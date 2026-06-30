@@ -1,0 +1,49 @@
+import type { Nationality } from "@/types";
+
+/** Nacionalidades del dataset (generado desde f1db). */
+export const NATIONALITIES: Record<string, Nationality> = {
+  ARG: { code: "ARG", name: "Argentina", flag: "🇦🇷" },
+  AUS: { code: "AUS", name: "Australia", flag: "🇦🇺" },
+  AUT: { code: "AUT", name: "Austria", flag: "🇦🇹" },
+  BEL: { code: "BEL", name: "Bélgica", flag: "🇧🇪" },
+  BRA: { code: "BRA", name: "Brasil", flag: "🇧🇷" },
+  CAN: { code: "CAN", name: "Canadá", flag: "🇨🇦" },
+  CHE: { code: "CHE", name: "Suiza", flag: "🇨🇭" },
+  CHL: { code: "CHL", name: "Chile", flag: "🇨🇱" },
+  CHN: { code: "CHN", name: "China", flag: "🇨🇳" },
+  COL: { code: "COL", name: "Colombia", flag: "🇨🇴" },
+  CZE: { code: "CZE", name: "Chequia", flag: "🇨🇿" },
+  DEU: { code: "DEU", name: "Alemania", flag: "🇩🇪" },
+  DNK: { code: "DNK", name: "Dinamarca", flag: "🇩🇰" },
+  ESP: { code: "ESP", name: "España", flag: "🇪🇸" },
+  FIN: { code: "FIN", name: "Finlandia", flag: "🇫🇮" },
+  FRA: { code: "FRA", name: "Francia", flag: "🇫🇷" },
+  GBR: { code: "GBR", name: "Reino Unido", flag: "🇬🇧" },
+  HUN: { code: "HUN", name: "Hungría", flag: "🇭🇺" },
+  IDN: { code: "IDN", name: "Indonesia", flag: "🇮🇩" },
+  IND: { code: "IND", name: "India", flag: "🇮🇳" },
+  IRL: { code: "IRL", name: "Irlanda", flag: "🇮🇪" },
+  ITA: { code: "ITA", name: "Italia", flag: "🇮🇹" },
+  JPN: { code: "JPN", name: "Japón", flag: "🇯🇵" },
+  LIE: { code: "LIE", name: "Liechtenstein", flag: "🇱🇮" },
+  MAR: { code: "MAR", name: "Marruecos", flag: "🇲🇦" },
+  MCO: { code: "MCO", name: "Mónaco", flag: "🇲🇨" },
+  MEX: { code: "MEX", name: "México", flag: "🇲🇽" },
+  MYS: { code: "MYS", name: "Malasia", flag: "🇲🇾" },
+  NLD: { code: "NLD", name: "Países Bajos", flag: "🇳🇱" },
+  NZL: { code: "NZL", name: "Nueva Zelanda", flag: "🇳🇿" },
+  POL: { code: "POL", name: "Polonia", flag: "🇵🇱" },
+  PRT: { code: "PRT", name: "Portugal", flag: "🇵🇹" },
+  RUS: { code: "RUS", name: "Rusia", flag: "🇷🇺" },
+  SWE: { code: "SWE", name: "Suecia", flag: "🇸🇪" },
+  THA: { code: "THA", name: "Tailandia", flag: "🇹🇭" },
+  URY: { code: "URY", name: "Uruguay", flag: "🇺🇾" },
+  USA: { code: "USA", name: "Estados Unidos", flag: "🇺🇸" },
+  VEN: { code: "VEN", name: "Venezuela", flag: "🇻🇪" },
+  ZAF: { code: "ZAF", name: "Sudáfrica", flag: "🇿🇦" },
+  ZWE: { code: "ZWE", name: "Zimbabue", flag: "🇿🇼" },
+};
+
+export function nationality(code: string): Nationality {
+  return NATIONALITIES[code] ?? { code, name: code, flag: "🏁" };
+}

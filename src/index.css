@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-asphalt text-ink font-display antialiased;
+    /* Subtle asphalt grain + a faint diagonal "start straight" gradient */
+    background-image:
+      radial-gradient(120% 80% at 50% -10%, rgba(225, 6, 0, 0.06), transparent 60%),
+      repeating-linear-gradient(
+        115deg,
+        rgba(255, 255, 255, 0.012) 0px,
+        rgba(255, 255, 255, 0.012) 1px,
+        transparent 1px,
+        transparent 7px
+      );
+    background-attachment: fixed;
+  }
+
+  /* Honor users who prefer less motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Visible keyboard focus everywhere */
+  :focus-visible {
+    @apply outline-none ring-2 ring-racing ring-offset-2 ring-offset-asphalt;
+  }
+
+  ::selection {
+    background: rgba(225, 6, 0, 0.35);
+  }
+}
+
+@layer components {
+  /* A panel that reads like a pit-wall module */
+  .panel {
+    @apply rounded-xl border border-white/5 bg-asphalt-800 shadow-panel;
+  }
+
+  /* Eyebrow label, monospace + tracked out, like a timing screen header */
+  .eyebrow {
+    @apply font-mono text-[11px] uppercase tracking-[0.22em] text-ink-muted;
+  }
+
+  /* The red speed bar used as a section accent */
+  .speed-bar {
+    @apply relative;
+  }
+  .speed-bar::before {
+    content: "";
+    @apply absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-racing;
+  }
+}
+
+@layer utilities {
+  /* Numeric tabular alignment for timers / lap times */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
