@@ -10,9 +10,16 @@
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc -b --noEmit",
-    "smoke": "tsx --tsconfig tsconfig.app.json scripts/smoke.ts"
+    "smoke": "tsx --tsconfig tsconfig.app.json scripts/smoke.ts",
+    "start": "node src/api/index.ts",
+    "dev:api": "tsx watch src/api/index.ts"
   },
   "dependencies": {
+    "@fastify/cors": "^11.2.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "fastify": "^5.9.0",
+    "pg": "^8.22.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2"
