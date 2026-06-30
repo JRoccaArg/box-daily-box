@@ -229,7 +229,7 @@ python3 gen-data.py
 ## 🎯 Contacto
 
 - GitHub: [@JRoccaArg](https://github.com/JRoccaArg)
-- Twitter/X: [@juanroccatic](https://twitter.com/juanroccatic)
+- LinkedIn: www.linkedin.com/in/juanrocca
 - Email: juanroccatic@gmail.com
 
 ---
