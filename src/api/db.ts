@@ -1,17 +1,11 @@
 // src/api/db.ts
-import { Pool } from "pg";
+import { Pool, QueryResult } from "pg";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-export const getDb = () => pool;
-
-/**
- * Ejecuta todas las migraciones al startup.
- * Crea tablas si no existen.
- */
-export async function initializeDatabase() {
+export async function initializeDatabase(): Promise<void> {
   const client = await pool.connect();
   try {
     // Crear tabla users
@@ -47,10 +41,10 @@ export async function initializeDatabase() {
       WHERE won AND NOT flagged;
     `);
 
-    // Crear tabla sessions (retos abiertos)
+    // Crear tabla sessions
     await client.query(`
       CREATE TABLE IF NOT EXISTS sessions (
-        id UUID PRIMARY KEY,
+        id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,
         game_id TEXT NOT NULL,
         difficulty TEXT NOT NULL,
@@ -68,17 +62,16 @@ export async function initializeDatabase() {
   }
 }
 
-/**
- * Ejecuta una query y devuelve resultados.
- */
-export async function query(sql: string, values?: any[]) {
+export async function query(
+  sql: string,
+  values?: (string | number | boolean | Date | null)[]
+): Promise<QueryResult> {
   return pool.query(sql, values);
 }
 
-/**
- * Ejecuta una transacción.
- */
-export async function transaction(fn: (client: any) => Promise<any>) {
+export async function transaction<T>(
+  fn: (client: any) => Promise<T>
+): Promise<T> {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");

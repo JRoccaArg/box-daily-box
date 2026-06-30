@@ -1,22 +1,22 @@
 // src/api/index.ts
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-import { initializeDatabase, getDb } from "./db";
+import { initializeDatabase } from "./db";
 import { startChallenge, finishChallenge, getRankingMonthly } from "./routes";
 
 const app = Fastify({ logger: true });
 
-// CORS
 app.register(cors, {
   origin: process.env.FRONTEND_URL || "https://box-daily-box.vercel.app",
 });
 
 // Health check
-app.get("/health", async () => {
-  return { status: "ok", timestamp: new Date().toISOString() };
-});
+app.get("/health", async () => ({
+  status: "ok",
+  timestamp: new Date().toISOString(),
+}));
 
-// Inicializar DB
+// Initialize DB on startup
 app.addHook("onReady", async () => {
   try {
     await initializeDatabase();
@@ -28,11 +28,10 @@ app.addHook("onReady", async () => {
 });
 
 // Routes
-app.post("/challenges/:gameId/start", startChallenge);
-app.post("/challenges/:gameId/finish", finishChallenge);
-app.get("/ranking/monthly", getRankingMonthly);
+app.post("/challenges/:gameId/start", startChallenge as any);
+app.post("/challenges/:gameId/finish", finishChallenge as any);
+app.get("/ranking/monthly", getRankingMonthly as any);
 
-// Start server
 const PORT = parseInt(process.env.PORT ?? "3000", 10);
 const HOST = "0.0.0.0";
 
