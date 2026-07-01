@@ -34,17 +34,14 @@ const app = Fastify({
   connectionTimeout: 30_000,
 });
 
-const ALLOWED_ORIGINS = process.env.FRONTEND_URL
-  ? process.env.FRONTEND_URL.split(",").map((s) => s.trim())
-  : [
-      "https://box-daily-box.vercel.app",
-      "https://boxdailybox.com",
-      "https://www.boxdailybox.com",
-      "http://localhost:5173",
-      "http://localhost:4173",
-    ];
-
-let dbReady = false;
+const FRONTEND_URL = process.env.FRONTEND_URL;
+if (!FRONTEND_URL) {
+  console.error(
+    "❌ FATAL: FRONTEND_URL no configurado. Define en Railway variables.",
+  );
+  process.exit(1);
+}
+const ALLOWED_ORIGINS = FRONTEND_URL.split(",").map((s) => s.trim());
 
 const requireDb = async (_req: any, reply: any) => {
   if (!dbReady) {
