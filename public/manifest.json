@@ -1,0 +1,24 @@
+{
+  "name": "Box Daily Box - Minijuegos F1",
+  "short_name": "Box Daily Box",
+  "description": "4 minijuegos diarios de Fórmula 1: adiviná pilotos, encontrá al intruso y completá bingos.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B0B0B",
+  "theme_color": "#0B0B0B",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["games", "entertainment", "sports"],
+  "lang": "es-AR"
+}

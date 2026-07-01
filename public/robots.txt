@@ -1,0 +1,10 @@
+# Box Daily Box - robots.txt
+# https://www.boxdailybox.com
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://www.boxdailybox.com/sitemap.xml
