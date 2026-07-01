@@ -16,8 +16,11 @@ export function AuthCallback(): JSX.Element {
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
+    console.log("[AuthCallback] Montado, searchParams:", searchParams.toString());
     const code = searchParams.get("code");
     const error = searchParams.get("error");
+    console.log("[AuthCallback] code:", code ? code.substring(0, 20) + "..." : null);
+    console.log("[AuthCallback] error:", error);
 
     if (error) {
       setStatus("error");
@@ -34,7 +37,9 @@ export function AuthCallback(): JSX.Element {
     }
 
     (async () => {
+      console.log("[AuthCallback] Llamando handleGoogleCallback...");
       const result = await handleGoogleCallback(code);
+      console.log("[AuthCallback] Resultado:", result);
       if (!result) {
         setStatus("error");
         setErrorMsg("No se pudo iniciar sesión");
