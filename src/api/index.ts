@@ -43,6 +43,8 @@ if (!FRONTEND_URL) {
 }
 const ALLOWED_ORIGINS = FRONTEND_URL.split(",").map((s) => s.trim());
 
+let dbReady = false;
+
 const requireDb = async (_req: any, reply: any) => {
   if (!dbReady) {
     reply.code(503).send({ error: "DB no lista, reintenta en unos segundos" });
