@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   apiGetMonthlyRanking,
   apiGetDailyRanking,
@@ -22,6 +22,8 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
   const [entries, setEntries] = useState<RankingEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  // Se incrementa al tocar "Reintentar" para forzar un refetch.
+  const [retryTick, setRetryTick] = useState(0);
 
   const { userId } = getIdentity();
   const now = new Date();
@@ -33,32 +35,33 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, []);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(false);
-    try {
-      const country = countryFilter || undefined;
-      const data =
-        tab === "monthly"
-          ? await apiGetMonthlyRanking(undefined, country)
-          : await apiGetDailyRanking(undefined, country);
-
-      if (data) {
-        setEntries(data.top);
-      } else {
-        setError(true);
-      }
-    } catch {
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  }, [tab, countryFilter]);
-
-  // Refrescar cuando cambia tab, pais, o refreshKey.
+  // Refrescar cuando cambia tab, pais, refreshKey o retry.
+  // El flag `cancelled` evita que una respuesta lenta de un fetch viejo
+  // pise los datos de uno más nuevo (race condition al cambiar tab/país rápido).
   useEffect(() => {
-    fetchData();
-  }, [fetchData, refreshKey]);
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setError(false);
+      try {
+        const country = countryFilter || undefined;
+        const data =
+          tab === "monthly"
+            ? await apiGetMonthlyRanking(undefined, country)
+            : await apiGetDailyRanking(undefined, country);
+        if (cancelled) return;
+        if (data) setEntries(data.top);
+        else setError(true);
+      } catch {
+        if (!cancelled) setError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, countryFilter, refreshKey, retryTick]);
 
   return (
     <section className="rounded-xl border border-white/10 bg-gradient-to-b from-asphalt-700 to-asphalt-800 p-4">
@@ -108,7 +111,7 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
           <div className="py-6 text-center">
             <p className="text-sm text-ink-faint">No se pudo cargar el ranking</p>
             <button
-              onClick={fetchData}
+              onClick={() => setRetryTick((t) => t + 1)}
               className="mt-2 text-xs text-racing-400 underline"
             >
               Reintentar

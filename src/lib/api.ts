@@ -87,11 +87,11 @@ async function apiFetch<T>(
 
 // ─── Endpoints ──────────────────────────────────────────────────────
 
-/** Inicia un reto. Devuelve sessionToken o null si falla. */
+/** Inicia un reto. Devuelve sessionToken + serverNow o null si falla. */
 export async function apiStartChallenge(
   gameId: string,
   difficulty: string,
-): Promise<{ sessionToken: string } | null> {
+): Promise<{ sessionToken: string; serverNow: number } | null> {
   const { userId, displayName, countryCode } = getIdentity();
   // Enviar la fecha LOCAL del cliente para evitar mismatch de timezone.
   const now = new Date();
@@ -104,7 +104,7 @@ export async function apiStartChallenge(
     },
   );
   if (!data) return null;
-  return { sessionToken: data.sessionToken };
+  return { sessionToken: data.sessionToken, serverNow: data.serverNow };
 }
 
 /** Envia la solucion y obtiene resultado verificado. */
@@ -114,28 +114,13 @@ export async function apiFinishChallenge(
   solution: Record<string, unknown>,
 ): Promise<FinishResponse | null> {
   const { userId } = getIdentity();
-  console.log(`[API] Finishing ${gameId}:`, {
-    userId,
-    sessionToken: sessionToken.substring(0, 20) + "...",
-    solution,
-  });
-  const result = await apiFetch<FinishResponse>(
+  return apiFetch<FinishResponse>(
     `/challenges/${gameId}/finish`,
     {
       method: "POST",
       body: JSON.stringify({ sessionToken, solution, userId }),
     },
   );
-  if (!result) {
-    console.warn(`[API] Finish ${gameId} failed (no response)`);
-  } else {
-    console.log(`[API] Finish ${gameId} success:`, {
-      won: result.won,
-      points: result.points,
-      flagged: result.flagged,
-    });
-  }
-  return result;
 }
 
 /** Ranking mensual global. */

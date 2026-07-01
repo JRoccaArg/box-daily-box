@@ -4,16 +4,33 @@
 // Verificación server-authoritative con tokens firmados HMAC.
 
 import { FastifyRequest, FastifyReply } from "fastify";
-import { randomUUID, createHmac } from "crypto";
+import { randomUUID, createHmac, timingSafeEqual } from "crypto";
 import { query, transaction } from "./db";
 import { verifyChallenge } from "./verify";
 import { computeScore } from "../lib/scoring";
 import type { Difficulty } from "../types";
+import {
+  isValidUserId,
+  isValidDateKey,
+  isValidMonth,
+  isValidCountry,
+  sanitizeDisplayName,
+  isPlausibleToken,
+  isPlausibleSolution,
+} from "./validate";
 
 const SESSION_TTL = 15 * 60 * 1000; // 15 minutos
 
 // Secreto para firmar tokens (configurable via env).
 const TOKEN_SECRET = process.env.TOKEN_SECRET || "bdb-token-secret-2026-change-me";
+
+// Advertencia de arranque si los secretos siguen en su valor por defecto.
+if (!process.env.TOKEN_SECRET) {
+  console.warn("⚠️  TOKEN_SECRET no configurado: usando default INSEGURO. Configuralo en Railway.");
+}
+if (!process.env.ADMIN_SECRET) {
+  console.warn("⚠️  ADMIN_SECRET no configurado: usando default INSEGURO. Configuralo en Railway.");
+}
 
 // Tiempo mínimo plausible por juego (segundos).
 // Tiempo límite por juego (para calcular bonus de velocidad).
@@ -51,13 +68,11 @@ function verifyToken(token: string): SessionPayload | null {
   const data = token.substring(0, dot);
   const sig = token.substring(dot + 1);
   const expected = createHmac("sha256", TOKEN_SECRET).update(data).digest("hex");
-  // Comparación timing-safe (longitud fija de hex digest).
-  if (sig.length !== expected.length) return null;
-  let diff = 0;
-  for (let i = 0; i < sig.length; i++) {
-    diff |= sig.charCodeAt(i) ^ expected.charCodeAt(i);
-  }
-  if (diff !== 0) return null;
+  // Comparación timing-safe con la primitiva nativa.
+  const sigBuf = Buffer.from(sig);
+  const expBuf = Buffer.from(expected);
+  if (sigBuf.length !== expBuf.length) return null;
+  if (!timingSafeEqual(sigBuf, expBuf)) return null;
   try {
     return JSON.parse(Buffer.from(data, "base64").toString()) as SessionPayload;
   } catch {
@@ -90,12 +105,17 @@ export async function startChallenge(
       return;
     }
 
+    // Validar userId: si viene, debe ser UUID o anon-id válido. Si es basura,
+    // lo tratamos como ausente (generamos uno nuevo) en vez de confiar en él.
+    const safeUserId = isValidUserId(userId) ? userId : null;
+
+    // Validar país (opcional).
+    const country = isValidCountry(countryCode) ? countryCode : null;
+
     // Usar la fecha LOCAL del cliente si es valida (±1 dia de UTC).
-    // Esto evita que a las 11 PM Argentina (2 AM UTC) el server use
-    // una fecha distinta a la que el frontend usa para generar el puzzle.
     const utcToday = new Date().toISOString().substring(0, 10);
     let today = utcToday;
-    if (clientDateKey && /^\d{4}-\d{2}-\d{2}$/.test(clientDateKey)) {
+    if (isValidDateKey(clientDateKey)) {
       const clientMs = new Date(clientDateKey + "T12:00:00Z").getTime();
       const utcMs = new Date(utcToday + "T12:00:00Z").getTime();
       const diffDays = Math.abs(clientMs - utcMs) / 86_400_000;
@@ -103,9 +123,15 @@ export async function startChallenge(
         today = clientDateKey;
       }
     }
-    const uid = userId || `anon-${randomUUID()}`;
+    const uid = safeUserId || `anon-${randomUUID()}`;
+    const clientIp = req.ip || "unknown";
+    // Solo aplicamos el bloqueo por IP si tenemos una IP real. Si es "unknown"
+    // (proxy raro, etc.), no bloqueamos: es preferible permitir a bloquear
+    // falsamente a muchos usuarios legítimos que caerían todos en "unknown".
+    const ipUsable = clientIp !== "unknown" && clientIp.length > 0;
 
-    // Verificar que no jugó ya hoy
+    // ─── ANTI MULTI-DISPOSITIVO ───
+    // 1. Verificar que ESTE usuario no jugó ya hoy
     const existing = await query(
       "SELECT id FROM attempts WHERE user_id = $1 AND game_id = $2 AND date_key = $3",
       [uid, gameId, today],
@@ -115,9 +141,42 @@ export async function startChallenge(
       return;
     }
 
-    // Upsert usuario (actualiza nombre/pais si cambió)
-    const name = (displayName || "").trim().substring(0, 30) || "Anónimo";
-    const country = countryCode?.trim().substring(0, 3) || null;
+    if (ipUsable) {
+      // 2. Verificar que desde esta IP no jugó OTRO usuario este juego hoy.
+      //    Esto evita: jugar en celular → ver respuesta → jugar en PC.
+      const ipCheck = await query(
+        `SELECT user_id FROM attempts
+         WHERE ip_address = $1 AND game_id = $2 AND date_key = $3
+         AND user_id != $4
+         LIMIT 1`,
+        [clientIp, gameId, today, uid],
+      );
+      if (ipCheck.rows.length > 0) {
+        reply.code(403).send({
+          error: "Ya se jugó este reto desde esta conexión hoy",
+        });
+        return;
+      }
+
+      // 3. Verificar que no haya una sesión activa (no consumida) desde esta IP
+      //    para este juego hoy con otro usuario.
+      const sessionIpCheck = await query(
+        `SELECT user_id FROM sessions
+         WHERE ip_address = $1 AND game_id = $2 AND date_key = $3
+         AND user_id != $4 AND NOT consumed AND expires_at > $5
+         LIMIT 1`,
+        [clientIp, gameId, today, uid, Date.now()],
+      );
+      if (sessionIpCheck.rows.length > 0) {
+        reply.code(403).send({
+          error: "Ya hay una partida activa de este reto desde esta conexión",
+        });
+        return;
+      }
+    }
+
+    // Upsert usuario (nombre sanitizado, país ya validado arriba).
+    const name = sanitizeDisplayName(displayName);
     await query(
       `INSERT INTO users (id, display_name, country_code)
        VALUES ($1, $2, $3)
@@ -127,7 +186,7 @@ export async function startChallenge(
       [uid, name, country],
     );
 
-    // Crear sesión firmada
+    // Crear sesión firmada (con IP)
     const startedAt = Date.now();
     const expiresAt = startedAt + SESSION_TTL;
     const sessionId = randomUUID();
@@ -138,9 +197,9 @@ export async function startChallenge(
     const sessionToken = signToken(payload);
 
     await query(
-      `INSERT INTO sessions (id, user_id, game_id, difficulty, date_key, started_at, expires_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [sessionId, uid, gameId, difficulty, today, startedAt, expiresAt],
+      `INSERT INTO sessions (id, user_id, game_id, difficulty, date_key, started_at, expires_at, ip_address)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [sessionId, uid, gameId, difficulty, today, startedAt, expiresAt, clientIp],
     );
 
     reply.code(200).send({
@@ -167,8 +226,12 @@ export async function finishChallenge(
       solution: Record<string, unknown>;
     };
 
-    if (!sessionToken || !solution) {
-      reply.code(422).send({ error: "Faltan sessionToken o solution" });
+    if (!isPlausibleToken(sessionToken)) {
+      reply.code(422).send({ error: "sessionToken inválido" });
+      return;
+    }
+    if (!isPlausibleSolution(solution)) {
+      reply.code(422).send({ error: "solution inválida" });
       return;
     }
 
@@ -226,8 +289,9 @@ export async function finishChallenge(
     });
 
     const uid = session.uid;
+    const clientIp = req.ip || "unknown";
 
-    // Guardar attempt
+    // Guardar attempt (con IP para anti multi-dispositivo)
     let duplicated = false;
     try {
       await transaction(async (client) => {
@@ -236,45 +300,63 @@ export async function finishChallenge(
           [session.sessionId],
         );
         await client.query(
-          `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, time_seconds, points, flagged)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-          [uid, gameId, session.today, session.difficulty, verifyResult.won, timeSeconds, points, flagged],
+          `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, time_seconds, points, flagged, ip_address)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          [uid, gameId, session.today, session.difficulty, verifyResult.won, timeSeconds, points, flagged, clientIp],
         );
       });
     } catch (err: any) {
       if (err.code === "23505") {
+        // Ya existe un attempt para este user/game/día (doble submit o race).
+        // No re-sumamos; devolvemos el resultado del attempt ya guardado.
         duplicated = true;
       } else {
         throw err;
       }
     }
 
-    // Puntos del mes
-    const monthResult = await query(
-      `SELECT SUM(points) as total FROM attempts
-       WHERE user_id = $1 AND won AND NOT flagged
-       AND date_trunc('month', date_key) = date_trunc('month', $2::date)`,
-      [uid, session.today],
-    );
-    const totalMonth = Number(monthResult.rows[0]?.total ?? 0);
+    // Si fue duplicado, leer el attempt original para devolver datos coherentes.
+    let finalWon = flagged ? false : verifyResult.won;
+    let finalPoints = flagged ? 0 : points;
+    if (duplicated) {
+      const prev = await query(
+        `SELECT won, points FROM attempts
+         WHERE user_id = $1 AND game_id = $2 AND date_key = $3`,
+        [uid, gameId, session.today],
+      );
+      if (prev.rows.length > 0) {
+        finalWon = Boolean(prev.rows[0]?.won);
+        finalPoints = Number(prev.rows[0]?.points ?? 0);
+      }
+    }
 
-    // Posición en ranking
-    const rankResult = await query(
+    // Puntos del mes + posición en ranking, en una sola query.
+    // Rango [primer día del mes, primer día del mes siguiente) para usar índice.
+    const monthStart = session.today.substring(0, 7) + "-01";
+    const statsResult = await query(
       `WITH user_scores AS (
          SELECT user_id, SUM(points) as score
          FROM attempts
          WHERE won AND NOT flagged
-         AND date_trunc('month', date_key) = date_trunc('month', $1::date)
+         AND date_key >= $1::date
+         AND date_key < ($1::date + INTERVAL '1 month')
          GROUP BY user_id
+       ),
+       me AS (
+         SELECT COALESCE(MAX(score), 0) as my_score
+         FROM user_scores WHERE user_id = $2
        )
-       SELECT COUNT(*) as rank FROM user_scores WHERE score > $2`,
-      [session.today, totalMonth],
+       SELECT
+         (SELECT my_score FROM me) as total_month,
+         (SELECT COUNT(*) FROM user_scores, me WHERE score > my_score) as ahead`,
+      [monthStart, uid],
     );
-    const rank = Number(rankResult.rows[0]?.rank ?? 0) + 1;
+    const totalMonth = Number(statsResult.rows[0]?.total_month ?? 0);
+    const rank = Number(statsResult.rows[0]?.ahead ?? 0) + 1;
 
     reply.code(200).send({
-      won: flagged ? false : verifyResult.won,
-      points: flagged ? 0 : points,
+      won: finalWon,
+      points: finalPoints,
       timeSeconds,
       totalMonth,
       rank,
@@ -295,11 +377,22 @@ export async function getRankingMonthly(
 ): Promise<void> {
   try {
     const { month, country } = req.query as { month?: string; country?: string };
-    const target = month
+    // Validar month: si es basura, usar mes actual.
+    const target = isValidMonth(month)
       ? `${month}-01`
       : new Date().toISOString().substring(0, 7) + "-01";
 
-    const countryFilter = country?.trim().substring(0, 3) || null;
+    const countryFilter = isValidCountry(country) ? country : null;
+
+    // Rango del mes [primer día, primer día del mes siguiente).
+    // Usar rango en vez de date_trunc(columna) permite aprovechar el índice.
+    const monthStart = target; // YYYY-MM-01
+    const params: (string | null)[] = [monthStart];
+    let countryClause = "";
+    if (countryFilter) {
+      params.push(countryFilter);
+      countryClause = `AND u.country_code = $${params.length}`;
+    }
 
     const topResult = await query(
       `SELECT u.id, u.display_name, u.country_code,
@@ -309,12 +402,13 @@ export async function getRankingMonthly(
        FROM attempts a
        JOIN users u ON a.user_id = u.id
        WHERE a.won AND NOT a.flagged
-       AND date_trunc('month', a.date_key) = date_trunc('month', $1::date)
-       ${countryFilter ? "AND u.country_code = $2" : ""}
+       AND a.date_key >= $1::date
+       AND a.date_key < ($1::date + INTERVAL '1 month')
+       ${countryClause}
        GROUP BY u.id, u.display_name, u.country_code
        ORDER BY points DESC
        LIMIT 50`,
-      countryFilter ? [target, countryFilter] : [target],
+      params,
     );
 
     const top = topResult.rows.map((row: any, idx: number) => ({
@@ -342,8 +436,10 @@ export async function getRankingDaily(
 ): Promise<void> {
   try {
     const { date, country } = req.query as { date?: string; country?: string };
-    const target = date || new Date().toISOString().substring(0, 10);
-    const countryFilter = country?.trim().substring(0, 3) || null;
+    const target = isValidDateKey(date)
+      ? date
+      : new Date().toISOString().substring(0, 10);
+    const countryFilter = isValidCountry(country) ? country : null;
 
     const topResult = await query(
       `SELECT u.id, u.display_name, u.country_code,
@@ -386,7 +482,11 @@ export async function adminDebug(
   try {
     const { secret } = req.query as { secret?: string };
     const adminSecret = process.env.ADMIN_SECRET || "boxdailybox-debug-2026";
-    if (secret !== adminSecret) {
+    // Comparación timing-safe para evitar timing attacks sobre el secreto.
+    const a = Buffer.from(String(secret ?? ""));
+    const b = Buffer.from(adminSecret);
+    const ok = a.length === b.length && timingSafeEqual(a, b);
+    if (!ok) {
       reply.code(403).send({ error: "Acceso denegado" });
       return;
     }
@@ -398,7 +498,7 @@ export async function adminDebug(
 
     const recentAttempts = await query(
       `SELECT a.user_id, a.game_id, a.date_key, a.difficulty, a.won,
-              a.time_seconds, a.points, a.flagged, a.created_at,
+              a.time_seconds, a.points, a.flagged, a.ip_address, a.created_at,
               u.display_name, u.country_code
        FROM attempts a
        JOIN users u ON a.user_id = u.id
@@ -420,10 +520,24 @@ export async function adminDebug(
        FROM attempts a
        JOIN users u ON a.user_id = u.id
        WHERE a.won AND NOT a.flagged
-       AND date_trunc('month', a.date_key) = date_trunc('month', CURRENT_DATE)
+       AND a.date_key >= date_trunc('month', CURRENT_DATE)::date
+       AND a.date_key < (date_trunc('month', CURRENT_DATE)::date + INTERVAL '1 month')
        GROUP BY u.id, u.display_name, u.country_code
        ORDER BY points DESC
        LIMIT 10`,
+    );
+
+    // IPs sospechosas: misma IP con >1 usuario distinto hoy.
+    const suspiciousIps = await query(
+      `SELECT ip_address,
+              COUNT(DISTINCT user_id) as user_count,
+              array_agg(DISTINCT user_id) as user_ids
+       FROM attempts
+       WHERE date_key = CURRENT_DATE AND ip_address IS NOT NULL
+       GROUP BY ip_address
+       HAVING COUNT(DISTINCT user_id) > 1
+       ORDER BY user_count DESC
+       LIMIT 20`,
     );
 
     reply.code(200).send({
@@ -438,6 +552,7 @@ export async function adminDebug(
       recentAttempts: recentAttempts.rows,
       activeSessions: activeSessions.rows,
       monthlyRanking: monthlyRanking.rows,
+      suspiciousIps: suspiciousIps.rows,
     });
   } catch (err) {
     console.error("adminDebug error:", err);

@@ -121,30 +121,11 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
       );
 
       // Enviar resultado al servidor (fire-and-forget, no bloquea UI).
+      // Si el backend falla, el juego sigue funcionando localmente.
       const token = sessionTokenRef.current;
-      console.log(`[GameShell] Finishing ${game.id}:`, {
-        outcome,
-        token: token ? token.substring(0, 20) + "..." : "NO TOKEN",
-        solution,
-      });
-
       if (token && solution) {
-        apiFinishChallenge(game.id, token, solution)
-          .then((res) => {
-            if (res) {
-              console.log(`[GameShell] Server confirmed:`, {
-                won: res.won,
-                points: res.points,
-              });
-            }
-          })
-          .catch((err) => {
-            console.error(`[GameShell] API error:`, err);
-          });
-      } else {
-        console.warn(`[GameShell] Missing token or solution:`, {
-          hasToken: !!token,
-          hasSolution: !!solution,
+        apiFinishChallenge(game.id, token, solution).catch(() => {
+          // Silencioso: la UX no depende del backend.
         });
       }
 
@@ -227,14 +208,27 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
 
   const startGameSession = () => {
     finishedRef.current = false;
-    scoreRef.current.startedAt = Date.now();
+    const localStart = Date.now();
+    scoreRef.current.startedAt = localStart;
     resetTimer(timeLimit);
     setStatus("playing");
     setPhase("playing");
 
     // Obtener token del servidor (fire-and-forget, no bloquea UI).
+    // Al llegar la respuesta, alineamos nuestro startedAt con el serverNow
+    // para que el tiempo medido (y por ende los puntos) coincida con el
+    // que calcula el backend. Sin esto, la latencia de red hace que el
+    // cliente mida ~1-2s de mas y muestre menos puntos que el ranking global.
     apiStartChallenge(game.id, difficulty).then((res) => {
-      if (res) sessionTokenRef.current = res.sessionToken;
+      if (res) {
+        sessionTokenRef.current = res.sessionToken;
+        if (typeof res.serverNow === "number") {
+          // El server empezo a contar en res.serverNow (su reloj). Traducimos
+          // ese instante al reloj local usando el offset de ida y vuelta.
+          const rtt = Date.now() - localStart;
+          scoreRef.current.startedAt = localStart + Math.round(rtt / 2);
+        }
+      }
     }).catch(() => {});
   };
 
