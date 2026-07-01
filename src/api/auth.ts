@@ -176,6 +176,7 @@ export async function googleAuthCallback(
 
     let userId: string;
     let isNewLink = false;
+    let migratedCount = 0;
 
     if (existing.rows.length > 0) {
       // Cuenta Google ya vinculada: devolver su userId
@@ -185,6 +186,29 @@ export async function googleAuthCallback(
         "UPDATE google_accounts SET last_login = now() WHERE google_id = $1",
         [googleId],
       );
+
+      // MIGRACIÓN: si el frontend viene con un userId anónimo distinto,
+      // migrar los attempts anónimos al userId de Google (si no hay conflicto).
+      // Regla:
+      //  - Si server ya tiene attempt para (game, date) → descartar el local (borrarlo)
+      //  - Si server NO tiene → migrar (cambiar user_id del attempt anónimo)
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (
+        typeof currentUserId === "string" &&
+        UUID_RE.test(currentUserId) &&
+        currentUserId !== userId
+      ) {
+        const anonHasGoogle = await query(
+          "SELECT google_id FROM google_accounts WHERE user_id = $1",
+          [currentUserId],
+        );
+        // Solo migrar si el userId anónimo NO está vinculado a ninguna cuenta
+        if (anonHasGoogle.rows.length === 0) {
+          migratedCount = await migrateAnonymousAttempts(currentUserId, userId);
+          // Borrar el user anónimo (cascade borra sus attempts y sessions)
+          await query("DELETE FROM users WHERE id = $1", [currentUserId]);
+        }
+      }
     } else {
       // Cuenta Google nueva: vincular con el userId actual o crear uno
       isNewLink = true;
@@ -250,11 +274,55 @@ export async function googleAuthCallback(
       email,
       picture,
       isNewLink,
+      migratedCount,
     });
   } catch (err) {
     console.error("googleAuthCallback error:", err);
     reply.code(500).send({ error: "Error interno" });
   }
+}
+
+/**
+ * Migra los attempts del userId anónimo al userId de Google.
+ * Regla:
+ *  - Si el destino YA tiene attempt para (game_id, date_key) → borrar el anónimo (descartar local)
+ *  - Si el destino NO tiene → cambiar user_id del attempt anónimo
+ *
+ * @returns cantidad de attempts efectivamente migrados
+ */
+async function migrateAnonymousAttempts(
+  fromUserId: string,
+  toUserId: string,
+): Promise<number> {
+  // 1. Traer todos los attempts del anónimo
+  const anonAttempts = await query(
+    "SELECT id, game_id, date_key FROM attempts WHERE user_id = $1",
+    [fromUserId],
+  );
+
+  let migrated = 0;
+
+  for (const row of anonAttempts.rows) {
+    // ¿El destino ya tiene attempt para (game, date)?
+    const conflict = await query(
+      "SELECT id FROM attempts WHERE user_id = $1 AND game_id = $2 AND date_key = $3",
+      [toUserId, row.game_id, row.date_key],
+    );
+
+    if (conflict.rows.length > 0) {
+      // Destino ya tiene → descartar el anónimo (borrar)
+      await query("DELETE FROM attempts WHERE id = $1", [row.id]);
+    } else {
+      // Destino no tiene → migrar
+      await query(
+        "UPDATE attempts SET user_id = $1 WHERE id = $2",
+        [toUserId, row.id],
+      );
+      migrated++;
+    }
+  }
+
+  return migrated;
 }
 
 /**

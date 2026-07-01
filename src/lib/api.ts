@@ -160,3 +160,34 @@ export async function apiPost<T>(
     body: JSON.stringify(body),
   });
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── Perfil del usuario ────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+export type UserProfile = {
+  userId: string;
+  displayName: string | null;
+  countryCode: string | null;
+  canChangeName: boolean;
+  nameChangedAt: string | null;
+};
+
+/** GET /user/:userId */
+export async function apiGetUserProfile(userId: string): Promise<UserProfile | null> {
+  return apiFetch<UserProfile>(`/user/${encodeURIComponent(userId)}`);
+}
+
+/** POST /user/:userId/profile */
+export async function apiUpdateUserProfile(
+  userId: string,
+  updates: { displayName?: string; countryCode?: string },
+): Promise<UserProfile | { error: string } | null> {
+  return apiFetch<UserProfile | { error: string }>(
+    `/user/${encodeURIComponent(userId)}/profile`,
+    {
+      method: "POST",
+      body: JSON.stringify(updates),
+    },
+  );
+}

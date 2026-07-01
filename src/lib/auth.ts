@@ -13,6 +13,7 @@
 import { apiPost } from "./api";
 import { getIdentity, updateIdentity } from "./identity";
 import { storage } from "./storage";
+import { resetAllProgress } from "./stats";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
 
@@ -66,6 +67,12 @@ export async function handleGoogleCallback(code: string): Promise<AuthResult | n
   });
 
   if (!result) return null;
+
+  // El server es la fuente de verdad después del login.
+  // Descartar TODOS los attempts locales: los que estaban en server + local
+  // ya se resolvieron server-side; los que solo estaban en local se migraron.
+  // A partir de acá, el frontend sincroniza con server.
+  resetAllProgress();
 
   // Guardar identidad completa (server-side es la fuente de verdad).
   updateIdentity({

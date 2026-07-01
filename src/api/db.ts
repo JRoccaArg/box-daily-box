@@ -21,8 +21,17 @@ export async function initializeDatabase(): Promise<void> {
         id TEXT PRIMARY KEY,
         display_name TEXT,
         country_code TEXT,
+        name_changed_at TIMESTAMPTZ,
         created_at TIMESTAMPTZ DEFAULT now()
       );
+    `);
+
+    // Migración: agregar name_changed_at si no existe
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS name_changed_at TIMESTAMPTZ;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
     `);
 
     // Tabla google_accounts (vinculación Google → userId)

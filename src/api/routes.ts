@@ -142,34 +142,37 @@ export async function startChallenge(
     }
 
     if (ipUsable) {
-      // 2. Verificar que desde esta IP no jugó OTRO usuario este juego hoy.
-      //    Esto evita: jugar en celular → ver respuesta → jugar en PC.
+      // Regla nueva: SOLO 1 usuario por IP por día en el ranking.
+      // Si otro userId ya registró CUALQUIER attempt hoy desde esta IP,
+      // el nuevo usuario no puede registrar. Esto evita crear cuentas nuevas
+      // desde la misma IP para inflar rankings, pero permite jugar
+      // localmente con amigos (comparando resultados presencialmente).
       const ipCheck = await query(
         `SELECT user_id FROM attempts
-         WHERE ip_address = $1 AND game_id = $2 AND date_key = $3
-         AND user_id != $4
+         WHERE ip_address = $1 AND date_key = $2
+         AND user_id != $3
          LIMIT 1`,
-        [clientIp, gameId, today, uid],
+        [clientIp, today, uid],
       );
       if (ipCheck.rows.length > 0) {
         reply.code(403).send({
-          error: "Ya se jugó este reto desde esta conexión hoy",
+          error: "Ya se registró otro jugador desde esta conexión hoy",
         });
         return;
       }
 
-      // 3. Verificar que no haya una sesión activa (no consumida) desde esta IP
-      //    para este juego hoy con otro usuario.
+      // Verificar que no haya una sesión activa (no consumida) desde esta IP
+      // hoy con otro usuario.
       const sessionIpCheck = await query(
         `SELECT user_id FROM sessions
-         WHERE ip_address = $1 AND game_id = $2 AND date_key = $3
-         AND user_id != $4 AND NOT consumed AND expires_at > $5
+         WHERE ip_address = $1 AND date_key = $2
+         AND user_id != $3 AND NOT consumed AND expires_at > $4
          LIMIT 1`,
-        [clientIp, gameId, today, uid, Date.now()],
+        [clientIp, today, uid, Date.now()],
       );
       if (sessionIpCheck.rows.length > 0) {
         reply.code(403).send({
-          error: "Ya hay una partida activa de este reto desde esta conexión",
+          error: "Ya hay una partida activa desde esta conexión con otro jugador",
         });
         return;
       }
@@ -558,4 +561,199 @@ export async function adminDebug(
     console.error("adminDebug error:", err);
     reply.code(500).send({ error: "Error interno" });
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── Perfil del usuario ────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * GET /user/:userId
+ *
+ * Devuelve el perfil del usuario incluyendo si puede cambiar el nombre
+ * (1 cambio por mes calendario, no acumulables).
+ */
+export async function getUserProfile(
+  req: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  try {
+    const { userId } = req.params as { userId?: string };
+    if (!userId || !isValidUserId(userId)) {
+      reply.code(422).send({ error: "userId inválido" });
+      return;
+    }
+
+    const rows = await query(
+      "SELECT id, display_name, country_code, name_changed_at FROM users WHERE id = $1",
+      [userId],
+    );
+
+    if (rows.rows.length === 0) {
+      reply.code(404).send({ error: "Usuario no encontrado" });
+      return;
+    }
+
+    const user = rows.rows[0];
+    const canChangeName = canChangeNameThisMonth(user.name_changed_at);
+
+    reply.code(200).send({
+      userId: user.id,
+      displayName: user.display_name,
+      countryCode: user.country_code,
+      canChangeName,
+      nameChangedAt: user.name_changed_at,
+    });
+  } catch (err) {
+    console.error("getUserProfile error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/**
+ * POST /user/:userId/profile
+ *
+ * Actualiza display_name y/o country_code.
+ * Regla: display_name solo puede cambiarse 1 vez por mes calendario.
+ *        country_code, una vez fijado, no cambia (siempre viene por IP inicialmente).
+ *
+ * Body: { displayName?: string, countryCode?: string }
+ */
+export async function updateUserProfile(
+  req: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  try {
+    const { userId } = req.params as { userId?: string };
+    if (!userId || !isValidUserId(userId)) {
+      reply.code(422).send({ error: "userId inválido" });
+      return;
+    }
+
+    const { displayName, countryCode } = req.body as {
+      displayName?: string;
+      countryCode?: string;
+    };
+
+    // Traer usuario actual
+    const existing = await query(
+      "SELECT display_name, country_code, name_changed_at FROM users WHERE id = $1",
+      [userId],
+    );
+
+    const isNewUser = existing.rows.length === 0;
+    const currentDisplayName = existing.rows[0]?.display_name as string | null | undefined;
+    const currentCountry = existing.rows[0]?.country_code as string | null | undefined;
+    const nameChangedAt = existing.rows[0]?.name_changed_at as Date | null | undefined;
+
+    // Validar displayName si viene
+    let sanitizedName: string | null = null;
+    if (typeof displayName === "string") {
+      sanitizedName = sanitizeDisplayName(displayName);
+      if (sanitizedName.length === 0) {
+        reply.code(422).send({ error: "Nombre inválido" });
+        return;
+      }
+
+      // Si el usuario ya existe y ya tiene nombre, verificar regla mensual
+      if (!isNewUser && currentDisplayName && sanitizedName !== currentDisplayName) {
+        if (!canChangeNameThisMonth(nameChangedAt ?? null)) {
+          reply.code(403).send({
+            error: "Ya cambiaste tu nombre este mes. Podrás cambiarlo el mes que viene.",
+          });
+          return;
+        }
+      }
+    }
+
+    // Validar countryCode si viene
+    let validCountry: string | null = null;
+    if (typeof countryCode === "string") {
+      const up = countryCode.toUpperCase();
+      if (!isValidCountry(up)) {
+        reply.code(422).send({ error: "País inválido" });
+        return;
+      }
+      // Country es fijo una vez set: si ya existe uno diferente, ignorar el nuevo.
+      if (currentCountry && currentCountry !== up) {
+        // Silenciosamente mantener el actual (no error, no cambio).
+        validCountry = currentCountry;
+      } else {
+        validCountry = up;
+      }
+    }
+
+    // Construir UPDATE / INSERT
+    if (isNewUser) {
+      await query(
+        `INSERT INTO users (id, display_name, country_code, name_changed_at)
+         VALUES ($1, $2, $3, $4)`,
+        [
+          userId,
+          sanitizedName,
+          validCountry,
+          sanitizedName ? new Date() : null,
+        ],
+      );
+    } else {
+      // Solo actualizar campos que vienen y son válidos
+      const updates: string[] = [];
+      const values: any[] = [];
+      let idx = 1;
+
+      if (sanitizedName !== null && sanitizedName !== currentDisplayName) {
+        updates.push(`display_name = $${idx++}`);
+        values.push(sanitizedName);
+        updates.push(`name_changed_at = $${idx++}`);
+        values.push(new Date());
+      }
+
+      // Country solo se setea si no había antes
+      if (validCountry !== null && !currentCountry) {
+        updates.push(`country_code = $${idx++}`);
+        values.push(validCountry);
+      }
+
+      if (updates.length > 0) {
+        values.push(userId);
+        await query(
+          `UPDATE users SET ${updates.join(", ")} WHERE id = $${idx}`,
+          values,
+        );
+      }
+    }
+
+    // Devolver estado actualizado
+    const finalRow = await query(
+      "SELECT id, display_name, country_code, name_changed_at FROM users WHERE id = $1",
+      [userId],
+    );
+    const user = finalRow.rows[0];
+
+    reply.code(200).send({
+      userId: user.id,
+      displayName: user.display_name,
+      countryCode: user.country_code,
+      canChangeName: canChangeNameThisMonth(user.name_changed_at),
+      nameChangedAt: user.name_changed_at,
+    });
+  } catch (err) {
+    console.error("updateUserProfile error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/**
+ * Devuelve true si el usuario puede cambiar su display_name este mes.
+ * Regla: 1 cambio por mes calendario (UTC), no acumulables.
+ */
+function canChangeNameThisMonth(nameChangedAt: Date | null): boolean {
+  if (!nameChangedAt) return true; // nunca lo cambió → puede
+  const now = new Date();
+  const changed = new Date(nameChangedAt);
+  // Puede si estamos en un mes calendario distinto
+  return (
+    changed.getUTCFullYear() !== now.getUTCFullYear() ||
+    changed.getUTCMonth() !== now.getUTCMonth()
+  );
 }

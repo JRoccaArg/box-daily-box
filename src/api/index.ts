@@ -18,6 +18,8 @@ import {
   getRankingMonthly,
   getRankingDaily,
   adminDebug,
+  getUserProfile,
+  updateUserProfile,
 } from "./routes";
 import { googleAuthCallback, logout } from "./auth";
 
@@ -153,6 +155,25 @@ async function start(): Promise<void> {
       config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
     },
     logout as any,
+  );
+
+  // ─── Perfil del usuario ────────────────────────────────────────────
+  app.get(
+    "/user/:userId",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 60, timeWindow: "1 minute" } },
+    },
+    getUserProfile as any,
+  );
+
+  app.post(
+    "/user/:userId/profile",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
+    },
+    updateUserProfile as any,
   );
 
   // ─── Inicializar BD en background ─────────────────────────────────
