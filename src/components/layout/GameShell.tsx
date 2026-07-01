@@ -6,6 +6,7 @@ import { useStats } from "@/context/StatsContext";
 import { computeScore } from "@/lib/scoring";
 import { apiStartChallenge, apiFinishChallenge } from "@/lib/api";
 import { isIdentityComplete } from "@/lib/identity";
+import { updateServerPoints } from "@/lib/stats";
 import { IdentityModal } from "@/components/layout/IdentityModal";
 import { useTimer } from "@/hooks/useTimer";
 import { Panel } from "@/components/ui/Panel";
@@ -48,7 +49,7 @@ type GameShellProps = {
  * duplicar el andamiaje y se mantiene un contrato unico y estable.
  */
 export function GameShell({ game, date = new Date() }: GameShellProps) {
-  const { record, playedStatus } = useStats();
+  const { record, playedStatus, refreshStats } = useStats();
   const lockedStatus = playedStatus(game.id, date);
 
   // Dificultad inicial: la primera permitida por el juego.
@@ -121,18 +122,28 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
       );
 
       // Enviar resultado al servidor (fire-and-forget, no bloquea UI).
-      // Si el backend falla, el juego sigue funcionando localmente.
+      // Si el backend responde, sincronizar puntos locales con los del server.
       const token = sessionTokenRef.current;
       if (token && solution) {
-        apiFinishChallenge(game.id, token, solution).catch(() => {
-          // Silencioso: la UX no depende del backend.
-        });
+        apiFinishChallenge(game.id, token, solution)
+          .then((res) => {
+            if (res && typeof res.points === "number") {
+              // Sincronizar: guardar los puntos del servidor en el resultado local.
+              // Esto hace que "Mi Progreso" coincida con el ranking global.
+              updateServerPoints(game.id, res.points, date);
+              setPointsEarned(res.points);
+              refreshStats();
+            }
+          })
+          .catch(() => {
+            // Silencioso: la UX no depende del backend.
+          });
       }
 
       // Pequena pausa para que el usuario vea el tablero final antes del modal.
       window.setTimeout(() => setResultOpen(true), 650);
     },
-    [game.id, record, date, buildMeta],
+    [game.id, record, date, buildMeta, refreshStats],
   );
 
   // -----------------------------------------------------------------

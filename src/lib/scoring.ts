@@ -7,9 +7,9 @@
  *   - Menos tiempo => mas bonus de rapidez (proporcional al tiempo que sobro).
  *
  * Esta funcion no toca almacenamiento ni fechas: recibe los datos del intento
- * y devuelve un numero. Asi es trivial reusarla TAL CUAL en un backend para
- * recalcular el puntaje del lado del servidor (la unica forma de tener un
- * ranking multiusuario infalsificable). Ver nota de seguridad en el ranking.
+ * y devuelve un numero. Se reutiliza IDENTICA en el backend (routes.ts) para
+ * recalcular el puntaje del lado del servidor, garantizando un ranking
+ * multiusuario verificado server-side.
  */
 
 import type { Difficulty } from "@/types";

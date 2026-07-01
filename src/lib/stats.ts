@@ -190,15 +190,39 @@ export function resetAllProgress(): void {
 
 const DIFFS: Difficulty[] = ["facil", "medio", "dificil", "leyenda"];
 
-/** Puntos de un resultado guardado, leyendo su meta (dificultad/tiempo). */
+/** Puntos de un resultado guardado. Usa serverPoints si el servidor los informó,
+ *  sino calcula localmente (fallback offline). */
 export function scoreOfResult(r: DailyGameResult): number {
   const meta = r.meta ?? {};
+  // Si el servidor ya validó y devolvió puntos, son la fuente de verdad.
+  if (typeof meta.serverPoints === "number") return meta.serverPoints;
+  // Fallback: calcular localmente (mismo algoritmo que el server).
   const difficulty = (DIFFS as string[]).includes(String(meta.difficulty))
     ? (meta.difficulty as Difficulty)
     : "medio";
   const timeSeconds = typeof meta.timeSeconds === "number" ? meta.timeSeconds : null;
   const timeLimit = typeof meta.timeLimit === "number" ? meta.timeLimit : null;
   return computeScore({ won: r.status === "won", difficulty, timeSeconds, timeLimit });
+}
+
+/**
+ * Actualiza los puntos de un resultado con los que devolvió el servidor.
+ * Esto sincroniza "Mi Progreso" (local) con el ranking global (server).
+ */
+export function updateServerPoints(
+  gameId: string,
+  serverPoints: number,
+  date: Date = new Date(),
+): void {
+  const key = dateKey(date);
+  const results = loadResults();
+  const dayResults = results[key] ?? {};
+  const existing = dayResults[gameId];
+  if (!existing) return; // No hay resultado local: nada que actualizar.
+  existing.meta = { ...existing.meta, serverPoints };
+  dayResults[gameId] = existing;
+  results[key] = dayResults;
+  storage.set(RESULTS_KEY, results);
 }
 
 export type MonthlyScore = {

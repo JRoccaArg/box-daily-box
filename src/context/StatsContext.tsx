@@ -27,6 +27,8 @@ type StatsContextValue = {
     meta?: DailyGameResult["meta"],
     date?: Date,
   ) => void;
+  /** Fuerza re-lectura de stats desde storage (útil tras sync con server). */
+  refreshStats: () => void;
   resetProgress: () => void;
 };
 
@@ -64,6 +66,10 @@ export function StatsProvider({ children }: { children: ReactNode }) {
     setVersion((v) => v + 1);
   }, []);
 
+  const refreshStats = useCallback(() => {
+    setVersion((v) => v + 1);
+  }, []);
+
   const value = useMemo<StatsContextValue>(
     () => ({
       summary,
@@ -71,9 +77,10 @@ export function StatsProvider({ children }: { children: ReactNode }) {
       resultFor,
       playedStatus,
       record,
+      refreshStats,
       resetProgress,
     }),
-    [summary, resultFor, playedStatus, record, resetProgress],
+    [summary, resultFor, playedStatus, record, refreshStats, resetProgress],
   );
 
   return <StatsContext.Provider value={value}>{children}</StatsContext.Provider>;
