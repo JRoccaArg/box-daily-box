@@ -22,8 +22,6 @@ export type UserIdentity = {
 
 const IDENTITY_KEY = "identity";
 const COOKIE_NAME = "bdb_uid";
-// Cookie dura 400 días (máximo permitido por navegadores modernos).
-const COOKIE_MAX_AGE = 400 * 24 * 60 * 60;
 
 function generateId(): string {
   // UUID v4 simple (sin crypto.randomUUID para compat con navegadores viejos).
@@ -34,9 +32,21 @@ function generateId(): string {
 
 // ─── Cookie helpers ──────────────────────────────────────────────────
 
+// Cookie dura hasta el final del día UTC. Al día siguiente se genera un nuevo UUID.
+// Esto evita "bloqueos por IP" accidentales si el usuario quiere cambiar de cuenta.
+function getCookieMaxAge(): number {
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+  tomorrow.setUTCHours(0, 0, 0, 0);
+  const secondsLeft = Math.floor((tomorrow.getTime() - now.getTime()) / 1000);
+  return Math.max(secondsLeft, 60); // Mínimo 60 segundos para evitar cookie ya expirada.
+}
+
 function setCookie(userId: string): void {
   try {
-    document.cookie = `${COOKIE_NAME}=${userId};path=/;max-age=${COOKIE_MAX_AGE};SameSite=Lax`;
+    const maxAge = getCookieMaxAge();
+    document.cookie = `${COOKIE_NAME}=${userId};path=/;max-age=${maxAge};SameSite=Lax`;
   } catch {
     // SSR o entorno sin document — ignorar.
   }

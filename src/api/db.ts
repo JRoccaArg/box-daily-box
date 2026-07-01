@@ -25,6 +25,24 @@ export async function initializeDatabase(): Promise<void> {
       );
     `);
 
+    // Tabla google_accounts (vinculación Google → userId)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS google_accounts (
+        google_id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        email TEXT NOT NULL,
+        name TEXT,
+        picture_url TEXT,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        last_login TIMESTAMPTZ DEFAULT now(),
+        UNIQUE(user_id)
+      );
+    `);
+    // Índice para búsqueda rápida por email
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_google_accounts_email ON google_accounts(email);
+    `);
+
     // Migraciones (columnas nuevas)
     await client.query(`
       DO $$ BEGIN

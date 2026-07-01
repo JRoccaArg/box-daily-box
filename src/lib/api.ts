@@ -146,3 +146,17 @@ export async function apiGetDailyRanking(
   const qs = params.toString();
   return apiFetch<DailyRankingResponse>(`/ranking/daily${qs ? `?${qs}` : ""}`);
 }
+
+/**
+ * Endpoint genérico para POST autenticado. Usado por el módulo de auth
+ * (que no puede importar apiFetch porque es privado).
+ */
+export async function apiPost<T>(
+  path: string,
+  body: Record<string, unknown>,
+): Promise<T | null> {
+  return apiFetch<T>(path, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}

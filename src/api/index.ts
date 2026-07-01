@@ -19,6 +19,7 @@ import {
   getRankingDaily,
   adminDebug,
 } from "./routes";
+import { googleAuthCallback, logout } from "./auth";
 
 const app = Fastify({
   logger: {
@@ -133,6 +134,25 @@ async function start(): Promise<void> {
       config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
     },
     adminDebug as any,
+  );
+
+  // ─── Autenticación con Google OAuth ───────────────────────────────
+  // Rate limit bajo: máximo 10 intentos por minuto por IP.
+  app.post(
+    "/auth/google",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
+    },
+    googleAuthCallback as any,
+  );
+
+  app.post(
+    "/auth/logout",
+    {
+      config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
+    },
+    logout as any,
   );
 
   // ─── Inicializar BD en background ─────────────────────────────────
