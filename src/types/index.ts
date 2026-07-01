@@ -90,10 +90,10 @@ export type GameProps = {
   secondsLeft: number | null;
   /** Estado actual de la partida administrado por el GameShell. */
   status: GameStatus;
-  /** Llamar cuando el usuario gana. */
-  onWin: () => void;
-  /** Llamar cuando el usuario pierde (sin intentos, etc.). */
-  onLose: () => void;
+  /** Llamar cuando el usuario gana. Pasar solution para verificacion server. */
+  onWin: (solution?: Record<string, unknown>) => void;
+  /** Llamar cuando el usuario pierde. Pasar solution para registro server. */
+  onLose: (solution?: Record<string, unknown>) => void;
 };
 
 /** Opciones de cronometro que admite un juego. */

@@ -52,7 +52,7 @@ export function ParrillaBingo({ difficulty, date, status, onWin }: GameProps) {
     next[cell] = driver.id;
     setCells(next);
     setActive(null);
-    if (next.every(Boolean)) onWin();
+    if (next.every(Boolean)) onWin({ grid: next as string[] });
   };
 
   const clearCell = (cell: number) => {

@@ -27,8 +27,8 @@ export function ElIntruso({ difficulty, date, status, onWin, onLose }: GameProps
   const confirm = () => {
     if (!selected || revealed) return;
     setSubmittedId(selected);
-    if (selected === puzzle.intruderId) onWin();
-    else onLose();
+    if (selected === puzzle.intruderId) onWin({ driverId: selected });
+    else onLose({ driverId: selected });
   };
 
   return (

@@ -1,6 +1,3 @@
-# Configuración de build para Railway
-# Solo instala deps y corre el backend (el frontend va en Vercel)
-
 [phases.setup]
 nixPkgs = ["nodejs_20"]
 
@@ -8,9 +5,7 @@ nixPkgs = ["nodejs_20"]
 cmds = ["npm ci"]
 
 [phases.build]
-# No buildeamos el frontend en Railway (va en Vercel)
-# Solo verificamos que el backend compila
-cmds = ["echo 'Skipping frontend build - backend runs with tsx'"]
+cmds = ["echo 'Backend runs with tsx - no frontend build needed'"]
 
 [start]
-cmd = "tsx src/api/index.ts"
+cmd = "tsx --tsconfig tsconfig.app.json src/api/index.ts"

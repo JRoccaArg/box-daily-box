@@ -4,6 +4,9 @@ import type { Difficulty, GameDefinition, GameStatus } from "@/types";
 import { DIFFICULTY_LABEL } from "@/types";
 import { useStats } from "@/context/StatsContext";
 import { computeScore } from "@/lib/scoring";
+import { apiStartChallenge, apiFinishChallenge } from "@/lib/api";
+import { isIdentityComplete } from "@/lib/identity";
+import { IdentityModal } from "@/components/layout/IdentityModal";
 import { useTimer } from "@/hooks/useTimer";
 import { Panel } from "@/components/ui/Panel";
 import { Button } from "@/components/ui/Button";
@@ -66,10 +69,14 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
   const [pointsEarned, setPointsEarned] = useState(0);
   // Modal de confirmacion para abandonar (al tocar "Volver" mientras juega).
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
+  // Modal de identidad (si el usuario no configuró nombre/pais).
+  const [identityOpen, setIdentityOpen] = useState(false);
   const navigate = useNavigate();
 
   // Evita doble registro (rendirse + expiracion simultaneos, p.ej.).
   const finishedRef = useRef(false);
+  // Token de sesión del servidor (para verificación server-side).
+  const sessionTokenRef = useRef<string | null>(null);
 
   const timeLimit = game.timer.kind === "none" ? null : chosenTime;
 
@@ -97,7 +104,7 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
   }, []);
 
   const finish = useCallback(
-    (outcome: Extract<GameStatus, "won" | "lost">) => {
+    (outcome: Extract<GameStatus, "won" | "lost">, solution?: Record<string, unknown>) => {
       if (finishedRef.current) return;
       finishedRef.current = true;
       setStatus(outcome);
@@ -112,6 +119,15 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
           timeLimit: scoreRef.current.timeLimit,
         }),
       );
+
+      // Enviar resultado al servidor (fire-and-forget, no bloquea UI).
+      const token = sessionTokenRef.current;
+      if (token && solution) {
+        apiFinishChallenge(game.id, token, solution).catch(() => {
+          // Silencioso: si falla el backend, el juego sigue localmente.
+        });
+      }
+
       // Pequena pausa para que el usuario vea el tablero final antes del modal.
       window.setTimeout(() => setResultOpen(true), 650);
     },
@@ -181,15 +197,41 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
   }, [phase, startTimer, pauseTimer]);
 
   const beginPlaying = () => {
+    // Si no configuró perfil, pedir nombre y pais primero.
+    if (!isIdentityComplete()) {
+      setIdentityOpen(true);
+      return;
+    }
+    startGameSession();
+  };
+
+  const startGameSession = () => {
     finishedRef.current = false;
     scoreRef.current.startedAt = Date.now();
     resetTimer(timeLimit);
     setStatus("playing");
     setPhase("playing");
+
+    // Obtener token del servidor (fire-and-forget, no bloquea UI).
+    apiStartChallenge(game.id, difficulty).then((res) => {
+      if (res) sessionTokenRef.current = res.sessionToken;
+    }).catch(() => {});
   };
 
-  const onWin = useCallback(() => finish("won"), [finish]);
-  const onLose = useCallback(() => finish("lost"), [finish]);
+  /** Callback del modal de identidad: una vez completado, arrancar. */
+  const handleIdentitySaved = () => {
+    setIdentityOpen(false);
+    startGameSession();
+  };
+
+  const onWin = useCallback(
+    (solution?: Record<string, unknown>) => finish("won", solution),
+    [finish],
+  );
+  const onLose = useCallback(
+    (solution?: Record<string, unknown>) => finish("lost", solution),
+    [finish],
+  );
 
   // -----------------------------------------------------------------
   // Vista: reto ya jugado hoy (bloqueado hasta manana).
@@ -296,6 +338,9 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
             </Button>
           </div>
         </Panel>
+
+        {/* Modal de identidad (primera vez) */}
+        <IdentityModal open={identityOpen} onClose={handleIdentitySaved} />
       </div>
     );
   }
@@ -411,6 +456,9 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
           <p className="mt-4 text-xs text-ink-faint">Vuelve manana para un nuevo reto</p>
         </div>
       </Modal>
+
+      {/* Modal de identidad (primera vez) */}
+      <IdentityModal open={identityOpen} onClose={handleIdentitySaved} />
     </div>
   );
 }

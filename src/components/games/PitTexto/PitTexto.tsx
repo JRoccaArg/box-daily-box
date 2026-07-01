@@ -37,8 +37,8 @@ export function PitTexto({ difficulty, date, status, onWin, onLose }: GameProps)
     setQuery("");
     inputRef.current?.focus();
 
-    if (d.id === target.id) onWin();
-    else if (next.length >= MAX_GUESSES) onLose();
+    if (d.id === target.id) onWin({ driverId: d.id });
+    else if (next.length >= MAX_GUESSES) onLose({ driverId: d.id });
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {

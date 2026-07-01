@@ -13,8 +13,17 @@ export async function initializeDatabase(): Promise<void> {
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         display_name TEXT,
+        country_code TEXT,
         created_at TIMESTAMPTZ DEFAULT now()
       );
+    `);
+
+    // Migración: agregar country_code si no existe (tablas ya creadas)
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS country_code TEXT;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
     `);
 
     // Crear tabla attempts (ranking)
@@ -34,11 +43,16 @@ export async function initializeDatabase(): Promise<void> {
       );
     `);
 
-    // Índice para ranking rápido
+    // Índices para ranking rápido
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_attempts_ranking
       ON attempts (date_key, user_id)
       WHERE won AND NOT flagged;
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_attempts_monthly
+      ON attempts (date_key, won, flagged);
     `);
 
     // Crear tabla sessions

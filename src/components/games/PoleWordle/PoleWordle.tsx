@@ -112,9 +112,9 @@ export function PoleWordle({ difficulty, date, status, onWin, onLose }: GameProp
     setCurrent("");
 
     if (current === answer) {
-      onWin();
+      onWin({ guesses: next });
     } else if (next.length >= MAX_ATTEMPTS) {
-      onLose();
+      onLose({ guesses: next });
     }
   }, [current, len, validWords, guesses, answer, locked, onWin, onLose]);
 
