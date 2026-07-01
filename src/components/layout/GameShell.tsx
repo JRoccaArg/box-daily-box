@@ -122,9 +122,29 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
 
       // Enviar resultado al servidor (fire-and-forget, no bloquea UI).
       const token = sessionTokenRef.current;
+      console.log(`[GameShell] Finishing ${game.id}:`, {
+        outcome,
+        token: token ? token.substring(0, 20) + "..." : "NO TOKEN",
+        solution,
+      });
+
       if (token && solution) {
-        apiFinishChallenge(game.id, token, solution).catch(() => {
-          // Silencioso: si falla el backend, el juego sigue localmente.
+        apiFinishChallenge(game.id, token, solution)
+          .then((res) => {
+            if (res) {
+              console.log(`[GameShell] Server confirmed:`, {
+                won: res.won,
+                points: res.points,
+              });
+            }
+          })
+          .catch((err) => {
+            console.error(`[GameShell] API error:`, err);
+          });
+      } else {
+        console.warn(`[GameShell] Missing token or solution:`, {
+          hasToken: !!token,
+          hasSolution: !!solution,
         });
       }
 
@@ -221,7 +241,9 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
   /** Callback del modal de identidad: una vez completado, arrancar. */
   const handleIdentitySaved = () => {
     setIdentityOpen(false);
-    startGameSession();
+    if (isIdentityComplete()) {
+      startGameSession();
+    }
   };
 
   const onWin = useCallback(

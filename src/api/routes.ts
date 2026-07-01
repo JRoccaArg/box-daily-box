@@ -17,21 +17,21 @@ const TOKEN_SECRET = process.env.TOKEN_SECRET || "bdb-token-secret-2026-change-m
 
 // Tiempo mínimo plausible por juego (segundos).
 const MIN_PLAUSIBLE: Record<string, number> = {
-  "pit-texto": 5,
-  "pole-wordle": 8,
+  "pittexto": 5,
+  "polewordle": 8,
   "el-intruso": 3,
   "parrilla-bingo": 10,
 };
 
 // Tiempo límite por juego (para calcular bonus de velocidad).
 const TIME_LIMITS: Record<string, number> = {
-  "pit-texto": 300,
-  "pole-wordle": 300,
+  "pittexto": 300,
+  "polewordle": 300,
   "el-intruso": 120,
   "parrilla-bingo": 600,
 };
 
-const VALID_GAMES = ["pit-texto", "pole-wordle", "el-intruso", "parrilla-bingo"];
+const VALID_GAMES = ["pittexto", "polewordle", "el-intruso", "parrilla-bingo"];
 const VALID_DIFFS = ["facil", "medio", "dificil", "leyenda"];
 
 // ─── Token firmado (HMAC-SHA256) ────────────────────────────────────
@@ -80,11 +80,12 @@ export async function startChallenge(
 ): Promise<void> {
   try {
     const { gameId } = req.params as { gameId: string };
-    const { difficulty, userId, displayName, countryCode } = req.body as {
+    const { difficulty, userId, displayName, countryCode, clientDateKey } = req.body as {
       difficulty: Difficulty;
       userId?: string;
       displayName?: string;
       countryCode?: string;
+      clientDateKey?: string;
     };
 
     if (!difficulty || !VALID_DIFFS.includes(difficulty)) {
@@ -96,7 +97,19 @@ export async function startChallenge(
       return;
     }
 
-    const today = new Date().toISOString().substring(0, 10);
+    // Usar la fecha LOCAL del cliente si es valida (±1 dia de UTC).
+    // Esto evita que a las 11 PM Argentina (2 AM UTC) el server use
+    // una fecha distinta a la que el frontend usa para generar el puzzle.
+    const utcToday = new Date().toISOString().substring(0, 10);
+    let today = utcToday;
+    if (clientDateKey && /^\d{4}-\d{2}-\d{2}$/.test(clientDateKey)) {
+      const clientMs = new Date(clientDateKey + "T12:00:00Z").getTime();
+      const utcMs = new Date(utcToday + "T12:00:00Z").getTime();
+      const diffDays = Math.abs(clientMs - utcMs) / 86_400_000;
+      if (diffDays <= 1) {
+        today = clientDateKey;
+      }
+    }
     const uid = userId || `anon-${randomUUID()}`;
 
     // Verificar que no jugó ya hoy

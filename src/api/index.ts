@@ -19,6 +19,8 @@ app.register(cors, {
         "https://box-daily-box.vercel.app",
         "https://boxdailybox.com",
         "https://www.boxdailybox.com",
+        "http://localhost:5173",
+        "http://localhost:4173",
       ],
 });
 

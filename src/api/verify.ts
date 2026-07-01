@@ -63,9 +63,9 @@ export function verifyChallenge(
   const date = dateFromKey(dateKeyStr);
 
   switch (gameId) {
-    case "pit-texto":
+    case "pittexto":
       return verifyPitTexto(difficulty, date, solution as PitTextoSolution);
-    case "pole-wordle":
+    case "polewordle":
       return verifyPoleWordle(difficulty, date, solution as PoleWordleSolution);
     case "el-intruso":
       return verifyElIntruso(difficulty, date, solution as IntrusoSolution);

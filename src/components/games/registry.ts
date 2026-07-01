@@ -20,7 +20,7 @@ const DIFFS = ["facil", "medio", "dificil", "leyenda"] as const;
 
 export const GAMES: GameDefinition[] = [
   {
-    id: "pit-texto",
+    id: "pittexto",
     name: "PitTexto",
     tagline: "Adivina al piloto secreto. Cada intento te dice que tan cerca estas.",
     glyph: "PT",
@@ -29,7 +29,7 @@ export const GAMES: GameDefinition[] = [
     component: PitTexto,
   },
   {
-    id: "pole-wordle",
+    id: "polewordle",
     name: "PoleWordle",
     tagline: "Adivina el apellido del piloto del dia, estilo Wordle, en 6 intentos.",
     glyph: "PW",

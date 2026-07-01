@@ -93,11 +93,14 @@ export async function apiStartChallenge(
   difficulty: string,
 ): Promise<{ sessionToken: string } | null> {
   const { userId, displayName, countryCode } = getIdentity();
+  // Enviar la fecha LOCAL del cliente para evitar mismatch de timezone.
+  const now = new Date();
+  const clientDateKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const data = await apiFetch<StartResponse>(
     `/challenges/${gameId}/start`,
     {
       method: "POST",
-      body: JSON.stringify({ difficulty, userId, displayName, countryCode }),
+      body: JSON.stringify({ difficulty, userId, displayName, countryCode, clientDateKey }),
     },
   );
   if (!data) return null;
@@ -111,13 +114,28 @@ export async function apiFinishChallenge(
   solution: Record<string, unknown>,
 ): Promise<FinishResponse | null> {
   const { userId } = getIdentity();
-  return apiFetch<FinishResponse>(
+  console.log(`[API] Finishing ${gameId}:`, {
+    userId,
+    sessionToken: sessionToken.substring(0, 20) + "...",
+    solution,
+  });
+  const result = await apiFetch<FinishResponse>(
     `/challenges/${gameId}/finish`,
     {
       method: "POST",
       body: JSON.stringify({ sessionToken, solution, userId }),
     },
   );
+  if (!result) {
+    console.warn(`[API] Finish ${gameId} failed (no response)`);
+  } else {
+    console.log(`[API] Finish ${gameId} success:`, {
+      won: result.won,
+      points: result.points,
+      flagged: result.flagged,
+    });
+  }
+  return result;
 }
 
 /** Ranking mensual global. */
