@@ -16,13 +16,6 @@ const SESSION_TTL = 15 * 60 * 1000; // 15 minutos
 const TOKEN_SECRET = process.env.TOKEN_SECRET || "bdb-token-secret-2026-change-me";
 
 // Tiempo mínimo plausible por juego (segundos).
-const MIN_PLAUSIBLE: Record<string, number> = {
-  "pittexto": 5,
-  "polewordle": 8,
-  "el-intruso": 3,
-  "parrilla-bingo": 10,
-};
-
 // Tiempo límite por juego (para calcular bonus de velocidad).
 const TIME_LIMITS: Record<string, number> = {
   "pittexto": 300,
@@ -221,8 +214,8 @@ export async function finishChallenge(
     );
 
     const timeSeconds = Math.round((now - session.startedAt) / 1000);
-    const minTime = MIN_PLAUSIBLE[gameId] ?? 3;
-    const flagged = verifyResult.won && timeSeconds < minTime;
+    // Sin tiempo mínimo: si la verificación server dice que es correcto, es válido.
+    const flagged = false;
 
     const timeLimit = TIME_LIMITS[gameId] ?? 300;
     const points = computeScore({
