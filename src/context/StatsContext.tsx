@@ -12,6 +12,7 @@ import { storageIsPersistent } from "@/lib/storage";
 import { getIdentity } from "@/lib/identity";
 import { apiGetUserAttempts } from "@/lib/api";
 import { dateKey } from "@/lib/seed";
+import { on, Events } from "@/lib/events";
 import type { DailyGameResult, GameStatus, StatsSummary } from "@/types";
 
 type StatsContextValue = {
@@ -100,6 +101,15 @@ export function StatsProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  // Suscribirse al evento STATS_CHANGED: cualquier módulo que modifique
+  // los datos locales (como auth.ts después del login) emite este evento
+  // para que la UI se actualice.
+  useEffect(() => {
+    return on(Events.STATS_CHANGED, () => {
+      setVersion((v) => v + 1);
+    });
   }, []);
 
   const value = useMemo<StatsContextValue>(

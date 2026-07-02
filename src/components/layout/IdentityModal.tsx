@@ -52,16 +52,23 @@ export function IdentityModal({ open, onClose }: IdentityModalProps) {
 
     (async () => {
       const profile = await apiGetUserProfile(identity.userId);
+
+      // Determinar si el país ya está fijo (server tiene uno)
+      const serverCountry = profile?.countryCode ?? null;
+
       if (profile) {
-        // Server es la fuente de verdad
+        // Actualizar nombre desde server si existe
         if (profile.displayName) setName(profile.displayName);
-        if (profile.countryCode) {
-          setCountry(profile.countryCode);
-          setCountryLocked(true); // ya tiene país → fijo
-        }
         setCanChangeName(profile.canChangeName);
+      }
+
+      // País: si el server ya tiene uno → fijo (readonly)
+      if (serverCountry) {
+        setCountry(serverCountry);
+        setCountryLocked(true);
       } else {
-        // Usuario nuevo: intentar detectar país automáticamente
+        // No hay país fijado: detectar por IP si no tenemos uno local ya
+        setCountryLocked(false);
         if (!identity.countryCode) {
           setDetecting(true);
           const detected = await detectCountryCode();

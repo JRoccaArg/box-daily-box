@@ -12,6 +12,7 @@
 import { storage } from "./storage";
 import { dateKey } from "./seed";
 import { computeScore } from "./scoring";
+import { emit, Events } from "./events";
 import type { DailyGameResult, GameStatus, StatsSummary, Difficulty } from "@/types";
 
 type ResultsMap = Record<string, Record<string, DailyGameResult>>;
@@ -244,6 +245,9 @@ export function syncFromServer(
   played[dateKey_] = playedDay;
   storage.set(RESULTS_KEY, results);
   storage.set(PLAYED_KEY, played);
+
+  // Notificar a React que los datos locales cambiaron.
+  emit(Events.STATS_CHANGED);
 }
 
 /* --------------------------------------------------------------------- */
