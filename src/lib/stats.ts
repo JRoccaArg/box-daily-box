@@ -184,6 +184,68 @@ export function resetAllProgress(): void {
   storage.remove(RESULTS_KEY);
 }
 
+/**
+ * Sincroniza resultados locales con attempts del servidor.
+ *
+ * Uso: se llama al cargar la home si el usuario está logueado, y después
+ * del login OAuth (para reflejar attempts migrados desde el anónimo o
+ * previos desde otros dispositivos).
+ *
+ * Comportamiento:
+ *  - Escribe TANTO en `results` (para stats/puntos) como en `played` (lock durable)
+ *  - Si un attempt del server ya existe localmente, no lo pisa (idempotente)
+ *  - Si un attempt del server NO existe localmente, lo agrega y bloquea el juego
+ *
+ * @param serverAttempts Attempts recibidos del server para una fecha
+ * @param dateKey_ Fecha (YYYY-MM-DD) — normalmente hoy
+ */
+export function syncFromServer(
+  serverAttempts: Array<{
+    gameId: string;
+    won: boolean;
+    timeSeconds: number;
+    points: number;
+    finishedAt: string;
+  }>,
+  dateKey_: string,
+): void {
+  if (serverAttempts.length === 0) return;
+
+  const results = loadResults();
+  const played = loadPlayed();
+
+  const resultsDay = results[dateKey_] ?? {};
+  const playedDay = played[dateKey_] ?? {};
+
+  for (const att of serverAttempts) {
+    const status: "won" | "lost" = att.won ? "won" : "lost";
+    const finishedAt = new Date(att.finishedAt).getTime();
+
+    // Escribir en played (lock durable) si no existe
+    if (!playedDay[att.gameId]) {
+      playedDay[att.gameId] = { status, finishedAt };
+    }
+
+    // Escribir en results (para stats) si no existe
+    if (!resultsDay[att.gameId]) {
+      resultsDay[att.gameId] = {
+        status,
+        date: dateKey_,
+        finishedAt,
+        meta: {
+          serverPoints: att.points,
+          timeSeconds: att.timeSeconds,
+        },
+      };
+    }
+  }
+
+  results[dateKey_] = resultsDay;
+  played[dateKey_] = playedDay;
+  storage.set(RESULTS_KEY, results);
+  storage.set(PLAYED_KEY, played);
+}
+
 /* --------------------------------------------------------------------- */
 /* Puntaje y ranking mensual (PERSONAL y local)                          */
 /* --------------------------------------------------------------------- */

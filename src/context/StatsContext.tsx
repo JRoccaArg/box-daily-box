@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import {
   getStats,
@@ -6,8 +6,12 @@ import {
   getPlayedStatus,
   recordResult as persistResult,
   resetAllProgress,
+  syncFromServer,
 } from "@/lib/stats";
 import { storageIsPersistent } from "@/lib/storage";
+import { getIdentity } from "@/lib/identity";
+import { apiGetUserAttempts } from "@/lib/api";
+import { dateKey } from "@/lib/seed";
 import type { DailyGameResult, GameStatus, StatsSummary } from "@/types";
 
 type StatsContextValue = {
@@ -68,6 +72,34 @@ export function StatsProvider({ children }: { children: ReactNode }) {
 
   const refreshStats = useCallback(() => {
     setVersion((v) => v + 1);
+  }, []);
+
+  // ─── Sincronización con server al montar ─────────────────────────
+  // Trae los attempts de hoy del server y los mergea en el storage local.
+  // Esto asegura que si el usuario:
+  //   - Jugó en otro dispositivo con la misma cuenta Google
+  //   - Se logueó y sus attempts anónimos se migraron
+  //   - Reinstaló la app o borró localStorage
+  // ...los juegos ya jugados aparezcan correctamente marcados en la home.
+  useEffect(() => {
+    const { userId } = getIdentity();
+    if (!userId) return;
+
+    let cancelled = false;
+    const today = dateKey(new Date());
+
+    (async () => {
+      const response = await apiGetUserAttempts(userId, today);
+      if (cancelled || !response) return;
+      if (response.attempts.length === 0) return;
+
+      syncFromServer(response.attempts, response.dateKey);
+      setVersion((v) => v + 1);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const value = useMemo<StatsContextValue>(

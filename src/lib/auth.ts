@@ -10,10 +10,11 @@
 //  5. Backend valida y devuelve identidad completa
 //  6. Frontend guarda identidad y redirige a home
 
-import { apiPost } from "./api";
+import { apiPost, apiGetUserAttempts } from "./api";
 import { getIdentity, updateIdentity } from "./identity";
 import { storage } from "./storage";
-import { resetAllProgress } from "./stats";
+import { resetAllProgress, syncFromServer } from "./stats";
+import { dateKey } from "./seed";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
 
@@ -92,6 +93,16 @@ export async function handleGoogleCallback(code: string): Promise<AuthResult | n
   storage.set(AUTH_STATUS_KEY, true);
   storage.set(AUTH_EMAIL_KEY, result.email);
   if (result.picture) storage.set(AUTH_PICTURE_KEY, result.picture);
+
+  // Sincronizar attempts de HOY desde el server.
+  // Después del reset local, esto trae los attempts que están en el server
+  // (los propios de Google + los migrados desde el anónimo) al storage local
+  // para que aparezcan como "ya jugados" en la home.
+  const today = dateKey(new Date());
+  const attemptsResponse = await apiGetUserAttempts(result.userId, today);
+  if (attemptsResponse && attemptsResponse.attempts.length > 0) {
+    syncFromServer(attemptsResponse.attempts, attemptsResponse.dateKey);
+  }
 
   return result;
 }

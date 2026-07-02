@@ -757,3 +757,51 @@ function canChangeNameThisMonth(nameChangedAt: Date | null): boolean {
     changed.getUTCMonth() !== now.getUTCMonth()
   );
 }
+
+/**
+ * GET /user/:userId/attempts?date=YYYY-MM-DD
+ *
+ * Devuelve los attempts del usuario para una fecha específica.
+ * Usado para sincronizar el estado local con el server después de login
+ * o al cargar la home.
+ */
+export async function getUserAttempts(
+  req: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  try {
+    const { userId } = req.params as { userId?: string };
+    if (!userId || !isValidUserId(userId)) {
+      reply.code(422).send({ error: "userId inválido" });
+      return;
+    }
+
+    const { date } = req.query as { date?: string };
+    const dateKey = typeof date === "string" && isValidDateKey(date)
+      ? date
+      : new Date().toISOString().slice(0, 10);
+
+    const rows = await query(
+      `SELECT game_id, difficulty, won, time_seconds, points, created_at
+       FROM attempts
+       WHERE user_id = $1 AND date_key = $2
+       ORDER BY created_at DESC`,
+      [userId, dateKey],
+    );
+
+    reply.code(200).send({
+      dateKey,
+      attempts: rows.rows.map((r) => ({
+        gameId: r.game_id,
+        difficulty: r.difficulty,
+        won: r.won,
+        timeSeconds: r.time_seconds,
+        points: r.points,
+        finishedAt: r.created_at,
+      })),
+    });
+  } catch (err) {
+    console.error("getUserAttempts error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}

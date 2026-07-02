@@ -20,6 +20,7 @@ import {
   adminDebug,
   getUserProfile,
   updateUserProfile,
+  getUserAttempts,
 } from "./routes";
 import { googleAuthCallback, logout } from "./auth";
 
@@ -174,6 +175,15 @@ async function start(): Promise<void> {
       config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
     },
     updateUserProfile as any,
+  );
+
+  app.get(
+    "/user/:userId/attempts",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 60, timeWindow: "1 minute" } },
+    },
+    getUserAttempts as any,
   );
 
   // ─── Inicializar BD en background ─────────────────────────────────

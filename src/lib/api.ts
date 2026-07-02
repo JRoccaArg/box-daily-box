@@ -191,3 +191,33 @@ export async function apiUpdateUserProfile(
     },
   );
 }
+
+export type ServerAttempt = {
+  gameId: string;
+  difficulty: string;
+  won: boolean;
+  timeSeconds: number;
+  points: number;
+  finishedAt: string; // ISO timestamp
+};
+
+export type UserAttemptsResponse = {
+  dateKey: string;
+  attempts: ServerAttempt[];
+};
+
+/**
+ * GET /user/:userId/attempts?date=YYYY-MM-DD
+ * Trae los attempts del usuario para una fecha específica.
+ */
+export async function apiGetUserAttempts(
+  userId: string,
+  date?: string,
+): Promise<UserAttemptsResponse | null> {
+  const params = new URLSearchParams();
+  if (date) params.set("date", date);
+  const qs = params.toString();
+  return apiFetch<UserAttemptsResponse>(
+    `/user/${encodeURIComponent(userId)}/attempts${qs ? `?${qs}` : ""}`,
+  );
+}
