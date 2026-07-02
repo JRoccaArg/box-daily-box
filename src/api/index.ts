@@ -21,6 +21,7 @@ import {
   getUserProfile,
   updateUserProfile,
   getUserAttempts,
+  getUserRank,
 } from "./routes";
 import { googleAuthCallback, logout } from "./auth";
 
@@ -184,6 +185,15 @@ async function start(): Promise<void> {
       config: { rateLimit: { max: 60, timeWindow: "1 minute" } },
     },
     getUserAttempts as any,
+  );
+
+  app.get(
+    "/user/:userId/rank",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 60, timeWindow: "1 minute" } },
+    },
+    getUserRank as any,
   );
 
   // ─── Inicializar BD en background ─────────────────────────────────

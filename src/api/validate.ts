@@ -12,7 +12,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const ANON_RE = /^anon-[0-9a-f-]{36}$/i;
 const DATEKEY_RE = /^\d{4}-\d{2}-\d{2}$/;
 const MONTH_RE = /^\d{4}-\d{2}$/;
-const COUNTRY_RE = /^[A-Z]{2,3}$/;
+const COUNTRY_RE = /^[A-Z]{3}$/;
 
 /** Valida que un userId sea un UUID o un id anónimo generado por nosotros. */
 export function isValidUserId(v: unknown): v is string {
@@ -31,7 +31,7 @@ export function isValidMonth(v: unknown): v is string {
   return typeof v === "string" && MONTH_RE.test(v);
 }
 
-/** Valida un código de país ISO (2-3 letras mayúsculas). */
+/** Valida un código de país ISO alpha-3 (3 letras mayúsculas, ej: "ARG"). */
 export function isValidCountry(v: unknown): v is string {
   return typeof v === "string" && COUNTRY_RE.test(v);
 }

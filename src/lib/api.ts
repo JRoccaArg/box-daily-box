@@ -233,3 +233,30 @@ export async function apiGetUserAttempts(
     `/user/${encodeURIComponent(userId)}/attempts${qs ? `?${qs}` : ""}`,
   );
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── Ranking del usuario (posición diaria) ─────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+export type UserRank = {
+  dateKey: string;
+  /** Posición en el ranking diario global. null si no rankea (0 puntos). */
+  rank: number | null;
+  /** Puntos ganados ese día. */
+  points: number;
+  /** Total de jugadores rankeados ese día (contexto). */
+  totalPlayers: number;
+};
+
+/** GET /user/:userId/rank?date=YYYY-MM-DD */
+export async function apiGetUserRank(
+  userId: string,
+  date?: string,
+): Promise<UserRank | null> {
+  const params = new URLSearchParams();
+  if (date) params.set("date", date);
+  const qs = params.toString();
+  return apiFetch<UserRank>(
+    `/user/${encodeURIComponent(userId)}/rank${qs ? `?${qs}` : ""}`,
+  );
+}

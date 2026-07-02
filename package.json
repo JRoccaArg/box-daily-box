@@ -11,7 +11,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc -b --noEmit",
     "smoke": "tsx --tsconfig tsconfig.app.json scripts/smoke.ts",
-    "test": "node scripts/test-identity-token.mjs && node scripts/test-migration.mjs && node scripts/test-sync-frontend.mjs && node scripts/test-attempts-flow.mjs && npm run smoke",
+    "test": "node scripts/test-identity-token.mjs && node scripts/test-migration.mjs && node scripts/test-sync-frontend.mjs && node scripts/test-attempts-flow.mjs && node scripts/test-country.mjs && node scripts/test-user-rank.mjs && npm run smoke",
     "start": "tsx --tsconfig tsconfig.app.json src/api/index.ts",
     "dev:api": "tsx watch --tsconfig tsconfig.app.json src/api/index.ts"
   },

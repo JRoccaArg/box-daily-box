@@ -836,3 +836,89 @@ export async function getUserAttempts(
     reply.code(500).send({ error: "Error interno" });
   }
 }
+
+/**
+ * GET /user/:userId/rank?date=YYYY-MM-DD
+ *
+ * Devuelve la posición del usuario en el ranking diario global.
+ * Reglas de negocio:
+ *  - Solo cuenta usuarios con al menos un attempt ganado y NO flagged.
+ *  - Si el usuario no tiene puntos ganados ese día → { rank: null }
+ *  - Si tiene → { rank: N, points: P, totalPlayers: T }
+ *
+ * Calculado eficientemente: cuenta cuántos usuarios distintos tienen
+ * más puntos que este usuario ese día.
+ */
+export async function getUserRank(
+  req: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  try {
+    const { userId } = req.params as { userId?: string };
+    if (!userId || !isValidUserId(userId)) {
+      reply.code(422).send({ error: "userId inválido" });
+      return;
+    }
+
+    const { date } = req.query as { date?: string };
+    const dateKey = typeof date === "string" && isValidDateKey(date)
+      ? date
+      : new Date().toISOString().slice(0, 10);
+
+    // 1. Puntos del usuario ese día (solo attempts ganados y no flagged).
+    const userPointsResult = await query(
+      `SELECT COALESCE(SUM(points), 0) as points
+       FROM attempts
+       WHERE user_id = $1
+         AND date_key = $2::date
+         AND won
+         AND NOT flagged`,
+      [userId, dateKey],
+    );
+    const userPoints = Number(userPointsResult.rows[0]?.points ?? 0);
+
+    // Regla: si el usuario no tiene puntos, no rankea → devolver null.
+    if (userPoints === 0) {
+      reply.code(200).send({
+        dateKey,
+        rank: null,
+        points: 0,
+        totalPlayers: 0,
+      });
+      return;
+    }
+
+    // 2. Contar cuántos usuarios distintos tienen MÁS puntos que el usuario.
+    //    Su posición es (ese count + 1).
+    const aheadResult = await query(
+      `SELECT COUNT(*) as ahead FROM (
+         SELECT user_id, SUM(points) as total
+         FROM attempts
+         WHERE date_key = $1::date AND won AND NOT flagged
+         GROUP BY user_id
+         HAVING SUM(points) > $2
+       ) t`,
+      [dateKey, userPoints],
+    );
+    const rank = Number(aheadResult.rows[0]?.ahead ?? 0) + 1;
+
+    // 3. Total de jugadores rankeados ese día (para dar contexto).
+    const totalResult = await query(
+      `SELECT COUNT(DISTINCT user_id) as total
+       FROM attempts
+       WHERE date_key = $1::date AND won AND NOT flagged`,
+      [dateKey],
+    );
+    const totalPlayers = Number(totalResult.rows[0]?.total ?? 0);
+
+    reply.code(200).send({
+      dateKey,
+      rank,
+      points: userPoints,
+      totalPlayers,
+    });
+  } catch (err) {
+    console.error("getUserRank error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}

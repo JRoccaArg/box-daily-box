@@ -35,4 +35,6 @@ export function on(event: string, fn: Listener): () => void {
 /** Nombres de eventos usados en la app. */
 export const Events = {
   STATS_CHANGED: "stats:changed",
+  /** Solicita abrir el modal de stats/ranking desde cualquier lugar. */
+  OPEN_STATS: "stats:open",
 } as const;

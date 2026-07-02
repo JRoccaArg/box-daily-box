@@ -7,6 +7,7 @@ import { computeScore } from "@/lib/scoring";
 import { apiStartChallenge, apiFinishChallenge } from "@/lib/api";
 import { isIdentityComplete } from "@/lib/identity";
 import { updateServerPoints } from "@/lib/stats";
+import { emit, Events } from "@/lib/events";
 import { IdentityModal } from "@/components/layout/IdentityModal";
 import { useTimer } from "@/hooks/useTimer";
 import { Panel } from "@/components/ui/Panel";
@@ -478,18 +479,30 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
               variant="outline"
               block
               onClick={() => {
+                // Cerrar el modal PRIMERO y esperar a que React lo desmonte
+                // (el Modal restaura body.overflow al desmontar). Luego scroll.
                 setResultOpen(false);
-                // Scroll suave al tablero para que quede claro que se puede
-                // repasar. Sin esto, cerrar el modal parece "no hacer nada".
                 window.setTimeout(() => {
                   boardRef.current?.scrollIntoView({
                     behavior: "smooth",
                     block: "start",
                   });
-                }, 100);
+                }, 200);
               }}
             >
               Ver el tablero
+            </Button>
+            <Button
+              variant="outline"
+              block
+              onClick={() => {
+                // Cerrar este modal y disparar la apertura del modal global
+                // de stats (montado en Header) via event bus.
+                setResultOpen(false);
+                window.setTimeout(() => emit(Events.OPEN_STATS), 200);
+              }}
+            >
+              Ver ranking del día
             </Button>
             <Link to="/" className="block">
               <Button variant="ghost" block>

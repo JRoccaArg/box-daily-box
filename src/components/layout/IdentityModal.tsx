@@ -23,6 +23,7 @@ import { apiGetUserProfile, apiUpdateUserProfile } from "@/lib/api";
 import { detectCountryCode } from "@/lib/geoip";
 import { loginWithGoogle, isLoggedIn, logout, getUserEmail } from "@/lib/auth";
 import { NATIONALITIES } from "@/data/nationalities";
+import { RankBadge } from "./RankBadge";
 
 type IdentityModalProps = {
   open: boolean;
@@ -39,8 +40,20 @@ function nextMonthName(): string {
 export function IdentityModal({ open, onClose }: IdentityModalProps) {
   const identity = getIdentity();
 
+  // Valor inicial del país: si el localStorage tiene un código legacy
+  // inválido (ej: "AR" alpha-2 de una versión anterior con bug), lo
+  // descartamos y empezamos vacío. Solo se conserva si es un código
+  // alpha-3 válido presente en NATIONALITIES.
+  const initialCountry =
+    identity.countryCode && identity.countryCode.length === 3 && identity.countryCode in NATIONALITIES
+      ? identity.countryCode
+      : "";
+  // Si había un código legacy, tratamos al usuario como "sin país fijado"
+  // para forzar detección/selección con el sistema correcto.
+  const hasValidLocalCountry = initialCountry.length === 3;
+
   const [name, setName] = useState(identity.displayName);
-  const [country, setCountry] = useState<string>(identity.countryCode ?? "");
+  const [country, setCountry] = useState<string>(initialCountry);
   const [canChangeName, setCanChangeName] = useState(true);
   const [countryLocked, setCountryLocked] = useState(false);
   const [detecting, setDetecting] = useState(false);
@@ -55,7 +68,9 @@ export function IdentityModal({ open, onClose }: IdentityModalProps) {
     (async () => {
       const profile = await apiGetUserProfile(identity.userId);
 
-      // Determinar si el país ya está fijo (server tiene uno)
+      // Determinar si el país ya está fijo (server tiene uno).
+      // El backend ahora solo acepta alpha-3, así que si viene un valor
+      // lo consideramos confiable.
       const serverCountry = profile?.countryCode ?? null;
 
       if (profile) {
@@ -69,9 +84,10 @@ export function IdentityModal({ open, onClose }: IdentityModalProps) {
         setCountry(serverCountry);
         setCountryLocked(true);
       } else {
-        // No hay país fijado: detectar por IP si no tenemos uno local ya
+        // No hay país fijado en server: detectar por IP si no tenemos
+        // uno local VÁLIDO (alpha-3) ya.
         setCountryLocked(false);
-        if (!identity.countryCode) {
+        if (!hasValidLocalCountry) {
           setDetecting(true);
           const detected = await detectCountryCode();
           setDetecting(false);
@@ -79,6 +95,9 @@ export function IdentityModal({ open, onClose }: IdentityModalProps) {
         }
       }
     })();
+    // hasValidLocalCountry se deriva de identity.countryCode, no hace falta
+    // agregarlo aparte al array de deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, identity.userId, identity.countryCode]);
 
   const countries = Object.values(NATIONALITIES).sort((a, b) =>
@@ -87,7 +106,9 @@ export function IdentityModal({ open, onClose }: IdentityModalProps) {
 
   const trimmedName = name.trim();
   const nameValid = trimmedName.length > 0 && trimmedName.length <= 30;
-  const countryValid = country.length === 2;
+  // Los códigos de país son ISO alpha-3 (3 letras) y deben existir en el
+  // dataset. Ver src/data/nationalities.ts y src/lib/geoip.ts.
+  const countryValid = country.length === 3 && country in NATIONALITIES;
   const nameChanged = trimmedName !== identity.displayName;
   const canSave =
     nameValid && countryValid && !saving && (canChangeName || !nameChanged);
@@ -138,6 +159,11 @@ export function IdentityModal({ open, onClose }: IdentityModalProps) {
       <p className="text-sm text-ink-muted">
         Aparecerás en el ranking global con este nombre y país.
       </p>
+
+      {/* Posición del usuario en el ranking diario (solo si tiene puntos). */}
+      <div className="mt-4">
+        <RankBadge />
+      </div>
 
       <div className="mt-4 space-y-4">
         <div>

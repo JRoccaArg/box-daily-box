@@ -4,6 +4,7 @@ import { GAMES } from "@/components/games/registry";
 import { useStats } from "@/context/StatsContext";
 import { Panel } from "@/components/ui/Panel";
 import { Check, Flag as FlagIcon, ChevronRight, Flame, Trophy } from "@/components/ui/Icon";
+import { RankBadge } from "@/components/layout/RankBadge";
 
 /** Pagina principal: lista de los retos del dia con su estado. */
 export function Home() {
@@ -16,6 +17,10 @@ export function Home() {
   return (
     <div className="space-y-6">
       <Hero done={done} total={total} streak={summary.currentStreak} />
+
+      {/* Posición del usuario en el ranking diario global.
+          Se muestra solo si el usuario tiene puntos (rank !== null). */}
+      <RankBadge />
 
       <div className="grid gap-3 sm:grid-cols-2">
         {results.map(({ game, result }) => (
