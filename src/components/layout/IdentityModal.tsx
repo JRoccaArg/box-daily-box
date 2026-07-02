@@ -16,6 +16,8 @@ import {
   getIdentity,
   updateIdentity,
   isIdentityComplete,
+  getIdentityToken,
+  setIdentityToken,
 } from "@/lib/identity";
 import { apiGetUserProfile, apiUpdateUserProfile } from "@/lib/api";
 import { detectCountryCode } from "@/lib/geoip";
@@ -99,7 +101,11 @@ export function IdentityModal({ open, onClose }: IdentityModalProps) {
     if (nameChanged) updates.displayName = trimmedName;
     if (!countryLocked && countryValid) updates.countryCode = country;
 
-    const result = await apiUpdateUserProfile(identity.userId, updates);
+    const result = await apiUpdateUserProfile(
+      identity.userId,
+      updates,
+      getIdentityToken(),
+    );
     setSaving(false);
 
     if (!result) {
@@ -109,6 +115,11 @@ export function IdentityModal({ open, onClose }: IdentityModalProps) {
     if ("error" in result) {
       setError(result.error);
       return;
+    }
+
+    // Guardar el identityToken emitido por el server (prueba de posesión).
+    if (result.identityToken) {
+      setIdentityToken(result.identityToken);
     }
 
     // Guardar en localStorage también (sincronizado con server)

@@ -6,7 +6,7 @@
  * usan para ranking global, no para bloquear gameplay.
  */
 
-import { getIdentity } from "./identity";
+import { getIdentity, setIdentityToken } from "./identity";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "";
 
@@ -14,6 +14,7 @@ type StartResponse = {
   puzzle: { gameId: string; difficulty: string; dateKey: string };
   sessionToken: string;
   serverNow: number;
+  identityToken?: string;
 };
 
 type FinishResponse = {
@@ -104,6 +105,11 @@ export async function apiStartChallenge(
     },
   );
   if (!data) return null;
+  // Guardar el identityToken emitido: prueba de posesión del userId, necesario
+  // para editar el perfil más adelante.
+  if (data.identityToken) {
+    setIdentityToken(data.identityToken);
+  }
   return { sessionToken: data.sessionToken, serverNow: data.serverNow };
 }
 
@@ -171,6 +177,8 @@ export type UserProfile = {
   countryCode: string | null;
   canChangeName: boolean;
   nameChangedAt: string | null;
+  /** Token de identidad emitido por el server (solo en respuestas de escritura). */
+  identityToken?: string;
 };
 
 /** GET /user/:userId */
@@ -182,12 +190,16 @@ export async function apiGetUserProfile(userId: string): Promise<UserProfile | n
 export async function apiUpdateUserProfile(
   userId: string,
   updates: { displayName?: string; countryCode?: string },
+  identityToken?: string | null,
 ): Promise<UserProfile | { error: string } | null> {
   return apiFetch<UserProfile | { error: string }>(
     `/user/${encodeURIComponent(userId)}/profile`,
     {
       method: "POST",
-      body: JSON.stringify(updates),
+      body: JSON.stringify({
+        ...updates,
+        ...(identityToken ? { identityToken } : {}),
+      }),
     },
   );
 }

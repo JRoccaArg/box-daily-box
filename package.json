@@ -11,6 +11,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc -b --noEmit",
     "smoke": "tsx --tsconfig tsconfig.app.json scripts/smoke.ts",
+    "test": "node scripts/test-identity-token.mjs && node scripts/test-migration.mjs && node scripts/test-sync-frontend.mjs && node scripts/test-attempts-flow.mjs && npm run smoke",
     "start": "tsx --tsconfig tsconfig.app.json src/api/index.ts",
     "dev:api": "tsx watch --tsconfig tsconfig.app.json src/api/index.ts"
   },
@@ -29,6 +30,7 @@
     "typescript": "^5.5.4"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.2.0",
     "@types/node": "^20.19.43",
     "@types/pg": "^8.20.0",
     "@types/react": "^18.3.5",
@@ -40,6 +42,7 @@
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.11",
+    "jsdom": "^25.0.0",
     "postcss": "^8.4.45",
     "tailwindcss": "^3.4.10",
     "vite": "^5.4.3"

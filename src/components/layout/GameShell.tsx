@@ -78,6 +78,8 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
   const finishedRef = useRef(false);
   // Token de sesión del servidor (para verificación server-side).
   const sessionTokenRef = useRef<string | null>(null);
+  // Ref al contenedor del tablero (para scroll al "Ver el tablero").
+  const boardRef = useRef<HTMLDivElement | null>(null);
 
   const timeLimit = game.timer.kind === "none" ? null : chosenTime;
 
@@ -396,15 +398,17 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
         }}
       />
 
-      <GameComponent
-        difficulty={difficulty}
-        date={date}
-        timeLimit={timeLimit}
-        secondsLeft={timer.secondsLeft}
-        status={status}
-        onWin={onWin}
-        onLose={onLose}
-      />
+      <div ref={boardRef}>
+        <GameComponent
+          difficulty={difficulty}
+          date={date}
+          timeLimit={timeLimit}
+          secondsLeft={timer.secondsLeft}
+          status={status}
+          onWin={onWin}
+          onLose={onLose}
+        />
+      </div>
 
       {phase === "finished" && (
         <ResultBanner won={won} onOpen={() => setResultOpen(true)} />
@@ -470,7 +474,21 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
           )}
 
           <div className="mt-5 flex flex-col gap-2">
-            <Button variant="outline" block onClick={() => setResultOpen(false)}>
+            <Button
+              variant="outline"
+              block
+              onClick={() => {
+                setResultOpen(false);
+                // Scroll suave al tablero para que quede claro que se puede
+                // repasar. Sin esto, cerrar el modal parece "no hacer nada".
+                window.setTimeout(() => {
+                  boardRef.current?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                }, 100);
+              }}
+            >
               Ver el tablero
             </Button>
             <Link to="/" className="block">

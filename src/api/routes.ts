@@ -18,6 +18,7 @@ import {
   isPlausibleToken,
   isPlausibleSolution,
 } from "./validate";
+import { signIdentityToken, ownsIdentity } from "./identity-token";
 
 const SESSION_TTL = 15 * 60 * 1000; // 15 minutos
 
@@ -209,6 +210,9 @@ export async function startChallenge(
       puzzle: { gameId, difficulty, dateKey: today },
       sessionToken,
       serverNow: startedAt,
+      // Emitir identityToken: al jugar, el usuario "reclama" su userId.
+      // El frontend lo guarda para poder editar su perfil después.
+      identityToken: signIdentityToken(uid),
     });
   } catch (err) {
     console.error("startChallenge error:", err);
@@ -483,10 +487,17 @@ export async function adminDebug(
   reply: FastifyReply,
 ): Promise<void> {
   try {
-    const { secret } = req.query as { secret?: string };
+    // El secreto va en un HEADER, no en la query string: así no queda
+    // registrado en logs de acceso, historial del navegador ni referers.
+    // Se acepta query.secret como fallback por compatibilidad, pero el header
+    // es lo recomendado.
+    const headerSecret = req.headers["x-admin-secret"];
+    const { secret: querySecret } = req.query as { secret?: string };
+    const provided = typeof headerSecret === "string" ? headerSecret : (querySecret ?? "");
+
     const adminSecret = process.env.ADMIN_SECRET || "boxdailybox-debug-2026";
     // Comparación timing-safe para evitar timing attacks sobre el secreto.
-    const a = Buffer.from(String(secret ?? ""));
+    const a = Buffer.from(String(provided));
     const b = Buffer.from(adminSecret);
     const ok = a.length === b.length && timingSafeEqual(a, b);
     if (!ok) {
@@ -630,9 +641,10 @@ export async function updateUserProfile(
       return;
     }
 
-    const { displayName, countryCode } = req.body as {
+    const { displayName, countryCode, identityToken } = req.body as {
       displayName?: string;
       countryCode?: string;
+      identityToken?: string;
     };
 
     // Traer usuario actual
@@ -642,6 +654,22 @@ export async function updateUserProfile(
     );
 
     const isNewUser = existing.rows.length === 0;
+
+    // ─── AUTORIZACIÓN ───
+    // Un usuario EXISTENTE solo puede ser modificado por quien posee su
+    // identityToken (emitido por el server). Esto impide que un atacante
+    // modifique el perfil de otro usuario enviando su userId.
+    // Un usuario NUEVO se puede crear libremente (no hay nada que proteger
+    // todavía); se le emite un token al final.
+    if (!isNewUser) {
+      if (!ownsIdentity(identityToken, userId)) {
+        reply.code(403).send({
+          error: "No autorizado para modificar este perfil",
+        });
+        return;
+      }
+    }
+
     const currentDisplayName = existing.rows[0]?.display_name as string | null | undefined;
     const currentCountry = existing.rows[0]?.country_code as string | null | undefined;
     const nameChangedAt = existing.rows[0]?.name_changed_at as Date | null | undefined;
@@ -736,6 +764,9 @@ export async function updateUserProfile(
       countryCode: user.country_code,
       canChangeName: canChangeNameThisMonth(user.name_changed_at),
       nameChangedAt: user.name_changed_at,
+      // Emitir/renovar el identityToken. El frontend lo guarda y lo manda
+      // en futuras modificaciones para probar la posesión del userId.
+      identityToken: signIdentityToken(user.id),
     });
   } catch (err) {
     console.error("updateUserProfile error:", err);

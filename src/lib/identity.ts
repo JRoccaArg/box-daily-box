@@ -163,3 +163,24 @@ export function isIdentityComplete(): boolean {
   const id = getIdentity();
   return id.displayName.trim().length > 0 && id.countryCode !== null;
 }
+
+// ─── Identity Token ──────────────────────────────────────────────────
+// Token firmado por el server que prueba la posesión del userId. Se usa
+// para autorizar modificaciones de perfil. Se guarda aparte de la identidad.
+
+const IDENTITY_TOKEN_KEY = "identity_token";
+
+/** Guarda el identityToken emitido por el server. */
+export function setIdentityToken(token: string): void {
+  storage.set(IDENTITY_TOKEN_KEY, token);
+}
+
+/** Lee el identityToken guardado, o null si no hay. */
+export function getIdentityToken(): string | null {
+  return storage.get<string | null>(IDENTITY_TOKEN_KEY, null);
+}
+
+/** Borra el identityToken (ej: al cerrar sesión). */
+export function clearIdentityToken(): void {
+  storage.remove(IDENTITY_TOKEN_KEY);
+}

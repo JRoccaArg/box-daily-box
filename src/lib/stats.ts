@@ -186,6 +186,18 @@ export function resetAllProgress(): void {
 }
 
 /**
+ * Reset COMPLETO para cambio de cuenta (login/logout).
+ * A diferencia de resetAllProgress, borra TAMBIÉN el lock `played`, porque
+ * al cambiar de identidad el estado de "qué jugué hoy" cambia por completo
+ * y debe reconstruirse desde el servidor (fuente de verdad).
+ */
+export function resetForAccountSwitch(): void {
+  storage.remove(RESULTS_KEY);
+  storage.remove(PLAYED_KEY);
+  emit(Events.STATS_CHANGED);
+}
+
+/**
  * Sincroniza resultados locales con attempts del servidor.
  *
  * Uso: se llama al cargar la home si el usuario está logueado, y después

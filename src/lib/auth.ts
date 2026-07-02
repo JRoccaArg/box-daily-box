@@ -11,9 +11,14 @@
 //  6. Frontend guarda identidad y redirige a home
 
 import { apiPost, apiGetUserAttempts } from "./api";
-import { getIdentity, updateIdentity } from "./identity";
+import {
+  getIdentity,
+  updateIdentity,
+  setIdentityToken,
+  clearIdentityToken,
+} from "./identity";
 import { storage } from "./storage";
-import { resetAllProgress, syncFromServer } from "./stats";
+import { resetForAccountSwitch, syncFromServer } from "./stats";
 import { dateKey } from "./seed";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
@@ -25,6 +30,9 @@ export type AuthResult = {
   email: string;
   picture: string | null;
   isNewLink: boolean;
+  migratedCount?: number;
+  /** Token de identidad emitido por el server (prueba posesión del userId). */
+  identityToken?: string;
 };
 
 const AUTH_STATUS_KEY = "auth:status";
@@ -70,10 +78,11 @@ export async function handleGoogleCallback(code: string): Promise<AuthResult | n
   if (!result) return null;
 
   // El server es la fuente de verdad después del login.
-  // Descartar TODOS los attempts locales: los que estaban en server + local
-  // ya se resolvieron server-side; los que solo estaban en local se migraron.
-  // A partir de acá, el frontend sincroniza con server.
-  resetAllProgress();
+  // Descartar TODO el estado local (results + played lock): los attempts
+  // que estaban en server + local ya se resolvieron server-side; los que
+  // solo estaban en local se migraron. A partir de acá, reconstruimos el
+  // estado desde el server.
+  resetForAccountSwitch();
 
   // Guardar identidad completa (server-side es la fuente de verdad).
   updateIdentity({
@@ -93,6 +102,12 @@ export async function handleGoogleCallback(code: string): Promise<AuthResult | n
   storage.set(AUTH_STATUS_KEY, true);
   storage.set(AUTH_EMAIL_KEY, result.email);
   if (result.picture) storage.set(AUTH_PICTURE_KEY, result.picture);
+
+  // Guardar el identityToken emitido por el server (prueba de posesión del
+  // userId). Necesario para futuras modificaciones de perfil.
+  if (result.identityToken) {
+    setIdentityToken(result.identityToken);
+  }
 
   // Sincronizar attempts de HOY desde el server.
   // Después del reset local, esto trae los attempts que están en el server
@@ -117,6 +132,8 @@ export function logout(): void {
   storage.remove(AUTH_PICTURE_KEY);
   // Borrar identidad para forzar generación de nueva.
   storage.remove("identity");
+  // Borrar el identityToken (pertenecía a la cuenta que cerró sesión).
+  clearIdentityToken();
   // Borrar cookie de identidad si existe.
   document.cookie = "bdb_uid=;path=/;max-age=0;SameSite=Lax";
   try {

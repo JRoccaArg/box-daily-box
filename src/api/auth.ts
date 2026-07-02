@@ -20,8 +20,9 @@
 //    → gana el intento del server (regla de negocio)
 
 import { FastifyRequest, FastifyReply } from "fastify";
-import { query } from "./db";
+import { query, transaction } from "./db";
 import { sanitizeDisplayName } from "./validate";
+import { signIdentityToken } from "./identity-token";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
@@ -204,9 +205,9 @@ export async function googleAuthCallback(
         );
         // Solo migrar si el userId anónimo NO está vinculado a ninguna cuenta
         if (anonHasGoogle.rows.length === 0) {
+          // migrateAnonymousAttempts hace TODO atómicamente:
+          // migra attempts + borra sesiones + borra el usuario anónimo.
           migratedCount = await migrateAnonymousAttempts(currentUserId, userId);
-          // Borrar el user anónimo (cascade borra sus attempts y sessions)
-          await query("DELETE FROM users WHERE id = $1", [currentUserId]);
         }
       }
     } else {
@@ -275,6 +276,9 @@ export async function googleAuthCallback(
       picture,
       isNewLink,
       migratedCount,
+      // Emitir identityToken: Google probó la identidad, así que le damos
+      // el token que prueba posesión del userId para futuras operaciones.
+      identityToken: signIdentityToken(user.id),
     });
   } catch (err) {
     console.error("googleAuthCallback error:", err);
@@ -283,10 +287,14 @@ export async function googleAuthCallback(
 }
 
 /**
- * Migra los attempts del userId anónimo al userId de Google.
+ * Migra los attempts del userId anónimo al userId de Google Y borra el
+ * usuario anónimo, todo de forma ATÓMICA en una sola transacción.
  * Regla:
  *  - Si el destino YA tiene attempt para (game_id, date_key) → borrar el anónimo (descartar local)
  *  - Si el destino NO tiene → cambiar user_id del attempt anónimo
+ *
+ * O se hace todo (migrar + borrar usuario), o no se hace nada. Esto evita
+ * estados corruptos si algo falla a mitad de camino.
  *
  * @returns cantidad de attempts efectivamente migrados
  */
@@ -294,35 +302,44 @@ async function migrateAnonymousAttempts(
   fromUserId: string,
   toUserId: string,
 ): Promise<number> {
-  // 1. Traer todos los attempts del anónimo
-  const anonAttempts = await query(
-    "SELECT id, game_id, date_key FROM attempts WHERE user_id = $1",
-    [fromUserId],
-  );
-
-  let migrated = 0;
-
-  for (const row of anonAttempts.rows) {
-    // ¿El destino ya tiene attempt para (game, date)?
-    const conflict = await query(
-      "SELECT id FROM attempts WHERE user_id = $1 AND game_id = $2 AND date_key = $3",
-      [toUserId, row.game_id, row.date_key],
+  return transaction(async (client) => {
+    // 1. Traer todos los attempts del anónimo (lock FOR UPDATE para evitar
+    //    que otra request los modifique mientras migramos).
+    const anonAttempts = await client.query(
+      "SELECT id, game_id, date_key FROM attempts WHERE user_id = $1 FOR UPDATE",
+      [fromUserId],
     );
 
-    if (conflict.rows.length > 0) {
-      // Destino ya tiene → descartar el anónimo (borrar)
-      await query("DELETE FROM attempts WHERE id = $1", [row.id]);
-    } else {
-      // Destino no tiene → migrar
-      await query(
-        "UPDATE attempts SET user_id = $1 WHERE id = $2",
-        [toUserId, row.id],
-      );
-      migrated++;
-    }
-  }
+    let migrated = 0;
 
-  return migrated;
+    for (const row of anonAttempts.rows) {
+      // ¿El destino ya tiene attempt para (game, date)?
+      const conflict = await client.query(
+        "SELECT id FROM attempts WHERE user_id = $1 AND game_id = $2 AND date_key = $3",
+        [toUserId, row.game_id, row.date_key],
+      );
+
+      if (conflict.rows.length > 0) {
+        // Destino ya tiene → descartar el anónimo (borrar)
+        await client.query("DELETE FROM attempts WHERE id = $1", [row.id]);
+      } else {
+        // Destino no tiene → migrar
+        await client.query(
+          "UPDATE attempts SET user_id = $1 WHERE id = $2",
+          [toUserId, row.id],
+        );
+        migrated++;
+      }
+    }
+
+    // 2. Borrar el usuario anónimo. Sus sesiones quedan huérfanas pero se
+    //    limpian por expiración (cleanupExpiredSessions). Los attempts ya
+    //    se movieron o borraron arriba.
+    await client.query("DELETE FROM sessions WHERE user_id = $1", [fromUserId]);
+    await client.query("DELETE FROM users WHERE id = $1", [fromUserId]);
+
+    return migrated;
+  });
 }
 
 /**

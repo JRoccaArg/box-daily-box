@@ -1,0 +1,23 @@
+name: CI
+
+# Corre en push y PRs a develop y staging, NO en main.
+# main se deploya directo (ya validado en staging) para no bloquear producción.
+on:
+  push:
+    branches: [develop, staging]
+  pull_request:
+    branches: [develop, staging]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test
