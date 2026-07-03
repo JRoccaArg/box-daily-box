@@ -137,10 +137,12 @@ export function MonthlyRanking({ refreshKey }: { refreshKey?: number }) {
 
       {/* Nota de seguridad honesta */}
       <p className="mt-3 rounded-lg border border-white/5 bg-asphalt-700/60 px-3 py-2 text-[11px] leading-relaxed text-ink-faint">
-        Este ranking es <strong>personal y local</strong> (se guarda en tu dispositivo).
-        El ranking global se calcula en el servidor, que verifica cada respuesta
-        de forma independiente. Pequeñas diferencias de puntos con el global son
-        normales (distinta medición de tiempo).
+        Este ranking es <strong>personal y local</strong> (se guarda en tu dispositivo)
+        y suma <strong>todos</strong> tus puntos, incluidos los que no entraron al
+        ranking global (por ejemplo, cuando otra cuenta de tu conexión jugó primero
+        ese reto). El ranking global se calcula en el servidor, que verifica cada
+        respuesta de forma independiente. Pequeñas diferencias de puntos con el
+        global son normales (distinta medición de tiempo).
       </p>
     </section>
   );
