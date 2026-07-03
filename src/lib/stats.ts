@@ -371,3 +371,48 @@ export function getMonthlyScore(date: Date = new Date()): MonthlyScore {
 
   return { month, total, gamesWon, byGame, byDifficulty, daily, bestDay };
 }
+
+/* --------------------------------------------------------------------- */
+/* Solutions locales (para re-verificar al importar en login)            */
+/* --------------------------------------------------------------------- */
+//
+// Cuando un juego se completa, guardamos la solution enviada. Sirve para que,
+// al loguearse, el frontend pueda mandar esas solutions al server y este las
+// re-verifique (no confiamos en puntos del cliente). Ver auth.ts importLocalAttempts.
+
+const SOLUTIONS_KEY = "solutions";
+
+type StoredSolution = {
+  gameId: string;
+  date: string;
+  solution: Record<string, unknown> | null;
+};
+
+/** Guarda la solution de un juego para una fecha (para re-verificación futura). */
+export function saveSolution(
+  gameId: string,
+  solution: Record<string, unknown> | null,
+  date: Date = new Date(),
+): void {
+  const key = dateKey(date);
+  const all = storage.get<Record<string, Record<string, StoredSolution>>>(SOLUTIONS_KEY, {});
+  const day = all[key] ?? {};
+  // No pisar una solution ya guardada (respeta el primer intento).
+  if (day[gameId]) return;
+  day[gameId] = { gameId, date: key, solution };
+  all[key] = day;
+  storage.set(SOLUTIONS_KEY, all);
+}
+
+/** Devuelve todas las solutions guardadas para una fecha. */
+export function getSolutionsForDate(date: Date = new Date()): StoredSolution[] {
+  const key = dateKey(date);
+  const all = storage.get<Record<string, Record<string, StoredSolution>>>(SOLUTIONS_KEY, {});
+  const day = all[key] ?? {};
+  return Object.values(day);
+}
+
+/** Borra todas las solutions guardadas (ej: al cambiar de cuenta). */
+export function clearSolutions(): void {
+  storage.remove(SOLUTIONS_KEY);
+}

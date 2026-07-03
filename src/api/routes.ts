@@ -230,14 +230,19 @@ export async function finishChallenge(
     const { gameId } = req.params as { gameId: string };
     const { sessionToken, solution } = req.body as {
       sessionToken: string;
-      solution: Record<string, unknown>;
+      solution?: Record<string, unknown> | null;
     };
 
     if (!isPlausibleToken(sessionToken)) {
       reply.code(422).send({ error: "sessionToken inválido" });
       return;
     }
-    if (!isPlausibleSolution(solution)) {
+    // solution puede venir null/ausente: significa abandono o timeout
+    // (el usuario perdió sin enviar respuesta). En ese caso NO verificamos:
+    // el resultado es directamente "perdido" con 0 puntos. Si viene solution,
+    // debe ser plausible.
+    const isAbandon = solution === null || solution === undefined;
+    if (!isAbandon && !isPlausibleSolution(solution)) {
       reply.code(422).send({ error: "solution inválida" });
       return;
     }
@@ -276,12 +281,16 @@ export async function finishChallenge(
     }
 
     // ─── VERIFICACIÓN REAL ───
-    const verifyResult = verifyChallenge(
-      gameId,
-      session.difficulty,
-      session.today,
-      solution as any,
-    );
+    // Si es abandono/timeout (sin solution), el resultado es perdido sin verificar.
+    // Si hay solution, se verifica normalmente server-side.
+    const verifyResult = isAbandon
+      ? { won: false, detail: "Abandono o tiempo agotado" }
+      : verifyChallenge(
+          gameId,
+          session.difficulty,
+          session.today,
+          solution as any,
+        );
 
     const timeSeconds = Math.round((now - session.startedAt) / 1000);
     // Sin tiempo mínimo: si la verificación server dice que es correcto, es válido.

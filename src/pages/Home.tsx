@@ -83,6 +83,7 @@ function GameCard({
 }) {
   const won = result?.status === "won";
   const lost = result?.status === "lost";
+  const blocked = result?.meta?.blocked === 1;
 
   return (
     <Link
@@ -118,7 +119,7 @@ function GameCard({
       </div>
 
       <div className="mt-3 flex items-center justify-between border-t border-white/5 pt-3">
-        <StatusTag won={won} lost={lost} />
+        <StatusTag won={won} lost={lost} blocked={blocked} />
         <span className="font-mono text-[11px] uppercase tracking-wider text-ink-faint">
           {result ? "Vuelve manana" : "Jugar ahora"}
         </span>
@@ -127,12 +128,20 @@ function GameCard({
   );
 }
 
-function StatusTag({ won, lost }: { won: boolean; lost: boolean }) {
+function StatusTag({ won, lost, blocked }: { won: boolean; lost: boolean; blocked?: boolean }) {
   if (won) {
     return (
       <span className="inline-flex items-center gap-1.5 text-sm font-medium text-sector-green">
         <Check size={15} />
         Resuelto
+      </span>
+    );
+  }
+  if (blocked) {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-muted">
+        <FlagIcon size={15} />
+        No disponible
       </span>
     );
   }

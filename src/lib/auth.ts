@@ -18,7 +18,13 @@ import {
   clearIdentityToken,
 } from "./identity";
 import { storage } from "./storage";
-import { resetForAccountSwitch, syncFromServer } from "./stats";
+import {
+  resetForAccountSwitch,
+  syncFromServer,
+  getSolutionsForDate,
+  clearSolutions,
+  getResult,
+} from "./stats";
 import { dateKey } from "./seed";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
@@ -31,6 +37,7 @@ export type AuthResult = {
   picture: string | null;
   isNewLink: boolean;
   migratedCount?: number;
+  importedCount?: number;
   /** Token de identidad emitido por el server (prueba posesión del userId). */
   identityToken?: string;
 };
@@ -68,21 +75,39 @@ export function loginWithGoogle(): void {
 export async function handleGoogleCallback(code: string): Promise<AuthResult | null> {
   const redirectUri = `${window.location.origin}/auth/callback`;
   const { userId: currentUserId } = getIdentity();
+  const today = dateKey(new Date());
+
+  // Recolectar los intentos locales del día ANTES del reset. El server los
+  // re-verificará e importará los que la cuenta no tenga (regla de
+  // inmutabilidad: si la cuenta ya jugó ese juego, el local se descarta).
+  const solutions = getSolutionsForDate(new Date());
+  const localAttempts = solutions.map((s) => {
+    const result = getResult(s.gameId, new Date());
+    const difficulty =
+      result?.meta && typeof result.meta.difficulty === "string"
+        ? result.meta.difficulty
+        : "medio";
+    return {
+      gameId: s.gameId,
+      difficulty,
+      solution: s.solution,
+    };
+  });
 
   const result = await apiPost<AuthResult>("/auth/google", {
     code,
     redirectUri,
     currentUserId,
+    localAttempts,
+    clientDateKey: today,
   });
 
   if (!result) return null;
 
   // El server es la fuente de verdad después del login.
-  // Descartar TODO el estado local (results + played lock): los attempts
-  // que estaban en server + local ya se resolvieron server-side; los que
-  // solo estaban en local se migraron. A partir de acá, reconstruimos el
-  // estado desde el server.
+  // Descartar TODO el estado local (results + played lock + solutions).
   resetForAccountSwitch();
+  clearSolutions();
 
   // Guardar identidad completa (server-side es la fuente de verdad).
   updateIdentity({
@@ -111,9 +136,8 @@ export async function handleGoogleCallback(code: string): Promise<AuthResult | n
 
   // Sincronizar attempts de HOY desde el server.
   // Después del reset local, esto trae los attempts que están en el server
-  // (los propios de Google + los migrados desde el anónimo) al storage local
-  // para que aparezcan como "ya jugados" en la home.
-  const today = dateKey(new Date());
+  // (los propios de Google + los migrados desde el anónimo + los importados)
+  // al storage local para que aparezcan como "ya jugados" en la home.
   const attemptsResponse = await apiGetUserAttempts(result.userId, today);
   if (attemptsResponse && attemptsResponse.attempts.length > 0) {
     syncFromServer(attemptsResponse.attempts, attemptsResponse.dateKey);
@@ -134,6 +158,8 @@ export function logout(): void {
   storage.remove("identity");
   // Borrar el identityToken (pertenecía a la cuenta que cerró sesión).
   clearIdentityToken();
+  // Borrar solutions locales (pertenecían a la cuenta anterior).
+  clearSolutions();
   // Borrar cookie de identidad si existe.
   document.cookie = "bdb_uid=;path=/;max-age=0;SameSite=Lax";
   try {

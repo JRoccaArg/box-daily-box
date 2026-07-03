@@ -21,8 +21,11 @@
 
 import { FastifyRequest, FastifyReply } from "fastify";
 import { query, transaction } from "./db";
-import { sanitizeDisplayName } from "./validate";
+import { sanitizeDisplayName, isValidDateKey } from "./validate";
 import { signIdentityToken } from "./identity-token";
+import { verifyChallenge } from "./verify";
+import { computeScore } from "../lib/scoring";
+import type { Difficulty } from "../types";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
@@ -135,10 +138,16 @@ export async function googleAuthCallback(
   }
 
   try {
-    const { code, redirectUri, currentUserId } = req.body as {
+    const { code, redirectUri, currentUserId, localAttempts, clientDateKey } = req.body as {
       code?: string;
       redirectUri?: string;
       currentUserId?: string;
+      localAttempts?: Array<{
+        gameId?: string;
+        difficulty?: string;
+        solution?: Record<string, unknown> | null;
+      }>;
+      clientDateKey?: string;
     };
 
     if (!code || typeof code !== "string" || code.length > 512) {
@@ -257,7 +266,27 @@ export async function googleAuthCallback(
       );
     }
 
-    // 4. Devolver identidad completa del usuario
+    // 4. Importar intentos locales que la cuenta NO tenga (re-verificados
+    //    server-side). Respeta la inmutabilidad: si la cuenta ya jugó ese
+    //    juego hoy, el local se descarta.
+    let importedCount = 0;
+    if (Array.isArray(localAttempts) && localAttempts.length > 0) {
+      const clientIp = req.ip || "unknown";
+      const importDate = isValidDateKey(clientDateKey || "")
+        ? (clientDateKey as string)
+        : new Date().toISOString().slice(0, 10);
+      // Límite defensivo: solo hay 4 juegos. Tomamos como máximo 4 intentos
+      // para evitar abuso (un atacante enviando miles de entradas).
+      const capped = localAttempts.slice(0, 4);
+      importedCount = await importLocalAttempts(
+        userId,
+        importDate,
+        capped,
+        clientIp,
+      );
+    }
+
+    // 5. Devolver identidad completa del usuario
     const userRow = await query(
       "SELECT id, display_name, country_code FROM users WHERE id = $1",
       [userId],
@@ -276,6 +305,7 @@ export async function googleAuthCallback(
       picture,
       isNewLink,
       migratedCount,
+      importedCount,
       // Emitir identityToken: Google probó la identidad, así que le damos
       // el token que prueba posesión del userId para futuras operaciones.
       identityToken: signIdentityToken(user.id),
@@ -353,4 +383,105 @@ export async function logout(
   reply: FastifyReply,
 ): Promise<void> {
   reply.code(200).send({ ok: true });
+}
+
+// Límites de tiempo por juego (para recalcular puntos al importar).
+const IMPORT_TIME_LIMITS: Record<string, number> = {
+  "pittexto": 300,
+  "polewordle": 300,
+  "el-intruso": 120,
+  "parrilla-bingo": 600,
+};
+
+const VALID_GAME_IDS = new Set(["pittexto", "polewordle", "el-intruso", "parrilla-bingo"]);
+const VALID_DIFFICULTIES = new Set(["facil", "medio", "dificil", "leyenda"]);
+
+/**
+ * Importa intentos locales al userId de la cuenta, RE-VERIFICANDO cada uno
+ * server-side (no se confía en los puntos del cliente).
+ *
+ * Regla de negocio (inmutabilidad del primer resultado):
+ *  - Si la cuenta YA tiene un attempt para (game, date) → se descarta el local.
+ *    El resultado del server es inmutable.
+ *  - Si la cuenta NO tiene ese juego → se registra, re-verificando la solution
+ *    para calcular los puntos correctos. Sin solution (abandono) → perdido, 0 pts.
+ *
+ * Seguridad: los puntos NUNCA vienen del cliente; se recalculan con
+ * verifyChallenge + computeScore usando la solution enviada.
+ *
+ * @returns cantidad de intentos importados (nuevos en la cuenta)
+ */
+async function importLocalAttempts(
+  userId: string,
+  dateKeyStr: string,
+  localAttempts: Array<{
+    gameId?: string;
+    difficulty?: string;
+    solution?: Record<string, unknown> | null;
+  }>,
+  clientIp: string,
+): Promise<number> {
+  if (!Array.isArray(localAttempts) || localAttempts.length === 0) return 0;
+  if (!isValidDateKey(dateKeyStr)) return 0;
+
+  let imported = 0;
+
+  for (const att of localAttempts) {
+    const gameId = att.gameId;
+    const difficulty = att.difficulty;
+
+    // Validaciones estrictas: solo juegos y dificultades conocidos.
+    if (typeof gameId !== "string" || !VALID_GAME_IDS.has(gameId)) continue;
+    if (typeof difficulty !== "string" || !VALID_DIFFICULTIES.has(difficulty)) continue;
+
+    // ¿La cuenta ya tiene este juego ese día? → inmutable, descartar local.
+    const existing = await query(
+      "SELECT id FROM attempts WHERE user_id = $1 AND game_id = $2 AND date_key = $3::date",
+      [userId, gameId, dateKeyStr],
+    );
+    if (existing.rows.length > 0) continue;
+
+    // Re-verificar la solution server-side (NO confiar en el cliente).
+    let won = false;
+    if (att.solution && typeof att.solution === "object") {
+      try {
+        const verifyResult = verifyChallenge(
+          gameId,
+          difficulty as Difficulty,
+          dateKeyStr,
+          att.solution as any,
+        );
+        won = verifyResult.won;
+      } catch {
+        won = false;
+      }
+    }
+
+    // Calcular puntos server-side. Sin tiempo real disponible al importar,
+    // usamos el tiempo límite completo (peor caso de bonus de velocidad):
+    // el usuario no pierde el resultado, pero tampoco gana bonus inflado.
+    const timeLimit = IMPORT_TIME_LIMITS[gameId] ?? 300;
+    const points = computeScore({
+      won,
+      difficulty: difficulty as Difficulty,
+      timeSeconds: timeLimit, // sin bonus de velocidad al importar
+      timeLimit,
+    });
+
+    // Insertar. UNIQUE(user_id, game_id, date_key) protege de duplicados
+    // por si dos requests corren en paralelo.
+    try {
+      await query(
+        `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, time_seconds, points, flagged, ip_address)
+         VALUES ($1, $2, $3::date, $4, $5, $6, $7, false, $8)`,
+        [userId, gameId, dateKeyStr, difficulty, won, timeLimit, points, clientIp],
+      );
+      imported++;
+    } catch (err: any) {
+      // 23505 = duplicado (race). Ignorar: el resultado existente gana.
+      if (err.code !== "23505") throw err;
+    }
+  }
+
+  return imported;
 }
