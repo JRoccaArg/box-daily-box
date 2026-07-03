@@ -468,13 +468,28 @@ async function importLocalAttempts(
       timeLimit,
     });
 
+    // Calcular si este attempt importado es rankeable: lo es si ninguna otra
+    // cuenta ya jugó (de forma rankeable) este juego hoy desde esta IP.
+    // Misma regla que en startChallenge.
+    let ranked = true;
+    if (clientIp && clientIp !== "unknown") {
+      const ipAttempt = await query(
+        `SELECT 1 FROM attempts
+         WHERE ip_address = $1 AND game_id = $2 AND date_key = $3::date
+         AND user_id != $4 AND ranked
+         LIMIT 1`,
+        [clientIp, gameId, dateKeyStr, userId],
+      );
+      if (ipAttempt.rows.length > 0) ranked = false;
+    }
+
     // Insertar. UNIQUE(user_id, game_id, date_key) protege de duplicados
     // por si dos requests corren en paralelo.
     try {
       await query(
-        `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, time_seconds, points, flagged, ip_address)
-         VALUES ($1, $2, $3::date, $4, $5, $6, $7, false, $8)`,
-        [userId, gameId, dateKeyStr, difficulty, won, timeLimit, points, clientIp],
+        `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, time_seconds, points, flagged, ranked, ip_address)
+         VALUES ($1, $2, $3::date, $4, $5, $6, $7, false, $8, $9)`,
+        [userId, gameId, dateKeyStr, difficulty, won, timeLimit, points, ranked, clientIp],
       );
       imported++;
     } catch (err: any) {

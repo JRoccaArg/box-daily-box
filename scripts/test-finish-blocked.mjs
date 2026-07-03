@@ -26,7 +26,7 @@ async function setup() {
     id BIGSERIAL PRIMARY KEY, user_id TEXT, game_id TEXT NOT NULL,
     date_key DATE NOT NULL, difficulty TEXT NOT NULL, won BOOLEAN NOT NULL,
     time_seconds INTEGER, points INTEGER NOT NULL, flagged BOOLEAN DEFAULT false,
-    ip_address TEXT, created_at TIMESTAMPTZ DEFAULT now(),
+    ranked BOOLEAN DEFAULT true, ip_address TEXT, created_at TIMESTAMPTZ DEFAULT now(),
     UNIQUE(user_id, game_id, date_key));`);
   await q(`CREATE TABLE sessions (
     id TEXT PRIMARY KEY, user_id TEXT NOT NULL, game_id TEXT NOT NULL,
@@ -37,23 +37,6 @@ async function setup() {
 async function reset() {
   await q("DELETE FROM attempts");
   await q("DELETE FROM sessions");
-}
-
-// ─── FIX 2: réplica del bloqueo IP de startChallenge ────────────────
-async function checkIpBlock(uid, ip, today) {
-  const ipCheck = await q(
-    `SELECT user_id FROM attempts WHERE ip_address = $1 AND date_key = $2::date AND user_id != $3 LIMIT 1`,
-    [ip, today, uid],
-  );
-  if (ipCheck.rows.length > 0) return { blocked: true };
-
-  const sessionCheck = await q(
-    `SELECT user_id FROM sessions WHERE ip_address = $1 AND date_key = $2::date
-     AND user_id != $3 AND NOT consumed AND expires_at > $4 LIMIT 1`,
-    [ip, today, uid, Date.now()],
-  );
-  if (sessionCheck.rows.length > 0) return { blocked: true };
-  return { blocked: false };
 }
 
 // ─── FIX 1: réplica de finishChallenge (parte de guardado) ──────────
@@ -94,59 +77,74 @@ async function test2_WonSaved() {
   assert(res.points === 100, "100 puntos");
 }
 
-async function test3_IpBlockAfterAttempt() {
-  console.log("\n▶ Test 3 (FIX 2): USER_A jugó desde IP → USER_B bloqueado desde misma IP");
+async function test3_IpAffectsRankedNotPlay() {
+  console.log("\n▶ Test 3 (FIX IP): USER_A juega desde IP → USER_B juega igual pero NO rankea");
   await reset();
-  // USER_A registra un attempt desde la IP
-  await finishChallenge(USER_A, "pittexto", "medio", { correct: true }, IP, TODAY);
-
-  // USER_B intenta empezar desde la misma IP
-  const check = await checkIpBlock(USER_B, IP, TODAY);
-  assert(check.blocked === true, "USER_B bloqueado (USER_A ya jugó desde esta IP)");
-}
-
-async function test4_SameUserNotBlocked() {
-  console.log("\n▶ Test 4 (FIX 2): el MISMO usuario no se bloquea a sí mismo");
-  await reset();
-  await finishChallenge(USER_A, "pittexto", "medio", { correct: true }, IP, TODAY);
-
-  // USER_A intenta empezar OTRO juego desde la misma IP → NO bloqueado
-  const check = await checkIpBlock(USER_A, IP, TODAY);
-  assert(check.blocked === false, "USER_A puede jugar otro juego desde su propia IP");
-}
-
-async function test5_DifferentIpNotBlocked() {
-  console.log("\n▶ Test 5 (FIX 2): distinta IP no se bloquea");
-  await reset();
-  await finishChallenge(USER_A, "pittexto", "medio", { correct: true }, IP, TODAY);
-
-  const check = await checkIpBlock(USER_B, "10.0.0.1", TODAY);
-  assert(check.blocked === false, "USER_B desde otra IP puede jugar");
-}
-
-async function test6_BlockedBySession() {
-  console.log("\n▶ Test 6 (FIX 2): sesión activa de otro usuario también bloquea");
-  await reset();
-  // USER_A tiene una sesión activa (empezó pero no terminó)
+  // USER_A registra un attempt rankeable desde la IP
   await q(
-    `INSERT INTO sessions (id, user_id, game_id, difficulty, date_key, started_at, expires_at, ip_address)
-     VALUES ('s1', $1, 'pittexto', 'medio', $2::date, 0, $3, $4)`,
-    [USER_A, TODAY, Date.now() + 900000, IP],
-  );
+    `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, time_seconds, points, ranked, ip_address)
+     VALUES ($1, 'pittexto', $2::date, 'medio', true, 60, 100, true, $3)`,
+    [USER_A, TODAY, IP]);
 
-  const check = await checkIpBlock(USER_B, IP, TODAY);
-  assert(check.blocked === true, "USER_B bloqueado por sesión activa de USER_A");
+  // USER_B calcula su ranked para el mismo juego+IP
+  const ipAttempt = await q(
+    `SELECT 1 FROM attempts WHERE ip_address = $1 AND game_id = $2 AND date_key = $3::date
+     AND user_id != $4 AND ranked LIMIT 1`,
+    [IP, "pittexto", TODAY, USER_B]);
+  const bRanked = ipAttempt.rows.length === 0;
+  assert(bRanked === false, "USER_B NO rankea (USER_A ya rankeó PitTexto en esta IP)");
+
+  // Pero USER_B puede jugar igual: se inserta su attempt (no-rankeable)
+  await q(
+    `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, time_seconds, points, ranked, ip_address)
+     VALUES ($1, 'pittexto', $2::date, 'medio', true, 60, 100, false, $3)`,
+    [USER_B, TODAY, IP]);
+  const bRow = await q("SELECT ranked FROM attempts WHERE user_id=$1 AND game_id='pittexto'", [USER_B]);
+  assert(bRow.rows.length === 1, "USER_B SÍ jugó (attempt guardado)");
+  assert(bRow.rows[0].ranked === false, "pero su attempt es no-rankeable");
+}
+
+async function test4_SameUserOtherGameRanks() {
+  console.log("\n▶ Test 4 (FIX IP): USER_B puede rankear en OTRO juego desde la misma IP");
+  await reset();
+  await q(
+    `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, time_seconds, points, ranked, ip_address)
+     VALUES ($1, 'pittexto', $2::date, 'medio', true, 60, 100, true, $3)`,
+    [USER_A, TODAY, IP]);
+
+  // USER_B en polewordle (nadie lo jugó en esta IP) → rankea
+  const ipAttempt = await q(
+    `SELECT 1 FROM attempts WHERE ip_address = $1 AND game_id = $2 AND date_key = $3::date
+     AND user_id != $4 AND ranked LIMIT 1`,
+    [IP, "polewordle", TODAY, USER_B]);
+  const bRanked = ipAttempt.rows.length === 0;
+  assert(bRanked === true, "USER_B rankea en PoleWordle (nadie lo jugó en esta IP)");
+}
+
+async function test5_DifferentIpRanks() {
+  console.log("\n▶ Test 5 (FIX IP): distinta IP siempre rankea");
+  await reset();
+  await q(
+    `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, time_seconds, points, ranked, ip_address)
+     VALUES ($1, 'pittexto', $2::date, 'medio', true, 60, 100, true, $3)`,
+    [USER_A, TODAY, IP]);
+
+  const ipAttempt = await q(
+    `SELECT 1 FROM attempts WHERE ip_address = $1 AND game_id = $2 AND date_key = $3::date
+     AND user_id != $4 AND ranked LIMIT 1`,
+    ["10.0.0.99", "pittexto", TODAY, USER_B]);
+  const bRanked = ipAttempt.rows.length === 0;
+  assert(bRanked === true, "USER_B rankea desde otra IP");
 }
 
 (async () => {
-  console.log("═══ TEST FIX 1 (guardar perdidos) + FIX 2 (bloqueo IP) ═══");
+  console.log("═══ TEST FIX 1 (guardar perdidos) + regla ranked por IP ═══");
   await setup();
   await test1_AbandonSaved();
   await test2_WonSaved();
-  await test3_IpBlockAfterAttempt();
-  await test4_SameUserNotBlocked();
-  await test5_DifferentIpNotBlocked();
-  await test6_BlockedBySession();
+  await test3_IpAffectsRankedNotPlay();
+  await test4_SameUserOtherGameRanks();
+  await test5_DifferentIpRanks();
   console.log(`\n═══ RESULTADO: ${passed} passed, ${failed} failed ═══`);
   process.exit(failed > 0 ? 1 : 0);
 })();

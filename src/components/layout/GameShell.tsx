@@ -31,7 +31,7 @@ const DIFFICULTY_HINT: Record<Difficulty, string> = {
   leyenda: "Toda la historia de la F1",
 };
 
-type Phase = "config" | "playing" | "finished" | "blocked";
+type Phase = "config" | "playing" | "finished";
 
 type GameShellProps = {
   game: GameDefinition;
@@ -73,8 +73,8 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   // Modal de identidad (si el usuario no configuró nombre/pais).
   const [identityOpen, setIdentityOpen] = useState(false);
-  // Mensaje cuando el juego está bloqueado por IP (otra cuenta ya jugó).
-  const [blockedMessage, setBlockedMessage] = useState<string | null>(null);
+  // true si el resultado NO entró al ranking (otra cuenta de la IP ya jugó).
+  const [notRanked, setNotRanked] = useState(false);
   const navigate = useNavigate();
 
   // Evita doble registro (rendirse + expiracion simultaneos, p.ej.).
@@ -144,6 +144,11 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
               updateServerPoints(game.id, res.points, date);
               setPointsEarned(res.points);
               refreshStats();
+            }
+            // Avisar si el resultado no entró al ranking (otra cuenta de la
+            // misma IP ya jugó este juego hoy).
+            if (res && res.ranked === false) {
+              setNotRanked(true);
             }
           })
           .catch(() => {
@@ -236,10 +241,10 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
     setStatus("playing");
     setPhase("playing");
 
-    // Pedir sesión al servidor. A diferencia de antes, ahora el bloqueo por
-    // IP (403) es BLOQUEANTE: si otra cuenta ya jugó desde esta conexión hoy,
-    // no dejamos jugar y marcamos el juego como bloqueado (para que la home
-    // también lo muestre como no disponible).
+    // Pedir sesión al servidor. SIEMPRE se puede jugar (para jugar con amigos
+    // desde la misma red). El server decide si el resultado será rankeable
+    // (solo la primera cuenta por IP+juego+día rankea); eso viaja firmado en
+    // el sessionToken y no afecta la jugabilidad.
     apiStartChallenge(game.id, difficulty).then((res) => {
       if (res.ok) {
         sessionTokenRef.current = res.sessionToken;
@@ -247,29 +252,11 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
           const rtt = Date.now() - localStart;
           scoreRef.current.startedAt = localStart + Math.round(rtt / 2);
         }
-        return;
       }
-
-      if (res.reason === "blocked") {
-        // Otra cuenta ya jugó desde esta IP hoy. Revertir el arranque:
-        // no se juega, se marca como bloqueado y se persiste en local para
-        // que la home lo muestre como no disponible.
-        finishedRef.current = true;
-        abandonRef.current.active = false; // evitar que el cleanup registre derrota
-        pauseTimer();
-        setBlockedMessage(
-          res.message || "Ya se registró otro jugador desde esta conexión hoy",
-        );
-        setPhase("blocked");
-        // Marcar en local como bloqueado (status "lost" para ocupar el slot
-        // del día, con meta.blocked para distinguirlo visualmente).
-        record(game.id, "lost", { ...buildMeta(), blocked: 1 }, date);
-      }
-      // Si reason === "error" (red, server caído): dejamos jugar en modo
-      // offline. El intento quedará solo en local hasta que haya conexión.
-      // Este es un caso degradado aceptable (no es el bug reportado).
+      // Si falla (red/server), se juega en modo offline: el intento queda
+      // en local y se importa al server en el próximo login (re-verificado).
     }).catch(() => {
-      // Error de red inesperado: seguir en modo offline.
+      // Error de red: seguir en modo offline.
     });
   };
 
@@ -289,35 +276,6 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
     (solution?: Record<string, unknown>) => finish("lost", solution),
     [finish],
   );
-
-  // -----------------------------------------------------------------
-  // Vista: bloqueado por IP (otra cuenta ya jugó desde esta conexión hoy).
-  // -----------------------------------------------------------------
-  if (phase === "blocked") {
-    return (
-      <div className="space-y-4">
-        <BackLink />
-        <Panel className="text-center">
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-racing/15 text-racing-400">
-            <Lock size={26} />
-          </div>
-          <h1 className="font-display text-2xl font-bold text-white">{game.name}</h1>
-          <p className="mt-1 text-ink-muted">
-            {blockedMessage ?? "Ya se jugó desde esta conexión hoy."}
-          </p>
-          <p className="mt-2 text-sm text-ink-faint">
-            Solo se permite un jugador por conexión (IP) por día en el ranking.
-            Si compartís red, alguien más ya jugó este reto hoy.
-          </p>
-          <div className="mt-6">
-            <Link to="/">
-              <Button variant="outline">Volver al inicio</Button>
-            </Link>
-          </div>
-        </Panel>
-      </div>
-    );
-  }
 
   // -----------------------------------------------------------------
   // Vista: reto ya jugado hoy (bloqueado hasta manana).
@@ -528,6 +486,14 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
               <span className="tnum font-display text-lg text-white">+{pointsEarned}</span>
               <span className="text-xs text-ink-muted">puntos</span>
             </div>
+          )}
+
+          {notRanked && (
+            <p className="mx-auto mt-3 max-w-xs text-xs text-ink-faint">
+              Otro jugador ya jugó este reto desde tu conexión hoy, así que tu
+              resultado no cuenta para el ranking global. Igual quedó guardado
+              en tu historial.
+            </p>
           )}
 
           <div className="mt-5 flex flex-col gap-2">

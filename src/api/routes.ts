@@ -54,6 +54,9 @@ type SessionPayload = {
   difficulty: Difficulty;
   today: string;
   startedAt: number;
+  /** Si el attempt entrará al ranking global (false si otra cuenta de la IP
+   *  ya jugó este juego hoy). Firmado en el token: no se puede falsificar. */
+  ranked: boolean;
 };
 
 function signToken(payload: SessionPayload): string {
@@ -142,40 +145,35 @@ export async function startChallenge(
       return;
     }
 
+    // Regla de ranking por IP: se permite JUGAR siempre (para jugar con
+    // amigos desde la misma red), pero en el ranking global solo cuenta la
+    // PRIMERA cuenta que jugó CADA juego ese día desde esa IP.
+    //
+    // Calculamos si este attempt será rankeable: lo es si NINGUNA otra cuenta
+    // jugó (o está jugando) ESTE juego hoy desde esta IP. El resultado se
+    // guarda igual; solo cambia si entra al ranking.
+    let ranked = true;
     if (ipUsable) {
-      // Regla nueva: SOLO 1 usuario por IP por día en el ranking.
-      // Si otro userId ya registró CUALQUIER attempt hoy desde esta IP,
-      // el nuevo usuario no puede registrar. Esto evita crear cuentas nuevas
-      // desde la misma IP para inflar rankings, pero permite jugar
-      // localmente con amigos (comparando resultados presencialmente).
-      const ipCheck = await query(
-        `SELECT user_id FROM attempts
-         WHERE ip_address = $1 AND date_key = $2
-         AND user_id != $3
+      // ¿Otra cuenta ya tiene un attempt de ESTE juego hoy desde esta IP?
+      const ipAttempt = await query(
+        `SELECT 1 FROM attempts
+         WHERE ip_address = $1 AND game_id = $2 AND date_key = $3::date
+         AND user_id != $4 AND ranked
          LIMIT 1`,
-        [clientIp, today, uid],
+        [clientIp, gameId, today, uid],
       );
-      if (ipCheck.rows.length > 0) {
-        reply.code(403).send({
-          error: "Ya se registró otro jugador desde esta conexión hoy",
-        });
-        return;
-      }
-
-      // Verificar que no haya una sesión activa (no consumida) desde esta IP
-      // hoy con otro usuario.
-      const sessionIpCheck = await query(
-        `SELECT user_id FROM sessions
-         WHERE ip_address = $1 AND date_key = $2
-         AND user_id != $3 AND NOT consumed AND expires_at > $4
+      // ¿Otra cuenta tiene una sesión activa (empezó pero no terminó) de ESTE
+      // juego hoy desde esta IP? (para evitar que dos empiecen a la vez y
+      // ambos crean que rankean).
+      const ipSession = await query(
+        `SELECT 1 FROM sessions
+         WHERE ip_address = $1 AND game_id = $2 AND date_key = $3::date
+         AND user_id != $4 AND NOT consumed AND expires_at > $5
          LIMIT 1`,
-        [clientIp, today, uid, Date.now()],
+        [clientIp, gameId, today, uid, Date.now()],
       );
-      if (sessionIpCheck.rows.length > 0) {
-        reply.code(403).send({
-          error: "Ya hay una partida activa desde esta conexión con otro jugador",
-        });
-        return;
+      if (ipAttempt.rows.length > 0 || ipSession.rows.length > 0) {
+        ranked = false;
       }
     }
 
@@ -196,7 +194,7 @@ export async function startChallenge(
     const sessionId = randomUUID();
 
     const payload: SessionPayload = {
-      sessionId, uid, gameId, difficulty, today, startedAt,
+      sessionId, uid, gameId, difficulty, today, startedAt, ranked,
     };
     const sessionToken = signToken(payload);
 
@@ -316,9 +314,9 @@ export async function finishChallenge(
           [session.sessionId],
         );
         await client.query(
-          `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, time_seconds, points, flagged, ip_address)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-          [uid, gameId, session.today, session.difficulty, verifyResult.won, timeSeconds, points, flagged, clientIp],
+          `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, time_seconds, points, flagged, ranked, ip_address)
+           VALUES ($1, $2, $3::date, $4, $5, $6, $7, $8, $9, $10)`,
+          [uid, gameId, session.today, session.difficulty, verifyResult.won, timeSeconds, points, flagged, session.ranked, clientIp],
         );
       });
     } catch (err: any) {
@@ -353,7 +351,7 @@ export async function finishChallenge(
       `WITH user_scores AS (
          SELECT user_id, SUM(points) as score
          FROM attempts
-         WHERE won AND NOT flagged
+         WHERE won AND NOT flagged AND ranked
          AND date_key >= $1::date
          AND date_key < ($1::date + INTERVAL '1 month')
          GROUP BY user_id
@@ -378,6 +376,10 @@ export async function finishChallenge(
       rank,
       flagged,
       duplicated,
+      // Si el attempt entró al ranking. false cuando otra cuenta de la misma
+      // IP ya jugó este juego hoy: el usuario jugó y ve su resultado, pero no
+      // cuenta para el ranking global.
+      ranked: session.ranked,
     });
   } catch (err) {
     console.error("finishChallenge error:", err);
@@ -417,7 +419,7 @@ export async function getRankingMonthly(
               COUNT(DISTINCT a.date_key) as days_played
        FROM attempts a
        JOIN users u ON a.user_id = u.id
-       WHERE a.won AND NOT a.flagged
+       WHERE a.won AND NOT a.flagged AND a.ranked
        AND a.date_key >= $1::date
        AND a.date_key < ($1::date + INTERVAL '1 month')
        ${countryClause}
@@ -463,7 +465,7 @@ export async function getRankingDaily(
               COUNT(a.id) as games_won
        FROM attempts a
        JOIN users u ON a.user_id = u.id
-       WHERE a.won AND NOT a.flagged
+       WHERE a.won AND NOT a.flagged AND a.ranked
        AND a.date_key = $1::date
        ${countryFilter ? "AND u.country_code = $2" : ""}
        GROUP BY u.id, u.display_name, u.country_code
@@ -824,7 +826,7 @@ export async function getUserAttempts(
     const rows = await query(
       `SELECT game_id, difficulty, won, time_seconds, points, created_at
        FROM attempts
-       WHERE user_id = $1 AND date_key = $2
+       WHERE user_id = $1 AND date_key = $2::date
        ORDER BY created_at DESC`,
       [userId, dateKey],
     );
@@ -874,19 +876,20 @@ export async function getUserRank(
       ? date
       : new Date().toISOString().slice(0, 10);
 
-    // 1. Puntos del usuario ese día (solo attempts ganados y no flagged).
+    // 1. Puntos RANKEABLES del usuario ese día (ganados, no flagged, ranked).
     const userPointsResult = await query(
       `SELECT COALESCE(SUM(points), 0) as points
        FROM attempts
        WHERE user_id = $1
          AND date_key = $2::date
          AND won
-         AND NOT flagged`,
+         AND NOT flagged
+         AND ranked`,
       [userId, dateKey],
     );
     const userPoints = Number(userPointsResult.rows[0]?.points ?? 0);
 
-    // Regla: si el usuario no tiene puntos, no rankea → devolver null.
+    // Regla: si el usuario no tiene puntos rankeables, no rankea → null.
     if (userPoints === 0) {
       reply.code(200).send({
         dateKey,
@@ -897,13 +900,12 @@ export async function getUserRank(
       return;
     }
 
-    // 2. Contar cuántos usuarios distintos tienen MÁS puntos que el usuario.
-    //    Su posición es (ese count + 1).
+    // 2. Contar cuántos usuarios distintos tienen MÁS puntos rankeables.
     const aheadResult = await query(
       `SELECT COUNT(*) as ahead FROM (
          SELECT user_id, SUM(points) as total
          FROM attempts
-         WHERE date_key = $1::date AND won AND NOT flagged
+         WHERE date_key = $1::date AND won AND NOT flagged AND ranked
          GROUP BY user_id
          HAVING SUM(points) > $2
        ) t`,
@@ -915,7 +917,7 @@ export async function getUserRank(
     const totalResult = await query(
       `SELECT COUNT(DISTINCT user_id) as total
        FROM attempts
-       WHERE date_key = $1::date AND won AND NOT flagged`,
+       WHERE date_key = $1::date AND won AND NOT flagged AND ranked`,
       [dateKey],
     );
     const totalPlayers = Number(totalResult.rows[0]?.total ?? 0);

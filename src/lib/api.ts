@@ -25,6 +25,8 @@ type FinishResponse = {
   rank: number;
   flagged: boolean;
   duplicated: boolean;
+  /** Si el resultado entró al ranking (false si otra cuenta de la IP ya jugó). */
+  ranked?: boolean;
 };
 
 export type RankingEntry = {
@@ -91,51 +93,33 @@ async function apiFetch<T>(
 /** Resultado del intento de iniciar un reto. */
 export type StartResult =
   | { ok: true; sessionToken: string; serverNow: number }
-  | { ok: false; reason: "blocked" | "error"; message?: string };
+  | { ok: false };
 
-/** Inicia un reto. Distingue el bloqueo por IP (403) de otros errores. */
+/** Inicia un reto. El server siempre permite jugar; decide internamente si
+ *  el resultado será rankeable (firmado en el token). */
 export async function apiStartChallenge(
   gameId: string,
   difficulty: string,
 ): Promise<StartResult> {
-  if (!API_URL) return { ok: false, reason: "error" };
+  if (!API_URL) return { ok: false };
 
   const { userId, displayName, countryCode } = getIdentity();
-  // Enviar la fecha LOCAL del cliente para evitar mismatch de timezone.
   const now = new Date();
   const clientDateKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 8000);
-
-  try {
-    const res = await fetch(`${API_URL}/challenges/${gameId}/start`, {
+  const data = await apiFetch<StartResponse>(
+    `/challenges/${gameId}/start`,
+    {
       method: "POST",
-      signal: controller.signal,
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ difficulty, userId, displayName, countryCode, clientDateKey }),
-    });
+    },
+  );
 
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      // 403 = bloqueo por IP (otra cuenta ya jugó desde esta conexión hoy).
-      if (res.status === 403) {
-        return { ok: false, reason: "blocked", message: body?.error };
-      }
-      return { ok: false, reason: "error", message: body?.error };
-    }
-
-    const data = (await res.json()) as StartResponse;
-    // Guardar el identityToken emitido: prueba de posesión del userId.
-    if (data.identityToken) {
-      setIdentityToken(data.identityToken);
-    }
-    return { ok: true, sessionToken: data.sessionToken, serverNow: data.serverNow };
-  } catch {
-    return { ok: false, reason: "error" };
-  } finally {
-    clearTimeout(timer);
+  if (!data) return { ok: false };
+  if (data.identityToken) {
+    setIdentityToken(data.identityToken);
   }
+  return { ok: true, sessionToken: data.sessionToken, serverNow: data.serverNow };
 }
 
 /** Envia la solucion y obtiene resultado verificado.
