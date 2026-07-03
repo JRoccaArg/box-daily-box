@@ -1,4 +1,17 @@
 {
+  "redirects": [
+    {
+      "source": "/:path*",
+      "destination": "https://www.boxdailybox.com/:path*",
+      "permanent": true,
+      "has": [
+        {
+          "type": "host",
+          "value": "boxdailybox.com"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",
