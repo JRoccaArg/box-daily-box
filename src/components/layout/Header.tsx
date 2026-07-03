@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useStats } from "@/context/StatsContext";
 import { StatsModal } from "./StatsModal";
+import { IdentityModal } from "./IdentityModal";
 import { Stat as StatIcon, Flame } from "@/components/ui/Icon";
+import { on, Events } from "@/lib/events";
 
 /** Fecha legible en espanol: "miercoles 25 de junio". */
 function readableDate(d: Date): string {
@@ -34,6 +36,13 @@ function Wordmark() {
 export function Header() {
   const { summary } = useStats();
   const [statsOpen, setStatsOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  // Escuchar el evento global para abrir el modal de stats desde cualquier
+  // lugar de la app (ej: botón "Ver ranking del día" del modal de resultado).
+  useEffect(() => {
+    return on(Events.OPEN_STATS, () => setStatsOpen(true));
+  }, []);
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/5 bg-asphalt-900/80 backdrop-blur-md">
@@ -56,6 +65,14 @@ export function Header() {
           )}
 
           <button
+            onClick={() => setProfileOpen(true)}
+            aria-label="Editar perfil"
+            className="inline-flex h-9 items-center justify-center rounded-lg border border-white/10 px-3 text-ink transition-colors hover:border-white/25 hover:bg-white/5"
+          >
+            <span className="text-lg">👤</span>
+          </button>
+
+          <button
             onClick={() => setStatsOpen(true)}
             aria-label="Ver estadisticas"
             className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/10 px-3 text-sm text-ink transition-colors hover:border-white/25 hover:bg-white/5"
@@ -67,6 +84,7 @@ export function Header() {
       </div>
 
       <StatsModal open={statsOpen} onClose={() => setStatsOpen(false)} />
+      <IdentityModal open={profileOpen} onClose={() => setProfileOpen(false)} />
     </header>
   );
 }

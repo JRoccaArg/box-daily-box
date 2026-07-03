@@ -18,7 +18,12 @@ import {
   getRankingMonthly,
   getRankingDaily,
   adminDebug,
+  getUserProfile,
+  updateUserProfile,
+  getUserAttempts,
+  getUserRank,
 } from "./routes";
+import { googleAuthCallback, logout } from "./auth";
 
 const app = Fastify({
   logger: {
@@ -133,6 +138,62 @@ async function start(): Promise<void> {
       config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
     },
     adminDebug as any,
+  );
+
+  // ─── Autenticación con Google OAuth ───────────────────────────────
+  // Rate limit bajo: máximo 10 intentos por minuto por IP.
+  app.post(
+    "/auth/google",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
+    },
+    googleAuthCallback as any,
+  );
+
+  app.post(
+    "/auth/logout",
+    {
+      config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
+    },
+    logout as any,
+  );
+
+  // ─── Perfil del usuario ────────────────────────────────────────────
+  app.get(
+    "/user/:userId",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 60, timeWindow: "1 minute" } },
+    },
+    getUserProfile as any,
+  );
+
+  app.post(
+    "/user/:userId/profile",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
+    },
+    updateUserProfile as any,
+  );
+
+  app.get(
+    "/user/:userId/attempts",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 60, timeWindow: "1 minute" } },
+    },
+    getUserAttempts as any,
+  );
+
+  app.get(
+    "/user/:userId/rank",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 60, timeWindow: "1 minute" } },
+    },
+    getUserRank as any,
   );
 
   // ─── Inicializar BD en background ─────────────────────────────────

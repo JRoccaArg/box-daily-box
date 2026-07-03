@@ -6,7 +6,8 @@ import { useStats } from "@/context/StatsContext";
 import { computeScore } from "@/lib/scoring";
 import { apiStartChallenge, apiFinishChallenge } from "@/lib/api";
 import { isIdentityComplete } from "@/lib/identity";
-import { updateServerPoints } from "@/lib/stats";
+import { updateServerPoints, saveSolution } from "@/lib/stats";
+import { emit, Events } from "@/lib/events";
 import { IdentityModal } from "@/components/layout/IdentityModal";
 import { useTimer } from "@/hooks/useTimer";
 import { Panel } from "@/components/ui/Panel";
@@ -72,12 +73,16 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   // Modal de identidad (si el usuario no configuró nombre/pais).
   const [identityOpen, setIdentityOpen] = useState(false);
+  // true si el resultado NO entró al ranking (otra cuenta de la IP ya jugó).
+  const [notRanked, setNotRanked] = useState(false);
   const navigate = useNavigate();
 
   // Evita doble registro (rendirse + expiracion simultaneos, p.ej.).
   const finishedRef = useRef(false);
   // Token de sesión del servidor (para verificación server-side).
   const sessionTokenRef = useRef<string | null>(null);
+  // Ref al contenedor del tablero (para scroll al "Ver el tablero").
+  const boardRef = useRef<HTMLDivElement | null>(null);
 
   const timeLimit = game.timer.kind === "none" ? null : chosenTime;
 
@@ -112,6 +117,9 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
       setPhase("finished");
       const meta = buildMeta();
       record(game.id, outcome, meta, date);
+      // Guardar la solution para poder re-verificarla en el server si el
+      // usuario se loguea más tarde (importación de intentos locales).
+      saveSolution(game.id, solution ?? null, date);
       setPointsEarned(
         computeScore({
           won: outcome === "won",
@@ -121,11 +129,14 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
         }),
       );
 
-      // Enviar resultado al servidor (fire-and-forget, no bloquea UI).
-      // Si el backend responde, sincronizar puntos locales con los del server.
+      // Enviar resultado al servidor SIEMPRE que haya token (no solo si hay
+      // solution). Si no hay solution (abandono/timeout), se envía null y el
+      // server lo registra como perdido. Esto garantiza que TODO intento
+      // quede en el server (fuente de verdad), evitando que un juego jugado
+      // localmente aparezca luego como "sin jugar" al loguearse.
       const token = sessionTokenRef.current;
-      if (token && solution) {
-        apiFinishChallenge(game.id, token, solution)
+      if (token) {
+        apiFinishChallenge(game.id, token, solution ?? null)
           .then((res) => {
             if (res && typeof res.points === "number") {
               // Sincronizar: guardar los puntos del servidor en el resultado local.
@@ -133,6 +144,11 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
               updateServerPoints(game.id, res.points, date);
               setPointsEarned(res.points);
               refreshStats();
+            }
+            // Avisar si el resultado no entró al ranking (otra cuenta de la
+            // misma IP ya jugó este juego hoy).
+            if (res && res.ranked === false) {
+              setNotRanked(true);
             }
           })
           .catch(() => {
@@ -225,22 +241,23 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
     setStatus("playing");
     setPhase("playing");
 
-    // Obtener token del servidor (fire-and-forget, no bloquea UI).
-    // Al llegar la respuesta, alineamos nuestro startedAt con el serverNow
-    // para que el tiempo medido (y por ende los puntos) coincida con el
-    // que calcula el backend. Sin esto, la latencia de red hace que el
-    // cliente mida ~1-2s de mas y muestre menos puntos que el ranking global.
+    // Pedir sesión al servidor. SIEMPRE se puede jugar (para jugar con amigos
+    // desde la misma red). El server decide si el resultado será rankeable
+    // (solo la primera cuenta por IP+juego+día rankea); eso viaja firmado en
+    // el sessionToken y no afecta la jugabilidad.
     apiStartChallenge(game.id, difficulty).then((res) => {
-      if (res) {
+      if (res.ok) {
         sessionTokenRef.current = res.sessionToken;
         if (typeof res.serverNow === "number") {
-          // El server empezo a contar en res.serverNow (su reloj). Traducimos
-          // ese instante al reloj local usando el offset de ida y vuelta.
           const rtt = Date.now() - localStart;
           scoreRef.current.startedAt = localStart + Math.round(rtt / 2);
         }
       }
-    }).catch(() => {});
+      // Si falla (red/server), se juega en modo offline: el intento queda
+      // en local y se importa al server en el próximo login (re-verificado).
+    }).catch(() => {
+      // Error de red: seguir en modo offline.
+    });
   };
 
   /** Callback del modal de identidad: una vez completado, arrancar. */
@@ -396,15 +413,17 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
         }}
       />
 
-      <GameComponent
-        difficulty={difficulty}
-        date={date}
-        timeLimit={timeLimit}
-        secondsLeft={timer.secondsLeft}
-        status={status}
-        onWin={onWin}
-        onLose={onLose}
-      />
+      <div ref={boardRef}>
+        <GameComponent
+          difficulty={difficulty}
+          date={date}
+          timeLimit={timeLimit}
+          secondsLeft={timer.secondsLeft}
+          status={status}
+          onWin={onWin}
+          onLose={onLose}
+        />
+      </div>
 
       {phase === "finished" && (
         <ResultBanner won={won} onOpen={() => setResultOpen(true)} />
@@ -469,9 +488,43 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
             </div>
           )}
 
+          {notRanked && (
+            <p className="mx-auto mt-3 max-w-xs text-xs text-ink-faint">
+              Otro jugador ya jugó este reto desde tu conexión hoy, así que tu
+              resultado no cuenta para el ranking global. Igual quedó guardado
+              en tu historial.
+            </p>
+          )}
+
           <div className="mt-5 flex flex-col gap-2">
-            <Button variant="outline" block onClick={() => setResultOpen(false)}>
+            <Button
+              variant="outline"
+              block
+              onClick={() => {
+                // Cerrar el modal PRIMERO y esperar a que React lo desmonte
+                // (el Modal restaura body.overflow al desmontar). Luego scroll.
+                setResultOpen(false);
+                window.setTimeout(() => {
+                  boardRef.current?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                }, 200);
+              }}
+            >
               Ver el tablero
+            </Button>
+            <Button
+              variant="outline"
+              block
+              onClick={() => {
+                // Cerrar este modal y disparar la apertura del modal global
+                // de stats (montado en Header) via event bus.
+                setResultOpen(false);
+                window.setTimeout(() => emit(Events.OPEN_STATS), 200);
+              }}
+            >
+              Ver ranking del día
             </Button>
             <Link to="/" className="block">
               <Button variant="ghost" block>

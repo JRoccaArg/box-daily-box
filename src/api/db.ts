@@ -21,8 +21,35 @@ export async function initializeDatabase(): Promise<void> {
         id TEXT PRIMARY KEY,
         display_name TEXT,
         country_code TEXT,
+        name_changed_at TIMESTAMPTZ,
         created_at TIMESTAMPTZ DEFAULT now()
       );
+    `);
+
+    // Migración: agregar name_changed_at si no existe
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS name_changed_at TIMESTAMPTZ;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
+    `);
+
+    // Tabla google_accounts (vinculación Google → userId)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS google_accounts (
+        google_id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        email TEXT NOT NULL,
+        name TEXT,
+        picture_url TEXT,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        last_login TIMESTAMPTZ DEFAULT now(),
+        UNIQUE(user_id)
+      );
+    `);
+    // Índice para búsqueda rápida por email
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_google_accounts_email ON google_accounts(email);
     `);
 
     // Migraciones (columnas nuevas)
@@ -45,6 +72,7 @@ export async function initializeDatabase(): Promise<void> {
         time_seconds INTEGER,
         points INTEGER NOT NULL,
         flagged BOOLEAN DEFAULT false,
+        ranked BOOLEAN DEFAULT true,
         ip_address TEXT,
         created_at TIMESTAMPTZ DEFAULT now(),
         UNIQUE(user_id, game_id, date_key)
@@ -55,6 +83,18 @@ export async function initializeDatabase(): Promise<void> {
     await client.query(`
       DO $$ BEGIN
         ALTER TABLE attempts ADD COLUMN IF NOT EXISTS ip_address TEXT;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
+    `);
+
+    // Migración: agregar ranked si no existe.
+    // ranked=false significa que el attempt NO cuenta para el ranking global
+    // (otra cuenta de la misma IP ya jugó ese juego ese día). El resultado se
+    // guarda igual (historial personal), pero no entra al ranking ni a la
+    // posición mundial.
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE attempts ADD COLUMN IF NOT EXISTS ranked BOOLEAN DEFAULT true;
       EXCEPTION WHEN duplicate_column THEN NULL;
       END $$;
     `);

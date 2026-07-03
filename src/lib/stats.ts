@@ -12,6 +12,7 @@
 import { storage } from "./storage";
 import { dateKey } from "./seed";
 import { computeScore } from "./scoring";
+import { emit, Events } from "./events";
 import type { DailyGameResult, GameStatus, StatsSummary, Difficulty } from "@/types";
 
 type ResultsMap = Record<string, Record<string, DailyGameResult>>;
@@ -184,6 +185,83 @@ export function resetAllProgress(): void {
   storage.remove(RESULTS_KEY);
 }
 
+/**
+ * Reset COMPLETO para cambio de cuenta (login/logout).
+ * A diferencia de resetAllProgress, borra TAMBIÉN el lock `played`, porque
+ * al cambiar de identidad el estado de "qué jugué hoy" cambia por completo
+ * y debe reconstruirse desde el servidor (fuente de verdad).
+ */
+export function resetForAccountSwitch(): void {
+  storage.remove(RESULTS_KEY);
+  storage.remove(PLAYED_KEY);
+  emit(Events.STATS_CHANGED);
+}
+
+/**
+ * Sincroniza resultados locales con attempts del servidor.
+ *
+ * Uso: se llama al cargar la home si el usuario está logueado, y después
+ * del login OAuth (para reflejar attempts migrados desde el anónimo o
+ * previos desde otros dispositivos).
+ *
+ * Comportamiento:
+ *  - Escribe TANTO en `results` (para stats/puntos) como en `played` (lock durable)
+ *  - Si un attempt del server ya existe localmente, no lo pisa (idempotente)
+ *  - Si un attempt del server NO existe localmente, lo agrega y bloquea el juego
+ *
+ * @param serverAttempts Attempts recibidos del server para una fecha
+ * @param dateKey_ Fecha (YYYY-MM-DD) — normalmente hoy
+ */
+export function syncFromServer(
+  serverAttempts: Array<{
+    gameId: string;
+    won: boolean;
+    timeSeconds: number;
+    points: number;
+    finishedAt: string;
+  }>,
+  dateKey_: string,
+): void {
+  if (serverAttempts.length === 0) return;
+
+  const results = loadResults();
+  const played = loadPlayed();
+
+  const resultsDay = results[dateKey_] ?? {};
+  const playedDay = played[dateKey_] ?? {};
+
+  for (const att of serverAttempts) {
+    const status: "won" | "lost" = att.won ? "won" : "lost";
+    const finishedAt = new Date(att.finishedAt).getTime();
+
+    // Escribir en played (lock durable) si no existe
+    if (!playedDay[att.gameId]) {
+      playedDay[att.gameId] = { status, finishedAt };
+    }
+
+    // Escribir en results (para stats) si no existe
+    if (!resultsDay[att.gameId]) {
+      resultsDay[att.gameId] = {
+        status,
+        date: dateKey_,
+        finishedAt,
+        meta: {
+          serverPoints: att.points,
+          timeSeconds: att.timeSeconds,
+        },
+      };
+    }
+  }
+
+  results[dateKey_] = resultsDay;
+  played[dateKey_] = playedDay;
+  storage.set(RESULTS_KEY, results);
+  storage.set(PLAYED_KEY, played);
+
+  // Notificar a React que los datos locales cambiaron.
+  emit(Events.STATS_CHANGED);
+}
+
 /* --------------------------------------------------------------------- */
 /* Puntaje y ranking mensual (PERSONAL y local)                          */
 /* --------------------------------------------------------------------- */
@@ -292,4 +370,49 @@ export function getMonthlyScore(date: Date = new Date()): MonthlyScore {
   }
 
   return { month, total, gamesWon, byGame, byDifficulty, daily, bestDay };
+}
+
+/* --------------------------------------------------------------------- */
+/* Solutions locales (para re-verificar al importar en login)            */
+/* --------------------------------------------------------------------- */
+//
+// Cuando un juego se completa, guardamos la solution enviada. Sirve para que,
+// al loguearse, el frontend pueda mandar esas solutions al server y este las
+// re-verifique (no confiamos en puntos del cliente). Ver auth.ts importLocalAttempts.
+
+const SOLUTIONS_KEY = "solutions";
+
+type StoredSolution = {
+  gameId: string;
+  date: string;
+  solution: Record<string, unknown> | null;
+};
+
+/** Guarda la solution de un juego para una fecha (para re-verificación futura). */
+export function saveSolution(
+  gameId: string,
+  solution: Record<string, unknown> | null,
+  date: Date = new Date(),
+): void {
+  const key = dateKey(date);
+  const all = storage.get<Record<string, Record<string, StoredSolution>>>(SOLUTIONS_KEY, {});
+  const day = all[key] ?? {};
+  // No pisar una solution ya guardada (respeta el primer intento).
+  if (day[gameId]) return;
+  day[gameId] = { gameId, date: key, solution };
+  all[key] = day;
+  storage.set(SOLUTIONS_KEY, all);
+}
+
+/** Devuelve todas las solutions guardadas para una fecha. */
+export function getSolutionsForDate(date: Date = new Date()): StoredSolution[] {
+  const key = dateKey(date);
+  const all = storage.get<Record<string, Record<string, StoredSolution>>>(SOLUTIONS_KEY, {});
+  const day = all[key] ?? {};
+  return Object.values(day);
+}
+
+/** Borra todas las solutions guardadas (ej: al cambiar de cuenta). */
+export function clearSolutions(): void {
+  storage.remove(SOLUTIONS_KEY);
 }
