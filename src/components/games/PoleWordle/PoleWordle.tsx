@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { GameProps } from "@/types";
 import { DRIVERS, fullName } from "@/data";
 import { getDriverPoolAtLeast } from "@/lib/filters";
@@ -76,6 +76,10 @@ export function PoleWordle({ difficulty, date, status, onWin, onLose }: GameProp
   const [guesses, setGuesses] = useState<string[]>([]);
   const [current, setCurrent] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // Input escondido usado en mobile para abrir el teclado del sistema
+  // operativo. En desktop no es necesario (el teclado físico funciona vía
+  // el listener de window.keydown).
+  const mobileInputRef = useRef<HTMLInputElement>(null);
 
   const solved = guesses.some((g) => g === answer);
   const finished = status !== "playing" || solved || guesses.length >= MAX_ATTEMPTS;
@@ -133,9 +137,15 @@ export function PoleWordle({ difficulty, date, status, onWin, onLose }: GameProp
     [current.length, len, locked, submit],
   );
 
-  // Soporte de teclado fisico.
+  // Soporte de teclado fisico (desktop). Se ignora cuando el foco esta en
+  // un input/textarea, para evitar doble-input cuando el usuario usa el
+  // teclado del OS en mobile via el input escondido.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const active = document.activeElement;
+      if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA")) {
+        return;
+      }
       if (e.key === "Enter") press("ENTER");
       else if (e.key === "Backspace") press("DEL");
       else {
@@ -148,7 +158,7 @@ export function PoleWordle({ difficulty, date, status, onWin, onLose }: GameProp
   }, [press]);
 
   return (
-    <Panel className="flex flex-col items-center">
+    <Panel className="relative flex flex-col items-center">
       <p className="eyebrow mb-1">Apellido del piloto</p>
       <p className="mb-2 max-w-xs text-center text-sm text-ink-muted">
         Adivina el apellido en {MAX_ATTEMPTS} intentos. Verde = letra y posicion
@@ -158,8 +168,46 @@ export function PoleWordle({ difficulty, date, status, onWin, onLose }: GameProp
         {len} letras &middot; {MAX_ATTEMPTS} intentos
       </p>
 
-      {/* Grilla */}
-      <div className="flex flex-col gap-1.5">
+      {/* Input escondido: al enfocarse abre el teclado del OS en mobile.
+          En desktop se ignora (el usuario usa su teclado físico). El input
+          se enfoca automáticamente al montar y al tocar la grilla. */}
+      <input
+        ref={mobileInputRef}
+        type="text"
+        inputMode="text"
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="characters"
+        spellCheck={false}
+        value={current}
+        maxLength={len}
+        onChange={(e) => {
+          if (locked) return;
+          // Aceptar solo letras A-Z (sin acentos ni ñ, coherente con el dataset).
+          const v = e.target.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, len);
+          setCurrent(v);
+          setError(null);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            submit();
+          }
+        }}
+        // sr-only NO se usa: iOS a veces no abre teclado si no hay tamaño real.
+        // Se hace transparente y posicionado sobre la grilla.
+        className="absolute inset-x-0 top-0 h-0 w-full opacity-0"
+        aria-label="Escribí el apellido"
+        disabled={locked}
+      />
+
+      {/* Grilla — tocarla enfoca el input para abrir el teclado del OS. */}
+      <button
+        type="button"
+        onClick={() => mobileInputRef.current?.focus()}
+        className="flex flex-col gap-1.5 focus:outline-none"
+        aria-label="Abrir teclado para escribir"
+      >
         {Array.from({ length: MAX_ATTEMPTS }).map((_, row) => {
           const guess = guesses[row];
           const isCurrentRow = row === guesses.length && !locked;
@@ -194,7 +242,7 @@ export function PoleWordle({ difficulty, date, status, onWin, onLose }: GameProp
             </div>
           );
         })}
-      </div>
+      </button>
 
       {/* Mensaje de error / revelacion */}
       <div className="mt-4 h-6 text-center text-sm">
