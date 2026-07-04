@@ -1,0 +1,154 @@
+// src/i18n/nl.ts — Nederlandse vertalingen.
+
+import type { Translations } from "./types";
+
+const nl: Translations = {
+  "home.eyebrow": "Uitdagingen van vandaag",
+  "home.title": "{{count}} uitdagingen. Één dag.",
+  "home.subtitle":
+    "Elke dag om middernacht een nieuwe set Formule 1-minigames. Geen registratie nodig: je voortgang wordt op dit apparaat opgeslagen.",
+  "home.completed": "{{done}} van {{total}} voltooid",
+  "home.streak": "{{count}}-daagse reeks",
+  "home.day_singular": "dag", "home.day_plural": "dagen",
+  "home.play_now": "Nu spelen", "home.come_back": "Kom morgen terug",
+  "home.solved": "Opgelost", "home.played": "Gespeeld", "home.unplayed": "Niet gespeeld",
+  "home.num.3": "Drie", "home.num.4": "Vier", "home.num.5": "Vijf",
+  "home.num.6": "Zes", "home.num.7": "Zeven", "home.num.8": "Acht",
+
+  "game.pittexto.name": "Pit Tekst",
+  "game.pittexto.tagline": "Raad de geheime coureur. Elke poging vertelt je hoe dichtbij je bent.",
+  "game.polewordle.name": "PoleWordle",
+  "game.polewordle.tagline": "Raad de achternaam van de coureur, Wordle-stijl, in 6 pogingen.",
+  "game.el-intruso.name": "De Indringer",
+  "game.el-intruso.tagline": "Negen van de tien coureurs delen iets. Tik op degene die er niet bij hoort.",
+  "game.parrilla-bingo.name": "Grid Bingo",
+  "game.parrilla-bingo.tagline": "Plaats in elke cel een coureur die bij zowel het team als de voorwaarde past.",
+
+  "shell.daily_challenge": "Dagelijkse uitdaging", "shell.difficulty": "Moeilijkheid",
+  "shell.time": "Tijd", "shell.time_limit": "Tijdslimiet: {{seconds}} seconden",
+  "shell.no_time_limit": "Geen tijdslimiet", "shell.start": "Start",
+  "shell.surrender": "Opgeven", "shell.no": "Nee",
+  "shell.back": "Home", "shell.back_label": "Terug naar home",
+
+  "diff.facil": "Makkelijk", "diff.medio": "Gemiddeld", "diff.dificil": "Moeilijk", "diff.leyenda": "Legende",
+  "diff.hint.facil": "Recent grid (laatste seizoenen)",
+  "diff.hint.medio": "Hybride & V8-tijdperk (vanaf 2006)",
+  "diff.hint.dificil": "Modern tijdperk (vanaf 1990)",
+  "diff.hint.leyenda": "De gehele F1-geschiedenis",
+
+  "result.won_title": "Uitdaging voltooid", "result.lost_title": "Poging beëindigd",
+  "result.won_msg": "Goed gedaan!", "result.lost_msg": "Niet deze keer.",
+  "result.won_sub": "Je hebt deze uitdaging aan je reeks toegevoegd.",
+  "result.lost_sub": "Bekijk de juiste antwoorden op het bord.",
+  "result.points": "punten",
+  "result.not_ranked": "Een andere speler heeft deze uitdaging vandaag al vanaf jouw verbinding gespeeld, dus je resultaat telt niet mee voor de wereldranglijst. Het is wel opgeslagen in je geschiedenis.",
+  "result.view_board": "Bord bekijken", "result.view_ranking": "Ranglijst van vandaag",
+  "result.go_home": "Terug naar home", "result.come_back": "Kom morgen terug voor een nieuwe uitdaging",
+
+  "leave.title": "Verlaten en uitdaging opgeven?",
+  "leave.msg": "Als je nu vertrekt, telt deze uitdaging als verloren en kun je hem pas morgen opnieuw spelen. Je reeks wordt onderbroken.",
+  "leave.confirm": "Ja, verlaten en opgeven", "leave.cancel": "Doorspelen",
+
+  "locked.won": "Je hebt de uitdaging van vandaag al opgelost.",
+  "locked.lost": "Je hebt de uitdaging van vandaag al gespeeld.",
+  "locked.wait": "Kom morgen terug voor een nieuwe uitdaging",
+
+  "banner.won": "Uitdaging voltooid", "banner.lost": "Uitdaging mislukt", "banner.summary": "Samenvatting",
+
+  "header.home_label": "Box Daily Box - home", "header.streak_title": "{{count}}-daagse reeks",
+  "header.profile_label": "Profiel bewerken", "header.stats_label": "Statistieken bekijken", "header.stats": "Stats",
+
+  "footer.line1": "Box Box Daily · Fanproject, geen officiële band met Formule 1.",
+  "footer.line2": "Elke dag om middernacht een nieuwe uitdaging.",
+
+  "profile.title": "Jouw profiel",
+  "profile.subtitle": "Je verschijnt in de wereldranglijst met deze naam en dit land.",
+  "profile.name_label": "Naam (zichtbaar in ranglijst)", "profile.name_placeholder": "Je naam of bijnaam",
+  "profile.name_locked": "Je kunt het weer wijzigen in {{month}}. Je hebt je naamswijziging deze maand al gebruikt.",
+  "profile.name_warn": "⚠️ Je kunt je naam slechts 1 keer per maand wijzigen. Kies goed voor je opslaat.",
+  "profile.country_label": "Land", "profile.country_detecting": "(wordt gedetecteerd...)",
+  "profile.country_select": "Selecteer je land", "profile.country_fixed": "(vast)",
+  "profile.country_warn": "⚠️ Eenmaal opgeslagen, kun je het niet meer wijzigen.",
+  "profile.save": "Opslaan", "profile.saving": "Opslaan...", "profile.cancel": "Annuleren",
+  "profile.save_error": "Opslaan mislukt. Probeer het opnieuw.",
+  "profile.sync_label": "Synchroniseren tussen apparaten",
+  "profile.logged_as": "Ingelogd als:", "profile.logout": "Uitloggen",
+  "profile.google_login": "Inloggen met Google",
+  "profile.logged_hint": "Je voortgang wordt gesynchroniseerd op al je apparaten.",
+  "profile.login_hint": "Optioneel. Inloggen laat je op meerdere apparaten spelen met hetzelfde account.",
+
+  "stats.title": "Statistieken", "stats.no_name": "Geen naam", "stats.edit_profile": "Profiel bewerken",
+  "stats.tab_global": "Wereldranglijst", "stats.tab_personal": "Mijn Voortgang",
+  "stats.won": "Gewonnen", "stats.lost": "Verloren", "stats.win_rate": "Win %", "stats.streak": "Reeks",
+  "stats.best_streak": "Beste reeks", "stats.days": "dagen",
+  "stats.no_persistent": "Permanente opslag is niet beschikbaar in deze browser. Je voortgang wordt alleen tijdens deze sessie opgeslagen.",
+  "stats.reset_confirm": "Dit verwijdert je statistieken en punten. Vandaag gespeelde uitdagingen blijven vergrendeld tot morgen. Deze actie kan niet ongedaan worden gemaakt.",
+  "stats.reset_yes": "Ja, alles verwijderen", "stats.reset_cancel": "Annuleren", "stats.reset": "Voortgang resetten",
+
+  "ranking.title": "Wereldranglijst", "ranking.tab_today": "Vandaag",
+  "ranking.all_countries": "Alle landen", "ranking.loading": "Ranglijst laden...",
+  "ranking.error": "Ranglijst kon niet worden geladen", "ranking.retry": "Opnieuw proberen",
+  "ranking.empty_daily": "Niemand heeft vandaag gespeeld. Wees de eerste!",
+  "ranking.empty_monthly": "Geen resultaten deze maand.",
+  "ranking.anonymous": "Anoniem", "ranking.you": "(jij)",
+  "ranking.challenges_won": "{{count}} {{label}} gewonnen",
+  "ranking.challenge_singular": "uitdaging", "ranking.challenge_plural": "uitdagingen",
+  "ranking.pts": "ptn",
+  "ranking.monthly_note": "De maandelijkse ranglijst wordt op de 1e van elke maand gereset.",
+  "ranking.daily_note": "De dagelijkse ranglijst toont de resultaten van vandaag.",
+
+  "monthly.title": "Ranglijst {{month}}", "monthly.challenges_won": "{{count}} uitdagingen gewonnen",
+  "monthly.points_month": "punten deze maand",
+  "monthly.no_wins": "Je hebt deze maand nog geen uitdagingen gewonnen. Scoor je eerste punten!",
+  "monthly.best_day": "Beste dag: {{day}} ({{points}} ptn)",
+  "monthly.scoring_title": "Hoe werkt de score?",
+  "monthly.scoring_body": "Alleen gewonnen uitdagingen tellen. Basispunten per moeilijkheid: Makkelijk {{easy}}, Gemiddeld {{medium}}, Moeilijk {{hard}}, Legende {{legend}}. Hoe sneller je klaar bent, hoe meer snelheidsbonus (tot +120). Opgeven telt als verlies (0 punten).",
+  "monthly.disclaimer": "Deze ranglijst is persoonlijk en lokaal (opgeslagen op je apparaat) en bevat al je punten, inclusief die niet meetelden voor de wereldranglijst. De wereldranglijst wordt op de server berekend, die elk antwoord onafhankelijk verifieert. Kleine puntenverschillen met de wereldranglijst zijn normaal.",
+
+  "rank.position": "Positie #{{rank}}", "rank.your_position": "Jouw positie vandaag",
+  "rank.world_ranking": "Wereldranglijst", "rank.of_players": "van {{count}}",
+  "rank.badge_title": "Positie in de dagelijkse ranglijst van {{count}} spelers",
+
+  "auth.loading": "Inloggen...", "auth.linking": "Je Google-account wordt gekoppeld",
+  "auth.error": "Fout", "auth.cancelled": "Authenticatie geannuleerd",
+  "auth.no_code": "Geen autorisatiecode", "auth.failed": "Inloggen mislukt",
+  "auth.redirecting": "Doorverwijzen...",
+
+  "pittexto.placeholder": "Typ een achternaam…", "pittexto.found": "Gevonden:", "pittexto.answer_was": "De coureur was:",
+  "pittexto.eyebrow": "Raad de coureur",
+  "pittexto.hint": "Elke poging toont de gelijkenis met de geheime coureur. Heter = dichterbij.",
+  "pittexto.attempt": "Poging {{current}} van {{max}}",
+
+  "polewordle.not_in_list": "Niet in de coureurslijst",
+  "polewordle.eyebrow": "Achternaam coureur",
+  "polewordle.hint": "Raad de achternaam in {{max}} pogingen. Groen = juiste letter en positie; geel = letter aanwezig maar verkeerde positie; grijs = niet aanwezig.",
+  "polewordle.grid_info": "{{len}} letters · {{max}} pogingen",
+  "polewordle.length_error": "De achternaam heeft {{len}} letters",
+  "polewordle.was": "Het was", "polewordle.correct": "Correct!",
+  "polewordle.input_label": "Typ de achternaam", "polewordle.grid_label": "Toetsenbord openen om te typen",
+
+  "intruso.confirm": "Indringer bevestigen", "intruso.select": "Selecteer een coureur",
+  "intruso.eyebrow": "De Indringer",
+  "intruso.hint": "9 van 10 coureurs delen iets. Vind degene die er niet bij hoort.",
+  "intruso.rule_label": "De andere 9",
+
+  "bingo.pick_driver": "Coureur kiezen", "bingo.drove_for": "reed voor {{team}}",
+  "bingo.nationality": "nationaliteit {{name}}", "bingo.world_champion": "wereldkampioen",
+  "bingo.eyebrow": "Grid Bingo",
+  "bingo.hint": "Vul elke cel met een coureur die past bij het team van de rij en de voorwaarde van de kolom. Geen herhalingen.",
+  "bingo.cells_count": "{{filled}} van 9 cellen",
+  "bingo.reveal_hint": "Grijze cellen tonen een geldig voorbeeld.",
+  "bingo.search_placeholder": "Coureur zoeken…", "bingo.no_match": "Geen overeenkomende coureurs.",
+  "bingo.already_used": "{{name}} staat al in een andere cel.",
+  "bingo.does_not_match": "{{name}} voldoet niet: {{rule}}.",
+  "bingo.in_cell": "In de cel:", "bingo.remove": "Verwijderen",
+  "bingo.empty_cell": "Lege cel", "bingo.example": "bijv.", "bingo.champion_label": "Kampioen",
+
+  "month.0": "januari", "month.1": "februari", "month.2": "maart", "month.3": "april",
+  "month.4": "mei", "month.5": "juni", "month.6": "juli", "month.7": "augustus",
+  "month.8": "september", "month.9": "oktober", "month.10": "november", "month.11": "december",
+
+  "lang.label": "Taal",
+};
+
+export default nl;

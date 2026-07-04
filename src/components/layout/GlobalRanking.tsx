@@ -4,40 +4,32 @@ import {
   apiGetDailyRanking,
   type RankingEntry,
 } from "@/lib/api";
+import { useI18n } from "@/context";
 import { getIdentity } from "@/lib/identity";
 import { NATIONALITIES } from "@/data/nationalities";
 import { Trophy } from "@/components/ui/Icon";
-
-const MONTHS_ES = [
-  "enero", "febrero", "marzo", "abril", "mayo", "junio",
-  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
-];
 
 type Tab = "monthly" | "daily";
 
 /** Ranking global que consume la API del servidor. */
 export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
+  const { t } = useI18n();
   const [tab, setTab] = useState<Tab>("daily");
   const [countryFilter, setCountryFilter] = useState<string>("");
   const [entries, setEntries] = useState<RankingEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  // Se incrementa al tocar "Reintentar" para forzar un refetch.
   const [retryTick, setRetryTick] = useState(0);
 
   const { userId } = getIdentity();
   const now = new Date();
-  const monthName = MONTHS_ES[now.getMonth()] ?? "";
+  const monthName = t(`month.${now.getMonth()}`);
 
-  // Lista de paises para el filtro (solo los que tienen nombre).
   const countries = useMemo(() => {
     return Object.values(NATIONALITIES)
       .sort((a, b) => a.name.localeCompare(b.name));
   }, []);
 
-  // Refrescar cuando cambia tab, pais, refreshKey o retry.
-  // El flag `cancelled` evita que una respuesta lenta de un fetch viejo
-  // pise los datos de uno más nuevo (race condition al cambiar tab/país rápido).
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -70,7 +62,7 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
         <div className="flex items-center gap-2">
           <Trophy size={18} />
           <h3 className="font-display text-sm uppercase tracking-wide text-ink">
-            Ranking Global
+            {t("ranking.title")}
           </h3>
         </div>
       </div>
@@ -78,7 +70,7 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
       {/* Tabs */}
       <div className="mt-3 flex gap-1 rounded-lg border border-white/10 bg-asphalt-800 p-1">
         <TabBtn active={tab === "daily"} onClick={() => setTab("daily")}>
-          Hoy
+          {t("ranking.tab_today")}
         </TabBtn>
         <TabBtn active={tab === "monthly"} onClick={() => setTab("monthly")}>
           {monthName.charAt(0).toUpperCase() + monthName.slice(1)}
@@ -92,7 +84,7 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
           onChange={(e) => setCountryFilter(e.target.value)}
           className="w-full rounded-lg border border-white/10 bg-asphalt-700 px-3 py-2 text-sm text-ink"
         >
-          <option value="">Todos los paises</option>
+          <option value="">{t("ranking.all_countries")}</option>
           {countries.map((n) => (
             <option key={n.code} value={n.code}>
               {n.flag} {n.name}
@@ -104,26 +96,24 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
       {/* Contenido */}
       <div className="mt-3">
         {loading && (
-          <p className="py-6 text-center text-sm text-ink-faint">Cargando ranking...</p>
+          <p className="py-6 text-center text-sm text-ink-faint">{t("ranking.loading")}</p>
         )}
 
         {error && !loading && (
           <div className="py-6 text-center">
-            <p className="text-sm text-ink-faint">No se pudo cargar el ranking</p>
+            <p className="text-sm text-ink-faint">{t("ranking.error")}</p>
             <button
-              onClick={() => setRetryTick((t) => t + 1)}
+              onClick={() => setRetryTick((v) => v + 1)}
               className="mt-2 text-xs text-racing-400 underline"
             >
-              Reintentar
+              {t("ranking.retry")}
             </button>
           </div>
         )}
 
         {!loading && !error && entries.length === 0 && (
           <p className="py-6 text-center text-sm text-ink-faint">
-            {tab === "daily"
-              ? "Nadie jugo hoy todavia. Se el primero!"
-              : "Sin resultados este mes."}
+            {tab === "daily" ? t("ranking.empty_daily") : t("ranking.empty_monthly")}
           </p>
         )}
 
@@ -134,6 +124,10 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
               const flag = entry.countryCode
                 ? (NATIONALITIES[entry.countryCode]?.flag ?? "🏁")
                 : "🏁";
+              const challengeLabel =
+                entry.gamesWon === 1
+                  ? t("ranking.challenge_singular")
+                  : t("ranking.challenge_plural");
 
               return (
                 <div
@@ -145,7 +139,6 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
                       : "border border-transparent bg-asphalt-700/50",
                   ].join(" ")}
                 >
-                  {/* Posicion */}
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-asphalt-600 text-xs font-bold text-ink-muted">
                     {entry.rank <= 3 ? (
                       <span className={MEDAL_COLOR[entry.rank] ?? ""}>
@@ -156,7 +149,6 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
                     )}
                   </div>
 
-                  {/* Nombre + pais */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm">{flag}</span>
@@ -166,23 +158,25 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
                           isMe ? "text-white" : "text-ink",
                         ].join(" ")}
                       >
-                        {entry.displayName || "Anónimo"}
+                        {entry.displayName || t("ranking.anonymous")}
                         {isMe && (
-                          <span className="ml-1.5 text-xs text-racing-400">(vos)</span>
+                          <span className="ml-1.5 text-xs text-racing-400">{t("ranking.you")}</span>
                         )}
                       </span>
                     </div>
                     <span className="text-xs text-ink-faint">
-                      {entry.gamesWon} {entry.gamesWon === 1 ? "reto" : "retos"} ganados
+                      {t("ranking.challenges_won", {
+                        count: entry.gamesWon,
+                        label: challengeLabel,
+                      })}
                     </span>
                   </div>
 
-                  {/* Puntos */}
                   <div className="text-right">
                     <span className="tnum font-display text-lg font-bold text-white">
                       {entry.points}
                     </span>
-                    <span className="ml-1 text-xs text-ink-faint">pts</span>
+                    <span className="ml-1 text-xs text-ink-faint">{t("ranking.pts")}</span>
                   </div>
                 </div>
               );
@@ -193,15 +187,11 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
 
       {/* Info */}
       <p className="mt-3 text-center text-[11px] text-ink-faint">
-        {tab === "monthly"
-          ? "El ranking mensual se reinicia el 1 de cada mes."
-          : "El ranking diario muestra los resultados de hoy."}
+        {tab === "monthly" ? t("ranking.monthly_note") : t("ranking.daily_note")}
       </p>
     </section>
   );
 }
-
-// ─── Helpers ──────────────────────────────────────────────────────────
 
 function TabBtn({
   active,
@@ -217,9 +207,7 @@ function TabBtn({
       onClick={onClick}
       className={[
         "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-        active
-          ? "bg-asphalt-600 text-white"
-          : "text-ink-faint hover:text-ink",
+        active ? "bg-asphalt-600 text-white" : "text-ink-faint hover:text-ink",
       ].join(" ")}
     >
       {children}

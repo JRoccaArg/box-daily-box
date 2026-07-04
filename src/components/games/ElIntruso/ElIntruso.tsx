@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { GameProps } from "@/types";
 import { buildIntruso } from "./intruso.logic";
 import { DriverCard } from "@/components/games/shared/DriverCard";
+import { useI18n } from "@/context";
 import { Panel } from "@/components/ui/Panel";
 import { Button } from "@/components/ui/Button";
 
@@ -10,6 +11,7 @@ import { Button } from "@/components/ui/Button";
  * El usuario debe identificar al intruso. La regla se revela al terminar.
  */
 export function ElIntruso({ difficulty, date, status, onWin, onLose }: GameProps) {
+  const { t } = useI18n();
   const puzzle = useMemo(() => buildIntruso(difficulty, date), [difficulty, date]);
 
   const [selected, setSelected] = useState<string | null>(null);
@@ -18,8 +20,6 @@ export function ElIntruso({ difficulty, date, status, onWin, onLose }: GameProps
   const finished = status !== "playing";
   const revealed = submittedId !== null || finished;
 
-  // Si el shell fuerza el fin (rendirse/tiempo) sin envio previo, igual se
-  // revela el intruso real.
   useEffect(() => {
     if (finished && submittedId === null) setSelected(null);
   }, [finished, submittedId]);
@@ -33,9 +33,9 @@ export function ElIntruso({ difficulty, date, status, onWin, onLose }: GameProps
 
   return (
     <Panel>
-      <p className="eyebrow speed-bar pl-1">El intruso</p>
+      <p className="eyebrow speed-bar pl-1">{t("intruso.eyebrow")}</p>
       <p className="mt-2 text-sm text-ink-muted">
-        9 de estos 10 pilotos comparten algo en comun. Encontra al que no encaja.
+        {t("intruso.hint")}
       </p>
 
       <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-5">
@@ -66,13 +66,13 @@ export function ElIntruso({ difficulty, date, status, onWin, onLose }: GameProps
 
       {revealed ? (
         <div className="mt-5 rounded-lg border border-white/10 bg-asphalt-700 px-4 py-3 text-center">
-          <p className="eyebrow">Los otros 9</p>
+          <p className="eyebrow">{t("intruso.rule_label")}</p>
           <p className="mt-1 font-display text-lg font-semibold text-white">{puzzle.rule}</p>
         </div>
       ) : (
         <div className="mt-5">
           <Button block disabled={!selected} onClick={confirm}>
-            {selected ? "Confirmar intruso" : "Selecciona un piloto"}
+            {selected ? t("intruso.confirm") : t("intruso.select")}
           </Button>
         </div>
       )}

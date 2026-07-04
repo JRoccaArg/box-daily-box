@@ -2,20 +2,9 @@ import { useMemo } from "react";
 import { getMonthlyScore } from "@/lib/stats";
 import { BASE_POINTS } from "@/lib/scoring";
 import { gameById } from "@/components/games/registry";
+import { useI18n } from "@/context";
 import { Trophy, Flame } from "@/components/ui/Icon";
 import type { Difficulty } from "@/types";
-
-const MONTHS_ES = [
-  "enero", "febrero", "marzo", "abril", "mayo", "junio",
-  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
-];
-
-const DIFF_LABEL: Record<Difficulty, string> = {
-  facil: "Fácil",
-  medio: "Medio",
-  dificil: "Difícil",
-  leyenda: "Leyenda",
-};
 
 const DIFF_ACCENT: Record<Difficulty, string> = {
   facil: "text-sector-green",
@@ -29,12 +18,12 @@ const DIFF_ACCENT: Record<Difficulty, string> = {
  * recalculados desde el progreso guardado. Es local (no compite con otros).
  */
 export function MonthlyRanking({ refreshKey }: { refreshKey?: number }) {
-  // refreshKey permite recomputar cuando cambia el progreso.
+  const { t } = useI18n();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const score = useMemo(() => getMonthlyScore(), [refreshKey]);
 
   const now = new Date();
-  const monthName = MONTHS_ES[now.getMonth()] ?? "";
+  const monthName = t(`month.${now.getMonth()}`);
   const maxDaily = Math.max(1, ...score.daily.map((d) => d.points));
   const today = now.getDate();
 
@@ -50,21 +39,23 @@ export function MonthlyRanking({ refreshKey }: { refreshKey?: number }) {
         <div className="flex items-center gap-2">
           <Trophy size={18} />
           <h3 className="font-display text-sm uppercase tracking-wide text-ink">
-            Ranking de {monthName}
+            {t("monthly.title", { month: monthName })}
           </h3>
         </div>
-        <span className="text-xs text-ink-faint">{score.gamesWon} retos ganados</span>
+        <span className="text-xs text-ink-faint">
+          {t("monthly.challenges_won", { count: score.gamesWon })}
+        </span>
       </div>
 
       {/* Total del mes */}
       <div className="mt-3 flex items-end gap-2">
         <span className="tnum font-display text-4xl leading-none text-white">{score.total}</span>
-        <span className="mb-1 text-sm text-ink-muted">puntos este mes</span>
+        <span className="mb-1 text-sm text-ink-muted">{t("monthly.points_month")}</span>
       </div>
 
       {score.gamesWon === 0 ? (
         <p className="mt-3 text-sm text-ink-faint">
-          Todavía no ganaste retos este mes. ¡Sumá tus primeros puntos!
+          {t("monthly.no_wins")}
         </p>
       ) : (
         <>
@@ -77,7 +68,7 @@ export function MonthlyRanking({ refreshKey }: { refreshKey?: number }) {
                 return (
                   <div
                     key={d.day}
-                    title={`Día ${d.day}: ${d.points} pts`}
+                    title={`${d.day}: ${d.points} pts`}
                     className={[
                       "flex-1 rounded-sm transition-colors",
                       d.points > 0 ? "bg-racing" : "bg-white/5",
@@ -90,7 +81,11 @@ export function MonthlyRanking({ refreshKey }: { refreshKey?: number }) {
             </div>
             {score.bestDay && (
               <p className="mt-1.5 flex items-center gap-1 text-xs text-ink-faint">
-                <Flame size={12} /> Mejor día: {score.bestDay.day} ({score.bestDay.points} pts)
+                <Flame size={12} />
+                {t("monthly.best_day", {
+                  day: score.bestDay.day,
+                  points: score.bestDay.points,
+                })}
               </p>
             )}
           </div>
@@ -103,7 +98,7 @@ export function MonthlyRanking({ refreshKey }: { refreshKey?: number }) {
                 className="rounded-lg border border-white/5 bg-asphalt-700 px-2 py-2 text-center"
               >
                 <div className={["text-[11px] font-semibold", DIFF_ACCENT[d]].join(" ")}>
-                  {DIFF_LABEL[d]}
+                  {t(`diff.${d}`)}
                 </div>
                 <div className="tnum mt-0.5 font-mono text-sm text-ink">
                   {score.byDifficulty[d]}
@@ -126,23 +121,22 @@ export function MonthlyRanking({ refreshKey }: { refreshKey?: number }) {
 
       {/* Como se puntua */}
       <details className="mt-4 text-xs text-ink-faint">
-        <summary className="cursor-pointer select-none text-ink-muted">¿Cómo se puntúa?</summary>
+        <summary className="cursor-pointer select-none text-ink-muted">
+          {t("monthly.scoring_title")}
+        </summary>
         <p className="mt-2 leading-relaxed">
-          Solo suman los retos <strong>ganados</strong>. Puntos base por dificultad: Fácil{" "}
-          {BASE_POINTS.facil}, Medio {BASE_POINTS.medio}, Difícil {BASE_POINTS.dificil}, Leyenda{" "}
-          {BASE_POINTS.leyenda}. Cuanto <strong>menos tardes</strong>, más bonus de rapidez (hasta
-          +120). Abandonar un reto cuenta como derrota (0 puntos).
+          {t("monthly.scoring_body", {
+            easy: BASE_POINTS.facil,
+            medium: BASE_POINTS.medio,
+            hard: BASE_POINTS.dificil,
+            legend: BASE_POINTS.leyenda,
+          })}
         </p>
       </details>
 
       {/* Nota de seguridad honesta */}
       <p className="mt-3 rounded-lg border border-white/5 bg-asphalt-700/60 px-3 py-2 text-[11px] leading-relaxed text-ink-faint">
-        Este ranking es <strong>personal y local</strong> (se guarda en tu dispositivo)
-        y suma <strong>todos</strong> tus puntos, incluidos los que no entraron al
-        ranking global (por ejemplo, cuando otra cuenta de tu conexión jugó primero
-        ese reto). El ranking global se calcula en el servidor, que verifica cada
-        respuesta de forma independiente. Pequeñas diferencias de puntos con el
-        global son normales (distinta medición de tiempo).
+        {t("monthly.disclaimer")}
       </p>
     </section>
   );

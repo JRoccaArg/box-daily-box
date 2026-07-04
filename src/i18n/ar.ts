@@ -1,0 +1,154 @@
+// src/i18n/ar.ts — الترجمة العربية.
+
+import type { Translations } from "./types";
+
+const ar: Translations = {
+  "home.eyebrow": "تحديات اليوم",
+  "home.title": "{{count}} تحديات. يوم واحد.",
+  "home.subtitle":
+    "مجموعة جديدة من ألعاب الفورمولا 1 المصغرة كل يوم عند منتصف الليل. بدون تسجيل: يُحفظ تقدمك على هذا الجهاز.",
+  "home.completed": "{{done}} من {{total}} مكتملة",
+  "home.streak": "سلسلة {{count}} {{day}}",
+  "home.day_singular": "يوم", "home.day_plural": "أيام",
+  "home.play_now": "العب الآن", "home.come_back": "عُد غداً",
+  "home.solved": "تم الحل", "home.played": "تم اللعب", "home.unplayed": "لم يُلعب",
+  "home.num.3": "ثلاثة", "home.num.4": "أربعة", "home.num.5": "خمسة",
+  "home.num.6": "ستة", "home.num.7": "سبعة", "home.num.8": "ثمانية",
+
+  "game.pittexto.name": "بيت تكست",
+  "game.pittexto.tagline": "اكتشف السائق الغامض. كل محاولة تخبرك بمدى قربك.",
+  "game.polewordle.name": "PoleWordle",
+  "game.polewordle.tagline": "اكتشف اسم عائلة السائق بأسلوب Wordle في 6 محاولات.",
+  "game.el-intruso.name": "الدخيل",
+  "game.el-intruso.tagline": "تسعة من عشرة سائقين يشتركون في شيء. اضغط على من لا ينتمي.",
+  "game.parrilla-bingo.name": "بينغو الشبكة",
+  "game.parrilla-bingo.tagline": "ضع في كل خانة سائقاً يطابق الفريق والشرط.",
+
+  "shell.daily_challenge": "تحدي اليوم", "shell.difficulty": "الصعوبة",
+  "shell.time": "الوقت", "shell.time_limit": "حد الوقت: {{seconds}} ثانية",
+  "shell.no_time_limit": "بدون حد زمني", "shell.start": "ابدأ",
+  "shell.surrender": "استسلم", "shell.no": "لا",
+  "shell.back": "الرئيسية", "shell.back_label": "العودة للرئيسية",
+
+  "diff.facil": "سهل", "diff.medio": "متوسط", "diff.dificil": "صعب", "diff.leyenda": "أسطوري",
+  "diff.hint.facil": "الشبكة الحديثة (آخر المواسم)",
+  "diff.hint.medio": "عصر الهايبرد و V8 (منذ 2006)",
+  "diff.hint.dificil": "العصر الحديث (منذ 1990)",
+  "diff.hint.leyenda": "تاريخ الفورمولا 1 بالكامل",
+
+  "result.won_title": "تحدي ناجح", "result.lost_title": "انتهت المحاولة",
+  "result.won_msg": "أحسنت!", "result.lost_msg": "ليس هذه المرة.",
+  "result.won_sub": "أضفت هذا التحدي إلى سلسلتك.",
+  "result.lost_sub": "راجع الإجابات الصحيحة على اللوحة.",
+  "result.points": "نقاط",
+  "result.not_ranked": "لاعب آخر لعب هذا التحدي من اتصالك اليوم، لذا نتيجتك لا تُحتسب في التصنيف العالمي. لكنها محفوظة في سجلك.",
+  "result.view_board": "عرض اللوحة", "result.view_ranking": "عرض تصنيف اليوم",
+  "result.go_home": "العودة للرئيسية", "result.come_back": "عُد غداً لتحدٍ جديد",
+
+  "leave.title": "المغادرة وخسارة التحدي؟",
+  "leave.msg": "إذا غادرت الآن، يُحتسب هذا التحدي كخسارة ولن تتمكن من لعبه حتى الغد. ستنقطع السلسلة.",
+  "leave.confirm": "نعم، غادر واخسر", "leave.cancel": "تابع اللعب",
+
+  "locked.won": "لقد حللت تحدي اليوم بالفعل.",
+  "locked.lost": "لقد لعبت تحدي اليوم بالفعل.",
+  "locked.wait": "عُد غداً لتحدٍ جديد",
+
+  "banner.won": "تحدي ناجح", "banner.lost": "تحدي فاشل", "banner.summary": "عرض الملخص",
+
+  "header.home_label": "Box Daily Box - الرئيسية", "header.streak_title": "سلسلة {{count}} أيام",
+  "header.profile_label": "تعديل الملف الشخصي", "header.stats_label": "عرض الإحصائيات", "header.stats": "إحصائيات",
+
+  "footer.line1": "Box Box Daily · مشروع معجبين، بدون ارتباط رسمي بالفورمولا 1.",
+  "footer.line2": "تحدٍ جديد كل يوم عند منتصف الليل.",
+
+  "profile.title": "ملفك الشخصي",
+  "profile.subtitle": "ستظهر في التصنيف العالمي بهذا الاسم والبلد.",
+  "profile.name_label": "الاسم (ظاهر في التصنيف)", "profile.name_placeholder": "اسمك أو لقبك",
+  "profile.name_locked": "يمكنك تغييره مجدداً في {{month}}. لقد استخدمت تغيير الاسم هذا الشهر.",
+  "profile.name_warn": "⚠️ يمكنك تغيير اسمك مرة واحدة فقط شهرياً. اختر جيداً قبل الحفظ.",
+  "profile.country_label": "البلد", "profile.country_detecting": "(جاري الكشف...)",
+  "profile.country_select": "اختر بلدك", "profile.country_fixed": "(ثابت)",
+  "profile.country_warn": "⚠️ بمجرد الحفظ، لا يمكن تغييره.",
+  "profile.save": "حفظ", "profile.saving": "جاري الحفظ...", "profile.cancel": "إلغاء",
+  "profile.save_error": "تعذر الحفظ. حاول مجدداً.",
+  "profile.sync_label": "مزامنة بين الأجهزة",
+  "profile.logged_as": "مسجل الدخول كـ:", "profile.logout": "تسجيل الخروج",
+  "profile.google_login": "تسجيل الدخول بـ Google",
+  "profile.logged_hint": "تقدمك مُزامن عبر جميع أجهزتك.",
+  "profile.login_hint": "اختياري. تسجيل الدخول يتيح لك اللعب على أجهزة متعددة بنفس الحساب.",
+
+  "stats.title": "الإحصائيات", "stats.no_name": "بدون اسم", "stats.edit_profile": "تعديل الملف",
+  "stats.tab_global": "التصنيف العالمي", "stats.tab_personal": "تقدمي",
+  "stats.won": "فوز", "stats.lost": "خسارة", "stats.win_rate": "نسبة الفوز %", "stats.streak": "سلسلة",
+  "stats.best_streak": "أفضل سلسلة", "stats.days": "أيام",
+  "stats.no_persistent": "التخزين الدائم غير متوفر في هذا المتصفح. سيُحفظ تقدمك فقط خلال هذه الجلسة.",
+  "stats.reset_confirm": "سيؤدي هذا إلى حذف إحصائياتك ونقاطك. التحديات التي لعبتها اليوم ستبقى مقفلة حتى الغد. لا يمكن التراجع عن هذا الإجراء.",
+  "stats.reset_yes": "نعم، احذف الكل", "stats.reset_cancel": "إلغاء", "stats.reset": "إعادة تعيين التقدم",
+
+  "ranking.title": "التصنيف العالمي", "ranking.tab_today": "اليوم",
+  "ranking.all_countries": "جميع الدول", "ranking.loading": "جاري تحميل التصنيف...",
+  "ranking.error": "تعذر تحميل التصنيف", "ranking.retry": "إعادة المحاولة",
+  "ranking.empty_daily": "لم يلعب أحد اليوم بعد. كن الأول!",
+  "ranking.empty_monthly": "لا نتائج هذا الشهر.",
+  "ranking.anonymous": "مجهول", "ranking.you": "(أنت)",
+  "ranking.challenges_won": "{{count}} {{label}} فوز",
+  "ranking.challenge_singular": "تحدي", "ranking.challenge_plural": "تحديات",
+  "ranking.pts": "نقاط",
+  "ranking.monthly_note": "يُعاد تعيين التصنيف الشهري في الأول من كل شهر.",
+  "ranking.daily_note": "التصنيف اليومي يعرض نتائج اليوم.",
+
+  "monthly.title": "تصنيف {{month}}", "monthly.challenges_won": "{{count}} تحديات فوز",
+  "monthly.points_month": "نقاط هذا الشهر",
+  "monthly.no_wins": "لم تفز بأي تحدي هذا الشهر بعد. احصل على أول نقاطك!",
+  "monthly.best_day": "أفضل يوم: {{day}} ({{points}} نقاط)",
+  "monthly.scoring_title": "كيف يُحسب التقييم؟",
+  "monthly.scoring_body": "فقط التحديات التي فُزت بها تُحتسب. نقاط أساسية حسب الصعوبة: سهل {{easy}}، متوسط {{medium}}، صعب {{hard}}، أسطوري {{legend}}. كلما أسرعت، زاد مكافأة السرعة (حتى +120). الاستسلام يُحتسب كخسارة (0 نقاط).",
+  "monthly.disclaimer": "هذا التصنيف شخصي ومحلي (محفوظ على جهازك) ويشمل جميع نقاطك، بما في ذلك تلك التي لم تُحتسب في التصنيف العالمي. التصنيف العالمي يُحسب على الخادم الذي يتحقق من كل إجابة بشكل مستقل. الفروقات الصغيرة في النقاط مع العالمي طبيعية.",
+
+  "rank.position": "المركز #{{rank}}", "rank.your_position": "مركزك اليوم",
+  "rank.world_ranking": "التصنيف العالمي", "rank.of_players": "من {{count}}",
+  "rank.badge_title": "المركز في التصنيف اليومي من {{count}} لاعب",
+
+  "auth.loading": "جاري تسجيل الدخول...", "auth.linking": "جاري ربط حساب Google",
+  "auth.error": "خطأ", "auth.cancelled": "تم إلغاء المصادقة",
+  "auth.no_code": "لا يوجد رمز تفويض", "auth.failed": "تعذر تسجيل الدخول",
+  "auth.redirecting": "جاري إعادة التوجيه...",
+
+  "pittexto.placeholder": "اكتب اسم العائلة…", "pittexto.found": "وجدته:", "pittexto.answer_was": "السائق كان:",
+  "pittexto.eyebrow": "اكتشف السائق",
+  "pittexto.hint": "كل محاولة تُظهر التشابه مع السائق الغامض. أسخن = أقرب.",
+  "pittexto.attempt": "محاولة {{current}} من {{max}}",
+
+  "polewordle.not_in_list": "ليس في قائمة السائقين",
+  "polewordle.eyebrow": "اسم عائلة السائق",
+  "polewordle.hint": "اكتشف اسم العائلة في {{max}} محاولات. أخضر = حرف وموضع صحيح؛ أصفر = الحرف موجود لكن في مكان آخر؛ رمادي = غير موجود.",
+  "polewordle.grid_info": "{{len}} أحرف · {{max}} محاولات",
+  "polewordle.length_error": "اسم العائلة يتكون من {{len}} أحرف",
+  "polewordle.was": "كان", "polewordle.correct": "صحيح!",
+  "polewordle.input_label": "اكتب اسم العائلة", "polewordle.grid_label": "افتح لوحة المفاتيح للكتابة",
+
+  "intruso.confirm": "تأكيد الدخيل", "intruso.select": "اختر سائقاً",
+  "intruso.eyebrow": "الدخيل",
+  "intruso.hint": "9 من 10 سائقين يشتركون في شيء. اعثر على من لا ينتمي.",
+  "intruso.rule_label": "التسعة الآخرون",
+
+  "bingo.pick_driver": "اختر سائقاً", "bingo.drove_for": "سابق في {{team}}",
+  "bingo.nationality": "الجنسية {{name}}", "bingo.world_champion": "بطل العالم",
+  "bingo.eyebrow": "بينغو الشبكة",
+  "bingo.hint": "املأ كل خانة بسائق يطابق فريق الصف وشرط العمود. لا تكرار.",
+  "bingo.cells_count": "{{filled}} من 9 خانات",
+  "bingo.reveal_hint": "الخانات الرمادية تعرض مثالاً صالحاً.",
+  "bingo.search_placeholder": "ابحث عن سائق…", "bingo.no_match": "لا يوجد سائقون مطابقون.",
+  "bingo.already_used": "{{name}} موجود بالفعل في خانة أخرى.",
+  "bingo.does_not_match": "{{name}} لا يطابق: {{rule}}.",
+  "bingo.in_cell": "في الخانة:", "bingo.remove": "إزالة",
+  "bingo.empty_cell": "خانة فارغة", "bingo.example": "مثال", "bingo.champion_label": "بطل",
+
+  "month.0": "يناير", "month.1": "فبراير", "month.2": "مارس", "month.3": "أبريل",
+  "month.4": "مايو", "month.5": "يونيو", "month.6": "يوليو", "month.7": "أغسطس",
+  "month.8": "سبتمبر", "month.9": "أكتوبر", "month.10": "نوفمبر", "month.11": "ديسمبر",
+
+  "lang.label": "اللغة",
+};
+
+export default ar;

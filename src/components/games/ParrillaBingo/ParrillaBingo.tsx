@@ -4,6 +4,7 @@ import { findDriversByText, fullName, nationality, team } from "@/data";
 import { buildBingo, completeGrid } from "./bingo.logic";
 import type { Constraint } from "./bingo.logic";
 import { driverColor } from "../shared/driverColor";
+import { useI18n } from "@/context";
 import { Panel } from "@/components/ui/Panel";
 import { Modal } from "@/components/ui/Modal";
 import { Check, Trophy, Flag, Timer, Stat, Grid as GridIcon } from "@/components/ui/Icon";
@@ -11,13 +12,12 @@ import { Check, Trophy, Flag, Timer, Stat, Grid as GridIcon } from "@/components
 /**
  * Parrilla Bingo: grilla 3x3 donde cada celda es la interseccion de una
  * restriccion de fila (escuderia) y una de columna (nacionalidad o campeon).
- * El jugador coloca un piloto que cumpla AMBAS y no se repita en la grilla.
  */
 export function ParrillaBingo({ difficulty, date, status, onWin }: GameProps) {
+  const { t } = useI18n();
   const puzzle = useMemo(() => buildBingo(difficulty, date), [difficulty, date]);
   const { rows, cols, pool } = puzzle;
 
-  // Asignaciones: indice = fila*3 + columna. Guarda el id del piloto o null.
   const [cells, setCells] = useState<(string | null)[]>(() =>
     new Array<string | null>(9).fill(null),
   );
@@ -25,7 +25,6 @@ export function ParrillaBingo({ difficulty, date, status, onWin }: GameProps) {
 
   const finished = status !== "playing";
 
-  // Acceso rapido id -> piloto dentro del pool del puzzle.
   const driverById = useMemo(() => {
     const m = new Map<string, Driver>();
     for (const d of pool) m.set(d.id, d);
@@ -38,8 +37,6 @@ export function ParrillaBingo({ difficulty, date, status, onWin }: GameProps) {
     return s;
   }, [cells]);
 
-  // Solucion mostrada al terminar: respeta lo que puso el jugador y rellena el
-  // resto con pilotos DISTINTOS (nunca repite un piloto en la grilla).
   const revealIds = useMemo(
     () => (finished ? completeGrid(cells, rows, cols, puzzle.solution) : null),
     [finished, cells, rows, cols, puzzle.solution],
@@ -62,7 +59,6 @@ export function ParrillaBingo({ difficulty, date, status, onWin }: GameProps) {
     setActive(null);
   };
 
-  // Datos de la celda abierta en el modal.
   const activeData = useMemo(() => {
     if (active === null) return null;
     const ri = Math.floor(active / 3);
@@ -74,25 +70,32 @@ export function ParrillaBingo({ difficulty, date, status, onWin }: GameProps) {
     return { row, col, currentId };
   }, [active, rows, cols, cells]);
 
+  /** Texto humano de una restriccion para mensajes de error. */
+  function describe(c: Constraint): string {
+    if (c.kind === "team") return t("bingo.drove_for", { team: c.label });
+    if (c.kind === "nat") return t("bingo.nationality", { name: nationality(c.ref ?? "").name });
+    if (c.kind === "stat") return c.label;
+    return t("bingo.world_champion");
+  }
+
   return (
     <Panel>
-      <p className="eyebrow speed-bar pl-1">Parrilla Bingo</p>
+      <p className="eyebrow speed-bar pl-1">{t("bingo.eyebrow")}</p>
       <p className="mt-2 text-sm text-ink-muted">
-        Completa cada casilla con un piloto que cumpla la escuderia de su fila y
-        la condicion de su columna. No puedes repetir pilotos.
+        {t("bingo.hint")}
       </p>
-      <p className="mt-1 font-mono text-xs text-ink-faint">{filledCount} de 9 casillas</p>
+      <p className="mt-1 font-mono text-xs text-ink-faint">
+        {t("bingo.cells_count", { filled: filledCount })}
+      </p>
 
-      {/* Grilla 3x3 con cabeceras. Primera columna: cabeceras de fila. */}
+      {/* Grilla 3x3 con cabeceras */}
       <div
         className="mt-4 grid gap-1.5"
         style={{ gridTemplateColumns: "minmax(52px, 0.75fr) repeat(3, 1fr)" }}
       >
-        {/* Esquina */}
         <div className="flex items-center justify-center rounded-lg text-ink-faint">
           <GridIcon size={18} />
         </div>
-        {/* Cabeceras de columna */}
         {cols.map((c) => (
           <div
             key={c.key}
@@ -102,7 +105,6 @@ export function ParrillaBingo({ difficulty, date, status, onWin }: GameProps) {
           </div>
         ))}
 
-        {/* Filas */}
         {rows.map((r, ri) => (
           <Fragment key={r.key}>
             <div className="flex items-center justify-center rounded-lg border border-white/10 bg-asphalt-800 p-1.5">
@@ -115,7 +117,7 @@ export function ParrillaBingo({ difficulty, date, status, onWin }: GameProps) {
               const exampleId = finished && !placed ? revealIds?.[idx] ?? null : null;
               const example = exampleId ? driverById.get(exampleId) ?? null : null;
               return (
-                <Cell
+                <BingoCell
                   key={c.key}
                   placed={placed}
                   example={example}
@@ -130,15 +132,15 @@ export function ParrillaBingo({ difficulty, date, status, onWin }: GameProps) {
 
       {finished && (
         <p className="mt-4 text-center text-xs text-ink-faint">
-          Las casillas en gris muestran un ejemplo valido.
+          {t("bingo.reveal_hint")}
         </p>
       )}
 
-      {/* Modal de seleccion de piloto para una celda */}
+      {/* Modal de seleccion de piloto */}
       <Modal
         open={activeData !== null}
         onClose={() => setActive(null)}
-        title="Elegir piloto"
+        title={t("bingo.pick_driver")}
       >
         {activeData && (
           <CellPicker
@@ -149,6 +151,7 @@ export function ParrillaBingo({ difficulty, date, status, onWin }: GameProps) {
             current={activeData.currentId ? driverById.get(activeData.currentId) ?? null : null}
             onPick={(d) => active !== null && assign(active, d)}
             onClear={() => active !== null && clearCell(active)}
+            describe={describe}
           />
         )}
       </Modal>
@@ -156,7 +159,6 @@ export function ParrillaBingo({ difficulty, date, status, onWin }: GameProps) {
   );
 }
 
-/** Devuelve un nuevo Set sin el id indicado (para permitir reemplazar). */
 function excluding(ids: Set<string>, keep: string | null): Set<string> {
   if (!keep) return ids;
   const s = new Set(ids);
@@ -169,6 +171,8 @@ function excluding(ids: Set<string>, keep: string | null): Set<string> {
 /* ===================================================================== */
 
 function ConstraintLabel({ constraint }: { constraint: Constraint }) {
+  const { t } = useI18n();
+
   if (constraint.kind === "team") {
     const color = team(constraint.ref ?? "")?.color ?? "#9CA3AF";
     return (
@@ -213,17 +217,9 @@ function ConstraintLabel({ constraint }: { constraint: Constraint }) {
   return (
     <div className="flex flex-col items-center gap-1 text-center text-sector-yellow">
       <Trophy size={16} />
-      <span className="text-[11px] font-semibold leading-tight">Campeon</span>
+      <span className="text-[11px] font-semibold leading-tight">{t("bingo.champion_label")}</span>
     </div>
   );
-}
-
-/** Texto humano de una restriccion para mensajes de error. */
-function describe(c: Constraint): string {
-  if (c.kind === "team") return `corrió en ${c.label}`;
-  if (c.kind === "nat") return `nacionalidad ${nationality(c.ref ?? "").name}`;
-  if (c.kind === "stat") return c.label;
-  return "campeón del mundo";
 }
 
 /* ===================================================================== */
@@ -243,7 +239,7 @@ function MiniHelmet({ color }: { color: string }) {
   );
 }
 
-function Cell({
+function BingoCell({
   placed,
   example,
   finished,
@@ -254,10 +250,10 @@ function Cell({
   finished: boolean;
   onClick?: () => void;
 }) {
+  const { t } = useI18n();
   const shown = placed ?? example;
   const isHint = !placed && !!example;
 
-  // Estilos segun estado.
   const stateClass = placed
     ? finished
       ? "border-sector-green/60 bg-sector-green/10"
@@ -275,7 +271,7 @@ function Cell({
         "relative flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-lg border-2 p-1 text-center transition-colors",
         stateClass,
       ].join(" ")}
-      aria-label={shown ? shown.lastName : "Casilla vacia"}
+      aria-label={shown ? shown.lastName : t("bingo.empty_cell")}
     >
       {shown ? (
         <>
@@ -290,7 +286,7 @@ function Cell({
           )}
           {isHint && (
             <span className="absolute left-1 top-1 font-mono text-[9px] uppercase text-ink-faint">
-              ej.
+              {t("bingo.example")}
             </span>
           )}
         </>
@@ -313,6 +309,7 @@ function CellPicker({
   current,
   onPick,
   onClear,
+  describe,
 }: {
   row: Constraint;
   col: Constraint;
@@ -321,7 +318,9 @@ function CellPicker({
   current: Driver | null;
   onPick: (d: Driver) => void;
   onClear: () => void;
+  describe: (c: Constraint) => string;
 }) {
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -334,14 +333,14 @@ function CellPicker({
 
   const tryPick = (d: Driver) => {
     if (blockedIds.has(d.id)) {
-      setError(`${d.lastName} ya esta en otra casilla.`);
+      setError(t("bingo.already_used", { name: d.lastName }));
       return;
     }
     const okRow = row.match(d);
     const okCol = col.match(d);
     if (!okRow || !okCol) {
       const falla = !okRow ? describe(row) : describe(col);
-      setError(`${d.lastName} no cumple: ${falla}.`);
+      setError(t("bingo.does_not_match", { name: d.lastName, rule: falla }));
       return;
     }
     onPick(d);
@@ -356,7 +355,6 @@ function CellPicker({
 
   return (
     <div>
-      {/* Par de restricciones de esta celda */}
       <div className="mb-4 flex items-center justify-center gap-3 rounded-lg border border-white/10 bg-asphalt-700 px-3 py-3">
         <ConstraintLabel constraint={row} />
         <span className="font-display text-lg text-ink-faint">×</span>
@@ -371,7 +369,7 @@ function CellPicker({
             setError(null);
           }}
           onKeyDown={onKeyDown}
-          placeholder="Busca un piloto…"
+          placeholder={t("bingo.search_placeholder")}
           autoComplete="off"
           spellCheck={false}
           autoFocus
@@ -393,7 +391,7 @@ function CellPicker({
           </ul>
         )}
         {query.trim() && suggestions.length === 0 && (
-          <p className="mt-2 px-1 text-sm text-ink-faint">Sin pilotos que coincidan.</p>
+          <p className="mt-2 px-1 text-sm text-ink-faint">{t("bingo.no_match")}</p>
         )}
       </div>
 
@@ -407,13 +405,13 @@ function CellPicker({
         <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-asphalt-700 px-3 py-2.5">
           <span className="inline-flex items-center gap-2 text-sm text-ink-muted">
             <span aria-hidden="true">{nationality(current.nationalityCode).flag}</span>
-            En la casilla: <span className="font-semibold text-ink">{current.lastName}</span>
+            {t("bingo.in_cell")} <span className="font-semibold text-ink">{current.lastName}</span>
           </span>
           <button
             onClick={onClear}
             className="rounded-md border border-racing/40 px-2.5 py-1 text-xs font-medium text-racing-400 transition-colors hover:bg-racing/10"
           >
-            Quitar
+            {t("bingo.remove")}
           </button>
         </div>
       )}

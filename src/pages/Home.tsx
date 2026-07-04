@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import type { GameDefinition, DailyGameResult } from "@/types";
 import { GAMES } from "@/components/games/registry";
 import { useStats } from "@/context/StatsContext";
+import { useI18n } from "@/context";
 import { Panel } from "@/components/ui/Panel";
 import { Check, Flag as FlagIcon, ChevronRight, Flame, Trophy } from "@/components/ui/Icon";
 import { RankBadge } from "@/components/layout/RankBadge";
@@ -32,23 +33,21 @@ export function Home() {
 }
 
 function Hero({ done, total, streak }: { done: number; total: number; streak: number }) {
+  const { t } = useI18n();
   const allDone = done === total;
-  // Numero en palabras para el titular, derivado del total real de juegos.
-  const NUM_WORD: Record<number, string> = {
-    3: "Tres", 4: "Cuatro", 5: "Cinco", 6: "Seis", 7: "Siete", 8: "Ocho",
-  };
-  const countWord = NUM_WORD[total] ?? String(total);
+  const countWord = t(`home.num.${total}`) || String(total);
+  const dayLabel = streak === 1 ? t("home.day_singular") : t("home.day_plural");
+
   return (
     <Panel>
       <div className="speed-bar mb-1 pl-1">
-        <p className="eyebrow">Retos de hoy</p>
+        <p className="eyebrow">{t("home.eyebrow")}</p>
       </div>
       <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-        {countWord} desafios. Un dia.
+        {t("home.title", { count: countWord })}
       </h1>
       <p className="mt-2 max-w-prose text-ink-muted">
-        Un set nuevo de minijuegos de Formula 1 cada dia a la medianoche. Sin
-        registro: tu progreso se guarda en este dispositivo.
+        {t("home.subtitle")}
       </p>
 
       <div className="mt-5 flex flex-wrap items-center gap-2.5">
@@ -61,12 +60,12 @@ function Hero({ done, total, streak }: { done: number; total: number; streak: nu
           ].join(" ")}
         >
           {allDone ? <Trophy size={15} /> : <Check size={15} />}
-          {done} de {total} completados
+          {t("home.completed", { done, total })}
         </span>
         {streak > 0 && (
           <span className="inline-flex items-center gap-1.5 rounded-lg border border-racing/30 bg-racing/10 px-3 py-1.5 text-sm font-medium text-racing-400">
             <Flame size={15} />
-            Racha de {streak} {streak === 1 ? "dia" : "dias"}
+            {t("home.streak", { count: streak, day: dayLabel })}
           </span>
         )}
       </div>
@@ -81,6 +80,7 @@ function GameCard({
   game: GameDefinition;
   result: DailyGameResult | null;
 }) {
+  const { t } = useI18n();
   const won = result?.status === "won";
   const lost = result?.status === "lost";
 
@@ -106,9 +106,11 @@ function GameCard({
 
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-lg font-bold tracking-tight text-white">
-            {game.name}
+            {t(`game.${game.id}.name`)}
           </h2>
-          <p className="mt-0.5 text-sm leading-snug text-ink-muted">{game.tagline}</p>
+          <p className="mt-0.5 text-sm leading-snug text-ink-muted">
+            {t(`game.${game.id}.tagline`)}
+          </p>
         </div>
 
         <ChevronRight
@@ -120,7 +122,7 @@ function GameCard({
       <div className="mt-3 flex items-center justify-between border-t border-white/5 pt-3">
         <StatusTag won={won} lost={lost} />
         <span className="font-mono text-[11px] uppercase tracking-wider text-ink-faint">
-          {result ? "Vuelve manana" : "Jugar ahora"}
+          {result ? t("home.come_back") : t("home.play_now")}
         </span>
       </div>
     </Link>
@@ -128,11 +130,12 @@ function GameCard({
 }
 
 function StatusTag({ won, lost }: { won: boolean; lost: boolean }) {
+  const { t } = useI18n();
   if (won) {
     return (
       <span className="inline-flex items-center gap-1.5 text-sm font-medium text-sector-green">
         <Check size={15} />
-        Resuelto
+        {t("home.solved")}
       </span>
     );
   }
@@ -140,14 +143,14 @@ function StatusTag({ won, lost }: { won: boolean; lost: boolean }) {
     return (
       <span className="inline-flex items-center gap-1.5 text-sm font-medium text-racing-400">
         <FlagIcon size={15} />
-        Jugado
+        {t("home.played")}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-muted">
       <span className="h-2 w-2 rounded-full bg-sector-purple" aria-hidden="true" />
-      Sin jugar
+      {t("home.unplayed")}
     </span>
   );
 }
