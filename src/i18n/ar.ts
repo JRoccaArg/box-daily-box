@@ -148,6 +148,14 @@ const ar: Translations = {
   "month.4": "مايو", "month.5": "يونيو", "month.6": "يوليو", "month.7": "أغسطس",
   "month.8": "سبتمبر", "month.9": "أكتوبر", "month.10": "نوفمبر", "month.11": "ديسمبر",
 
+    "game.gp-resultado.name": "نتيجة GP",
+  "game.gp-resultado.tagline": "أكمل المراكز العشرة الأولى لجائزة كبرى تاريخية قبل انتهاء الوقت.",
+  "gpresultado.eyebrow": "الجائزة الكبرى",
+  "gpresultado.search_placeholder": "اكتب اسم سائق…",
+  "gpresultado.found_count": "{{found}} من {{total}} تم إيجادهم",
+  "gpresultado.not_in_top": "{{name}} لم ينهِ في المراكز العشرة الأولى.",
+  "gpresultado.time_up": "انتهى الوقت. المراكز المفقودة معروضة أعلاه.",
+
   "lang.label": "اللغة",
 };
 

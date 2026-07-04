@@ -261,6 +261,14 @@ const en: Translations = {
   "bingo.champion_label": "Champion",
 
   // ─── Language ───────────────────────────────────────────────────────
+    "game.gp-resultado.name": "GP Result",
+  "game.gp-resultado.tagline": "Complete the top 10 of a historic Grand Prix before time runs out.",
+  "gpresultado.eyebrow": "Grand Prix",
+  "gpresultado.search_placeholder": "Type a driver name…",
+  "gpresultado.found_count": "{{found}} of {{total}} found",
+  "gpresultado.not_in_top": "{{name}} did not finish in the top 10.",
+  "gpresultado.time_up": "Time is up. Missing positions are shown above.",
+
   "lang.label": "Language",
 };
 

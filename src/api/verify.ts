@@ -12,6 +12,7 @@ import { dailyPick } from "../lib/daily";
 import { getDriverPoolAtLeast } from "../lib/filters";
 import { buildIntruso } from "../components/games/ElIntruso/intruso.logic";
 import { buildBingo } from "../components/games/ParrillaBingo/bingo.logic";
+import { buildGPChallenge } from "../components/games/GPResultado/gpresultado.logic";
 
 // ─── Tipos de solución por juego ────────────────────────────────────
 
@@ -38,7 +39,21 @@ interface BingoSolution {
   grid: string[];
 }
 
-type AnySolution = PitTextoSolution | PoleWordleSolution | IntrusoSolution | BingoSolution;
+interface GPResultadoSolution {
+  /**
+   * Array de 10 nombres de piloto, en orden de posición P1..P10.
+   * El juego coloca cada piloto acertado en su barra automáticamente,
+   * así que un grid completo y correcto implica haber acertado los 10.
+   */
+  grid: (string | null)[];
+}
+
+type AnySolution =
+  | PitTextoSolution
+  | PoleWordleSolution
+  | IntrusoSolution
+  | BingoSolution
+  | GPResultadoSolution;
 
 export interface VerifyResult {
   won: boolean;
@@ -71,6 +86,8 @@ export function verifyChallenge(
       return verifyElIntruso(difficulty, date, solution as IntrusoSolution);
     case "parrilla-bingo":
       return verifyParrillaBingo(difficulty, date, solution as BingoSolution);
+    case "gp-resultado":
+      return verifyGPResultado(difficulty, date, solution as GPResultadoSolution);
     default:
       return { won: false, detail: `Juego desconocido: ${gameId}` };
   }
@@ -233,6 +250,48 @@ function verifyParrillaBingo(
     won,
     detail: won
       ? "Grilla completa y válida (9 pilotos distintos, todas las restricciones cumplidas)"
+      : `Errores: ${errors.join("; ")}`,
+  };
+}
+
+// ─── GP Resultado ───────────────────────────────────────────────────
+//
+// Regla: HAY UNA SOLA solución (el top 10 real del GP del día).
+// El usuario debe completar las 10 posiciones con el piloto exacto que
+// terminó en cada una. El juego coloca cada piloto acertado en su barra,
+// así que un grid completo P1..P10 correcto sólo se logra acertando los 10.
+//
+// El servidor regenera el GP con buildGPChallenge (determinista) y compara
+// posición por posición. No confía en el cliente.
+
+function verifyGPResultado(
+  difficulty: Difficulty,
+  date: Date,
+  solution: GPResultadoSolution,
+): VerifyResult {
+  if (!solution.grid || !Array.isArray(solution.grid) || solution.grid.length !== 10) {
+    return { won: false, detail: "Falta grid (10 elementos) en la solución" };
+  }
+
+  const gp = buildGPChallenge(difficulty, date);
+
+  const errors: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    const expected = gp.t[i]?.[0];
+    if (!expected) {
+      errors.push(`P${i + 1}: puzzle inválido (sin piloto esperado)`);
+      continue;
+    }
+    if (solution.grid[i] !== expected) {
+      errors.push(`P${i + 1}: esperado "${expected}", recibido "${solution.grid[i] ?? "vacío"}"`);
+    }
+  }
+
+  const won = errors.length === 0;
+  return {
+    won,
+    detail: won
+      ? `Top 10 completo y correcto (${gp.y} ${gp.g})`
       : `Errores: ${errors.join("; ")}`,
   };
 }

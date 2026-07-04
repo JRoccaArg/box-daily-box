@@ -247,6 +247,14 @@ const pt: Translations = {
   "bingo.example": "ex.",
   "bingo.champion_label": "Campeão",
 
+    "game.gp-resultado.name": "GP Resultado",
+  "game.gp-resultado.tagline": "Complete o top 10 de um Grande Prêmio histórico antes que o tempo acabe.",
+  "gpresultado.eyebrow": "Grande Prêmio",
+  "gpresultado.search_placeholder": "Digite um piloto…",
+  "gpresultado.found_count": "{{found}} de {{total}} encontrados",
+  "gpresultado.not_in_top": "{{name}} não terminou no top 10.",
+  "gpresultado.time_up": "Tempo esgotado. As posições faltantes são mostradas acima.",
+
   "lang.label": "Idioma",
 };
 

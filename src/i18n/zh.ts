@@ -215,6 +215,14 @@ const zh: Translations = {
   "month.6": "七月", "month.7": "八月", "month.8": "九月",
   "month.9": "十月", "month.10": "十一月", "month.11": "十二月",
 
+    "game.gp-resultado.name": "GP结果",
+  "game.gp-resultado.tagline": "在时间耗尽前完成一场历史大奖赛的前10名。",
+  "gpresultado.eyebrow": "大奖赛",
+  "gpresultado.search_placeholder": "输入车手姓名…",
+  "gpresultado.found_count": "已找到 {{found}}/{{total}}",
+  "gpresultado.not_in_top": "{{name}}未进入前10名。",
+  "gpresultado.time_up": "时间到。缺少的位置已显示在上方。",
+
   "lang.label": "语言",
 };
 

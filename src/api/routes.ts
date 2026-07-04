@@ -40,9 +40,10 @@ const TIME_LIMITS: Record<string, number> = {
   "polewordle": 300,
   "el-intruso": 120,
   "parrilla-bingo": 600,
+  "gp-resultado": 180,
 };
 
-const VALID_GAMES = ["pittexto", "polewordle", "el-intruso", "parrilla-bingo"];
+const VALID_GAMES = ["pittexto", "polewordle", "el-intruso", "parrilla-bingo", "gp-resultado"];
 const VALID_DIFFS = ["facil", "medio", "dificil", "leyenda"];
 
 // ─── Token firmado (HMAC-SHA256) ────────────────────────────────────

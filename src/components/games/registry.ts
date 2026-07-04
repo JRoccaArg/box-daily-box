@@ -3,6 +3,7 @@ import { PitTexto } from "./PitTexto/PitTexto";
 import { PoleWordle } from "./PoleWordle/PoleWordle";
 import { ElIntruso } from "./ElIntruso/ElIntruso";
 import { ParrillaBingo } from "./ParrillaBingo/ParrillaBingo";
+import { GPResultado } from "./GPResultado/GPResultado";
 
 /**
  * Registro central de juegos. Cada entrada es autodescriptiva: el resto de la
@@ -54,6 +55,15 @@ export const GAMES: GameDefinition[] = [
     difficulties: [...DIFFS],
     timer: { kind: "fixed", seconds: 150 },
     component: ParrillaBingo,
+  },
+  {
+    id: "gp-resultado",
+    name: "GP Resultado",
+    tagline: "Completa el top 10 de un Gran Premio historico antes de que se acabe el tiempo.",
+    glyph: "GP",
+    difficulties: [...DIFFS],
+    timer: { kind: "choice", options: [90, 120, 150, 180] },
+    component: GPResultado,
   },
 ];
 

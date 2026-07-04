@@ -148,6 +148,14 @@ const nl: Translations = {
   "month.4": "mei", "month.5": "juni", "month.6": "juli", "month.7": "augustus",
   "month.8": "september", "month.9": "oktober", "month.10": "november", "month.11": "december",
 
+    "game.gp-resultado.name": "GP Resultaat",
+  "game.gp-resultado.tagline": "Vul de top 10 van een historische Grand Prix in voordat de tijd op is.",
+  "gpresultado.eyebrow": "Grand Prix",
+  "gpresultado.search_placeholder": "Typ een coureursnaam…",
+  "gpresultado.found_count": "{{found}} van {{total}} gevonden",
+  "gpresultado.not_in_top": "{{name}} eindigde niet in de top 10.",
+  "gpresultado.time_up": "Tijd is op. Ontbrekende posities worden hierboven getoond.",
+
   "lang.label": "Taal",
 };
 
