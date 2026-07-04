@@ -21,8 +21,10 @@ import de from "./de";
 import nl from "./nl";
 import ar from "./ar";
 import ru from "./ru";
+import tr from "./tr";
+import sl from "./sl";
 
-const DICTIONARIES: Record<Locale, Translations> = { es, en, pt, hi, it, fr, zh, ja, de, nl, ar, ru };
+const DICTIONARIES: Record<Locale, Translations> = { es, en, pt, hi, it, fr, zh, ja, de, nl, ar, ru, tr, sl };
 
 const STORAGE_KEY = "lang";
 
