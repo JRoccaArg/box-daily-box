@@ -7,6 +7,7 @@ import { difficultyFloor } from "@/lib/filters";
 import { buildTarget, scoreGuess } from "@/components/games/PitTexto/pittexto.logic";
 import { buildIntruso } from "@/components/games/ElIntruso/intruso.logic";
 import { buildBingo, completeGrid } from "@/components/games/ParrillaBingo/bingo.logic";
+import { buildGPChallenge, verifyGPResultado } from "@/components/games/GPResultado/gpresultado.logic";
 
 const DIFFS: Difficulty[] = ["facil", "medio", "dificil", "leyenda"];
 const DAYS = 90;
@@ -72,6 +73,33 @@ for (const diff of DIFFS) {
       const cDistinct = new Set(completed.filter(Boolean));
       if (cDistinct.size !== completed.filter(Boolean).length) fail(`bingo: completeGrid REPITE`);
     } catch (e) { fail(`bingo throw: ${(e as Error).message}`); }
+
+    // GP Resultado: top 10 valido, rango de anio correcto, verificador OK.
+    try {
+      const gp = buildGPChallenge(diff, date);
+      if (gp.t.length !== 10) fail(`gp-resultado: ${gp.t.length} posiciones (esperado 10)`);
+      // Rango de anio segun dificultad.
+      const RANGES: Record<Difficulty, [number, number]> = {
+        facil: [2018, 2025], medio: [2006, 2017], dificil: [1990, 2005], leyenda: [1950, 1989],
+      };
+      const [minY, maxY] = RANGES[diff];
+      if (gp.y < minY || gp.y > maxY) fail(`gp-resultado[${diff}]: anio ${gp.y} fuera de rango [${minY},${maxY}]`);
+      // Nombres de piloto no vacios y sin duplicados en el top 10.
+      const names = gp.t.map(([n]) => n);
+      if (names.some((n) => !n || !n.trim())) fail(`gp-resultado: nombre vacio en ${gp.y} ${gp.g}`);
+      if (new Set(names).size !== 10) fail(`gp-resultado: piloto repetido en ${gp.y} ${gp.g}`);
+      // Verificador: el top 10 correcto GANA.
+      const winSol = { grid: names };
+      if (!verifyGPResultado(diff, date, winSol).won) fail(`gp-resultado: top10 correcto NO gana (${gp.y} ${gp.g})`);
+      // Verificador: un orden incorrecto (swap P1<->P2) PIERDE.
+      if (names[0] !== names[1]) {
+        const swapped = [names[1], names[0], ...names.slice(2)];
+        if (verifyGPResultado(diff, date, { grid: swapped }).won) fail(`gp-resultado: orden incorrecto gana (${gp.y})`);
+      }
+      // Verificador: grid incompleto PIERDE.
+      const incomplete = [...names.slice(0, 9), null];
+      if (verifyGPResultado(diff, date, { grid: incomplete }).won) fail(`gp-resultado: grid incompleto gana (${gp.y})`);
+    } catch (e) { fail(`gp-resultado throw: ${(e as Error).message}`); }
   }
   console.log(`[${diff}] OK (${DAYS} dias) — bingo repetidos: ${bingoRepeats} | anacronismos: ${bingoAnachro}`);
 }
