@@ -8,7 +8,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { handleGoogleCallback } from "@/lib/auth";
-import { useI18n } from "@/context/I18nContext";
+import { useI18n } from "@/context";
 
 export function AuthCallback(): JSX.Element {
   const [searchParams] = useSearchParams();

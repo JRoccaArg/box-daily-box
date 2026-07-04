@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useStats } from "@/context/StatsContext";
-import { useI18n } from "@/context/I18nContext";
+import { useI18n } from "@/context";
 import { Modal } from "@/components/ui/Modal";
 import { StatPill } from "@/components/ui/StatPill";
 import { Button } from "@/components/ui/Button";

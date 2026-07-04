@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Header } from "./Header";
-import { useI18n } from "@/context/I18nContext";
+import { useI18n } from "@/context";
 
 /** Marco de pagina: header pegajoso + contenedor centrado + footer. */
 export function Layout({ children }: { children: ReactNode }) {

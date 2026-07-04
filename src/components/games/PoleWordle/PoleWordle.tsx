@@ -3,7 +3,7 @@ import type { GameProps } from "@/types";
 import { DRIVERS, fullName } from "@/data";
 import { getDriverPoolAtLeast } from "@/lib/filters";
 import { dailyPick } from "@/lib/daily";
-import { useI18n } from "@/context/I18nContext";
+import { useI18n } from "@/context";
 import { Panel } from "@/components/ui/Panel";
 
 const MAX_ATTEMPTS = 6;

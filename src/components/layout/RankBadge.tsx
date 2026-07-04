@@ -5,7 +5,7 @@ import { apiGetUserRank } from "@/lib/api";
 import { getIdentity } from "@/lib/identity";
 import { dateKey } from "@/lib/seed";
 import { on, Events } from "@/lib/events";
-import { useI18n } from "@/context/I18nContext";
+import { useI18n } from "@/context";
 
 type RankBadgeProps = {
   variant?: "inline" | "block";

@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import type { GameDefinition, DailyGameResult } from "@/types";
 import { GAMES } from "@/components/games/registry";
 import { useStats } from "@/context/StatsContext";
-import { useI18n } from "@/context/I18nContext";
+import { useI18n } from "@/context";
 import { Panel } from "@/components/ui/Panel";
 import { Check, Flag as FlagIcon, ChevronRight, Flame, Trophy } from "@/components/ui/Icon";
 import { RankBadge } from "@/components/layout/RankBadge";

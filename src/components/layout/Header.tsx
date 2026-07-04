@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useStats } from "@/context/StatsContext";
-import { useI18n } from "@/context/I18nContext";
+import { useI18n } from "@/context";
 import { StatsModal } from "./StatsModal";
 import { IdentityModal } from "./IdentityModal";
 import { LanguageSelector } from "./LanguageSelector";

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { GameProps } from "@/types";
 import { buildIntruso } from "./intruso.logic";
 import { DriverCard } from "@/components/games/shared/DriverCard";
-import { useI18n } from "@/context/I18nContext";
+import { useI18n } from "@/context";
 import { Panel } from "@/components/ui/Panel";
 import { Button } from "@/components/ui/Button";
 

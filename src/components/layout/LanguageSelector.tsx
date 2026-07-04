@@ -4,7 +4,7 @@
 // Muestra la bandera del idioma actual; al clickear despliega un menú.
 
 import { useRef, useState, useEffect } from "react";
-import { useI18n } from "@/context/I18nContext";
+import { useI18n } from "@/context";
 import { LOCALE_META } from "@/i18n/types";
 
 export function LanguageSelector() {

@@ -5,7 +5,7 @@ import { findDriversByText, fullName, nationality } from "@/data";
 import { getDriverPoolAtLeast } from "@/lib/filters";
 import { buildTarget, scoreGuess, heatColor } from "./pittexto.logic";
 import type { Factor } from "./pittexto.logic";
-import { useI18n } from "@/context/I18nContext";
+import { useI18n } from "@/context";
 import { Panel } from "@/components/ui/Panel";
 import { Check, Close } from "@/components/ui/Icon";
 

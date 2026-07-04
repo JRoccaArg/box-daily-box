@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { I18nProvider } from "@/context/I18nContext";
-import { StatsProvider } from "@/context/StatsContext";
+import { I18nProvider } from "@/context";
+import { StatsProvider } from "@/context";
 import { Layout } from "@/components/layout/Layout";
 import { Home } from "@/pages/Home";
 import { GamePage } from "@/pages/GamePage";

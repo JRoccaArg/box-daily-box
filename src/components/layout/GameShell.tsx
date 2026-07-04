@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { Difficulty, GameDefinition, GameStatus } from "@/types";
 import { useStats } from "@/context/StatsContext";
-import { useI18n } from "@/context/I18nContext";
+import { useI18n } from "@/context";
 import { computeScore } from "@/lib/scoring";
 import { apiStartChallenge, apiFinishChallenge } from "@/lib/api";
 import { isIdentityComplete } from "@/lib/identity";

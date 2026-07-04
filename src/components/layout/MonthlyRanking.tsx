@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { getMonthlyScore } from "@/lib/stats";
 import { BASE_POINTS } from "@/lib/scoring";
 import { gameById } from "@/components/games/registry";
-import { useI18n } from "@/context/I18nContext";
+import { useI18n } from "@/context";
 import { Trophy, Flame } from "@/components/ui/Icon";
 import type { Difficulty } from "@/types";
 

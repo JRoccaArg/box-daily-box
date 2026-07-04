@@ -4,7 +4,7 @@ import {
   apiGetDailyRanking,
   type RankingEntry,
 } from "@/lib/api";
-import { useI18n } from "@/context/I18nContext";
+import { useI18n } from "@/context";
 import { getIdentity } from "@/lib/identity";
 import { NATIONALITIES } from "@/data/nationalities";
 import { Trophy } from "@/components/ui/Icon";

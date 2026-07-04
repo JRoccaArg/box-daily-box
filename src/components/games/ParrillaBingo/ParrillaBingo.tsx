@@ -4,7 +4,7 @@ import { findDriversByText, fullName, nationality, team } from "@/data";
 import { buildBingo, completeGrid } from "./bingo.logic";
 import type { Constraint } from "./bingo.logic";
 import { driverColor } from "../shared/driverColor";
-import { useI18n } from "@/context/I18nContext";
+import { useI18n } from "@/context";
 import { Panel } from "@/components/ui/Panel";
 import { Modal } from "@/components/ui/Modal";
 import { Check, Trophy, Flag, Timer, Stat, Grid as GridIcon } from "@/components/ui/Icon";
