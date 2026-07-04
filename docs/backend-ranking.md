@@ -97,6 +97,7 @@ packages/core/
     pittexto.ts     buildTarget + verifyPitTexto
     polewordle.ts   buildWordle + verifyPoleWordle
     intruso.ts      buildIntruso + verifyIntruso
+    gpresultado.ts  buildGPChallenge + verifyGPResultado
   verify.ts    verifyChallenge(gameId, difficulty, dateKey, solution) -> { won }
 ```
 
@@ -137,6 +138,43 @@ export function verifyBingo(
 > Nota: el servidor **no** confía en la "solución canónica" del puzzle; valida
 > que cada piloto cumpla su celda. Así acepta cualquier solución válida (igual
 > que el juego) y no hay una respuesta única que filtrar.
+
+Para **GP Resultado** el verificador reconstruye el top 10 del GP del día y
+compara posición por posición (la solución es el orden P1..P10 que el cliente
+completó; el juego coloca cada piloto en su posición automáticamente, así que
+un grid completo y correcto sólo puede lograrse acertando los 10 pilotos):
+
+```ts
+// packages/core/games/gpresultado.ts
+export type GPSolution = { grid: (string | null)[] }; // 10 nombres, orden P1..P10
+
+export function verifyGPResultado(
+  difficulty: Difficulty,
+  date: Date,
+  solution: GPSolution,
+): { won: boolean } {
+  if (!solution || !Array.isArray(solution.grid)) return { won: false };
+  if (solution.grid.length !== 10) return { won: false };
+
+  const gp = buildGPChallenge(difficulty, date); // determinista: mismo GP que vio el cliente
+  for (let i = 0; i < 10; i++) {
+    const expected = gp.t[i]?.[0];               // nombre del piloto que terminó Pi+1
+    if (!expected) return { won: false };
+    if (solution.grid[i] !== expected) return { won: false };
+  }
+  return { won: true };
+}
+```
+
+> Este verificador ya está implementado en el front en
+> `src/components/games/GPResultado/gpresultado.logic.ts` (`verifyGPResultado`),
+> listo para moverse al paquete `core` junto con `buildGPChallenge` y el
+> dataset `gpResults.ts`. Al pasar por `GameShell`, GP Resultado hereda
+> automáticamente el ciclo completo: `apiStartChallenge` → `sessionToken`,
+> `apiFinishChallenge` → verificación + scoring + ranking por IP
+> (`ranked:false` si no es la primera cuenta de esa IP en ganar ese juego), y
+> `saveSolution` para la migración local↔servidor (los 4 escenarios de login).
+
 
 ---
 

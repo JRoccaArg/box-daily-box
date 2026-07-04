@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import type { GameProps } from "@/types";
 import { buildGPChallenge } from "./gpresultado.logic";
+import type { GPSolution } from "./gpresultado.logic";
 import { allDriverNames, searchDrivers } from "@/data/gpResults";
 import { useI18n } from "@/context";
 import { Panel } from "@/components/ui/Panel";
@@ -104,7 +105,8 @@ export function GPResultado({ difficulty, date, status, onWin }: GameProps) {
 
     // Victoria: todos revelados.
     if (next.every(Boolean)) {
-      onWin({ grid: next as string[] });
+      const solution: GPSolution = { grid: next };
+      onWin(solution);
     }
   };
 
