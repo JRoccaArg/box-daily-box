@@ -5,12 +5,14 @@ import { findDriversByText, fullName, nationality } from "@/data";
 import { getDriverPoolAtLeast } from "@/lib/filters";
 import { buildTarget, scoreGuess, heatColor } from "./pittexto.logic";
 import type { Factor } from "./pittexto.logic";
+import { useI18n } from "@/context/I18nContext";
 import { Panel } from "@/components/ui/Panel";
 import { Check, Close } from "@/components/ui/Icon";
 
 const MAX_GUESSES = 8;
 
 export function PitTexto({ difficulty, date, status, onWin, onLose }: GameProps) {
+  const { t } = useI18n();
   const target = useMemo(() => buildTarget(difficulty, date), [difficulty, date]);
   const pool = useMemo(() => getDriverPoolAtLeast(difficulty, 15), [difficulty]);
 
@@ -50,12 +52,15 @@ export function PitTexto({ difficulty, date, status, onWin, onLose }: GameProps)
 
   return (
     <Panel>
-      <p className="eyebrow speed-bar pl-1">Adivina el piloto</p>
+      <p className="eyebrow speed-bar pl-1">{t("pittexto.eyebrow")}</p>
       <p className="mt-2 text-sm text-ink-muted">
-        Cada intento muestra cuanto se parece al piloto secreto. Mas caliente = mas cerca.
+        {t("pittexto.hint")}
       </p>
       <p className="mt-1 font-mono text-xs text-ink-faint">
-        Intento {Math.min(guesses.length + (finished ? 0 : 1), MAX_GUESSES)} de {MAX_GUESSES}
+        {t("pittexto.attempt", {
+          current: Math.min(guesses.length + (finished ? 0 : 1), MAX_GUESSES),
+          max: MAX_GUESSES,
+        })}
       </p>
 
       {/* Buscador */}
@@ -66,7 +71,7 @@ export function PitTexto({ difficulty, date, status, onWin, onLose }: GameProps)
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Escribe un apellido…"
+            placeholder={t("pittexto.placeholder")}
             autoComplete="off"
             spellCheck={false}
             className="w-full rounded-lg border border-white/15 bg-asphalt-700 px-4 py-3 text-ink placeholder:text-ink-faint focus:border-racing/50"
@@ -99,7 +104,9 @@ export function PitTexto({ difficulty, date, status, onWin, onLose }: GameProps)
               : "border-racing/40 bg-racing/10",
           ].join(" ")}
         >
-          <p className="text-sm text-ink-muted">{solved ? "Lo encontraste:" : "El piloto era:"}</p>
+          <p className="text-sm text-ink-muted">
+            {solved ? t("pittexto.found") : t("pittexto.answer_was")}
+          </p>
           <p className="mt-0.5 font-display text-lg font-bold text-white">
             {nationality(target.nationalityCode).flag} {fullName(target)}
           </p>

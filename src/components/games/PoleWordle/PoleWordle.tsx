@@ -3,6 +3,7 @@ import type { GameProps } from "@/types";
 import { DRIVERS, fullName } from "@/data";
 import { getDriverPoolAtLeast } from "@/lib/filters";
 import { dailyPick } from "@/lib/daily";
+import { useI18n } from "@/context/I18nContext";
 import { Panel } from "@/components/ui/Panel";
 
 const MAX_ATTEMPTS = 6;
@@ -15,7 +16,6 @@ function scoreGuess(guess: string, target: string): Cell[] {
   const result: Cell[] = new Array(target.length).fill("absent");
   const remaining: Record<string, number> = {};
 
-  // Primera pasada: aciertos exactos.
   for (let i = 0; i < target.length; i++) {
     const t = target[i] as string;
     if (guess[i] === t) {
@@ -24,7 +24,6 @@ function scoreGuess(guess: string, target: string): Cell[] {
       remaining[t] = (remaining[t] ?? 0) + 1;
     }
   }
-  // Segunda pasada: letras presentes en otra posicion.
   for (let i = 0; i < target.length; i++) {
     if (result[i] === "correct") continue;
     const g = guess[i] as string;
@@ -53,11 +52,9 @@ const KEY_CLASS: Record<Cell, string> = {
 };
 
 export function PoleWordle({ difficulty, date, status, onWin, onLose }: GameProps) {
-  // Objetivo del dia: un piloto del pool de la dificultad elegida.
+  const { t } = useI18n();
   const target = useMemo(() => {
     const base = getDriverPoolAtLeast(difficulty, 10);
-    // Evita apellidos extremos en la grilla (muy cortos o larguisimos);
-    // si el filtro deja muy pocos, cae al pool completo.
     const sane = base.filter((d) => d.wordleKey.length >= 4 && d.wordleKey.length <= 11);
     const pool = sane.length >= 8 ? sane : base;
     return dailyPick(pool, date, `polewordle::${difficulty}`);
@@ -66,7 +63,6 @@ export function PoleWordle({ difficulty, date, status, onWin, onLose }: GameProp
   const answer = target.wordleKey;
   const len = answer.length;
 
-  // Apellidos validos (misma longitud) de toda la base, para aceptar intentos.
   const validWords = useMemo(() => {
     const set = new Set<string>();
     for (const d of DRIVERS) if (d.wordleKey.length === len) set.add(d.wordleKey);
@@ -76,16 +72,12 @@ export function PoleWordle({ difficulty, date, status, onWin, onLose }: GameProp
   const [guesses, setGuesses] = useState<string[]>([]);
   const [current, setCurrent] = useState("");
   const [error, setError] = useState<string | null>(null);
-  // Input escondido usado en mobile para abrir el teclado del sistema
-  // operativo. En desktop no es necesario (el teclado físico funciona vía
-  // el listener de window.keydown).
   const mobileInputRef = useRef<HTMLInputElement>(null);
 
   const solved = guesses.some((g) => g === answer);
   const finished = status !== "playing" || solved || guesses.length >= MAX_ATTEMPTS;
   const locked = finished;
 
-  // Estado por letra para colorear el teclado.
   const keyState = useMemo(() => {
     const map: Record<string, Cell> = {};
     const rank: Record<Cell, number> = { empty: 0, absent: 1, present: 2, correct: 3 };
@@ -103,11 +95,11 @@ export function PoleWordle({ difficulty, date, status, onWin, onLose }: GameProp
   const submit = useCallback(() => {
     if (locked) return;
     if (current.length !== len) {
-      setError(`El apellido tiene ${len} letras`);
+      setError(t("polewordle.length_error", { len }));
       return;
     }
     if (!validWords.has(current)) {
-      setError("No esta en la lista de pilotos");
+      setError(t("polewordle.not_in_list"));
       return;
     }
     setError(null);
@@ -120,7 +112,7 @@ export function PoleWordle({ difficulty, date, status, onWin, onLose }: GameProp
     } else if (next.length >= MAX_ATTEMPTS) {
       onLose({ guesses: next });
     }
-  }, [current, len, validWords, guesses, answer, locked, onWin, onLose]);
+  }, [current, len, validWords, guesses, answer, locked, onWin, onLose, t]);
 
   const press = useCallback(
     (key: string) => {
@@ -137,9 +129,6 @@ export function PoleWordle({ difficulty, date, status, onWin, onLose }: GameProp
     [current.length, len, locked, submit],
   );
 
-  // Soporte de teclado fisico (desktop). Se ignora cuando el foco esta en
-  // un input/textarea, para evitar doble-input cuando el usuario usa el
-  // teclado del OS en mobile via el input escondido.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const active = document.activeElement;
@@ -159,18 +148,14 @@ export function PoleWordle({ difficulty, date, status, onWin, onLose }: GameProp
 
   return (
     <Panel className="relative flex flex-col items-center">
-      <p className="eyebrow mb-1">Apellido del piloto</p>
+      <p className="eyebrow mb-1">{t("polewordle.eyebrow")}</p>
       <p className="mb-2 max-w-xs text-center text-sm text-ink-muted">
-        Adivina el apellido en {MAX_ATTEMPTS} intentos. Verde = letra y posicion
-        correctas; amarillo = la letra esta pero en otro lugar; gris = no esta.
+        {t("polewordle.hint", { max: MAX_ATTEMPTS })}
       </p>
       <p className="mb-5 font-mono text-xs text-ink-faint">
-        {len} letras &middot; {MAX_ATTEMPTS} intentos
+        {t("polewordle.grid_info", { len, max: MAX_ATTEMPTS })}
       </p>
 
-      {/* Input escondido: al enfocarse abre el teclado del OS en mobile.
-          En desktop se ignora (el usuario usa su teclado físico). El input
-          se enfoca automáticamente al montar y al tocar la grilla. */}
       <input
         ref={mobileInputRef}
         type="text"
@@ -183,7 +168,6 @@ export function PoleWordle({ difficulty, date, status, onWin, onLose }: GameProp
         maxLength={len}
         onChange={(e) => {
           if (locked) return;
-          // Aceptar solo letras A-Z (sin acentos ni ñ, coherente con el dataset).
           const v = e.target.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, len);
           setCurrent(v);
           setError(null);
@@ -194,19 +178,16 @@ export function PoleWordle({ difficulty, date, status, onWin, onLose }: GameProp
             submit();
           }
         }}
-        // sr-only NO se usa: iOS a veces no abre teclado si no hay tamaño real.
-        // Se hace transparente y posicionado sobre la grilla.
         className="absolute inset-x-0 top-0 h-0 w-full opacity-0"
-        aria-label="Escribí el apellido"
+        aria-label={t("polewordle.input_label")}
         disabled={locked}
       />
 
-      {/* Grilla — tocarla enfoca el input para abrir el teclado del OS. */}
       <button
         type="button"
         onClick={() => mobileInputRef.current?.focus()}
         className="flex flex-col gap-1.5 focus:outline-none"
-        aria-label="Abrir teclado para escribir"
+        aria-label={t("polewordle.grid_label")}
       >
         {Array.from({ length: MAX_ATTEMPTS }).map((_, row) => {
           const guess = guesses[row];
@@ -227,7 +208,6 @@ export function PoleWordle({ difficulty, date, status, onWin, onLose }: GameProp
                     className={[
                       "flex items-center justify-center rounded-md border-2 font-mono font-bold uppercase",
                       "transition-colors",
-                      // Tamano adaptable segun longitud para que entre en mobile.
                       len > 8 ? "h-10 w-7 text-base sm:h-11 sm:w-9" : "h-11 w-10 text-xl sm:h-12 sm:w-11",
                       CELL_CLASS[cell],
                       filled && cell === "empty" ? "border-white/40" : "",
@@ -244,18 +224,16 @@ export function PoleWordle({ difficulty, date, status, onWin, onLose }: GameProp
         })}
       </button>
 
-      {/* Mensaje de error / revelacion */}
       <div className="mt-4 h-6 text-center text-sm">
         {error && <span className="text-sector-yellow">{error}</span>}
         {!error && finished && !solved && status !== "playing" && (
           <span className="text-ink-muted">
-            Era <strong className="text-white">{fullName(target)}</strong>
+            {t("polewordle.was")} <strong className="text-white">{fullName(target)}</strong>
           </span>
         )}
-        {!error && solved && <span className="text-sector-green">Correcto!</span>}
+        {!error && solved && <span className="text-sector-green">{t("polewordle.correct")}</span>}
       </div>
 
-      {/* Teclado en pantalla */}
       <div className="mt-2 flex w-full max-w-md flex-col gap-1.5">
         {ROWS.map((rowKeys, i) => (
           <div key={i} className="flex justify-center gap-1.5">

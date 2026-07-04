@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
 import { Header } from "./Header";
+import { useI18n } from "@/context/I18nContext";
 
 /** Marco de pagina: header pegajoso + contenedor centrado + footer. */
 export function Layout({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   return (
     <div className="flex min-h-full flex-col">
       <Header />
@@ -10,8 +12,8 @@ export function Layout({ children }: { children: ReactNode }) {
       <footer className="border-t border-white/5 py-6">
         <div className="mx-auto max-w-3xl px-4">
           <p className="text-center text-xs leading-relaxed text-ink-faint">
-            Box Box Daily &middot; Proyecto de fans, sin afiliacion oficial con la Formula 1.
-            <br className="hidden sm:inline" /> Un reto nuevo cada dia a la medianoche.
+            {t("footer.line1")}
+            <br className="hidden sm:inline" /> {t("footer.line2")}
           </p>
         </div>
       </footer>

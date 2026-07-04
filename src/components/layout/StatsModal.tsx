@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useStats } from "@/context/StatsContext";
+import { useI18n } from "@/context/I18nContext";
 import { Modal } from "@/components/ui/Modal";
 import { StatPill } from "@/components/ui/StatPill";
 import { Button } from "@/components/ui/Button";
@@ -20,6 +21,7 @@ type View = "personal" | "global";
 /** Panel de estadisticas + ranking global + perfil. */
 export function StatsModal({ open, onClose }: StatsModalProps) {
   const { summary, persistent, resetProgress } = useStats();
+  const { t } = useI18n();
   const [confirming, setConfirming] = useState(false);
   const [view, setView] = useState<View>("global");
   const [identityOpen, setIdentityOpen] = useState(false);
@@ -43,30 +45,30 @@ export function StatsModal({ open, onClose }: StatsModalProps) {
 
   return (
     <>
-      <Modal open={open} onClose={onClose} title="Estadísticas">
+      <Modal open={open} onClose={onClose} title={t("stats.title")}>
         {/* Perfil */}
         <div className="mb-4 flex items-center justify-between rounded-lg border border-white/10 bg-asphalt-700 px-3 py-2.5">
           <div className="flex items-center gap-2">
             <span className="text-lg">{flag}</span>
             <span className="text-sm font-medium text-ink">
-              {identity.displayName || "Sin nombre"}
+              {identity.displayName || t("stats.no_name")}
             </span>
           </div>
           <button
             onClick={() => setIdentityOpen(true)}
             className="text-xs text-racing-400 hover:underline"
           >
-            Editar perfil
+            {t("stats.edit_profile")}
           </button>
         </div>
 
         {/* Tabs personal/global */}
         <div className="mb-4 flex gap-1 rounded-lg border border-white/10 bg-asphalt-800 p-1">
           <ViewTab active={view === "global"} onClick={() => setView("global")}>
-            Ranking Global
+            {t("stats.tab_global")}
           </ViewTab>
           <ViewTab active={view === "personal"} onClick={() => setView("personal")}>
-            Mi Progreso
+            {t("stats.tab_personal")}
           </ViewTab>
         </div>
 
@@ -79,11 +81,11 @@ export function StatsModal({ open, onClose }: StatsModalProps) {
             </div>
 
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-              <StatPill label="Ganados" value={summary.won} accent="green" />
-              <StatPill label="Perdidos" value={summary.lost} accent="red" />
-              <StatPill label="% Victorias" value={`${winRate}`} />
+              <StatPill label={t("stats.won")} value={summary.won} accent="green" />
+              <StatPill label={t("stats.lost")} value={summary.lost} accent="red" />
+              <StatPill label={t("stats.win_rate")} value={`${winRate}`} />
               <StatPill
-                label="Racha"
+                label={t("stats.streak")}
                 value={
                   <span className="inline-flex items-center gap-1">
                     {summary.currentStreak > 0 && <Flame size={20} />}
@@ -96,17 +98,16 @@ export function StatsModal({ open, onClose }: StatsModalProps) {
 
             <div className="mt-3 rounded-lg border border-white/5 bg-asphalt-700 px-4 py-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-ink-muted">Mejor racha</span>
+                <span className="text-ink-muted">{t("stats.best_streak")}</span>
                 <span className="tnum font-mono font-semibold text-white">
-                  {summary.bestStreak} dias
+                  {summary.bestStreak} {t("stats.days")}
                 </span>
               </div>
             </div>
 
             {!persistent && (
               <p className="mt-3 text-xs leading-relaxed text-sector-yellow/90">
-                El almacenamiento persistente no esta disponible en este navegador. Tu progreso
-                se guardara solo durante esta sesion.
+                {t("stats.no_persistent")}
               </p>
             )}
 
@@ -114,21 +115,20 @@ export function StatsModal({ open, onClose }: StatsModalProps) {
               {confirming ? (
                 <div className="space-y-2">
                   <p className="text-sm text-ink-muted">
-                    Esto borra tus estadísticas y puntos. Los retos que ya jugaste hoy seguirán
-                    bloqueados hasta mañana. Esta acción no se puede deshacer.
+                    {t("stats.reset_confirm")}
                   </p>
                   <div className="flex gap-2">
                     <Button variant="danger" size="sm" onClick={handleReset}>
-                      Si, borrar todo
+                      {t("stats.reset_yes")}
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>
-                      Cancelar
+                      {t("stats.reset_cancel")}
                     </Button>
                   </div>
                 </div>
               ) : (
                 <Button variant="ghost" size="sm" onClick={handleReset} className="text-ink-muted">
-                  Reiniciar progreso
+                  {t("stats.reset")}
                 </Button>
               )}
             </div>

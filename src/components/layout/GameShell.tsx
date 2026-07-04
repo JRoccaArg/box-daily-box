@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { Difficulty, GameDefinition, GameStatus } from "@/types";
-import { DIFFICULTY_LABEL } from "@/types";
 import { useStats } from "@/context/StatsContext";
+import { useI18n } from "@/context/I18nContext";
 import { computeScore } from "@/lib/scoring";
 import { apiStartChallenge, apiFinishChallenge } from "@/lib/api";
 import { isIdentityComplete } from "@/lib/identity";
@@ -22,14 +22,6 @@ import {
   Lock,
   Timer as TimerIcon,
 } from "@/components/ui/Icon";
-
-/** Texto descriptivo de cada dificultad para la pantalla de configuracion. */
-const DIFFICULTY_HINT: Record<Difficulty, string> = {
-  facil: "Parrilla reciente (ultimas temporadas)",
-  medio: "Era hibrida y V8 (desde 2006)",
-  dificil: "Era moderna (desde 1990)",
-  leyenda: "Toda la historia de la F1",
-};
 
 type Phase = "config" | "playing" | "finished";
 
@@ -51,6 +43,7 @@ type GameShellProps = {
  */
 export function GameShell({ game, date = new Date() }: GameShellProps) {
   const { record, playedStatus, refreshStats } = useStats();
+  const { t } = useI18n();
   const lockedStatus = playedStatus(game.id, date);
 
   // Dificultad inicial: la primera permitida por el juego.
@@ -129,34 +122,22 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
         }),
       );
 
-      // Enviar resultado al servidor SIEMPRE que haya token (no solo si hay
-      // solution). Si no hay solution (abandono/timeout), se envía null y el
-      // server lo registra como perdido. Esto garantiza que TODO intento
-      // quede en el server (fuente de verdad), evitando que un juego jugado
-      // localmente aparezca luego como "sin jugar" al loguearse.
       const token = sessionTokenRef.current;
       if (token) {
         apiFinishChallenge(game.id, token, solution ?? null)
           .then((res) => {
             if (res && typeof res.points === "number") {
-              // Sincronizar: guardar los puntos del servidor en el resultado local.
-              // Esto hace que "Mi Progreso" coincida con el ranking global.
               updateServerPoints(game.id, res.points, date);
               setPointsEarned(res.points);
               refreshStats();
             }
-            // Avisar si el resultado no entró al ranking (otra cuenta de la
-            // misma IP ya jugó este juego hoy).
             if (res && res.ranked === false) {
               setNotRanked(true);
             }
           })
-          .catch(() => {
-            // Silencioso: la UX no depende del backend.
-          });
+          .catch(() => {});
       }
 
-      // Pequena pausa para que el usuario vea el tablero final antes del modal.
       window.setTimeout(() => setResultOpen(true), 650);
     },
     [game.id, record, date, buildMeta, refreshStats],
@@ -164,16 +145,6 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
 
   // -----------------------------------------------------------------
   // Abandono = derrota.
-  // Si el jugador ya empezo y se va por cualquier via (cerrar pestana,
-  // recargar, navegar atras), el reto cuenta como perdido. Esto se logra:
-  //
-  //  1) Un ref siempre actualizado con (phase, finishedRef, gameId, date)
-  //     para que el cleanup del effect no quede capturando un valor viejo.
-  //  2) Un cleanup que, si al desmontar el shell estaba "playing" sin
-  //     terminar, llama a record(lost) de forma sincrona. Esto cubre:
-  //     navegacion interna (botones, atras del navegador).
-  //  3) Listener "beforeunload" que registra la derrota antes de cerrar
-  //     la pestana / recargar, y ademas pide confirmacion nativa.
   // -----------------------------------------------------------------
   const abandonRef = useRef<{ active: boolean; gameId: string; date: Date }>({
     active: false,
@@ -188,23 +159,19 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
     };
   }, [phase, game.id, date]);
 
-  // beforeunload: registra perdida + dispara la advertencia del navegador.
   useEffect(() => {
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
       if (!abandonRef.current.active) return;
-      // Registro sincrono (record usa localStorage de forma sincrona).
       record(abandonRef.current.gameId, "lost", buildMeta(), abandonRef.current.date);
       finishedRef.current = true;
       abandonRef.current.active = false;
       e.preventDefault();
-      // returnValue no vacio = navegador muestra su prompt nativo.
       e.returnValue = "";
     };
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [record, buildMeta]);
 
-  // Cleanup al desmontar el shell (cambio de ruta, atras del navegador, etc.).
   useEffect(() => {
     return () => {
       if (abandonRef.current.active) {
@@ -218,14 +185,12 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
   const timer = useTimer({ seconds: timeLimit, onExpire: handleExpire });
   const { start: startTimer, pause: pauseTimer, reset: resetTimer } = timer;
 
-  // Arranca el cronometro al entrar en juego; lo frena al terminar.
   useEffect(() => {
     if (phase === "playing") startTimer();
     else pauseTimer();
   }, [phase, startTimer, pauseTimer]);
 
   const beginPlaying = () => {
-    // Si no configuró perfil, pedir nombre y pais primero.
     if (!isIdentityComplete()) {
       setIdentityOpen(true);
       return;
@@ -241,10 +206,6 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
     setStatus("playing");
     setPhase("playing");
 
-    // Pedir sesión al servidor. SIEMPRE se puede jugar (para jugar con amigos
-    // desde la misma red). El server decide si el resultado será rankeable
-    // (solo la primera cuenta por IP+juego+día rankea); eso viaja firmado en
-    // el sessionToken y no afecta la jugabilidad.
     apiStartChallenge(game.id, difficulty).then((res) => {
       if (res.ok) {
         sessionTokenRef.current = res.sessionToken;
@@ -253,14 +214,9 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
           scoreRef.current.startedAt = localStart + Math.round(rtt / 2);
         }
       }
-      // Si falla (red/server), se juega en modo offline: el intento queda
-      // en local y se importa al server en el próximo login (re-verificado).
-    }).catch(() => {
-      // Error de red: seguir en modo offline.
-    });
+    }).catch(() => {});
   };
 
-  /** Callback del modal de identidad: una vez completado, arrancar. */
   const handleIdentitySaved = () => {
     setIdentityOpen(false);
     if (isIdentityComplete()) {
@@ -294,17 +250,19 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
           >
             {won ? <Trophy size={26} /> : <FlagIcon size={26} />}
           </div>
-          <h1 className="font-display text-2xl font-bold text-white">{game.name}</h1>
+          <h1 className="font-display text-2xl font-bold text-white">
+            {t(`game.${game.id}.name`)}
+          </h1>
           <p className="mt-1 text-ink-muted">
-            {won ? "Ya resolviste el reto de hoy." : "Ya jugaste el reto de hoy."}
+            {won ? t("locked.won") : t("locked.lost")}
           </p>
           <div className="mt-4 inline-flex items-center gap-2 rounded-lg border border-white/10 bg-asphalt-700 px-4 py-2 text-sm text-ink-muted">
             <Lock size={15} />
-            Vuelve manana para un nuevo desafio
+            {t("locked.wait")}
           </div>
           <div className="mt-6">
             <Link to="/">
-              <Button variant="outline">Volver al inicio</Button>
+              <Button variant="outline">{t("result.go_home")}</Button>
             </Link>
           </div>
         </Panel>
@@ -324,25 +282,27 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
         <BackLink />
         <Panel>
           <div className="speed-bar mb-1 pl-1">
-            <p className="eyebrow">{game.glyph} &middot; Reto del dia</p>
+            <p className="eyebrow">{game.glyph} &middot; {t("shell.daily_challenge")}</p>
           </div>
           <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-white">
-            {game.name}
+            {t(`game.${game.id}.name`)}
           </h1>
-          <p className="mt-1.5 max-w-prose text-ink-muted">{game.tagline}</p>
+          <p className="mt-1.5 max-w-prose text-ink-muted">
+            {t(`game.${game.id}.tagline`)}
+          </p>
 
           {showDifficulty && (
             <section className="mt-6">
-              <label className="eyebrow mb-2 block">Dificultad</label>
+              <label className="eyebrow mb-2 block">{t("shell.difficulty")}</label>
               <SegmentedControl
-                aria-label="Dificultad"
+                aria-label={t("shell.difficulty")}
                 stacked
                 value={difficulty}
                 onChange={setDifficulty}
                 options={game.difficulties.map((d) => ({
                   value: d,
-                  label: DIFFICULTY_LABEL[d],
-                  hint: DIFFICULTY_HINT[d],
+                  label: t(`diff.${d}`),
+                  hint: t(`diff.hint.${d}`),
                 }))}
               />
             </section>
@@ -350,9 +310,9 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
 
           {showTimeChoice && (
             <section className="mt-6">
-              <label className="eyebrow mb-2 block">Tiempo</label>
+              <label className="eyebrow mb-2 block">{t("shell.time")}</label>
               <SegmentedControl
-                aria-label="Tiempo"
+                aria-label={t("shell.time")}
                 value={chosenTime ?? timeOptions[0] ?? 0}
                 onChange={(v) => setChosenTime(v)}
                 options={timeOptions.map((s) => ({
@@ -366,32 +326,30 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
           {game.timer.kind === "fixed" && (
             <p className="mt-5 inline-flex items-center gap-2 text-sm text-ink-muted">
               <TimerIcon size={15} />
-              Tiempo limite: {game.timer.seconds} segundos
+              {t("shell.time_limit", { seconds: game.timer.seconds })}
             </p>
           )}
           {game.timer.kind === "none" && (
             <p className="mt-5 inline-flex items-center gap-2 text-sm text-ink-muted">
               <TimerIcon size={15} />
-              Sin limite de tiempo
+              {t("shell.no_time_limit")}
             </p>
           )}
 
           <div className="mt-7">
             <Button size="lg" block onClick={beginPlaying}>
-              Comenzar
+              {t("shell.start")}
             </Button>
           </div>
         </Panel>
 
-        {/* Modal de identidad (primera vez) */}
         <IdentityModal open={identityOpen} onClose={handleIdentitySaved} />
       </div>
     );
   }
 
   // -----------------------------------------------------------------
-  // Vista: en juego / terminado (se mantiene el juego montado para
-  // que pueda revelar respuestas tras finalizar).
+  // Vista: en juego / terminado.
   // -----------------------------------------------------------------
   const GameComponent = game.component;
   const won = status === "won";
@@ -405,9 +363,6 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
         status={status}
         onSurrender={() => finish("lost")}
         onBackRequest={() => {
-          // Si todavia esta jugando, pide confirmacion (la salida sin
-          // confirmar tambien se registra como derrota via cleanup, pero el
-          // modal le da claridad al jugador). Si ya termino, vuelve directo.
           if (phase === "playing") setLeaveConfirmOpen(true);
           else navigate("/");
         }}
@@ -433,26 +388,24 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
       <Modal
         open={leaveConfirmOpen}
         onClose={() => setLeaveConfirmOpen(false)}
-        title="¿Salir y perder el reto?"
+        title={t("leave.title")}
       >
         <p className="text-sm text-ink-muted">
-          Si salis ahora, este reto cuenta como <strong className="text-white">perdido</strong> y
-          ya no podras jugarlo hasta manana. La racha se interrumpe.
+          {t("leave.msg")}
         </p>
         <div className="mt-5 flex flex-col gap-2">
           <Button
             variant="danger"
             block
             onClick={() => {
-              // El cleanup del shell registra la derrota; aca solo navegamos.
               setLeaveConfirmOpen(false);
               navigate("/");
             }}
           >
-            Si, salir y dar por perdido
+            {t("leave.confirm")}
           </Button>
           <Button variant="ghost" block onClick={() => setLeaveConfirmOpen(false)}>
-            Seguir jugando
+            {t("leave.cancel")}
           </Button>
         </div>
       </Modal>
@@ -460,7 +413,7 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
       <Modal
         open={resultOpen}
         onClose={() => setResultOpen(false)}
-        title={won ? "Reto superado" : "Fin del intento"}
+        title={won ? t("result.won_title") : t("result.lost_title")}
       >
         <div className="text-center">
           <div
@@ -472,27 +425,23 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
             {won ? <Trophy size={30} /> : <FlagIcon size={30} />}
           </div>
           <p className="text-lg font-semibold text-white">
-            {won ? "Buen trabajo!" : "No esta vez."}
+            {won ? t("result.won_msg") : t("result.lost_msg")}
           </p>
           <p className="mt-1 text-sm text-ink-muted">
-            {won
-              ? "Sumaste este reto a tu racha."
-              : "Repasa las respuestas correctas en el tablero."}
+            {won ? t("result.won_sub") : t("result.lost_sub")}
           </p>
 
           {won && pointsEarned > 0 && (
             <div className="mx-auto mt-3 inline-flex items-center gap-2 rounded-full border border-sector-yellow/30 bg-sector-yellow/10 px-4 py-1.5">
               <Trophy size={16} />
               <span className="tnum font-display text-lg text-white">+{pointsEarned}</span>
-              <span className="text-xs text-ink-muted">puntos</span>
+              <span className="text-xs text-ink-muted">{t("result.points")}</span>
             </div>
           )}
 
           {notRanked && (
             <p className="mx-auto mt-3 max-w-xs text-xs text-ink-faint">
-              Otro jugador ya jugó este reto desde tu conexión hoy, así que tu
-              resultado no cuenta para el ranking global. Igual quedó guardado
-              en tu historial.
+              {t("result.not_ranked")}
             </p>
           )}
 
@@ -501,8 +450,6 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
               variant="outline"
               block
               onClick={() => {
-                // Cerrar el modal PRIMERO y esperar a que React lo desmonte
-                // (el Modal restaura body.overflow al desmontar). Luego scroll.
                 setResultOpen(false);
                 window.setTimeout(() => {
                   boardRef.current?.scrollIntoView({
@@ -512,28 +459,26 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
                 }, 200);
               }}
             >
-              Ver el tablero
+              {t("result.view_board")}
             </Button>
             <Button
               variant="outline"
               block
               onClick={() => {
-                // Cerrar este modal y disparar la apertura del modal global
-                // de stats (montado en Header) via event bus.
                 setResultOpen(false);
                 window.setTimeout(() => emit(Events.OPEN_STATS), 200);
               }}
             >
-              Ver ranking del día
+              {t("result.view_ranking")}
             </Button>
             <Link to="/" className="block">
               <Button variant="ghost" block>
-                Volver al inicio
+                {t("result.go_home")}
               </Button>
             </Link>
           </div>
 
-          <p className="mt-4 text-xs text-ink-faint">Vuelve manana para un nuevo reto</p>
+          <p className="mt-4 text-xs text-ink-faint">{t("result.come_back")}</p>
         </div>
       </Modal>
 
@@ -548,13 +493,14 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
 /* ===================================================================== */
 
 function BackLink() {
+  const { t } = useI18n();
   return (
     <Link
       to="/"
       className="inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
     >
       <ChevronLeft size={16} />
-      Inicio
+      {t("shell.back")}
     </Link>
   );
 }
@@ -572,13 +518,9 @@ function ControlBar({
   totalSeconds: number | null;
   status: GameStatus;
   onSurrender: () => void;
-  /**
-   * Click en la flecha "atras". Si el juego sigue en curso, el padre debe
-   * mostrar la confirmacion de abandono (= derrota). Si ya termino, navega
-   * directo a la home.
-   */
   onBackRequest: () => void;
 }) {
+  const { t } = useI18n();
   const [confirm, setConfirm] = useState(false);
   const playing = status === "playing";
 
@@ -588,13 +530,13 @@ function ControlBar({
         <button
           type="button"
           onClick={onBackRequest}
-          aria-label="Volver al inicio"
+          aria-label={t("shell.back_label")}
           className="rounded-lg p-1 text-ink-muted transition-colors hover:bg-white/5 hover:text-ink"
         >
           <ChevronLeft size={18} />
         </button>
         <span className="rounded-md border border-white/10 bg-asphalt-700 px-2 py-0.5 font-mono text-xs uppercase tracking-wider text-ink-muted">
-          {DIFFICULTY_LABEL[difficulty]}
+          {t(`diff.${difficulty}`)}
         </span>
       </div>
 
@@ -607,15 +549,15 @@ function ControlBar({
           (confirm ? (
             <span className="flex items-center gap-1.5">
               <Button variant="danger" size="sm" onClick={onSurrender}>
-                Rendirse
+                {t("shell.surrender")}
               </Button>
               <Button variant="ghost" size="sm" onClick={() => setConfirm(false)}>
-                No
+                {t("shell.no")}
               </Button>
             </span>
           ) : (
             <Button variant="ghost" size="sm" onClick={() => setConfirm(true)}>
-              Rendirse
+              {t("shell.surrender")}
             </Button>
           ))}
       </div>
@@ -624,6 +566,7 @@ function ControlBar({
 }
 
 function ResultBanner({ won, onOpen }: { won: boolean; onOpen: () => void }) {
+  const { t } = useI18n();
   return (
     <button
       onClick={onOpen}
@@ -636,9 +579,9 @@ function ResultBanner({ won, onOpen }: { won: boolean; onOpen: () => void }) {
     >
       <div className="flex items-center justify-between">
         <span className={["font-semibold", won ? "text-sector-green" : "text-racing-400"].join(" ")}>
-          {won ? "Reto superado" : "Reto fallido"}
+          {won ? t("banner.won") : t("banner.lost")}
         </span>
-        <span className="text-xs text-ink-muted">Ver resumen</span>
+        <span className="text-xs text-ink-muted">{t("banner.summary")}</span>
       </div>
     </button>
   );
