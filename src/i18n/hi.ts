@@ -246,6 +246,14 @@ const hi: Translations = {
   "bingo.example": "उदा.",
   "bingo.champion_label": "चैंपियन",
 
+    "game.gp-resultado.name": "GP परिणाम",
+  "game.gp-resultado.tagline": "समय समाप्त होने से पहले एक ऐतिहासिक ग्रां प्री का टॉप 10 पूरा करें।",
+  "gpresultado.eyebrow": "ग्रां प्री",
+  "gpresultado.search_placeholder": "ड्राइवर का नाम टाइप करें…",
+  "gpresultado.found_count": "{{found}} / {{total}} मिले",
+  "gpresultado.not_in_top": "{{name}} टॉप 10 में नहीं था।",
+  "gpresultado.time_up": "समय समाप्त। छूटी हुई स्थितियाँ ऊपर दिखाई गई हैं।",
+
   "lang.label": "भाषा",
 };
 

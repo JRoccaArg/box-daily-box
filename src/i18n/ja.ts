@@ -215,6 +215,14 @@ const ja: Translations = {
   "month.6": "7月", "month.7": "8月", "month.8": "9月",
   "month.9": "10月", "month.10": "11月", "month.11": "12月",
 
+    "game.gp-resultado.name": "GPリザルト",
+  "game.gp-resultado.tagline": "制限時間内に歴史的グランプリのトップ10を完成させよう。",
+  "gpresultado.eyebrow": "グランプリ",
+  "gpresultado.search_placeholder": "ドライバー名を入力…",
+  "gpresultado.found_count": "{{found}}/{{total}} 発見",
+  "gpresultado.not_in_top": "{{name}}はトップ10に入っていません。",
+  "gpresultado.time_up": "タイムアップ。未発見の順位が上に表示されています。",
+
   "lang.label": "言語",
 };
 

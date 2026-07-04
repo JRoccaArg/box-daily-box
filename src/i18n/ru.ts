@@ -162,6 +162,14 @@ const ru: Translations = {
   "month.4": "май", "month.5": "июнь", "month.6": "июль", "month.7": "август",
   "month.8": "сентябрь", "month.9": "октябрь", "month.10": "ноябрь", "month.11": "декабрь",
 
+    "game.gp-resultado.name": "GP Результат",
+  "game.gp-resultado.tagline": "Заполни топ-10 исторического Гран-при до истечения времени.",
+  "gpresultado.eyebrow": "Гран-при",
+  "gpresultado.search_placeholder": "Введи имя гонщика…",
+  "gpresultado.found_count": "{{found}} из {{total}} найдено",
+  "gpresultado.not_in_top": "{{name}} не финишировал в топ-10.",
+  "gpresultado.time_up": "Время вышло. Недостающие позиции показаны выше.",
+
   "lang.label": "Язык",
 };
 

@@ -162,6 +162,14 @@ const de: Translations = {
   "month.4": "Mai", "month.5": "Juni", "month.6": "Juli", "month.7": "August",
   "month.8": "September", "month.9": "Oktober", "month.10": "November", "month.11": "Dezember",
 
+    "game.gp-resultado.name": "GP Ergebnis",
+  "game.gp-resultado.tagline": "Vervollständige die Top 10 eines historischen Grand Prix bevor die Zeit abläuft.",
+  "gpresultado.eyebrow": "Grand Prix",
+  "gpresultado.search_placeholder": "Fahrernamen eingeben…",
+  "gpresultado.found_count": "{{found}} von {{total}} gefunden",
+  "gpresultado.not_in_top": "{{name}} war nicht in den Top 10.",
+  "gpresultado.time_up": "Zeit abgelaufen. Fehlende Positionen werden oben angezeigt.",
+
   "lang.label": "Sprache",
 };
 
