@@ -7,6 +7,7 @@
  */
 
 import { getIdentity, setIdentityToken } from "./identity";
+import { dateKey } from "./seed";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "";
 
@@ -145,10 +146,10 @@ export async function apiGetMonthlyRanking(
   country?: string,
 ): Promise<RankingResponse | null> {
   const params = new URLSearchParams();
-  if (month) params.set("month", month);
+  // Mes LOCAL del cliente por default (no UTC), consistente con date_key.
+  params.set("month", month ?? dateKey().substring(0, 7));
   if (country) params.set("country", country);
-  const qs = params.toString();
-  return apiFetch<RankingResponse>(`/ranking/monthly${qs ? `?${qs}` : ""}`);
+  return apiFetch<RankingResponse>(`/ranking/monthly?${params.toString()}`);
 }
 
 /** Ranking del dia. */
@@ -157,10 +158,11 @@ export async function apiGetDailyRanking(
   country?: string,
 ): Promise<DailyRankingResponse | null> {
   const params = new URLSearchParams();
-  if (date) params.set("date", date);
+  // Dia LOCAL del cliente por default (no UTC). Esto es lo que arreglaba el
+  // ranking diario vacio despues de las 21:00 ART (UTC-3).
+  params.set("date", date ?? dateKey());
   if (country) params.set("country", country);
-  const qs = params.toString();
-  return apiFetch<DailyRankingResponse>(`/ranking/daily${qs ? `?${qs}` : ""}`);
+  return apiFetch<DailyRankingResponse>(`/ranking/daily?${params.toString()}`);
 }
 
 /**
@@ -237,10 +239,9 @@ export async function apiGetUserAttempts(
   date?: string,
 ): Promise<UserAttemptsResponse | null> {
   const params = new URLSearchParams();
-  if (date) params.set("date", date);
-  const qs = params.toString();
+  params.set("date", date ?? dateKey());
   return apiFetch<UserAttemptsResponse>(
-    `/user/${encodeURIComponent(userId)}/attempts${qs ? `?${qs}` : ""}`,
+    `/user/${encodeURIComponent(userId)}/attempts?${params.toString()}`,
   );
 }
 
@@ -264,9 +265,8 @@ export async function apiGetUserRank(
   date?: string,
 ): Promise<UserRank | null> {
   const params = new URLSearchParams();
-  if (date) params.set("date", date);
-  const qs = params.toString();
+  params.set("date", date ?? dateKey());
   return apiFetch<UserRank>(
-    `/user/${encodeURIComponent(userId)}/rank${qs ? `?${qs}` : ""}`,
+    `/user/${encodeURIComponent(userId)}/rank?${params.toString()}`,
   );
 }

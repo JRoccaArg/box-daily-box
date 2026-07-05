@@ -25,3 +25,8 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Local Claude/docs
+.claude/
+Box_Daily_Box_Business_Architecture.docx
+create_doc.js
