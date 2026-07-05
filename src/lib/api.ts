@@ -50,11 +50,14 @@ type DailyRankingResponse = {
   top: RankingEntry[];
 };
 
-/** Wrapper de fetch con timeout y manejo de errores. */
+/** Wrapper de fetch con timeout y manejo de errores.
+ *  Si `preserveClientErrors` es true, devuelve el body de respuestas 4xx
+ *  en lugar de null (útil para mostrar errores de validación al usuario). */
 async function apiFetch<T>(
   path: string,
   options: RequestInit = {},
   timeoutMs = 8000,
+  preserveClientErrors = false,
 ): Promise<T | null> {
   if (!API_URL) return null;
 
@@ -74,6 +77,9 @@ async function apiFetch<T>(
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       console.warn(`[API] ${path} → ${res.status}:`, body);
+      if (preserveClientErrors && res.status >= 400 && res.status < 500) {
+        return body as T;
+      }
       return null;
     }
 
@@ -203,8 +209,8 @@ export async function apiUpdateUserProfile(
   userId: string,
   updates: { displayName?: string; countryCode?: string },
   identityToken?: string | null,
-): Promise<UserProfile | { error: string } | null> {
-  return apiFetch<UserProfile | { error: string }>(
+): Promise<UserProfile | { error: string; code?: string } | null> {
+  return apiFetch<UserProfile | { error: string; code?: string }>(
     `/user/${encodeURIComponent(userId)}/profile`,
     {
       method: "POST",
@@ -213,7 +219,25 @@ export async function apiUpdateUserProfile(
         ...(identityToken ? { identityToken } : {}),
       }),
     },
+    8000,
+    true, // preservar errores 4xx para mostrar "nombre en uso", "mes bloqueado", etc.
   );
+}
+
+/** GET /username-available?name=X&userId=Y
+ *  Chequea si un nombre está libre. userId opcional: si es tu propio nombre,
+ *  no se marca como duplicado. Devuelve null si la API no responde. */
+export async function apiCheckUsernameAvailable(
+  name: string,
+  userId?: string,
+): Promise<boolean | null> {
+  const params = new URLSearchParams({ name });
+  if (userId) params.set("userId", userId);
+  const data = await apiFetch<{ available: boolean }>(
+    `/username-available?${params.toString()}`,
+  );
+  if (!data) return null;
+  return data.available;
 }
 
 export type ServerAttempt = {

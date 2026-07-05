@@ -103,8 +103,12 @@ const en: Translations = {
   "profile.title": "Your profile",
   "profile.subtitle":
     "You'll appear in the global ranking with this name and country.",
-  "profile.name_label": "Name (visible in ranking)",
-  "profile.name_placeholder": "Your name or nickname",
+  "profile.name_label": "Username (visible in ranking)",
+  "profile.name_placeholder": "Choose a username",
+  "profile.name_unique_hint": "Must be unique: no one else can have the same username.",
+  "profile.name_taken": "That username is already taken. Try another one.",
+  "profile.name_checking": "Checking availability...",
+  "profile.name_available": "✓ Available",
   "profile.name_locked":
     "You can change it again in {{month}}. You already used your name change this month.",
   "profile.name_warn":

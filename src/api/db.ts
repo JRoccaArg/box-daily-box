@@ -60,6 +60,16 @@ export async function initializeDatabase(): Promise<void> {
       END $$;
     `);
 
+    // Índice único case-insensitive sobre display_name. Impide dos usuarios
+    // con el mismo nombre (ignora mayúsculas/minúsculas). NULLs permitidos.
+    // Si hay duplicados existentes al momento de migrar, la creación fallará;
+    // en producción con datos hay que resolver duplicados a mano primero.
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_users_display_name_unique
+      ON users (LOWER(display_name))
+      WHERE display_name IS NOT NULL;
+    `);
+
     // Tabla attempts
     await client.query(`
       CREATE TABLE IF NOT EXISTS attempts (

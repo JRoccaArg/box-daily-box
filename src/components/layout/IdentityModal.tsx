@@ -11,7 +11,7 @@ import {
   getIdentityToken,
   setIdentityToken,
 } from "@/lib/identity";
-import { apiGetUserProfile, apiUpdateUserProfile } from "@/lib/api";
+import { apiGetUserProfile, apiUpdateUserProfile, apiCheckUsernameAvailable } from "@/lib/api";
 import { detectCountryCode } from "@/lib/geoip";
 import { loginWithGoogle, isLoggedIn, logout, getUserEmail } from "@/lib/auth";
 import { NATIONALITIES } from "@/data/nationalities";
@@ -40,6 +40,9 @@ export function IdentityModal({ open, onClose }: IdentityModalProps) {
   const [detecting, setDetecting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [nameStatus, setNameStatus] = useState<
+    "idle" | "checking" | "available" | "taken"
+  >("idle");
 
   /** Nombre del mes siguiente. */
   function nextMonthName(): string {
@@ -81,8 +84,34 @@ export function IdentityModal({ open, onClose }: IdentityModalProps) {
   const nameValid = trimmedName.length > 0 && trimmedName.length <= 30;
   const countryValid = country.length === 3 && country in NATIONALITIES;
   const nameChanged = trimmedName !== identity.displayName;
+
+  // Verificación en tiempo real: solo si el nombre cambió y es válido.
+  // Debounce de 500ms para no golpear la API en cada tecla.
+  useEffect(() => {
+    if (!nameChanged || !nameValid) {
+      setNameStatus("idle");
+      return;
+    }
+    setNameStatus("checking");
+    const timer = setTimeout(async () => {
+      const available = await apiCheckUsernameAvailable(trimmedName, identity.userId);
+      // available === null significa que la API no respondió; no bloquear.
+      if (available === null) {
+        setNameStatus("idle");
+      } else {
+        setNameStatus(available ? "available" : "taken");
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [trimmedName, nameChanged, nameValid, identity.userId]);
+
   const canSave =
-    nameValid && countryValid && !saving && (canChangeName || !nameChanged);
+    nameValid &&
+    countryValid &&
+    !saving &&
+    (canChangeName || !nameChanged) &&
+    nameStatus !== "taken" &&
+    nameStatus !== "checking";
 
   const handleSave = async () => {
     setError(null);
@@ -105,7 +134,13 @@ export function IdentityModal({ open, onClose }: IdentityModalProps) {
       return;
     }
     if ("error" in result) {
-      setError(result.error);
+      // Errores conocidos con clave i18n; el resto muestra el string crudo.
+      if (result.code === "username_taken") {
+        setNameStatus("taken");
+        setError(t("profile.name_taken"));
+      } else {
+        setError(result.error);
+      }
       return;
     }
 
@@ -149,8 +184,37 @@ export function IdentityModal({ open, onClose }: IdentityModalProps) {
             placeholder={t("profile.name_placeholder")}
             autoComplete="off"
             disabled={!canChangeName && isIdentityComplete()}
-            className="w-full rounded-lg border border-white/15 bg-asphalt-700 px-4 py-3 text-ink placeholder:text-ink-faint focus:border-racing/50 disabled:opacity-60 disabled:cursor-not-allowed"
+            className={[
+              "w-full rounded-lg border bg-asphalt-700 px-4 py-3 text-ink placeholder:text-ink-faint focus:border-racing/50 disabled:opacity-60 disabled:cursor-not-allowed",
+              nameStatus === "taken"
+                ? "border-red-500/60"
+                : nameStatus === "available"
+                  ? "border-sector-green/60"
+                  : "border-white/15",
+            ].join(" ")}
           />
+          {/* Estado de disponibilidad en tiempo real */}
+          {nameChanged && nameValid && nameStatus === "checking" && (
+            <p className="mt-1 text-[11px] text-ink-faint">
+              {t("profile.name_checking")}
+            </p>
+          )}
+          {nameChanged && nameValid && nameStatus === "available" && (
+            <p className="mt-1 text-[11px] text-sector-green">
+              {t("profile.name_available")}
+            </p>
+          )}
+          {nameChanged && nameValid && nameStatus === "taken" && (
+            <p className="mt-1 text-[11px] text-red-400">
+              {t("profile.name_taken")}
+            </p>
+          )}
+          {/* Hint permanente de unicidad */}
+          {(nameStatus === "idle" || !nameChanged) && (
+            <p className="mt-1 text-[11px] text-ink-faint">
+              {t("profile.name_unique_hint")}
+            </p>
+          )}
           {!canChangeName && isIdentityComplete() && (
             <p className="mt-1 text-[11px] text-ink-faint">
               {t("profile.name_locked", { month: nextMonthName() })}
