@@ -9,9 +9,10 @@ import type { ComponentType } from "react";
 
 /** Codigo ISO-3166 alpha-3 simplificado para nacionalidades. */
 export type Nationality = {
-  code: string; // p.ej. "ARG", "GBR"
+  code: string; // ISO alpha-3 p.ej. "ARG", "GBR"
+  alpha2: string; // ISO alpha-2 p.ej. "ar", "gb" (minúsculas, para flag-icons CSS)
   name: string; // p.ej. "Argentina", "Reino Unido"
-  /** Emoji de bandera, util como fallback sin assets. */
+  /** Emoji de bandera, usado como fallback en <select> nativos. */
   flag: string;
 };
 

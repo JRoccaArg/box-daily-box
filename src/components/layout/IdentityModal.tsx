@@ -176,7 +176,7 @@ export function IdentityModal({ open, onClose }: IdentityModalProps) {
           </label>
           {countryLocked ? (
             <div className="w-full rounded-lg border border-white/10 bg-asphalt-700/60 px-4 py-3 text-ink-muted">
-              {currentCountry ? `${currentCountry.flag} ${currentCountry.name}` : country}
+              {currentCountry ? `${currentCountry.flag} ${currentCountry.name} (${currentCountry.code})` : country}
               <span className="ml-2 text-[11px] text-ink-faint">{t("profile.country_fixed")}</span>
             </div>
           ) : (
@@ -190,7 +190,7 @@ export function IdentityModal({ open, onClose }: IdentityModalProps) {
               <option value="">{t("profile.country_select")}</option>
               {countries.map((n) => (
                 <option key={n.code} value={n.code}>
-                  {n.flag} {n.name}
+                  {n.flag} {n.name} ({n.code})
                 </option>
               ))}
             </select>

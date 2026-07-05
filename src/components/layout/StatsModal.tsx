@@ -30,9 +30,7 @@ export function StatsModal({ open, onClose }: StatsModalProps) {
   const winRate = total > 0 ? Math.round((summary.won / total) * 100) : 0;
 
   const identity = getIdentity();
-  const flag = identity.countryCode
-    ? (NATIONALITIES[identity.countryCode]?.flag ?? "🏁")
-    : "🏁";
+  const natData = identity.countryCode ? NATIONALITIES[identity.countryCode] : null;
 
   const handleReset = () => {
     if (!confirming) {
@@ -49,7 +47,11 @@ export function StatsModal({ open, onClose }: StatsModalProps) {
         {/* Perfil */}
         <div className="mb-4 flex items-center justify-between rounded-lg border border-white/10 bg-asphalt-700 px-3 py-2.5">
           <div className="flex items-center gap-2">
-            <span className="text-lg">{flag}</span>
+            {natData ? (
+              <span className={`fi fi-${natData.alpha2} text-lg`} role="img" aria-label={natData.name} />
+            ) : (
+              <span className="text-lg">🏁</span>
+            )}
             <span className="text-sm font-medium text-ink">
               {identity.displayName || t("stats.no_name")}
             </span>

@@ -87,7 +87,7 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
           <option value="">{t("ranking.all_countries")}</option>
           {countries.map((n) => (
             <option key={n.code} value={n.code}>
-              {n.flag} {n.name}
+              {n.flag} {n.name} ({n.code})
             </option>
           ))}
         </select>
@@ -121,9 +121,7 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
           <div className="space-y-1.5">
             {entries.map((entry) => {
               const isMe = entry.userId === userId;
-              const flag = entry.countryCode
-                ? (NATIONALITIES[entry.countryCode]?.flag ?? "🏁")
-                : "🏁";
+              const natData = entry.countryCode ? NATIONALITIES[entry.countryCode] : null;
               const challengeLabel =
                 entry.gamesWon === 1
                   ? t("ranking.challenge_singular")
@@ -151,7 +149,11 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-sm">{flag}</span>
+                      {natData ? (
+                        <span className={`fi fi-${natData.alpha2} text-sm`} role="img" aria-label={natData.name} />
+                      ) : (
+                        <span className="text-sm">🏁</span>
+                      )}
                       <span
                         className={[
                           "truncate text-sm font-medium",

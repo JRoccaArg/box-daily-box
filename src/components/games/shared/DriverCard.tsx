@@ -67,7 +67,7 @@ export function DriverCard({ driver, onClick, state = "idle", disabled, full = f
           {driver.lastName}
         </div>
         <div className="mt-0.5 inline-flex items-center gap-1 text-xs text-ink-muted">
-          <span aria-hidden="true">{nat.flag}</span>
+          <span className={`fi fi-${nat.alpha2}`} role="img" aria-label={nat.name} />
           <span className="font-mono">{driver.nationalityCode}</span>
         </div>
       </div>

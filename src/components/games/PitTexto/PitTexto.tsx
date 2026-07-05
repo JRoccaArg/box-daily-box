@@ -84,7 +84,7 @@ export function PitTexto({ difficulty, date, status, onWin, onLose }: GameProps)
                     onClick={() => addGuess(d)}
                     className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-ink transition-colors hover:bg-asphalt-600"
                   >
-                    <span aria-hidden="true">{nationality(d.nationalityCode).flag}</span>
+                    <span className={`fi fi-${nationality(d.nationalityCode).alpha2}`} role="img" aria-label={nationality(d.nationalityCode).name} />
                     <span className="font-medium">{fullName(d)}</span>
                   </button>
                 </li>
@@ -108,7 +108,7 @@ export function PitTexto({ difficulty, date, status, onWin, onLose }: GameProps)
             {solved ? t("pittexto.found") : t("pittexto.answer_was")}
           </p>
           <p className="mt-0.5 font-display text-lg font-bold text-white">
-            {nationality(target.nationalityCode).flag} {fullName(target)}
+            <span className={`fi fi-${nationality(target.nationalityCode).alpha2}`} role="img" aria-label={nationality(target.nationalityCode).name} /> {fullName(target)}
           </p>
         </div>
       )}
@@ -138,7 +138,7 @@ function GuessRow({ guess, target }: { guess: Driver; target: Driver }) {
         </div>
         <div className="min-w-0 flex-1">
           <div className="truncate font-display font-semibold text-white">
-            <span aria-hidden="true">{nationality(guess.nationalityCode).flag}</span> {fullName(guess)}
+            <span className={`fi fi-${nationality(guess.nationalityCode).alpha2}`} role="img" aria-label={nationality(guess.nationalityCode).name} /> {fullName(guess)}
           </div>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {score.factors.map((f) => (
