@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   apiGetMonthlyRanking,
   apiGetDailyRanking,
@@ -7,6 +7,7 @@ import {
 import { useI18n } from "@/context";
 import { getIdentity } from "@/lib/identity";
 import { NATIONALITIES } from "@/data/nationalities";
+import { CountrySelect } from "@/components/ui/CountrySelect";
 import { Trophy } from "@/components/ui/Icon";
 
 type Tab = "monthly" | "daily";
@@ -24,11 +25,6 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
   const { userId } = getIdentity();
   const now = new Date();
   const monthName = t(`month.${now.getMonth()}`);
-
-  const countries = useMemo(() => {
-    return Object.values(NATIONALITIES)
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,18 +75,13 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
 
       {/* Filtro por pais */}
       <div className="mt-3">
-        <select
+        <CountrySelect
           value={countryFilter}
-          onChange={(e) => setCountryFilter(e.target.value)}
-          className="w-full rounded-lg border border-white/10 bg-asphalt-700 px-3 py-2 text-sm text-ink"
-        >
-          <option value="">{t("ranking.all_countries")}</option>
-          {countries.map((n) => (
-            <option key={n.code} value={n.code}>
-              {n.flag} {n.name} ({n.code})
-            </option>
-          ))}
-        </select>
+          onChange={setCountryFilter}
+          placeholder={t("ranking.all_countries")}
+          size="sm"
+          allowClear
+        />
       </div>
 
       {/* Contenido */}

@@ -15,6 +15,7 @@ import { apiGetUserProfile, apiUpdateUserProfile } from "@/lib/api";
 import { detectCountryCode } from "@/lib/geoip";
 import { loginWithGoogle, isLoggedIn, logout, getUserEmail } from "@/lib/auth";
 import { NATIONALITIES } from "@/data/nationalities";
+import { CountrySelect } from "@/components/ui/CountrySelect";
 import { RankBadge } from "./RankBadge";
 
 type IdentityModalProps = {
@@ -75,10 +76,6 @@ export function IdentityModal({ open, onClose }: IdentityModalProps) {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, identity.userId, identity.countryCode]);
-
-  const countries = Object.values(NATIONALITIES).sort((a, b) =>
-    a.name.localeCompare(b.name),
-  );
 
   const trimmedName = name.trim();
   const nameValid = trimmedName.length > 0 && trimmedName.length <= 30;
@@ -175,25 +172,25 @@ export function IdentityModal({ open, onClose }: IdentityModalProps) {
             {detecting && <span className="text-ink-faint">{t("profile.country_detecting")}</span>}
           </label>
           {countryLocked ? (
-            <div className="w-full rounded-lg border border-white/10 bg-asphalt-700/60 px-4 py-3 text-ink-muted">
-              {currentCountry ? `${currentCountry.flag} ${currentCountry.name} (${currentCountry.code})` : country}
-              <span className="ml-2 text-[11px] text-ink-faint">{t("profile.country_fixed")}</span>
+            <div className="flex w-full items-center gap-2 rounded-lg border border-white/10 bg-asphalt-700/60 px-4 py-3 text-ink-muted">
+              {currentCountry ? (
+                <>
+                  <span className={`fi fi-${currentCountry.alpha2}`} role="img" aria-label={currentCountry.name} />
+                  <span>{currentCountry.name} ({currentCountry.code})</span>
+                </>
+              ) : (
+                <span>{country}</span>
+              )}
+              <span className="ml-auto text-[11px] text-ink-faint">{t("profile.country_fixed")}</span>
             </div>
           ) : (
-            <select
+            <CountrySelect
               id="identity-country"
               value={country}
-              onChange={(e) => setCountry(e.target.value)}
+              onChange={setCountry}
+              placeholder={t("profile.country_select")}
               disabled={detecting}
-              className="w-full rounded-lg border border-white/15 bg-asphalt-700 px-4 py-3 text-ink"
-            >
-              <option value="">{t("profile.country_select")}</option>
-              {countries.map((n) => (
-                <option key={n.code} value={n.code}>
-                  {n.flag} {n.name} ({n.code})
-                </option>
-              ))}
-            </select>
+            />
           )}
           {!countryLocked && (
             <p className="mt-1 text-[11px] text-ink-faint">
