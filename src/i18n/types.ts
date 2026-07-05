@@ -4,7 +4,7 @@
 
 /** Idiomas soportados. Para agregar uno nuevo, crear el archivo de
  *  traducciones (ej: `de.ts`) y agregarlo a SUPPORTED_LOCALES. */
-export const SUPPORTED_LOCALES = ["es", "en", "pt", "hi", "it", "fr", "zh", "ja", "de", "nl", "ar", "ru"] as const;
+export const SUPPORTED_LOCALES = ["es", "en", "pt", "hi", "it", "fr", "zh", "ja", "de", "nl", "ar", "ru", "tr", "sl"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 
 /** Metadatos de cada idioma para el selector. */
@@ -28,6 +28,8 @@ export const LOCALE_META: LocaleMeta[] = [
   { code: "ar", label: "العربية", flag: "🇸🇦" },
   { code: "hi", label: "हिन्दी", flag: "🇮🇳" },
   { code: "ru", label: "Русский", flag: "🇷🇺" },
+  { code: "tr", label: "Türkçe", flag: "🇹🇷" },
+  { code: "sl", label: "Slovenščina", flag: "🇸🇮" },
 ];
 
 /** Diccionario plano de traducciones. Las claves usan dot-notation

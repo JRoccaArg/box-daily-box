@@ -35,6 +35,7 @@ const ALPHA2_TO_ALPHA3: Record<string, string> = {
   IE: "IRL", IT: "ITA", JP: "JPN", LI: "LIE", MA: "MAR",
   MC: "MCO", MX: "MEX", MY: "MYS", NL: "NLD", NZ: "NZL",
   PL: "POL", PT: "PRT", RU: "RUS", SE: "SWE", TH: "THA",
+  TR: "TUR", SI: "SVN",
   UY: "URY", US: "USA", VE: "VEN", ZA: "ZAF", ZW: "ZWE",
 };
 
