@@ -3,6 +3,11 @@ node_modules
 .pnp
 .pnp.js
 
+# Secrets
+.env
+.env.local
+.env.*.local
+
 # Build output
 dist
 dist-ssr

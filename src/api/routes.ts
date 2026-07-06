@@ -19,19 +19,9 @@ import {
   isPlausibleSolution,
 } from "./validate";
 import { signIdentityToken, ownsIdentity } from "./identity-token";
+import { TOKEN_SECRET, ADMIN_SECRET } from "./secrets";
 
 const SESSION_TTL = 15 * 60 * 1000; // 15 minutos
-
-// Secreto para firmar tokens (configurable via env).
-const TOKEN_SECRET = process.env.TOKEN_SECRET || "bdb-token-secret-2026-change-me";
-
-// Advertencia de arranque si los secretos siguen en su valor por defecto.
-if (!process.env.TOKEN_SECRET) {
-  console.warn("⚠️  TOKEN_SECRET no configurado: usando default INSEGURO. Configuralo en Railway.");
-}
-if (!process.env.ADMIN_SECRET) {
-  console.warn("⚠️  ADMIN_SECRET no configurado: usando default INSEGURO. Configuralo en Railway.");
-}
 
 // Opciones de tiempo disponibles por juego (segundos). El backend las usa para:
 // 1. Validar que el timeLimit enviado por el cliente es una opción legítima.
@@ -552,10 +542,9 @@ export async function adminDebug(
     const { secret: querySecret } = req.query as { secret?: string };
     const provided = typeof headerSecret === "string" ? headerSecret : (querySecret ?? "");
 
-    const adminSecret = process.env.ADMIN_SECRET || "boxdailybox-debug-2026";
     // Comparación timing-safe para evitar timing attacks sobre el secreto.
     const a = Buffer.from(String(provided));
-    const b = Buffer.from(adminSecret);
+    const b = Buffer.from(ADMIN_SECRET);
     const ok = a.length === b.length && timingSafeEqual(a, b);
     if (!ok) {
       reply.code(403).send({ error: "Acceso denegado" });
@@ -893,11 +882,15 @@ export async function checkUsernameAvailable(
 }
 
 /**
- * GET /user/:userId/attempts?date=YYYY-MM-DD
+ * GET /user/:userId/attempts?date=YYYY-MM-DD&identityToken=...
  *
  * Devuelve los attempts del usuario para una fecha específica.
  * Usado para sincronizar el estado local con el server después de login
  * o al cargar la home.
+ *
+ * Requiere identityToken propio: el userId no es secreto (aparece en el
+ * ranking público), así que sin esta verificación cualquiera podría leer
+ * el historial diario de otra persona conociendo su userId.
  */
 export async function getUserAttempts(
   req: FastifyRequest,
@@ -907,6 +900,12 @@ export async function getUserAttempts(
     const { userId } = req.params as { userId?: string };
     if (!userId || !isValidUserId(userId)) {
       reply.code(422).send({ error: "userId inválido" });
+      return;
+    }
+
+    const { identityToken } = req.query as { identityToken?: string };
+    if (!ownsIdentity(identityToken, userId)) {
+      reply.code(403).send({ error: "No autorizado para leer estos datos" });
       return;
     }
 
@@ -941,7 +940,7 @@ export async function getUserAttempts(
 }
 
 /**
- * GET /user/:userId/rank?date=YYYY-MM-DD
+ * GET /user/:userId/rank?date=YYYY-MM-DD&identityToken=...
  *
  * Devuelve la posición del usuario en el ranking diario global.
  * Reglas de negocio:
@@ -951,6 +950,10 @@ export async function getUserAttempts(
  *
  * Calculado eficientemente: cuenta cuántos usuarios distintos tienen
  * más puntos que este usuario ese día.
+ *
+ * Requiere identityToken propio (ver nota de seguridad en getUserAttempts).
+ * Esto NO afecta el ranking público (getRankingMonthly/getRankingDaily),
+ * que siguen siendo agregados sin necesidad de identificar a quien consulta.
  */
 export async function getUserRank(
   req: FastifyRequest,
@@ -960,6 +963,12 @@ export async function getUserRank(
     const { userId } = req.params as { userId?: string };
     if (!userId || !isValidUserId(userId)) {
       reply.code(422).send({ error: "userId inválido" });
+      return;
+    }
+
+    const { identityToken } = req.query as { identityToken?: string };
+    if (!ownsIdentity(identityToken, userId)) {
+      reply.code(403).send({ error: "No autorizado para leer estos datos" });
       return;
     }
 

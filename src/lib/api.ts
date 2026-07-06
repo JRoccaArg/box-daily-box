@@ -6,7 +6,7 @@
  * usan para ranking global, no para bloquear gameplay.
  */
 
-import { getIdentity, setIdentityToken } from "./identity";
+import { getIdentity, setIdentityToken, getIdentityToken } from "./identity";
 import { dateKey } from "./seed";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "";
@@ -256,8 +256,12 @@ export type UserAttemptsResponse = {
 };
 
 /**
- * GET /user/:userId/attempts?date=YYYY-MM-DD
+ * GET /user/:userId/attempts?date=YYYY-MM-DD&identityToken=...
  * Trae los attempts del usuario para una fecha específica.
+ *
+ * Manda el identityToken guardado localmente: el server solo devuelve datos
+ * si prueba la posesión del userId (evita que cualquiera con un userId ajeno
+ * pueda leer el historial de otra persona).
  */
 export async function apiGetUserAttempts(
   userId: string,
@@ -265,6 +269,8 @@ export async function apiGetUserAttempts(
 ): Promise<UserAttemptsResponse | null> {
   const params = new URLSearchParams();
   params.set("date", date ?? dateKey());
+  const token = getIdentityToken();
+  if (token) params.set("identityToken", token);
   return apiFetch<UserAttemptsResponse>(
     `/user/${encodeURIComponent(userId)}/attempts?${params.toString()}`,
   );
@@ -284,13 +290,18 @@ export type UserRank = {
   totalPlayers: number;
 };
 
-/** GET /user/:userId/rank?date=YYYY-MM-DD */
+/**
+ * GET /user/:userId/rank?date=YYYY-MM-DD&identityToken=...
+ * Manda el identityToken guardado localmente (ver nota en apiGetUserAttempts).
+ */
 export async function apiGetUserRank(
   userId: string,
   date?: string,
 ): Promise<UserRank | null> {
   const params = new URLSearchParams();
   params.set("date", date ?? dateKey());
+  const token = getIdentityToken();
+  if (token) params.set("identityToken", token);
   return apiFetch<UserRank>(
     `/user/${encodeURIComponent(userId)}/rank?${params.toString()}`,
   );
