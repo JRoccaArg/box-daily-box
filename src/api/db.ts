@@ -60,10 +60,33 @@ export async function initializeDatabase(): Promise<void> {
       END $$;
     `);
 
+    // Deduplicación previa: para cada grupo de duplicados case-insensitive,
+    // conservamos al usuario más antiguo con su nombre intacto y renombramos
+    // al resto agregando los primeros caracteres de su id como sufijo.
+    // Truncamos a 30 chars (límite de sanitizeDisplayName) para no romper el
+    // formato. Además reseteamos name_changed_at para que puedan elegir un
+    // nombre nuevo sin esperar al mes siguiente.
+    await client.query(`
+      WITH dupes AS (
+        SELECT id,
+               display_name,
+               ROW_NUMBER() OVER (
+                 PARTITION BY LOWER(display_name)
+                 ORDER BY created_at ASC NULLS LAST, id ASC
+               ) AS rn
+        FROM users
+        WHERE display_name IS NOT NULL
+      )
+      UPDATE users u
+      SET display_name = LEFT(u.display_name || '_' || SUBSTRING(u.id, 1, 4), 30),
+          name_changed_at = NULL
+      FROM dupes d
+      WHERE u.id = d.id AND d.rn > 1;
+    `);
+
     // Índice único case-insensitive sobre display_name. Impide dos usuarios
     // con el mismo nombre (ignora mayúsculas/minúsculas). NULLs permitidos.
-    // Si hay duplicados existentes al momento de migrar, la creación fallará;
-    // en producción con datos hay que resolver duplicados a mano primero.
+    // La deduplicación previa garantiza que la creación no falla en producción.
     await client.query(`
       CREATE UNIQUE INDEX IF NOT EXISTS idx_users_display_name_unique
       ON users (LOWER(display_name))
