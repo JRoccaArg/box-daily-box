@@ -113,12 +113,16 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
       // Guardar la solution para poder re-verificarla en el server si el
       // usuario se loguea más tarde (importación de intentos locales).
       saveSolution(game.id, solution ?? null, date);
+      const maxTimeOption = game.timer.kind === "choice"
+        ? Math.max(...game.timer.options)
+        : undefined;
       setPointsEarned(
         computeScore({
           won: outcome === "won",
           difficulty: scoreRef.current.difficulty,
           timeSeconds: typeof meta.timeSeconds === "number" ? meta.timeSeconds : null,
           timeLimit: scoreRef.current.timeLimit,
+          maxTimeOption,
         }),
       );
 
@@ -206,7 +210,7 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
     setStatus("playing");
     setPhase("playing");
 
-    apiStartChallenge(game.id, difficulty).then((res) => {
+    apiStartChallenge(game.id, difficulty, timeLimit).then((res) => {
       if (res.ok) {
         sessionTokenRef.current = res.sessionToken;
         if (typeof res.serverNow === "number") {

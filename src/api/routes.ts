@@ -33,13 +33,24 @@ if (!process.env.ADMIN_SECRET) {
   console.warn("⚠️  ADMIN_SECRET no configurado: usando default INSEGURO. Configuralo en Railway.");
 }
 
-// Tiempo mínimo plausible por juego (segundos).
-// Tiempo límite por juego (para calcular bonus de velocidad).
+// Opciones de tiempo disponibles por juego (segundos). El backend las usa para:
+// 1. Validar que el timeLimit enviado por el cliente es una opción legítima.
+// 2. Calcular el multiplicador de riesgo: maxTimeOption / chosenTimeLimit.
+// Juegos con timer fijo tienen una sola opción → multiplicador siempre 1×.
+const GAME_TIME_OPTIONS: Record<string, number[]> = {
+  "pittexto": [120, 180],
+  "polewordle": [90, 120],
+  "el-intruso": [45, 60],
+  "parrilla-bingo": [150],
+  "gp-resultado": [90, 120, 150, 180],
+};
+
+// Tiempo máximo por juego (para fallback de sesiones antiguas sin timeLimit guardado).
 const TIME_LIMITS: Record<string, number> = {
-  "pittexto": 300,
-  "polewordle": 300,
-  "el-intruso": 120,
-  "parrilla-bingo": 600,
+  "pittexto": 180,
+  "polewordle": 120,
+  "el-intruso": 60,
+  "parrilla-bingo": 150,
   "gp-resultado": 180,
 };
 
@@ -55,6 +66,8 @@ type SessionPayload = {
   difficulty: Difficulty;
   today: string;
   startedAt: number;
+  /** Tiempo elegido por el jugador (segundos). Firmado para que no se pueda inflar. */
+  timeLimit: number;
   /** Si el attempt entrará al ranking global (false si otra cuenta de la IP
    *  ya jugó este juego hoy). Firmado en el token: no se puede falsificar. */
   ranked: boolean;
@@ -93,12 +106,13 @@ export async function startChallenge(
 ): Promise<void> {
   try {
     const { gameId } = req.params as { gameId: string };
-    const { difficulty, userId, displayName, countryCode, clientDateKey } = req.body as {
+    const { difficulty, userId, displayName, countryCode, clientDateKey, timeLimit: rawTimeLimit } = req.body as {
       difficulty: Difficulty;
       userId?: string;
       displayName?: string;
       countryCode?: string;
       clientDateKey?: string;
+      timeLimit?: number;
     };
 
     if (!difficulty || !VALID_DIFFS.includes(difficulty)) {
@@ -207,13 +221,19 @@ export async function startChallenge(
       }
     }
 
+    // Validar timeLimit: debe ser una opción reconocida para el juego.
+    const validOptions = GAME_TIME_OPTIONS[gameId] ?? [];
+    const timeLimit = validOptions.includes(rawTimeLimit as number)
+      ? (rawTimeLimit as number)
+      : (validOptions.length > 0 ? Math.max(...validOptions) : TIME_LIMITS[gameId] ?? 180);
+
     // Crear sesión firmada (con IP)
     const startedAt = Date.now();
     const expiresAt = startedAt + SESSION_TTL;
     const sessionId = randomUUID();
 
     const payload: SessionPayload = {
-      sessionId, uid, gameId, difficulty, today, startedAt, ranked,
+      sessionId, uid, gameId, difficulty, today, startedAt, timeLimit, ranked,
     };
     const sessionToken = signToken(payload);
 
@@ -313,12 +333,17 @@ export async function finishChallenge(
     // Sin tiempo mínimo: si la verificación server dice que es correcto, es válido.
     const flagged = false;
 
-    const timeLimit = TIME_LIMITS[gameId] ?? 300;
+    // Usar el timeLimit firmado en la sesión; fallback al máximo del juego para
+    // sesiones antiguas (pre-deploy) que no tienen timeLimit en el token.
+    const sessionTimeLimit = session.timeLimit ?? TIME_LIMITS[gameId] ?? 180;
+    const gameOptions = GAME_TIME_OPTIONS[gameId] ?? [];
+    const maxTimeOption = gameOptions.length > 0 ? Math.max(...gameOptions) : sessionTimeLimit;
     const points = computeScore({
       won: verifyResult.won,
       difficulty: session.difficulty,
       timeSeconds,
-      timeLimit,
+      timeLimit: sessionTimeLimit,
+      maxTimeOption,
     });
 
     const uid = session.uid;
