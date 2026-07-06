@@ -4,6 +4,7 @@ import { PoleWordle } from "./PoleWordle/PoleWordle";
 import { ElIntruso } from "./ElIntruso/ElIntruso";
 import { ParrillaBingo } from "./ParrillaBingo/ParrillaBingo";
 import { GPResultado } from "./GPResultado/GPResultado";
+import { Top10Standings } from "./Top10Standings/Top10Standings";
 
 /**
  * Registro central de juegos. Cada entrada es autodescriptiva: el resto de la
@@ -64,6 +65,15 @@ export const GAMES: GameDefinition[] = [
     difficulties: [...DIFFS],
     timer: { kind: "choice", options: [90, 120, 150, 180] },
     component: GPResultado,
+  },
+  {
+    id: "top10-standings",
+    name: "Top 10 Standings",
+    tagline: "Adivina el top 10 acumulado de puntos de un periodo de 1 a 4 anios.",
+    glyph: "TS",
+    difficulties: [...DIFFS],
+    timer: { kind: "choice", options: [90, 120, 150, 180] },
+    component: Top10Standings,
   },
 ];
 

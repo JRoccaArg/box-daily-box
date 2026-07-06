@@ -29,4 +29,5 @@ yarn-error.log*
 # Local Claude/docs
 .claude/
 Box_Daily_Box_Business_Architecture.docx
+Box_Daily_Box_Technical_Reference.md
 create_doc.js

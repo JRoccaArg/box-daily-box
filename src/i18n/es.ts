@@ -287,6 +287,16 @@ const es: Translations = {
   "gpresultado.not_in_top": "{{name}} no terminó en el top 10.",
   "gpresultado.time_up": "Tiempo agotado. Las posiciones faltantes se muestran arriba.",
 
+  "game.top10-standings.name": "Top 10 Standings",
+  "game.top10-standings.tagline": "Adivina el top 10 acumulado de puntos de un período de 1 a 4 años.",
+  "top10standings.eyebrow": "Campeonato de Pilotos",
+  "top10standings.subtitle": "Top 10 acumulado de puntos del período",
+  "top10standings.search_placeholder": "Escribí un piloto…",
+  "top10standings.found_count": "{{found}} de {{total}} encontrados",
+  "top10standings.not_in_top": "{{name}} no está en el top 10 acumulado.",
+  "top10standings.points_label": "{{points}} pts",
+  "top10standings.time_up": "Tiempo agotado. Las posiciones faltantes se muestran arriba.",
+
   "lang.label": "Idioma",
 };
 

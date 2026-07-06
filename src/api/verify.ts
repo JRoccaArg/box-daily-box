@@ -13,6 +13,7 @@ import { getDriverPoolAtLeast } from "../lib/filters";
 import { buildIntruso } from "../components/games/ElIntruso/intruso.logic";
 import { buildBingo } from "../components/games/ParrillaBingo/bingo.logic";
 import { buildGPChallenge } from "../components/games/GPResultado/gpresultado.logic";
+import { buildChallenge as buildTop10StandingsChallenge } from "../components/games/Top10Standings/top10standings.logic";
 
 // ─── Tipos de solución por juego ────────────────────────────────────
 
@@ -48,12 +49,21 @@ interface GPResultadoSolution {
   grid: (string | null)[];
 }
 
+interface Top10StandingsSolution {
+  /**
+   * Array de 10 nombres de piloto, en orden del top 10 ACUMULADO de puntos
+   * del período (1-4 años) del día. Mismo shape que GPResultadoSolution.
+   */
+  grid: (string | null)[];
+}
+
 type AnySolution =
   | PitTextoSolution
   | PoleWordleSolution
   | IntrusoSolution
   | BingoSolution
-  | GPResultadoSolution;
+  | GPResultadoSolution
+  | Top10StandingsSolution;
 
 export interface VerifyResult {
   won: boolean;
@@ -88,6 +98,8 @@ export function verifyChallenge(
       return verifyParrillaBingo(difficulty, date, solution as BingoSolution);
     case "gp-resultado":
       return verifyGPResultado(difficulty, date, solution as GPResultadoSolution);
+    case "top10-standings":
+      return verifyTop10Standings(difficulty, date, solution as Top10StandingsSolution);
     default:
       return { won: false, detail: `Juego desconocido: ${gameId}` };
   }
@@ -292,6 +304,48 @@ function verifyGPResultado(
     won,
     detail: won
       ? `Top 10 completo y correcto (${gp.y} ${gp.g})`
+      : `Errores: ${errors.join("; ")}`,
+  };
+}
+
+// ─── Top 10 Standings ───────────────────────────────────────────────
+//
+// Regla: HAY UNA SOLA solución (el top 10 acumulado de puntos del período
+// de 1-4 años del día). El usuario debe completar las 10 posiciones con el
+// piloto exacto. Misma lógica de verificación que GP Resultado, pero el
+// "puzzle" es un acumulado multi-año en vez de una carrera puntual.
+//
+// El servidor regenera el período con buildTop10StandingsChallenge
+// (determinista) y compara posición por posición. No confía en el cliente.
+
+function verifyTop10Standings(
+  difficulty: Difficulty,
+  date: Date,
+  solution: Top10StandingsSolution,
+): VerifyResult {
+  if (!solution.grid || !Array.isArray(solution.grid) || solution.grid.length !== 10) {
+    return { won: false, detail: "Falta grid (10 elementos) en la solución" };
+  }
+
+  const challenge = buildTop10StandingsChallenge(difficulty, date);
+
+  const errors: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    const expected = challenge.top10[i]?.name;
+    if (!expected) {
+      errors.push(`P${i + 1}: puzzle inválido (sin piloto esperado)`);
+      continue;
+    }
+    if (solution.grid[i] !== expected) {
+      errors.push(`P${i + 1}: esperado "${expected}", recibido "${solution.grid[i] ?? "vacío"}"`);
+    }
+  }
+
+  const won = errors.length === 0;
+  return {
+    won,
+    detail: won
+      ? `Top 10 acumulado completo y correcto (${challenge.startYear}-${challenge.endYear})`
       : `Errores: ${errors.join("; ")}`,
   };
 }

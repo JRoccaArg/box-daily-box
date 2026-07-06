@@ -273,6 +273,16 @@ const en: Translations = {
   "gpresultado.not_in_top": "{{name}} did not finish in the top 10.",
   "gpresultado.time_up": "Time is up. Missing positions are shown above.",
 
+  "game.top10-standings.name": "Top 10 Standings",
+  "game.top10-standings.tagline": "Guess the accumulated top 10 points standings over a 1-4 year period.",
+  "top10standings.eyebrow": "Drivers' Championship",
+  "top10standings.subtitle": "Accumulated top 10 points for the period",
+  "top10standings.search_placeholder": "Type a driver name…",
+  "top10standings.found_count": "{{found}} of {{total}} found",
+  "top10standings.not_in_top": "{{name}} is not in the accumulated top 10.",
+  "top10standings.points_label": "{{points}} pts",
+  "top10standings.time_up": "Time is up. Missing positions are shown above.",
+
   "lang.label": "Language",
 };
 
