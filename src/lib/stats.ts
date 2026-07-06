@@ -219,6 +219,7 @@ export function syncFromServer(
     timeSeconds: number;
     points: number;
     finishedAt: string;
+    difficulty?: string;
   }>,
   dateKey_: string,
 ): void {
@@ -248,6 +249,7 @@ export function syncFromServer(
         meta: {
           serverPoints: att.points,
           timeSeconds: att.timeSeconds,
+          ...(att.difficulty ? { difficulty: att.difficulty } : {}),
         },
       };
     }
