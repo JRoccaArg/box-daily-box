@@ -102,6 +102,11 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
     return meta;
   }, []);
 
+  const maxTimeOption = useMemo(
+    () => game.timer.kind === "choice" ? Math.max(...game.timer.options) : undefined,
+    [game.timer],
+  );
+
   const finish = useCallback(
     (outcome: Extract<GameStatus, "won" | "lost">, solution?: Record<string, unknown>) => {
       if (finishedRef.current) return;
@@ -113,9 +118,6 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
       // Guardar la solution para poder re-verificarla en el server si el
       // usuario se loguea más tarde (importación de intentos locales).
       saveSolution(game.id, solution ?? null, date);
-      const maxTimeOption = game.timer.kind === "choice"
-        ? Math.max(...game.timer.options)
-        : undefined;
       setPointsEarned(
         computeScore({
           won: outcome === "won",
@@ -144,7 +146,7 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
 
       window.setTimeout(() => setResultOpen(true), 650);
     },
-    [game.id, record, date, buildMeta, refreshStats],
+    [game.id, record, date, buildMeta, refreshStats, maxTimeOption],
   );
 
   // -----------------------------------------------------------------
