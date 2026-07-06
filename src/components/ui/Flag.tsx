@@ -14,14 +14,16 @@ const FLAG_SIZE: Record<NonNullable<FlagProps["size"]>, string> = {
   lg: "text-3xl",
 };
 
-/** Bandera de nacionalidad (emoji) con codigo opcional. */
+/** Bandera de nacionalidad renderizada como SVG via flag-icons. */
 export function Flag({ code, showCode = false, size = "md" }: FlagProps) {
   const nat = nationality(code);
   return (
     <span className="inline-flex items-center gap-1.5" title={nat.name}>
-      <span className={["leading-none", FLAG_SIZE[size]].join(" ")} aria-hidden="true">
-        {nat.flag}
-      </span>
+      <span
+        className={`fi fi-${nat.alpha2} ${FLAG_SIZE[size]} leading-none`}
+        role="img"
+        aria-label={nat.name}
+      />
       {showCode && <span className="font-mono text-xs text-ink-muted">{code}</span>}
     </span>
   );

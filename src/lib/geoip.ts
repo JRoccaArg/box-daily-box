@@ -9,8 +9,8 @@
 // IMPORTANTE: ipapi.co devuelve códigos ISO alpha-2 (2 letras: "AR"),
 // pero nuestro dataset de NATIONALITIES usa ISO alpha-3 (3 letras: "ARG").
 // Esta función mapea alpha-2 → alpha-3 antes de devolver, y valida que
-// el país mapeado exista en el dataset. Si no existe (ej: país sin pilotos
-// F1), devuelve null y el usuario elige manualmente.
+// el país mapeado exista en el dataset. Si no existe, devuelve null y
+// el usuario elige manualmente.
 
 import { NATIONALITIES } from "@/data/nationalities";
 
@@ -24,19 +24,55 @@ type GeoResponse = {
 
 /**
  * Mapa ISO alpha-2 → alpha-3 para los países presentes en NATIONALITIES.
- * Solo incluye los ~40 países que tienen pilotos en el dataset F1.
- * Países no incluidos: el usuario elige manualmente.
  */
 const ALPHA2_TO_ALPHA3: Record<string, string> = {
-  AR: "ARG", AU: "AUS", AT: "AUT", BE: "BEL", BR: "BRA",
-  CA: "CAN", CH: "CHE", CL: "CHL", CN: "CHN", CO: "COL",
-  CZ: "CZE", DE: "DEU", DK: "DNK", ES: "ESP", FI: "FIN",
-  FR: "FRA", GB: "GBR", HU: "HUN", ID: "IDN", IN: "IND",
-  IE: "IRL", IT: "ITA", JP: "JPN", LI: "LIE", MA: "MAR",
-  MC: "MCO", MX: "MEX", MY: "MYS", NL: "NLD", NZ: "NZL",
-  PL: "POL", PT: "PRT", RU: "RUS", SE: "SWE", TH: "THA",
-  TR: "TUR", SI: "SVN",
-  UY: "URY", US: "USA", VE: "VEN", ZA: "ZAF", ZW: "ZWE",
+  // Americas
+  AW: "ABW", AR: "ARG", AG: "ATG", BS: "BHS", BZ: "BLZ",
+  BO: "BOL", BR: "BRA", BB: "BRB", CA: "CAN", CL: "CHL",
+  CO: "COL", CR: "CRI", CU: "CUB", CW: "CUW", DM: "DMA",
+  DO: "DOM", EC: "ECU", GD: "GRD", GT: "GTM", GY: "GUY",
+  HN: "HND", HT: "HTI", JM: "JAM", KN: "KNA", LC: "LCA",
+  MX: "MEX", NI: "NIC", PA: "PAN", PE: "PER", PR: "PRI",
+  PY: "PRY", SV: "SLV", SR: "SUR", TT: "TTO", UY: "URY",
+  US: "USA", VC: "VCT", VE: "VEN",
+  // Europe
+  AL: "ALB", AD: "AND", AT: "AUT", BE: "BEL", BG: "BGR",
+  BA: "BIH", BY: "BLR", CH: "CHE", CY: "CYP", CZ: "CZE",
+  DE: "DEU", DK: "DNK", ES: "ESP", EE: "EST", FI: "FIN",
+  FR: "FRA", GB: "GBR", GE: "GEO", GR: "GRC", HR: "HRV",
+  HU: "HUN", IE: "IRL", IS: "ISL", IT: "ITA", LI: "LIE",
+  LT: "LTU", LU: "LUX", LV: "LVA", MC: "MCO", MD: "MDA",
+  MK: "MKD", MT: "MLT", ME: "MNE", NL: "NLD", NO: "NOR",
+  PL: "POL", PT: "PRT", RO: "ROU", RU: "RUS", SM: "SMR",
+  RS: "SRB", SK: "SVK", SI: "SVN", SE: "SWE", TR: "TUR",
+  UA: "UKR", XK: "XKO",
+  // Middle East & Arab
+  AE: "ARE", BH: "BHR", DZ: "DZA", EG: "EGY", IR: "IRN",
+  IQ: "IRQ", IL: "ISR", JO: "JOR", KW: "KWT", LB: "LBN",
+  LY: "LBY", MA: "MAR", OM: "OMN", PS: "PSE", QA: "QAT",
+  SA: "SAU", SD: "SDN", SS: "SSD", SY: "SYR", TN: "TUN",
+  YE: "YEM",
+  // Asia & Oceania
+  AF: "AFG", AM: "ARM", AU: "AUS", AZ: "AZE", BD: "BGD",
+  BN: "BRN", BT: "BTN", CN: "CHN", FJ: "FJI", FM: "FSM",
+  HK: "HKG", ID: "IDN", IN: "IND", JP: "JPN", KZ: "KAZ",
+  KG: "KGZ", KH: "KHM", KI: "KIR", KR: "KOR", LA: "LAO",
+  LK: "LKA", MO: "MAC", MV: "MDV", MH: "MHL", MM: "MMR",
+  MN: "MNG", MY: "MYS", NP: "NPL", NR: "NRU", NZ: "NZL",
+  PK: "PAK", PH: "PHL", PW: "PLW", PG: "PNG", KP: "PRK",
+  SG: "SGP", SB: "SLB", TH: "THA", TJ: "TJK", TM: "TKM",
+  TL: "TLS", TO: "TON", TV: "TUV", TW: "TWN", UZ: "UZB",
+  VN: "VNM", VU: "VUT", WS: "WSM",
+  // Africa
+  AO: "AGO", BJ: "BEN", BF: "BFA", BW: "BWA", CF: "CAF",
+  CI: "CIV", CM: "CMR", CD: "COD", KM: "COM", CV: "CPV",
+  DJ: "DJI", ER: "ERI", ET: "ETH", GA: "GAB", GH: "GHA",
+  GN: "GIN", GM: "GMB", GW: "GNB", GQ: "GNQ", KE: "KEN",
+  LR: "LBR", LS: "LSO", MG: "MDG", ML: "MLI", MZ: "MOZ",
+  MR: "MRT", MU: "MUS", MW: "MWI", NA: "NAM", NE: "NER",
+  NG: "NGA", RW: "RWA", SN: "SEN", SL: "SLE", SO: "SOM",
+  ST: "STP", SZ: "SWZ", TD: "TCD", TG: "TGO", TZ: "TZA",
+  UG: "UGA", ZA: "ZAF", ZM: "ZMB", ZW: "ZWE",
 };
 
 /**
@@ -55,7 +91,7 @@ export function alpha2ToAlpha3(alpha2: string): string | null {
 /**
  * Detecta el país del cliente por su IP.
  * @returns Country code ISO alpha-3 (ej: "ARG") o null si falla o no está
- *          en el dataset de países F1.
+ *          en el dataset de países.
  */
 export async function detectCountryCode(): Promise<string | null> {
   try {

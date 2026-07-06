@@ -192,9 +192,7 @@ function ConstraintLabel({ constraint }: { constraint: Constraint }) {
     const nat = nationality(constraint.ref ?? "");
     return (
       <div className="flex flex-col items-center gap-0.5 text-center">
-        <span className="text-base leading-none" aria-hidden="true">
-          {nat.flag}
-        </span>
+        <span className={`fi fi-${nat.alpha2} text-base leading-none`} role="img" aria-label={nat.name} />
         <span className="font-mono text-[11px] text-ink">{nat.code}</span>
       </div>
     );
@@ -383,7 +381,7 @@ function CellPicker({
                   onClick={() => tryPick(d)}
                   className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm text-ink transition-colors hover:bg-asphalt-600"
                 >
-                  <span aria-hidden="true">{nationality(d.nationalityCode).flag}</span>
+                  <span className={`fi fi-${nationality(d.nationalityCode).alpha2}`} role="img" aria-label={nationality(d.nationalityCode).name} />
                   <span className="font-medium">{fullName(d)}</span>
                 </button>
               </li>
@@ -404,7 +402,7 @@ function CellPicker({
       {current && (
         <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-asphalt-700 px-3 py-2.5">
           <span className="inline-flex items-center gap-2 text-sm text-ink-muted">
-            <span aria-hidden="true">{nationality(current.nationalityCode).flag}</span>
+            <span className={`fi fi-${nationality(current.nationalityCode).alpha2}`} role="img" aria-label={nationality(current.nationalityCode).name} />
             {t("bingo.in_cell")} <span className="font-semibold text-ink">{current.lastName}</span>
           </span>
           <button

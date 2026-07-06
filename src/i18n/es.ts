@@ -109,8 +109,12 @@ const es: Translations = {
   "profile.title": "Tu perfil",
   "profile.subtitle":
     "Aparecerás en el ranking global con este nombre y país.",
-  "profile.name_label": "Nombre (visible en ranking)",
-  "profile.name_placeholder": "Tu nombre o apodo",
+  "profile.name_label": "Nombre de usuario (visible en ranking)",
+  "profile.name_placeholder": "Elegí un nombre de usuario",
+  "profile.name_unique_hint": "Debe ser único: nadie más puede tener este mismo nombre.",
+  "profile.name_taken": "Ese nombre de usuario ya está en uso. Probá con otro.",
+  "profile.name_checking": "Comprobando disponibilidad...",
+  "profile.name_available": "✓ Disponible",
   "profile.name_locked":
     "Podrás volver a cambiarlo en {{month}}. Este mes ya usaste tu cambio de nombre.",
   "profile.name_warn":

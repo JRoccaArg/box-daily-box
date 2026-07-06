@@ -179,15 +179,33 @@ export async function startChallenge(
     }
 
     // Upsert usuario (nombre sanitizado, país ya validado arriba).
+    // Si el display_name colisiona con el índice único (otro usuario ya lo
+    // tiene), reintentamos sin tocarlo para no bloquear el juego. El usuario
+    // conservará su nombre local anterior y podrá elegir uno único después
+    // desde el modal de perfil.
     const name = sanitizeDisplayName(displayName);
-    await query(
-      `INSERT INTO users (id, display_name, country_code)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (id) DO UPDATE SET
-         display_name = COALESCE(NULLIF($2, ''), users.display_name),
-         country_code = COALESCE($3, users.country_code)`,
-      [uid, name, country],
-    );
+    try {
+      await query(
+        `INSERT INTO users (id, display_name, country_code)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (id) DO UPDATE SET
+           display_name = COALESCE(NULLIF($2, ''), users.display_name),
+           country_code = COALESCE($3, users.country_code)`,
+        [uid, name, country],
+      );
+    } catch (err: any) {
+      if (err.code === "23505" && String(err.constraint || "").includes("display_name")) {
+        await query(
+          `INSERT INTO users (id, country_code)
+           VALUES ($1, $2)
+           ON CONFLICT (id) DO UPDATE SET
+             country_code = COALESCE($2, users.country_code)`,
+          [uid, country],
+        );
+      } else {
+        throw err;
+      }
+    }
 
     // Crear sesión firmada (con IP)
     const startedAt = Date.now();
@@ -723,44 +741,56 @@ export async function updateUserProfile(
       }
     }
 
-    // Construir UPDATE / INSERT
-    if (isNewUser) {
-      await query(
-        `INSERT INTO users (id, display_name, country_code, name_changed_at)
-         VALUES ($1, $2, $3, $4)`,
-        [
-          userId,
-          sanitizedName,
-          validCountry,
-          sanitizedName ? new Date() : null,
-        ],
-      );
-    } else {
-      // Solo actualizar campos que vienen y son válidos
-      const updates: string[] = [];
-      const values: any[] = [];
-      let idx = 1;
-
-      if (sanitizedName !== null && sanitizedName !== currentDisplayName) {
-        updates.push(`display_name = $${idx++}`);
-        values.push(sanitizedName);
-        updates.push(`name_changed_at = $${idx++}`);
-        values.push(new Date());
-      }
-
-      // Country solo se setea si no había antes
-      if (validCountry !== null && !currentCountry) {
-        updates.push(`country_code = $${idx++}`);
-        values.push(validCountry);
-      }
-
-      if (updates.length > 0) {
-        values.push(userId);
+    // Construir UPDATE / INSERT. Capturamos violación del índice único
+    // sobre LOWER(display_name) para devolver un error claro al frontend.
+    try {
+      if (isNewUser) {
         await query(
-          `UPDATE users SET ${updates.join(", ")} WHERE id = $${idx}`,
-          values,
+          `INSERT INTO users (id, display_name, country_code, name_changed_at)
+           VALUES ($1, $2, $3, $4)`,
+          [
+            userId,
+            sanitizedName,
+            validCountry,
+            sanitizedName ? new Date() : null,
+          ],
         );
+      } else {
+        // Solo actualizar campos que vienen y son válidos
+        const updates: string[] = [];
+        const values: any[] = [];
+        let idx = 1;
+
+        if (sanitizedName !== null && sanitizedName !== currentDisplayName) {
+          updates.push(`display_name = $${idx++}`);
+          values.push(sanitizedName);
+          updates.push(`name_changed_at = $${idx++}`);
+          values.push(new Date());
+        }
+
+        // Country solo se setea si no había antes
+        if (validCountry !== null && !currentCountry) {
+          updates.push(`country_code = $${idx++}`);
+          values.push(validCountry);
+        }
+
+        if (updates.length > 0) {
+          values.push(userId);
+          await query(
+            `UPDATE users SET ${updates.join(", ")} WHERE id = $${idx}`,
+            values,
+          );
+        }
       }
+    } catch (err: any) {
+      if (err.code === "23505" && String(err.constraint || "").includes("display_name")) {
+        reply.code(409).send({
+          error: "Ese nombre de usuario ya está en uso. Elegí otro.",
+          code: "username_taken",
+        });
+        return;
+      }
+      throw err;
     }
 
     // Devolver estado actualizado
@@ -799,6 +829,40 @@ function canChangeNameThisMonth(nameChangedAt: Date | null): boolean {
     changed.getUTCFullYear() !== now.getUTCFullYear() ||
     changed.getUTCMonth() !== now.getUTCMonth()
   );
+}
+
+/**
+ * GET /username-available?name=X&userId=Y
+ *
+ * Chequea si un nombre está disponible (case-insensitive). Si viene userId,
+ * se ignora al usuario dueño (permite "usar tu mismo nombre" sin marcarlo
+ * como duplicado).
+ * Respuesta: { available: boolean }
+ */
+export async function checkUsernameAvailable(
+  req: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  try {
+    const { name, userId } = req.query as { name?: string; userId?: string };
+    const sanitized = sanitizeDisplayName(name);
+    if (sanitized.length === 0 || sanitized === "Anónimo") {
+      reply.code(200).send({ available: false });
+      return;
+    }
+    const params: string[] = [sanitized.toLowerCase()];
+    let sql = "SELECT id FROM users WHERE LOWER(display_name) = $1";
+    if (userId && isValidUserId(userId)) {
+      params.push(userId);
+      sql += " AND id != $2";
+    }
+    sql += " LIMIT 1";
+    const rows = await query(sql, params);
+    reply.code(200).send({ available: rows.rows.length === 0 });
+  } catch (err) {
+    console.error("checkUsernameAvailable error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
 }
 
 /**

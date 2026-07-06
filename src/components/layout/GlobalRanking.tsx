@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   apiGetMonthlyRanking,
   apiGetDailyRanking,
@@ -7,6 +7,7 @@ import {
 import { useI18n } from "@/context";
 import { getIdentity } from "@/lib/identity";
 import { NATIONALITIES } from "@/data/nationalities";
+import { CountrySelect } from "@/components/ui/CountrySelect";
 import { Trophy } from "@/components/ui/Icon";
 
 type Tab = "monthly" | "daily";
@@ -24,11 +25,6 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
   const { userId } = getIdentity();
   const now = new Date();
   const monthName = t(`month.${now.getMonth()}`);
-
-  const countries = useMemo(() => {
-    return Object.values(NATIONALITIES)
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,18 +75,13 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
 
       {/* Filtro por pais */}
       <div className="mt-3">
-        <select
+        <CountrySelect
           value={countryFilter}
-          onChange={(e) => setCountryFilter(e.target.value)}
-          className="w-full rounded-lg border border-white/10 bg-asphalt-700 px-3 py-2 text-sm text-ink"
-        >
-          <option value="">{t("ranking.all_countries")}</option>
-          {countries.map((n) => (
-            <option key={n.code} value={n.code}>
-              {n.flag} {n.name}
-            </option>
-          ))}
-        </select>
+          onChange={setCountryFilter}
+          placeholder={t("ranking.all_countries")}
+          size="sm"
+          allowClear
+        />
       </div>
 
       {/* Contenido */}
@@ -121,9 +112,7 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
           <div className="space-y-1.5">
             {entries.map((entry) => {
               const isMe = entry.userId === userId;
-              const flag = entry.countryCode
-                ? (NATIONALITIES[entry.countryCode]?.flag ?? "🏁")
-                : "🏁";
+              const natData = entry.countryCode ? NATIONALITIES[entry.countryCode] : null;
               const challengeLabel =
                 entry.gamesWon === 1
                   ? t("ranking.challenge_singular")
@@ -151,7 +140,11 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-sm">{flag}</span>
+                      {natData ? (
+                        <span className={`fi fi-${natData.alpha2} text-sm`} role="img" aria-label={natData.name} />
+                      ) : (
+                        <span className="text-sm">🏁</span>
+                      )}
                       <span
                         className={[
                           "truncate text-sm font-medium",
