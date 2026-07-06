@@ -107,6 +107,7 @@ export type StartResult =
 export async function apiStartChallenge(
   gameId: string,
   difficulty: string,
+  timeLimit?: number | null,
 ): Promise<StartResult> {
   if (!API_URL) return { ok: false };
 
@@ -118,7 +119,7 @@ export async function apiStartChallenge(
     `/challenges/${gameId}/start`,
     {
       method: "POST",
-      body: JSON.stringify({ difficulty, userId, displayName, countryCode, clientDateKey }),
+      body: JSON.stringify({ difficulty, userId, displayName, countryCode, clientDateKey, timeLimit }),
     },
   );
 

@@ -19,8 +19,14 @@ export type ScoreInput = {
   difficulty: Difficulty;
   /** Segundos que tardo en resolver (reloj real). */
   timeSeconds?: number | null;
-  /** Limite de tiempo del reto, si tenia. */
+  /** Limite de tiempo elegido por el jugador. */
   timeLimit?: number | null;
+  /**
+   * Tiempo máximo disponible para este juego (el mayor de las opciones).
+   * Si el jugador eligió un tiempo menor, el bonus de velocidad sube
+   * proporcionalmente (recompensa el riesgo). Omitir = sin multiplicador (1×).
+   */
+  maxTimeOption?: number | null;
 };
 
 /** Puntos base por dificultad. */
@@ -40,10 +46,12 @@ export function computeScore(input: ScoreInput): number {
   const base = BASE_POINTS[input.difficulty] ?? BASE_POINTS.medio;
 
   let speed = 0;
-  const { timeSeconds, timeLimit } = input;
+  const { timeSeconds, timeLimit, maxTimeOption } = input;
   if (timeSeconds != null && timeLimit != null && timeLimit > 0) {
     const remaining = Math.max(0, Math.min(timeLimit, timeLimit - timeSeconds));
-    speed = Math.round(MAX_SPEED_BONUS * (remaining / timeLimit));
+    const maxTime = maxTimeOption != null && maxTimeOption >= timeLimit ? maxTimeOption : timeLimit;
+    const riskMultiplier = maxTime / timeLimit;
+    speed = Math.round(MAX_SPEED_BONUS * riskMultiplier * (remaining / timeLimit));
   }
   return base + speed;
 }

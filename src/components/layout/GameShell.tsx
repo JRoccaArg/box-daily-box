@@ -102,6 +102,11 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
     return meta;
   }, []);
 
+  const maxTimeOption = useMemo(
+    () => game.timer.kind === "choice" ? Math.max(...game.timer.options) : undefined,
+    [game.timer],
+  );
+
   const finish = useCallback(
     (outcome: Extract<GameStatus, "won" | "lost">, solution?: Record<string, unknown>) => {
       if (finishedRef.current) return;
@@ -119,6 +124,7 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
           difficulty: scoreRef.current.difficulty,
           timeSeconds: typeof meta.timeSeconds === "number" ? meta.timeSeconds : null,
           timeLimit: scoreRef.current.timeLimit,
+          maxTimeOption,
         }),
       );
 
@@ -140,7 +146,7 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
 
       window.setTimeout(() => setResultOpen(true), 650);
     },
-    [game.id, record, date, buildMeta, refreshStats],
+    [game.id, record, date, buildMeta, refreshStats, maxTimeOption],
   );
 
   // -----------------------------------------------------------------
@@ -206,7 +212,7 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
     setStatus("playing");
     setPhase("playing");
 
-    apiStartChallenge(game.id, difficulty).then((res) => {
+    apiStartChallenge(game.id, difficulty, timeLimit).then((res) => {
       if (res.ok) {
         sessionTokenRef.current = res.sessionToken;
         if (typeof res.serverNow === "number") {
