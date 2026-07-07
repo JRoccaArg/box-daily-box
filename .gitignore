@@ -13,6 +13,11 @@ dist
 dist-ssr
 *.local
 
+# Playwright (visual regression)
+/test-results/
+/playwright-report/
+/playwright/.cache/
+
 # Logs
 logs
 *.log

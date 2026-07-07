@@ -12,7 +12,9 @@
     "typecheck": "tsc -b --noEmit",
     "gen:sitemap": "tsx --tsconfig tsconfig.app.json scripts/gen-sitemap.ts",
     "smoke": "tsx --tsconfig tsconfig.app.json scripts/smoke.ts",
-    "test": "node scripts/test-identity-token.mjs && node scripts/test-migration.mjs && node scripts/test-sync-frontend.mjs && node scripts/test-attempts-flow.mjs && node scripts/test-country.mjs && node scripts/test-user-rank.mjs && node scripts/test-migration-scenarios.mjs && node scripts/test-login-flow.mjs && node scripts/test-import-attempts.mjs && node scripts/test-finish-blocked.mjs && node scripts/test-ranked-by-ip.mjs && node scripts/test-session-token.mjs && node scripts/test-game-registry.mjs && tsx --tsconfig tsconfig.app.json scripts/test-verify-solution.ts && tsx --tsconfig tsconfig.app.json scripts/test-scoring.ts && tsx --tsconfig tsconfig.app.json scripts/test-idor-protection.ts && npm run smoke",
+    "test": "node scripts/test-identity-token.mjs && node scripts/test-migration.mjs && node scripts/test-sync-frontend.mjs && node scripts/test-attempts-flow.mjs && node scripts/test-country.mjs && node scripts/test-user-rank.mjs && node scripts/test-migration-scenarios.mjs && node scripts/test-login-flow.mjs && node scripts/test-import-attempts.mjs && node scripts/test-finish-blocked.mjs && node scripts/test-ranked-by-ip.mjs && node scripts/test-session-token.mjs && node scripts/test-game-registry.mjs && tsx --tsconfig tsconfig.app.json scripts/test-verify-solution.ts && tsx --tsconfig tsconfig.app.json scripts/test-scoring.ts && tsx --tsconfig tsconfig.app.json scripts/test-idor-protection.ts && npm run smoke && npm run test:visual",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots",
     "start": "tsx --tsconfig tsconfig.app.json src/api/index.ts",
     "dev:api": "tsx watch --tsconfig tsconfig.app.json src/api/index.ts"
   },
@@ -34,6 +36,7 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.2.0",
+    "@playwright/test": "^1.61.1",
     "@types/node": "^20.19.43",
     "@types/pg": "^8.20.0",
     "@types/react": "^18.3.5",
