@@ -10,12 +10,16 @@
           "value": "boxdailybox.com"
         }
       ]
-    }
-  ],
-  "rewrites": [
+    },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "source": "/juego/:gameId",
+      "destination": "/es/juego/:gameId",
+      "permanent": true
+    },
+    {
+      "source": "/juegos/:gameId",
+      "destination": "/es/juego/:gameId",
+      "permanent": true
     }
   ]
 }

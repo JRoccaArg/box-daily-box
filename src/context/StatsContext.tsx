@@ -7,6 +7,7 @@ import {
   recordResult as persistResult,
   resetAllProgress,
   syncFromServer,
+  monthStartKey,
 } from "@/lib/stats";
 import { storageIsPersistent } from "@/lib/storage";
 import { getIdentity } from "@/lib/identity";
@@ -39,13 +40,30 @@ type StatsContextValue = {
 
 const StatsContext = createContext<StatsContextValue | null>(null);
 
+/** Estado neutral para el primer render (server y cliente pre-hidratación). */
+const EMPTY_SUMMARY: StatsSummary = {
+  won: 0,
+  lost: 0,
+  currentStreak: 0,
+  bestStreak: 0,
+  lastPlayed: null,
+};
+
 export function StatsProvider({ children }: { children: ReactNode }) {
   // `version` fuerza recomputo de los agregados tras cada escritura.
   const [version, setVersion] = useState(0);
 
-  // `version` fuerza recomputo de los agregados tras cada escritura a storage.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const summary = useMemo<StatsSummary>(() => getStats(), [version]);
+  // El HTML prerenderizado no tiene acceso a localStorage: para que el
+  // primer render del cliente coincida bit a bit con ese HTML (sin mismatch
+  // de hidratación), el progreso real solo se lee DESPUÉS de montar.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const summary = useMemo<StatsSummary>(
+    () => (mounted ? getStats() : EMPTY_SUMMARY),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [version, mounted],
+  );
 
   const record = useCallback<StatsContextValue["record"]>((gameId, status, meta, date) => {
     persistResult(gameId, status, meta, date);
@@ -53,17 +71,17 @@ export function StatsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const resultFor = useCallback<StatsContextValue["resultFor"]>(
-    (gameId, date) => getResult(gameId, date),
+    (gameId, date) => (mounted ? getResult(gameId, date) : null),
     // depende de `version` para releer tras escrituras
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [version],
+    [version, mounted],
   );
 
   const playedStatus = useCallback<StatsContextValue["playedStatus"]>(
-    (gameId, date) => getPlayedStatus(gameId, date),
+    (gameId, date) => (mounted ? getPlayedStatus(gameId, date) : null),
     // depende de `version` para releer tras escrituras
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [version],
+    [version, mounted],
   );
 
   const resetProgress = useCallback(() => {
@@ -90,11 +108,14 @@ export function StatsProvider({ children }: { children: ReactNode }) {
     const today = dateKey(new Date());
 
     (async () => {
-      const response = await apiGetUserAttempts(userId, today);
+      // Mes completo (no solo hoy): si el usuario borró localStorage estando
+      // logueado, esto reconstruye también el gráfico mensual, no solo el
+      // lock de "ya jugado hoy".
+      const response = await apiGetUserAttempts(userId, { from: monthStartKey(new Date()), to: today });
       if (cancelled || !response) return;
       if (response.attempts.length === 0) return;
 
-      syncFromServer(response.attempts, response.dateKey);
+      syncFromServer(response.attempts);
       setVersion((v) => v + 1);
     })();
 

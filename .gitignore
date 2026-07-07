@@ -3,6 +3,11 @@ node_modules
 .pnp
 .pnp.js
 
+# Secrets
+.env
+.env.local
+.env.*.local
+
 # Build output
 dist
 dist-ssr
@@ -28,5 +33,9 @@ yarn-error.log*
 
 # Local Claude/docs
 .claude/
+Box_Daily_Box_Context.md
 Box_Daily_Box_Business_Architecture.docx
+Box_Daily_Box_Business_Architecture.md
+Box_Daily_Box_Technical_Reference.md
+Box_Daily_Box_Session_Guide.md
 create_doc.js

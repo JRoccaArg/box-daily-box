@@ -224,6 +224,47 @@ const ja: Translations = {
   "gpresultado.time_up": "タイムアップ。未発見の順位が上に表示されています。",
 
   "lang.label": "言語",
+
+  "profile.name_unique_hint": "一意である必要があります：他の誰も同じユーザー名を使用できません。",
+  "profile.name_taken": "そのユーザー名はすでに使用されています。別の名前を試してください。",
+  "profile.name_checking": "利用可能か確認しています...",
+  "profile.name_available": "✓ 利用可能",
+
+  "game.top10-standings.name": "Top 10 Standings",
+  "game.top10-standings.tagline": "1〜4年間のドライバーズチャンピオンシップの累計トップ10ポイントを当ててください。",
+  "top10standings.eyebrow": "ドライバーズチャンピオンシップ",
+  "top10standings.subtitle": "期間の累計トップ10ポイント",
+  "top10standings.search_placeholder": "ドライバー名を入力…",
+  "top10standings.found_count": "{{total}}人中{{found}}人見つけました",
+  "top10standings.not_in_top": "{{name}}は累計トップ10に入っていません。",
+  "top10standings.points_label": "{{points}} pt",
+  "top10standings.time_up": "タイムアップ。未発見の順位が上に表示されています。",
+
+  "seo.home.title": "Box Daily Box — 毎日のF1ミニゲーム | 6つの無料パズル",
+  "seo.home.description":
+    "6つの毎日のF1ミニゲーム：ドライバーを当てる、トップ10を完成させる、部外者を見つけるなど。無料のグローバルランキング、登録不要。",
+  "seo.game.pittexto.title": "PitTexto — 秘密のF1ドライバーを当てよう | Box Daily Box",
+  "seo.game.pittexto.description":
+    "今日の秘密のF1ドライバーを当てましょう。試すたびにどれだけ近いかがわかります。24時間ごとに新しいチャレンジ。",
+  "seo.game.polewordle.title": "PoleWordle — F1版Wordle | Box Daily Box",
+  "seo.game.polewordle.description":
+    "Wordle形式で6回の試行以内に今日のF1ドライバーの姓を当てましょう。新しい無料の毎日のパズル。",
+  "seo.game.el-intruso.title": "El Intruso — 仲間外れのF1ドライバーを見つけよう | Box Daily Box",
+  "seo.game.el-intruso.description":
+    "10人のF1ドライバーのうち9人には共通点があります。この毎日のF1パズルで部外者を見つけましょう。",
+  "seo.game.parrilla-bingo.title": "Parrilla Bingo — F1チームビンゴ | Box Daily Box",
+  "seo.game.parrilla-bingo.description":
+    "チームと条件の両方に合うドライバーで各セルを埋めましょう。毎日のF1ビンゴ。",
+  "seo.game.gp-resultado.title": "GP Resultado — グランプリのトップ10を当てよう | Box Daily Box",
+  "seo.game.gp-resultado.description":
+    "時間切れになる前に歴史的なF1グランプリのトップ10を完成させましょう。新しい無料の毎日のパズル。",
+  "seo.game.top10-standings.title": "Top 10 Standings — F1選手権パズル | Box Daily Box",
+  "seo.game.top10-standings.description":
+    "1〜4年間のF1ドライバーズチャンピオンシップの累計トップ10ポイントを当ててください。",
+
+  "gamepage.not_found_title": "ゲームが見つかりません",
+  "gamepage.not_found_body": "お探しのチャレンジは存在しないか、移動しました。",
+  "gamepage.see_all": "すべてのチャレンジを見る",
 };
 
 export default ja;

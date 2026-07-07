@@ -271,6 +271,48 @@ const sl: Translations = {
 
   // ─── Language ───────────────────────────────────────────────────────
   "lang.label": "Jezik",
+
+  "profile.name_unique_hint": "Mora biti edinstveno: nihče drug ne more imeti istega uporabniškega imena.",
+  "profile.name_taken": "To uporabniško ime je že zasedeno. Poskusite z drugim.",
+  "profile.name_checking": "Preverjanje razpoložljivosti...",
+  "profile.name_available": "✓ Na voljo",
+
+  "game.top10-standings.name": "Top 10 Standings",
+  "game.top10-standings.tagline":
+    "Uganite seštevek najboljših 10 mest v prvenstvu voznikov v obdobju 1-4 let.",
+  "top10standings.eyebrow": "Prvenstvo voznikov",
+  "top10standings.subtitle": "Seštevek najboljših 10 mest za obdobje",
+  "top10standings.search_placeholder": "Vnesite ime voznika…",
+  "top10standings.found_count": "{{found}} od {{total}} najdenih",
+  "top10standings.not_in_top": "{{name}} ni med seštetimi najboljšimi 10.",
+  "top10standings.points_label": "{{points}} t.",
+  "top10standings.time_up": "Čas je potekel. Manjkajoči položaji so prikazani zgoraj.",
+
+  "seo.home.title": "Box Daily Box — Dnevne mini igre Formule 1 | 6 brezplačnih ugank",
+  "seo.home.description":
+    "Šest dnevnih mini iger Formule 1: ugibajte voznike, dopolnite najboljših 10, poiščite vsiljivca in več. Brezplačna svetovna lestvica, brez prijave.",
+  "seo.game.pittexto.title": "PitTexto — Uganite skrivnega voznika F1 | Box Daily Box",
+  "seo.game.pittexto.description":
+    "Uganite skrivnega voznika Formule 1 dneva. Vsak poskus vam pove, kako blizu ste. Nov izziv vsakih 24 ur.",
+  "seo.game.polewordle.title": "PoleWordle — Wordle Formule 1 | Box Daily Box",
+  "seo.game.polewordle.description":
+    "Uganite priimek voznika F1 dneva, v slogu Wordle, v 6 poskusih. Nova brezplačna dnevna uganka.",
+  "seo.game.el-intruso.title": "El Intruso — Poiščite voznika, ki ne sodi zraven | Box Daily Box",
+  "seo.game.el-intruso.description":
+    "Devet od desetih voznikov F1 si deli nekaj skupnega. Poiščite vsiljivca v tej dnevni uganki Formule 1.",
+  "seo.game.parrilla-bingo.title": "Parrilla Bingo — Bingo ekip F1 | Box Daily Box",
+  "seo.game.parrilla-bingo.description":
+    "Vsako celico zapolnite z voznikom, ki ustreza ekipi in pogoju. Dnevni bingo Formule 1.",
+  "seo.game.gp-resultado.title": "GP Resultado — Uganite najboljših 10 na Velike nagrade | Box Daily Box",
+  "seo.game.gp-resultado.description":
+    "Dopolnite najboljših 10 na zgodovinski Veliki nagradi F1, preden poteče čas. Nova brezplačna dnevna uganka.",
+  "seo.game.top10-standings.title": "Top 10 Standings — Uganka prvenstva F1 | Box Daily Box",
+  "seo.game.top10-standings.description":
+    "Uganite seštevek najboljših 10 mest v prvenstvu voznikov F1 v obdobju 1-4 let.",
+
+  "gamepage.not_found_title": "Igra ni najdena",
+  "gamepage.not_found_body": "Izziv, ki ga iščete, ne obstaja ali je bil premaknjen.",
+  "gamepage.see_all": "Poglej vse izzive",
 };
 
 export default sl;

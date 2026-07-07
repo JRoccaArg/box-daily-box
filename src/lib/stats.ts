@@ -202,15 +202,17 @@ export function resetForAccountSwitch(): void {
  *
  * Uso: se llama al cargar la home si el usuario está logueado, y después
  * del login OAuth (para reflejar attempts migrados desde el anónimo o
- * previos desde otros dispositivos).
+ * previos desde otros dispositivos). En ambos casos se pide el mes completo
+ * (no solo hoy), para que el gráfico mensual local no pierda días tras un
+ * reset de cuenta (ver resetForAccountSwitch).
  *
  * Comportamiento:
  *  - Escribe TANTO en `results` (para stats/puntos) como en `played` (lock durable)
+ *  - Cada attempt se agrupa bajo SU PROPIO `dateKey` (pueden venir de varios días)
  *  - Si un attempt del server ya existe localmente, no lo pisa (idempotente)
  *  - Si un attempt del server NO existe localmente, lo agrega y bloquea el juego
  *
- * @param serverAttempts Attempts recibidos del server para una fecha
- * @param dateKey_ Fecha (YYYY-MM-DD) — normalmente hoy
+ * @param serverAttempts Attempts recibidos del server, cada uno con su dateKey
  */
 export function syncFromServer(
   serverAttempts: Array<{
@@ -219,18 +221,20 @@ export function syncFromServer(
     timeSeconds: number;
     points: number;
     finishedAt: string;
+    dateKey: string;
+    difficulty?: string;
   }>,
-  dateKey_: string,
 ): void {
   if (serverAttempts.length === 0) return;
 
   const results = loadResults();
   const played = loadPlayed();
 
-  const resultsDay = results[dateKey_] ?? {};
-  const playedDay = played[dateKey_] ?? {};
-
   for (const att of serverAttempts) {
+    const day = att.dateKey;
+    const resultsDay = results[day] ?? {};
+    const playedDay = played[day] ?? {};
+
     const status: "won" | "lost" = att.won ? "won" : "lost";
     const finishedAt = new Date(att.finishedAt).getTime();
 
@@ -243,18 +247,20 @@ export function syncFromServer(
     if (!resultsDay[att.gameId]) {
       resultsDay[att.gameId] = {
         status,
-        date: dateKey_,
+        date: day,
         finishedAt,
         meta: {
           serverPoints: att.points,
           timeSeconds: att.timeSeconds,
+          ...(att.difficulty ? { difficulty: att.difficulty } : {}),
         },
       };
     }
+
+    results[day] = resultsDay;
+    played[day] = playedDay;
   }
 
-  results[dateKey_] = resultsDay;
-  played[dateKey_] = playedDay;
   storage.set(RESULTS_KEY, results);
   storage.set(PLAYED_KEY, played);
 
@@ -321,6 +327,12 @@ export type MonthlyScore = {
 /** Clave "YYYY-MM" de una fecha. */
 export function monthKey(date: Date = new Date()): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/** Clave "YYYY-MM-01" (primer día del mes de la fecha dada). Usado para
+ *  pedirle al server el rango completo del mes tras login/reset. */
+export function monthStartKey(date: Date = new Date()): string {
+  return `${monthKey(date)}-01`;
 }
 
 /**

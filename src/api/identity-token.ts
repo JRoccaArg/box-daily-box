@@ -20,8 +20,7 @@
 // ranking (solo el display_name), así que tampoco es adivinable.
 
 import { createHmac, timingSafeEqual } from "crypto";
-
-const TOKEN_SECRET = process.env.TOKEN_SECRET || "bdb-token-secret-2026-change-me";
+import { TOKEN_SECRET } from "./secrets";
 
 type IdentityPayload = {
   userId: string;

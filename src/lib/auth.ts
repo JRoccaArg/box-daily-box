@@ -24,6 +24,7 @@ import {
   getSolutionsForDate,
   clearSolutions,
   getResult,
+  monthStartKey,
 } from "./stats";
 import { dateKey } from "./seed";
 
@@ -134,13 +135,17 @@ export async function handleGoogleCallback(code: string): Promise<AuthResult | n
     setIdentityToken(result.identityToken);
   }
 
-  // Sincronizar attempts de HOY desde el server.
+  // Sincronizar attempts del MES COMPLETO desde el server (no solo hoy).
   // Después del reset local, esto trae los attempts que están en el server
   // (los propios de Google + los migrados desde el anónimo + los importados)
-  // al storage local para que aparezcan como "ya jugados" en la home.
-  const attemptsResponse = await apiGetUserAttempts(result.userId, today);
+  // al storage local para que aparezcan como "ya jugados" en la home Y para
+  // que el gráfico mensual (getMonthlyScore) no pierda los días previos.
+  const attemptsResponse = await apiGetUserAttempts(result.userId, {
+    from: monthStartKey(new Date()),
+    to: today,
+  });
   if (attemptsResponse && attemptsResponse.attempts.length > 0) {
-    syncFromServer(attemptsResponse.attempts, attemptsResponse.dateKey);
+    syncFromServer(attemptsResponse.attempts);
   }
 
   return result;

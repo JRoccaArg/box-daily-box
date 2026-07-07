@@ -6,7 +6,7 @@
  * usan para ranking global, no para bloquear gameplay.
  */
 
-import { getIdentity, setIdentityToken } from "./identity";
+import { getIdentity, setIdentityToken, getIdentityToken } from "./identity";
 import { dateKey } from "./seed";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "";
@@ -248,6 +248,8 @@ export type ServerAttempt = {
   timeSeconds: number;
   points: number;
   finishedAt: string; // ISO timestamp
+  /** Día (YYYY-MM-DD) al que pertenece el attempt, para agrupar en syncFromServer. */
+  dateKey: string;
 };
 
 export type UserAttemptsResponse = {
@@ -256,15 +258,29 @@ export type UserAttemptsResponse = {
 };
 
 /**
- * GET /user/:userId/attempts?date=YYYY-MM-DD
- * Trae los attempts del usuario para una fecha específica.
+ * GET /user/:userId/attempts?date=YYYY-MM-DD&identityToken=...
+ * GET /user/:userId/attempts?from=YYYY-MM-DD&to=YYYY-MM-DD&identityToken=...
+ *
+ * Trae los attempts del usuario para una fecha puntual (`date`) o un rango
+ * (`from`/`to`) — usado para reconstruir el gráfico mensual local tras login.
+ *
+ * Manda el identityToken guardado localmente: el server solo devuelve datos
+ * si prueba la posesión del userId (evita que cualquiera con un userId ajeno
+ * pueda leer el historial de otra persona).
  */
 export async function apiGetUserAttempts(
   userId: string,
-  date?: string,
+  opts: { date?: string; from?: string; to?: string } = {},
 ): Promise<UserAttemptsResponse | null> {
   const params = new URLSearchParams();
-  params.set("date", date ?? dateKey());
+  if (opts.from || opts.to) {
+    params.set("from", opts.from ?? opts.to ?? dateKey());
+    params.set("to", opts.to ?? opts.from ?? dateKey());
+  } else {
+    params.set("date", opts.date ?? dateKey());
+  }
+  const token = getIdentityToken();
+  if (token) params.set("identityToken", token);
   return apiFetch<UserAttemptsResponse>(
     `/user/${encodeURIComponent(userId)}/attempts?${params.toString()}`,
   );
@@ -284,13 +300,18 @@ export type UserRank = {
   totalPlayers: number;
 };
 
-/** GET /user/:userId/rank?date=YYYY-MM-DD */
+/**
+ * GET /user/:userId/rank?date=YYYY-MM-DD&identityToken=...
+ * Manda el identityToken guardado localmente (ver nota en apiGetUserAttempts).
+ */
 export async function apiGetUserRank(
   userId: string,
   date?: string,
 ): Promise<UserRank | null> {
   const params = new URLSearchParams();
   params.set("date", date ?? dateKey());
+  const token = getIdentityToken();
+  if (token) params.set("identityToken", token);
   return apiFetch<UserRank>(
     `/user/${encodeURIComponent(userId)}/rank?${params.toString()}`,
   );

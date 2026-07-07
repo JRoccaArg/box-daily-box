@@ -6,12 +6,13 @@
   "description": "Daily F1 minigames. One puzzle per day. No signup.",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && npm run gen:sitemap && vite-react-ssg build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc -b --noEmit",
+    "gen:sitemap": "tsx --tsconfig tsconfig.app.json scripts/gen-sitemap.ts",
     "smoke": "tsx --tsconfig tsconfig.app.json scripts/smoke.ts",
-    "test": "node scripts/test-identity-token.mjs && node scripts/test-migration.mjs && node scripts/test-sync-frontend.mjs && node scripts/test-attempts-flow.mjs && node scripts/test-country.mjs && node scripts/test-user-rank.mjs && node scripts/test-migration-scenarios.mjs && node scripts/test-login-flow.mjs && node scripts/test-import-attempts.mjs && node scripts/test-finish-blocked.mjs && node scripts/test-ranked-by-ip.mjs && npm run smoke",
+    "test": "node scripts/test-identity-token.mjs && node scripts/test-migration.mjs && node scripts/test-sync-frontend.mjs && node scripts/test-attempts-flow.mjs && node scripts/test-country.mjs && node scripts/test-user-rank.mjs && node scripts/test-migration-scenarios.mjs && node scripts/test-login-flow.mjs && node scripts/test-import-attempts.mjs && node scripts/test-finish-blocked.mjs && node scripts/test-ranked-by-ip.mjs && node scripts/test-session-token.mjs && tsx --tsconfig tsconfig.app.json scripts/test-verify-solution.ts && tsx --tsconfig tsconfig.app.json scripts/test-scoring.ts && tsx --tsconfig tsconfig.app.json scripts/test-idor-protection.ts && npm run smoke",
     "start": "tsx --tsconfig tsconfig.app.json src/api/index.ts",
     "dev:api": "tsx watch --tsconfig tsconfig.app.json src/api/index.ts"
   },
@@ -28,7 +29,8 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2",
     "tsx": "^4.22.4",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vite-react-ssg": "^0.9.0"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.2.0",

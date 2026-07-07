@@ -224,6 +224,40 @@ const zh: Translations = {
   "gpresultado.time_up": "时间到。缺少的位置已显示在上方。",
 
   "lang.label": "语言",
+
+  "profile.name_unique_hint": "必须唯一：其他人不能使用相同的用户名。",
+  "profile.name_taken": "该用户名已被使用。请尝试其他名称。",
+  "profile.name_checking": "正在检查可用性...",
+  "profile.name_available": "✓ 可用",
+
+  "game.top10-standings.name": "Top 10 Standings",
+  "game.top10-standings.tagline": "猜出1至4年内车手积分榜累计的前10名。",
+  "top10standings.eyebrow": "车手积分榜",
+  "top10standings.subtitle": "该时期累计的前10名积分",
+  "top10standings.search_placeholder": "输入车手姓名…",
+  "top10standings.found_count": "已找到 {{found}}/{{total}}",
+  "top10standings.not_in_top": "{{name}}不在累计前10名之列。",
+  "top10standings.points_label": "{{points}} 分",
+  "top10standings.time_up": "时间到。缺少的位置已显示在上方。",
+
+  "seo.home.title": "Box Daily Box — 每日F1迷你游戏 | 6个免费谜题",
+  "seo.home.description": "六款每日F1迷你游戏：猜车手、完成前10名、找出内鬼等等。免费全球排名，无需注册。",
+  "seo.game.pittexto.title": "PitTexto — 猜出神秘F1车手 | Box Daily Box",
+  "seo.game.pittexto.description": "猜出今日的神秘F1车手。每次尝试都会告诉你有多接近。每24小时一个新挑战。",
+  "seo.game.polewordle.title": "PoleWordle — F1版Wordle | Box Daily Box",
+  "seo.game.polewordle.description": "以Wordle方式在6次尝试内猜出今日F1车手的姓氏。全新每日免费谜题。",
+  "seo.game.el-intruso.title": "El Intruso — 找出格格不入的F1车手 | Box Daily Box",
+  "seo.game.el-intruso.description": "十位F1车手中有九位有共同点。在这个每日F1谜题中找出内鬼。",
+  "seo.game.parrilla-bingo.title": "Parrilla Bingo — F1车队宾果 | Box Daily Box",
+  "seo.game.parrilla-bingo.description": "在每个格子中填入符合车队和条件的车手。每日F1宾果游戏。",
+  "seo.game.gp-resultado.title": "GP结果 — 猜出大奖赛前10名 | Box Daily Box",
+  "seo.game.gp-resultado.description": "在时间耗尽前完成一场历史大奖赛的前10名。全新每日免费谜题。",
+  "seo.game.top10-standings.title": "Top 10 Standings — F1积分榜谜题 | Box Daily Box",
+  "seo.game.top10-standings.description": "猜出1至4年内F1车手积分榜累计的前10名。",
+
+  "gamepage.not_found_title": "未找到游戏",
+  "gamepage.not_found_body": "您要找的挑战不存在或已更改地址。",
+  "gamepage.see_all": "查看所有挑战",
 };
 
 export default zh;

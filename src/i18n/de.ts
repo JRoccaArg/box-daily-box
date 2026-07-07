@@ -171,6 +171,48 @@ const de: Translations = {
   "gpresultado.time_up": "Zeit abgelaufen. Fehlende Positionen werden oben angezeigt.",
 
   "lang.label": "Sprache",
+
+  "profile.name_unique_hint": "Muss eindeutig sein: niemand sonst kann denselben Benutzernamen haben.",
+  "profile.name_taken": "Dieser Benutzername ist bereits vergeben. Versuche einen anderen.",
+  "profile.name_checking": "Verfügbarkeit wird geprüft...",
+  "profile.name_available": "✓ Verfügbar",
+
+  "game.top10-standings.name": "Top 10 Standings",
+  "game.top10-standings.tagline":
+    "Rate die kumulierten Top-10-Punkte der Fahrerweltmeisterschaft über einen Zeitraum von 1-4 Jahren.",
+  "top10standings.eyebrow": "Fahrerweltmeisterschaft",
+  "top10standings.subtitle": "Kumulierte Top-10-Punkte des Zeitraums",
+  "top10standings.search_placeholder": "Fahrernamen eingeben…",
+  "top10standings.found_count": "{{found}} von {{total}} gefunden",
+  "top10standings.not_in_top": "{{name}} ist nicht in den kumulierten Top 10.",
+  "top10standings.points_label": "{{points}} Pkt.",
+  "top10standings.time_up": "Zeit abgelaufen. Fehlende Positionen werden oben angezeigt.",
+
+  "seo.home.title": "Box Daily Box — Tägliche Formel-1-Minispiele | 6 kostenlose Rätsel",
+  "seo.home.description":
+    "Sechs tägliche Formel-1-Minispiele: Fahrer erraten, die Top 10 vervollständigen, den Eindringling finden und mehr. Kostenlose globale Rangliste, keine Anmeldung nötig.",
+  "seo.game.pittexto.title": "PitTexto — Errate den geheimen F1-Fahrer | Box Daily Box",
+  "seo.game.pittexto.description":
+    "Errate den geheimen Formel-1-Fahrer des Tages. Jeder Versuch zeigt dir, wie nah du dran bist. Neue Herausforderung alle 24 Stunden.",
+  "seo.game.polewordle.title": "PoleWordle — Das Wordle der Formel 1 | Box Daily Box",
+  "seo.game.polewordle.description":
+    "Errate den Nachnamen des F1-Fahrers des Tages im Wordle-Stil in 6 Versuchen. Ein neues kostenloses tägliches Rätsel.",
+  "seo.game.el-intruso.title": "El Intruso — Finde den F1-Fahrer, der nicht passt | Box Daily Box",
+  "seo.game.el-intruso.description":
+    "Neun von zehn F1-Fahrern haben etwas gemeinsam. Finde den Eindringling in diesem täglichen Formel-1-Rätsel.",
+  "seo.game.parrilla-bingo.title": "Parrilla Bingo — Das F1-Team-Bingo | Box Daily Box",
+  "seo.game.parrilla-bingo.description":
+    "Fülle jede Zelle mit einem Fahrer, der sowohl zum Team als auch zur Bedingung passt. Das tägliche Formel-1-Bingo.",
+  "seo.game.gp-resultado.title": "GP Resultado — Errate die Top 10 eines Grand Prix | Box Daily Box",
+  "seo.game.gp-resultado.description":
+    "Vervollständige die Top 10 eines historischen F1-Grand-Prix, bevor die Zeit abläuft. Ein neues kostenloses tägliches Rätsel.",
+  "seo.game.top10-standings.title": "Top 10 Standings — Das F1-Meisterschaftsrätsel | Box Daily Box",
+  "seo.game.top10-standings.description":
+    "Rate die kumulierten Top-10-Punkte der F1-Fahrerweltmeisterschaft über einen Zeitraum von 1-4 Jahren.",
+
+  "gamepage.not_found_title": "Spiel nicht gefunden",
+  "gamepage.not_found_body": "Die gesuchte Herausforderung existiert nicht oder wurde verschoben.",
+  "gamepage.see_all": "Alle Herausforderungen ansehen",
 };
 
 export default de;

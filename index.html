@@ -1,76 +1,24 @@
 <!doctype html>
-<html lang="es" class="dark">
+<html lang="en" class="dark">
   <head>
+    <!--
+      Este <head> es SOLO el shell global (charset, viewport, favicons,
+      fuentes). Todo lo que depende de la página/idioma (title, meta
+      description, canonical, hreflang, OG, JSON-LD, atributo lang/dir del
+      <html>) lo inyecta <Seo> (src/components/layout/Seo.tsx) vía
+      react-helmet, tanto en el prerender como en la navegación client-side.
+      Duplicar esos tags acá los dejaría repetidos en el HTML final: Helmet
+      los inserta al principio de <head> sin borrar lo que ya hay.
+    -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0B0B0B" />
-
-    <!-- ─── SEO básico ─── -->
-    <title>Box Daily Box — Minijuegos diarios de Fórmula 1 | Puzzles F1</title>
-    <meta
-      name="description"
-      content="4 minijuegos diarios de Fórmula 1: adiviná pilotos, encontrá al intruso y completá bingos de F1. Ranking global, sin registro. ¡Jugá gratis!"
-    />
-    <meta name="keywords" content="F1, Fórmula 1, juegos F1, minijuegos F1, puzzles F1, wordle F1, PitTexto, PoleWordle, El Intruso, Parrilla Bingo, ranking F1, pilotos F1" />
     <meta name="author" content="Juan Cruz Rocca" />
-    <meta name="robots" content="index, follow" />
-    <meta name="googlebot" content="index, follow" />
-
-    <!-- ─── Canonical URL ─── -->
-    <link rel="canonical" href="https://www.boxdailybox.com/" />
-
-    <!-- ─── Open Graph (Facebook, LinkedIn, WhatsApp) ─── -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.boxdailybox.com/" />
-    <meta property="og:title" content="Box Daily Box — Minijuegos diarios de F1" />
-    <meta property="og:description" content="4 minijuegos diarios de Fórmula 1: adiviná pilotos, encontrá al intruso y completá bingos de F1. Ranking global, sin registro." />
-    <meta property="og:image" content="https://www.boxdailybox.com/og-image.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:site_name" content="Box Daily Box" />
-    <meta property="og:locale" content="es_AR" />
-
-    <!-- ─── Twitter Card ─── -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Box Daily Box — Minijuegos diarios de F1" />
-    <meta name="twitter:description" content="4 minijuegos diarios de Fórmula 1: adiviná pilotos, encontrá al intruso y completá bingos de F1." />
-    <meta name="twitter:image" content="https://www.boxdailybox.com/og-image.png" />
 
     <!-- ─── Favicons ─── -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
-
-    <!-- ─── Structured Data (Google Rich Results) ─── -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "Box Daily Box",
-      "url": "https://www.boxdailybox.com/",
-      "description": "Minijuegos diarios de Fórmula 1: PitTexto, PoleWordle, El Intruso y Parrilla Bingo. Ranking global, sin registro.",
-      "applicationCategory": "GameApplication",
-      "genre": "Puzzle Game",
-      "operatingSystem": "Web Browser",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
-      },
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "4.8",
-        "reviewCount": "10"
-      },
-      "author": {
-        "@type": "Person",
-        "name": "Juan Cruz Rocca"
-      },
-      "inLanguage": "es-AR",
-      "isAccessibleForFree": true,
-      "keywords": "F1, Fórmula 1, minijuegos, puzzles, PitTexto, PoleWordle, El Intruso, Parrilla Bingo"
-    }
-    </script>
 
     <!-- ─── Fuentes ─── -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

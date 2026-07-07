@@ -255,6 +255,48 @@ const hi: Translations = {
   "gpresultado.time_up": "समय समाप्त। छूटी हुई स्थितियाँ ऊपर दिखाई गई हैं।",
 
   "lang.label": "भाषा",
+
+  "profile.name_unique_hint": "अद्वितीय होना चाहिए: किसी और का यह उपयोगकर्ता नाम नहीं हो सकता।",
+  "profile.name_taken": "यह उपयोगकर्ता नाम पहले से उपयोग में है। कोई और नाम आज़माएं।",
+  "profile.name_checking": "उपलब्धता जांच रहे हैं...",
+  "profile.name_available": "✓ उपलब्ध",
+
+  "game.top10-standings.name": "टॉप 10 स्टैंडिंग्स",
+  "game.top10-standings.tagline":
+    "1 से 4 वर्षों की अवधि में ड्राइवर चैंपियनशिप के संचित टॉप 10 अंक अनुमान लगाएं।",
+  "top10standings.eyebrow": "ड्राइवर्स चैंपियनशिप",
+  "top10standings.subtitle": "अवधि के संचित टॉप 10 अंक",
+  "top10standings.search_placeholder": "ड्राइवर का नाम टाइप करें…",
+  "top10standings.found_count": "{{found}} / {{total}} मिले",
+  "top10standings.not_in_top": "{{name}} संचित टॉप 10 में नहीं है।",
+  "top10standings.points_label": "{{points}} अंक",
+  "top10standings.time_up": "समय समाप्त। छूटी हुई स्थितियाँ ऊपर दिखाई गई हैं।",
+
+  "seo.home.title": "Box Daily Box — दैनिक फॉर्मूला 1 मिनी-गेम्स | 6 मुफ़्त पहेलियाँ",
+  "seo.home.description":
+    "छह दैनिक फॉर्मूला 1 मिनी-गेम्स: ड्राइवरों का अनुमान लगाएं, टॉप 10 पूरा करें, घुसपैठिए को खोजें और भी बहुत कुछ। मुफ़्त वैश्विक रैंकिंग, बिना पंजीकरण।",
+  "seo.game.pittexto.title": "PitTexto — गुप्त F1 ड्राइवर का अनुमान लगाएं | Box Daily Box",
+  "seo.game.pittexto.description":
+    "आज के गुप्त फॉर्मूला 1 ड्राइवर का अनुमान लगाएं। हर प्रयास बताता है कि आप कितने करीब हैं। हर 24 घंटे में नई चुनौती।",
+  "seo.game.polewordle.title": "PoleWordle — फॉर्मूला 1 का Wordle | Box Daily Box",
+  "seo.game.polewordle.description":
+    "आज के F1 ड्राइवर का उपनाम, Wordle शैली में, 6 प्रयासों में अनुमान लगाएं। एक नई मुफ़्त दैनिक पहेली।",
+  "seo.game.el-intruso.title": "El Intruso — बेमेल F1 ड्राइवर खोजें | Box Daily Box",
+  "seo.game.el-intruso.description":
+    "दस में से नौ F1 ड्राइवर कुछ समान साझा करते हैं। इस दैनिक फॉर्मूला 1 पहेली में घुसपैठिए को खोजें।",
+  "seo.game.parrilla-bingo.title": "Parrilla Bingo — F1 टीम बिंगो | Box Daily Box",
+  "seo.game.parrilla-bingo.description":
+    "हर सेल में एक ऐसा ड्राइवर भरें जो टीम और शर्त दोनों से मेल खाता हो। दैनिक फॉर्मूला 1 बिंगो।",
+  "seo.game.gp-resultado.title": "GP Resultado — ग्रां प्री का टॉप 10 अनुमान लगाएं | Box Daily Box",
+  "seo.game.gp-resultado.description":
+    "समय समाप्त होने से पहले एक ऐतिहासिक F1 ग्रां प्री के टॉप 10 को पूरा करें। एक नई मुफ़्त दैनिक पहेली।",
+  "seo.game.top10-standings.title": "Top 10 Standings — F1 चैंपियनशिप पहेली | Box Daily Box",
+  "seo.game.top10-standings.description":
+    "1-4 वर्षों की अवधि में F1 ड्राइवर्स चैंपियनशिप के संचित टॉप 10 अंकों का अनुमान लगाएं।",
+
+  "gamepage.not_found_title": "गेम नहीं मिला",
+  "gamepage.not_found_body": "आप जिस चुनौती की तलाश कर रहे हैं वह मौजूद नहीं है या स्थानांतरित हो गई है।",
+  "gamepage.see_all": "सभी चुनौतियाँ देखें",
 };
 
 export default hi;

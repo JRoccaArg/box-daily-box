@@ -19,19 +19,9 @@ import {
   isPlausibleSolution,
 } from "./validate";
 import { signIdentityToken, ownsIdentity } from "./identity-token";
+import { TOKEN_SECRET, ADMIN_SECRET } from "./secrets";
 
 const SESSION_TTL = 15 * 60 * 1000; // 15 minutos
-
-// Secreto para firmar tokens (configurable via env).
-const TOKEN_SECRET = process.env.TOKEN_SECRET || "bdb-token-secret-2026-change-me";
-
-// Advertencia de arranque si los secretos siguen en su valor por defecto.
-if (!process.env.TOKEN_SECRET) {
-  console.warn("⚠️  TOKEN_SECRET no configurado: usando default INSEGURO. Configuralo en Railway.");
-}
-if (!process.env.ADMIN_SECRET) {
-  console.warn("⚠️  ADMIN_SECRET no configurado: usando default INSEGURO. Configuralo en Railway.");
-}
 
 // Opciones de tiempo disponibles por juego (segundos). El backend las usa para:
 // 1. Validar que el timeLimit enviado por el cliente es una opción legítima.
@@ -43,6 +33,7 @@ const GAME_TIME_OPTIONS: Record<string, number[]> = {
   "el-intruso": [45, 60],
   "parrilla-bingo": [150],
   "gp-resultado": [90, 120, 150, 180],
+  "top10-standings": [90, 120, 150, 180],
 };
 
 // Tiempo máximo por juego (para fallback de sesiones antiguas sin timeLimit guardado).
@@ -52,9 +43,10 @@ const TIME_LIMITS: Record<string, number> = {
   "el-intruso": 60,
   "parrilla-bingo": 150,
   "gp-resultado": 180,
+  "top10-standings": 180,
 };
 
-const VALID_GAMES = ["pittexto", "polewordle", "el-intruso", "parrilla-bingo", "gp-resultado"];
+const VALID_GAMES = ["pittexto", "polewordle", "el-intruso", "parrilla-bingo", "gp-resultado", "top10-standings"];
 const VALID_DIFFS = ["facil", "medio", "dificil", "leyenda"];
 
 // ─── Token firmado (HMAC-SHA256) ────────────────────────────────────
@@ -550,10 +542,9 @@ export async function adminDebug(
     const { secret: querySecret } = req.query as { secret?: string };
     const provided = typeof headerSecret === "string" ? headerSecret : (querySecret ?? "");
 
-    const adminSecret = process.env.ADMIN_SECRET || "boxdailybox-debug-2026";
     // Comparación timing-safe para evitar timing attacks sobre el secreto.
     const a = Buffer.from(String(provided));
-    const b = Buffer.from(adminSecret);
+    const b = Buffer.from(ADMIN_SECRET);
     const ok = a.length === b.length && timingSafeEqual(a, b);
     if (!ok) {
       reply.code(403).send({ error: "Acceso denegado" });
@@ -891,11 +882,18 @@ export async function checkUsernameAvailable(
 }
 
 /**
- * GET /user/:userId/attempts?date=YYYY-MM-DD
+ * GET /user/:userId/attempts?date=YYYY-MM-DD&identityToken=...
+ * GET /user/:userId/attempts?from=YYYY-MM-DD&to=YYYY-MM-DD&identityToken=...
  *
- * Devuelve los attempts del usuario para una fecha específica.
+ * Devuelve los attempts del usuario en un rango de fechas (o una fecha
+ * puntual con `date`, retrocompatible con el uso anterior de un solo día).
  * Usado para sincronizar el estado local con el server después de login
- * o al cargar la home.
+ * (rango: mes completo) o al cargar la home (rango: mes completo también,
+ * para que el gráfico mensual local no pierda días tras un reset).
+ *
+ * Requiere identityToken propio: el userId no es secreto (aparece en el
+ * ranking público), así que sin esta verificación cualquiera podría leer
+ * el historial diario de otra persona conociendo su userId.
  */
 export async function getUserAttempts(
   req: FastifyRequest,
@@ -908,21 +906,28 @@ export async function getUserAttempts(
       return;
     }
 
-    const { date } = req.query as { date?: string };
-    const dateKey = typeof date === "string" && isValidDateKey(date)
-      ? date
-      : new Date().toISOString().slice(0, 10);
+    const { identityToken } = req.query as { identityToken?: string };
+    if (!ownsIdentity(identityToken, userId)) {
+      reply.code(403).send({ error: "No autorizado para leer estos datos" });
+      return;
+    }
+
+    const { date, from, to } = req.query as { date?: string; from?: string; to?: string };
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const singleDate = typeof date === "string" && isValidDateKey(date) ? date : todayKey;
+    const fromKey = typeof from === "string" && isValidDateKey(from) ? from : singleDate;
+    const toKey = typeof to === "string" && isValidDateKey(to) ? to : singleDate;
 
     const rows = await query(
-      `SELECT game_id, difficulty, won, time_seconds, points, created_at
+      `SELECT game_id, difficulty, won, time_seconds, points, created_at, date_key
        FROM attempts
-       WHERE user_id = $1 AND date_key = $2::date
-       ORDER BY created_at DESC`,
-      [userId, dateKey],
+       WHERE user_id = $1 AND date_key BETWEEN $2::date AND $3::date
+       ORDER BY date_key DESC, created_at DESC`,
+      [userId, fromKey, toKey],
     );
 
     reply.code(200).send({
-      dateKey,
+      dateKey: toKey,
       attempts: rows.rows.map((r) => ({
         gameId: r.game_id,
         difficulty: r.difficulty,
@@ -930,6 +935,7 @@ export async function getUserAttempts(
         timeSeconds: r.time_seconds,
         points: r.points,
         finishedAt: r.created_at,
+        dateKey: r.date_key.toISOString().slice(0, 10),
       })),
     });
   } catch (err) {
@@ -939,7 +945,7 @@ export async function getUserAttempts(
 }
 
 /**
- * GET /user/:userId/rank?date=YYYY-MM-DD
+ * GET /user/:userId/rank?date=YYYY-MM-DD&identityToken=...
  *
  * Devuelve la posición del usuario en el ranking diario global.
  * Reglas de negocio:
@@ -949,6 +955,10 @@ export async function getUserAttempts(
  *
  * Calculado eficientemente: cuenta cuántos usuarios distintos tienen
  * más puntos que este usuario ese día.
+ *
+ * Requiere identityToken propio (ver nota de seguridad en getUserAttempts).
+ * Esto NO afecta el ranking público (getRankingMonthly/getRankingDaily),
+ * que siguen siendo agregados sin necesidad de identificar a quien consulta.
  */
 export async function getUserRank(
   req: FastifyRequest,
@@ -958,6 +968,12 @@ export async function getUserRank(
     const { userId } = req.params as { userId?: string };
     if (!userId || !isValidUserId(userId)) {
       reply.code(422).send({ error: "userId inválido" });
+      return;
+    }
+
+    const { identityToken } = req.query as { identityToken?: string };
+    if (!ownsIdentity(identityToken, userId)) {
+      reply.code(403).send({ error: "No autorizado para leer estos datos" });
       return;
     }
 

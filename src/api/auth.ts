@@ -386,14 +386,22 @@ export async function logout(
 }
 
 // Límites de tiempo por juego (para recalcular puntos al importar).
+// Nota: el timeSeconds usado al importar siempre es igual al timeLimit
+// (ver más abajo), por lo que el bonus de velocidad da 0 sin importar el
+// valor exacto acá — el número solo importa para que computeScore no reciba
+// un timeLimit null.
 const IMPORT_TIME_LIMITS: Record<string, number> = {
   "pittexto": 300,
   "polewordle": 300,
   "el-intruso": 120,
   "parrilla-bingo": 600,
+  "gp-resultado": 180,
+  "top10-standings": 180,
 };
 
-const VALID_GAME_IDS = new Set(["pittexto", "polewordle", "el-intruso", "parrilla-bingo"]);
+const VALID_GAME_IDS = new Set([
+  "pittexto", "polewordle", "el-intruso", "parrilla-bingo", "gp-resultado", "top10-standings",
+]);
 const VALID_DIFFICULTIES = new Set(["facil", "medio", "dificil", "leyenda"]);
 
 /**
