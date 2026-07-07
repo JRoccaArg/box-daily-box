@@ -152,6 +152,15 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
 
   // -----------------------------------------------------------------
   // Abandono = derrota.
+  //
+  // CRITICO: cualquier camino de derrota (rendirse, timeout, o abandono por
+  // navegacion/cierre) debe persistir en el server, no solo en localStorage.
+  // Si no, el lock local `played` bloquea re-jugar el reto, pero el server
+  // nunca se entera del intento — al desloguearse y borrar localStorage (o
+  // simplemente en otro dispositivo), el reto reaparece como no jugado y
+  // deja re-jugarlo. `persistAbandon` es el unico punto de salida para los
+  // 3 caminos de abandono (leave-confirm, unmount, beforeunload) y por eso
+  // llama a apiFinishChallenge igual que `finish()`.
   // -----------------------------------------------------------------
   const abandonRef = useRef<{ active: boolean; gameId: string; date: Date }>({
     active: false,
@@ -166,26 +175,36 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
     };
   }, [phase, game.id, date]);
 
+  const persistAbandon = useCallback(() => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+    abandonRef.current.active = false;
+    record(game.id, "lost", buildMeta(), date);
+
+    const token = sessionTokenRef.current;
+    if (token) {
+      apiFinishChallenge(game.id, token, null).catch(() => {});
+    }
+  }, [game.id, record, buildMeta, date]);
+
   useEffect(() => {
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
       if (!abandonRef.current.active) return;
-      record(abandonRef.current.gameId, "lost", buildMeta(), abandonRef.current.date);
-      finishedRef.current = true;
-      abandonRef.current.active = false;
+      persistAbandon();
       e.preventDefault();
       e.returnValue = "";
     };
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, [record, buildMeta]);
+  }, [persistAbandon]);
 
   useEffect(() => {
     return () => {
       if (abandonRef.current.active) {
-        record(abandonRef.current.gameId, "lost", buildMeta(), abandonRef.current.date);
+        persistAbandon();
       }
     };
-  }, [record, buildMeta]);
+  }, [persistAbandon]);
 
   const handleExpire = useCallback(() => finish("lost"), [finish]);
 
@@ -213,15 +232,27 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
     setStatus("playing");
     setPhase("playing");
 
-    apiStartChallenge(game.id, difficulty, timeLimit).then((res) => {
-      if (res.ok) {
-        sessionTokenRef.current = res.sessionToken;
-        if (typeof res.serverNow === "number") {
-          const rtt = Date.now() - localStart;
-          scoreRef.current.startedAt = localStart + Math.round(rtt / 2);
+    // Reintenta si el backend estaba frio (Railway) o hubo un blip de red:
+    // sin sessionToken, ni `finish()` ni `persistAbandon()` pueden reportar
+    // el intento al server (quedaria solo en localStorage).
+    const tryStart = (attempt: number) => {
+      apiStartChallenge(game.id, difficulty, timeLimit).then((res) => {
+        if (res.ok) {
+          sessionTokenRef.current = res.sessionToken;
+          if (typeof res.serverNow === "number") {
+            const rtt = Date.now() - localStart;
+            scoreRef.current.startedAt = localStart + Math.round(rtt / 2);
+          }
+        } else if (attempt < 2 && !finishedRef.current) {
+          window.setTimeout(() => tryStart(attempt + 1), 1500 * (attempt + 1));
         }
-      }
-    }).catch(() => {});
+      }).catch(() => {
+        if (attempt < 2 && !finishedRef.current) {
+          window.setTimeout(() => tryStart(attempt + 1), 1500 * (attempt + 1));
+        }
+      });
+    };
+    tryStart(0);
   };
 
   const handleIdentitySaved = () => {
@@ -406,6 +437,7 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
             block
             onClick={() => {
               setLeaveConfirmOpen(false);
+              persistAbandon();
               navigate(homePath(locale));
             }}
           >
