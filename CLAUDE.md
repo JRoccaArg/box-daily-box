@@ -1,12 +1,16 @@
 # Box Daily Box — Instrucciones para Claude Code
 
+> **REPO PÚBLICO.** Este archivo es visible para cualquiera. NO poner aquí info
+> sensible (costos, planes de negocio, datos personales, claves, IPs internas).
+> Eso va en `Box_Daily_Box_Context.md` (gitignored, local).
+
 ## Reglas de trabajo
 - Rama: siempre `develop`. Nunca commitear a `main`/`staging` sin permiso explícito.
 - Confirmar antes de acciones destructivas (push, deploy, delete).
 - Sin emojis en código/docs/UI salvo pedido.
 - Respuestas concisas, sin narrar deliberación.
 - Verificación real: dev server + prueba en navegador, no solo typecheck.
-- Documentar cada fix/feature importante en `Box_Daily_Box_Context.md` (sección 8).
+- Documentar cada fix/feature importante en `Box_Daily_Box_Context.md` (sección 8) — NUNCA en archivos trackeados por git (repo público).
 
 ## Proyecto
 Plataforma de minijuegos diarios de F1. 6 juegos, determinista por fecha.
@@ -43,5 +47,13 @@ npm test corre ~20 suites: identity-token, migration (4 escenarios), sync,
 attempts-flow, country, user-rank, ranked-by-ip, session-token, verify-solution
 (513 asserts), scoring, idor-protection, smoke (90 días × 4 dificultades).
 
-## Doc local (gitignored, leer si necesitas detalle)
-- `Box_Daily_Box_Context.md` — contexto completo: usuario, visión, arquitectura, flujos, tests, historial
+## Documentación — qué va dónde
+
+| Tipo de info | Dónde | Por qué |
+|---|---|---|
+| Instrucciones de proyecto para Claude (públicas) | `CLAUDE.md` (este archivo, en git) | Auto-cargado, viaja con el repo |
+| Contexto profundo, visión, negocio, historial de fixes | `Box_Daily_Box_Context.md` (gitignored) | Info privada, no debe ser pública |
+| Preferencias del usuario, reglas de sesión | `.claude/memory/` (gitignored) | Auto-cargado, local |
+| Código, tests, configs | En git (normal) | Es código |
+
+**Regla de oro**: si dudás si algo es público, va en `Box_Daily_Box_Context.md` (gitignored), NO en este archivo ni en commits/PRs.
