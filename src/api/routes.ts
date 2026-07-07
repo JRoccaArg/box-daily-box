@@ -883,10 +883,13 @@ export async function checkUsernameAvailable(
 
 /**
  * GET /user/:userId/attempts?date=YYYY-MM-DD&identityToken=...
+ * GET /user/:userId/attempts?from=YYYY-MM-DD&to=YYYY-MM-DD&identityToken=...
  *
- * Devuelve los attempts del usuario para una fecha específica.
+ * Devuelve los attempts del usuario en un rango de fechas (o una fecha
+ * puntual con `date`, retrocompatible con el uso anterior de un solo día).
  * Usado para sincronizar el estado local con el server después de login
- * o al cargar la home.
+ * (rango: mes completo) o al cargar la home (rango: mes completo también,
+ * para que el gráfico mensual local no pierda días tras un reset).
  *
  * Requiere identityToken propio: el userId no es secreto (aparece en el
  * ranking público), así que sin esta verificación cualquiera podría leer
@@ -909,21 +912,22 @@ export async function getUserAttempts(
       return;
     }
 
-    const { date } = req.query as { date?: string };
-    const dateKey = typeof date === "string" && isValidDateKey(date)
-      ? date
-      : new Date().toISOString().slice(0, 10);
+    const { date, from, to } = req.query as { date?: string; from?: string; to?: string };
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const singleDate = typeof date === "string" && isValidDateKey(date) ? date : todayKey;
+    const fromKey = typeof from === "string" && isValidDateKey(from) ? from : singleDate;
+    const toKey = typeof to === "string" && isValidDateKey(to) ? to : singleDate;
 
     const rows = await query(
-      `SELECT game_id, difficulty, won, time_seconds, points, created_at
+      `SELECT game_id, difficulty, won, time_seconds, points, created_at, date_key
        FROM attempts
-       WHERE user_id = $1 AND date_key = $2::date
-       ORDER BY created_at DESC`,
-      [userId, dateKey],
+       WHERE user_id = $1 AND date_key BETWEEN $2::date AND $3::date
+       ORDER BY date_key DESC, created_at DESC`,
+      [userId, fromKey, toKey],
     );
 
     reply.code(200).send({
-      dateKey,
+      dateKey: toKey,
       attempts: rows.rows.map((r) => ({
         gameId: r.game_id,
         difficulty: r.difficulty,
@@ -931,6 +935,7 @@ export async function getUserAttempts(
         timeSeconds: r.time_seconds,
         points: r.points,
         finishedAt: r.created_at,
+        dateKey: r.date_key.toISOString().slice(0, 10),
       })),
     });
   } catch (err) {

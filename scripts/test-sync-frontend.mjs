@@ -52,6 +52,9 @@ function dateKey(date = new Date()) {
 }
 
 // ─── Replicar syncFromServer (de stats.ts) ──────────────────────────
+// Desde el fix del gráfico mensual (2026-07-07), cada attempt trae SU PROPIO
+// dateKey (ya no un único dateKey_ para todo el lote) — se pueden sincronizar
+// varios días de una sola vez (ver monthStartKey en stats.ts).
 const RESULTS_KEY = "results";
 const PLAYED_KEY = "played";
 
@@ -62,19 +65,25 @@ function getResult(gameId, date = new Date()) {
   const day = loadResults()[dateKey(date)];
   return day?.[gameId] ?? null;
 }
+function getResultOnDay(gameId, dayKey) {
+  const day = loadResults()[dayKey];
+  return day?.[gameId] ?? null;
+}
 function getPlayedStatus(gameId, date = new Date()) {
   const day = loadPlayed()[dateKey(date)];
   return day?.[gameId]?.status ?? null;
 }
 
-function syncFromServer(serverAttempts, dateKey_) {
+function syncFromServer(serverAttempts) {
   if (serverAttempts.length === 0) return;
   const results = loadResults();
   const played = loadPlayed();
-  const resultsDay = results[dateKey_] ?? {};
-  const playedDay = played[dateKey_] ?? {};
 
   for (const att of serverAttempts) {
+    const day = att.dateKey;
+    const resultsDay = results[day] ?? {};
+    const playedDay = played[day] ?? {};
+
     const status = att.won ? "won" : "lost";
     const finishedAt = new Date(att.finishedAt).getTime();
     if (!playedDay[att.gameId]) {
@@ -82,7 +91,7 @@ function syncFromServer(serverAttempts, dateKey_) {
     }
     if (!resultsDay[att.gameId]) {
       resultsDay[att.gameId] = {
-        status, date: dateKey_, finishedAt,
+        status, date: day, finishedAt,
         meta: {
           serverPoints: att.points,
           timeSeconds: att.timeSeconds,
@@ -90,9 +99,11 @@ function syncFromServer(serverAttempts, dateKey_) {
         },
       };
     }
+
+    results[day] = resultsDay;
+    played[day] = playedDay;
   }
-  results[dateKey_] = resultsDay;
-  played[dateKey_] = playedDay;
+
   storage.set(RESULTS_KEY, results);
   storage.set(PLAYED_KEY, played);
 }
@@ -110,10 +121,9 @@ function test1_SyncSameDateKey() {
   console.log("\n▶ Test 1: sync con dateKey que COINCIDE con el local");
   clear();
   const today = dateKey(new Date());
-  syncFromServer(
-    [{ gameId: "polewordle", won: true, timeSeconds: 42, points: 100, finishedAt: new Date().toISOString() }],
-    today,
-  );
+  syncFromServer([
+    { gameId: "polewordle", won: true, timeSeconds: 42, points: 100, finishedAt: new Date().toISOString(), dateKey: today },
+  ]);
   assert(getResult("polewordle") !== null, "getResult encuentra polewordle");
   assert(getPlayedStatus("polewordle") === "won", "getPlayedStatus = won");
 }
@@ -126,10 +136,9 @@ function test2_SyncMismatchedDateKey() {
   const utcTomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
   // El server responde con la fecha UTC
-  syncFromServer(
-    [{ gameId: "el-intruso", won: true, timeSeconds: 30, points: 90, finishedAt: new Date().toISOString() }],
-    utcTomorrow,
-  );
+  syncFromServer([
+    { gameId: "el-intruso", won: true, timeSeconds: 30, points: 90, finishedAt: new Date().toISOString(), dateKey: utcTomorrow },
+  ]);
 
   const foundToday = getResult("el-intruso"); // busca con localToday
   if (localToday !== utcTomorrow) {
@@ -149,10 +158,9 @@ function test3_IdempotentNoPisar() {
   storage.set(RESULTS_KEY, results);
 
   // Server dice que pittexto tiene 999 pts
-  syncFromServer(
-    [{ gameId: "pittexto", won: true, timeSeconds: 10, points: 999, finishedAt: new Date().toISOString() }],
-    today,
-  );
+  syncFromServer([
+    { gameId: "pittexto", won: true, timeSeconds: 10, points: 999, finishedAt: new Date().toISOString(), dateKey: today },
+  ]);
 
   const r = getResult("pittexto");
   assert(r.meta.serverPoints === 500, "no pisó el local (mantiene 500, no 999)");
@@ -163,10 +171,9 @@ function test4_PreservesDifficulty() {
   clear();
   const today = dateKey(new Date());
   // El server manda difficulty (ver ServerAttempt en src/lib/api.ts).
-  syncFromServer(
-    [{ gameId: "gp-resultado", won: true, timeSeconds: 55, points: 150, difficulty: "dificil", finishedAt: new Date().toISOString() }],
-    today,
-  );
+  syncFromServer([
+    { gameId: "gp-resultado", won: true, timeSeconds: 55, points: 150, difficulty: "dificil", finishedAt: new Date().toISOString(), dateKey: today },
+  ]);
   const r = getResult("gp-resultado");
   assert(r?.meta?.difficulty === "dificil", `meta.difficulty preservado (recibido: ${r?.meta?.difficulty})`);
 
@@ -174,12 +181,35 @@ function test4_PreservesDifficulty() {
   // respuestas viejas o casos donde el campo no viene), no debe reventar ni
   // inventar un valor — simplemente no queda seteado en meta.
   clear();
-  syncFromServer(
-    [{ gameId: "polewordle", won: true, timeSeconds: 20, points: 100, finishedAt: new Date().toISOString() }],
-    today,
-  );
+  syncFromServer([
+    { gameId: "polewordle", won: true, timeSeconds: 20, points: 100, finishedAt: new Date().toISOString(), dateKey: today },
+  ]);
   const r2 = getResult("polewordle");
   assert(r2?.meta?.difficulty === undefined, "sin difficulty en la respuesta, no se inventa un valor");
+}
+
+function test5_MultiDayAttempts() {
+  console.log("\n▶ Test 5: REGRESIÓN — attempts de VARIOS días en una sola respuesta (fix gráfico mensual)");
+  // Antes del fix, syncFromServer recibía un solo dateKey_ para TODO el lote,
+  // así que tras un reset (resetForAccountSwitch) + re-login, solo el día de
+  // hoy quedaba en localStorage — el gráfico mensual perdía las barras de
+  // días anteriores aunque el server sí tuviera esos datos. Este test asegura
+  // que attempts de días distintos se escriban cada uno bajo su propio día.
+  clear();
+  const today = dateKey(new Date());
+  const fiveDaysAgo = dateKey(new Date(Date.now() - 5 * 86400000));
+  const tenDaysAgo = dateKey(new Date(Date.now() - 10 * 86400000));
+
+  syncFromServer([
+    { gameId: "pittexto", won: true, timeSeconds: 40, points: 100, finishedAt: new Date().toISOString(), dateKey: today },
+    { gameId: "polewordle", won: true, timeSeconds: 35, points: 90, finishedAt: new Date(Date.now() - 5 * 86400000).toISOString(), dateKey: fiveDaysAgo },
+    { gameId: "el-intruso", won: false, timeSeconds: 20, points: 0, finishedAt: new Date(Date.now() - 10 * 86400000).toISOString(), dateKey: tenDaysAgo },
+  ]);
+
+  assert(getResultOnDay("pittexto", today)?.status === "won", "attempt de HOY escrito bajo hoy");
+  assert(getResultOnDay("polewordle", fiveDaysAgo)?.status === "won", "attempt de hace 5 días escrito bajo su propio día (no bajo hoy)");
+  assert(getResultOnDay("el-intruso", tenDaysAgo)?.status === "lost", "attempt de hace 10 días escrito bajo su propio día (no bajo hoy)");
+  assert(getResultOnDay("polewordle", today) === null, "el attempt de hace 5 días NO quedó (incorrectamente) bajo hoy");
 }
 
 (async () => {
@@ -188,6 +218,7 @@ function test4_PreservesDifficulty() {
   test2_SyncMismatchedDateKey();
   test3_IdempotentNoPisar();
   test4_PreservesDifficulty();
+  test5_MultiDayAttempts();
   console.log(`\n═══ RESULTADO: ${passed} passed, ${failed} failed ═══`);
   process.exit(failed > 0 ? 1 : 0);
 })();

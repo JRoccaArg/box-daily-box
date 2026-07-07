@@ -8,8 +8,17 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getStoredLocale } from "@/i18n";
-import { LOCALE_META } from "@/i18n/types";
+import { LOCALE_META, SUPPORTED_LOCALES } from "@/i18n/types";
 import { homePath } from "@/lib/routes";
+
+// Script inline (no module/async/defer) que el navegador ejecuta de forma
+// síncrona apenas lo parsea, ANTES de pintar el <div> de fallback que viene
+// después en el mismo HTML. Replica getStoredLocale()/detectLocale() de
+// src/i18n/index.ts para no depender de que React monte y corra el useEffect
+// (que sí pintaría el fallback primero). El fallback sigue existiendo en el
+// HTML estático para crawlers/no-JS — esto solo evita el flash en navegadores
+// con JS habilitado, adelantando la misma redirección.
+const INSTANT_REDIRECT_SCRIPT = `(function(){try{var S=${JSON.stringify(SUPPORTED_LOCALES)};var l=null;try{var s=localStorage.getItem("lang");if(s&&S.indexOf(s)!==-1)l=s;}catch(e){}if(!l){var ls=navigator.languages||[navigator.language];for(var i=0;i<ls.length;i++){var p=(ls[i]||"").split("-")[0].toLowerCase();if(S.indexOf(p)!==-1){l=p;break;}}}if(!l)l="en";location.replace("/"+l+"/");}catch(e){}})();`;
 
 export function RootRedirect() {
   const navigate = useNavigate();
@@ -20,6 +29,7 @@ export function RootRedirect() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-asphalt-900 px-4 text-center text-ink">
+      <script dangerouslySetInnerHTML={{ __html: INSTANT_REDIRECT_SCRIPT }} />
       <p className="font-display text-lg font-bold">Box Daily Box</p>
       <ul className="flex flex-wrap justify-center gap-3">
         {LOCALE_META.map((m) => (

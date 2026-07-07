@@ -248,6 +248,8 @@ export type ServerAttempt = {
   timeSeconds: number;
   points: number;
   finishedAt: string; // ISO timestamp
+  /** Día (YYYY-MM-DD) al que pertenece el attempt, para agrupar en syncFromServer. */
+  dateKey: string;
 };
 
 export type UserAttemptsResponse = {
@@ -257,7 +259,10 @@ export type UserAttemptsResponse = {
 
 /**
  * GET /user/:userId/attempts?date=YYYY-MM-DD&identityToken=...
- * Trae los attempts del usuario para una fecha específica.
+ * GET /user/:userId/attempts?from=YYYY-MM-DD&to=YYYY-MM-DD&identityToken=...
+ *
+ * Trae los attempts del usuario para una fecha puntual (`date`) o un rango
+ * (`from`/`to`) — usado para reconstruir el gráfico mensual local tras login.
  *
  * Manda el identityToken guardado localmente: el server solo devuelve datos
  * si prueba la posesión del userId (evita que cualquiera con un userId ajeno
@@ -265,10 +270,15 @@ export type UserAttemptsResponse = {
  */
 export async function apiGetUserAttempts(
   userId: string,
-  date?: string,
+  opts: { date?: string; from?: string; to?: string } = {},
 ): Promise<UserAttemptsResponse | null> {
   const params = new URLSearchParams();
-  params.set("date", date ?? dateKey());
+  if (opts.from || opts.to) {
+    params.set("from", opts.from ?? opts.to ?? dateKey());
+    params.set("to", opts.to ?? opts.from ?? dateKey());
+  } else {
+    params.set("date", opts.date ?? dateKey());
+  }
   const token = getIdentityToken();
   if (token) params.set("identityToken", token);
   return apiFetch<UserAttemptsResponse>(

@@ -7,6 +7,7 @@ import {
   recordResult as persistResult,
   resetAllProgress,
   syncFromServer,
+  monthStartKey,
 } from "@/lib/stats";
 import { storageIsPersistent } from "@/lib/storage";
 import { getIdentity } from "@/lib/identity";
@@ -107,11 +108,14 @@ export function StatsProvider({ children }: { children: ReactNode }) {
     const today = dateKey(new Date());
 
     (async () => {
-      const response = await apiGetUserAttempts(userId, today);
+      // Mes completo (no solo hoy): si el usuario borró localStorage estando
+      // logueado, esto reconstruye también el gráfico mensual, no solo el
+      // lock de "ya jugado hoy".
+      const response = await apiGetUserAttempts(userId, { from: monthStartKey(new Date()), to: today });
       if (cancelled || !response) return;
       if (response.attempts.length === 0) return;
 
-      syncFromServer(response.attempts, response.dateKey);
+      syncFromServer(response.attempts);
       setVersion((v) => v + 1);
     })();
 
