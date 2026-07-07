@@ -131,7 +131,11 @@ export async function apiStartChallenge(
 }
 
 /** Envia la solucion y obtiene resultado verificado.
- *  solution puede ser null: representa abandono/timeout (perdido sin verificar). */
+ *  solution puede ser null: representa abandono/timeout (perdido sin verificar).
+ *  `keepalive: true` para que el POST sobreviva a una navegacion de pagina
+ *  real (cerrar pestana, o el redirect de loginWithGoogle inmediatamente
+ *  despues de abandonar un reto) — sin esto, el browser puede abortar el
+ *  fetch a mitad de camino y el intento nunca llega al server. */
 export async function apiFinishChallenge(
   gameId: string,
   sessionToken: string,
@@ -143,6 +147,7 @@ export async function apiFinishChallenge(
     {
       method: "POST",
       body: JSON.stringify({ sessionToken, solution, userId }),
+      keepalive: true,
     },
   );
 }
