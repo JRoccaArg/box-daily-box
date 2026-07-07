@@ -1,0 +1,21 @@
+name: Update visual snapshots (temp)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - run: npx playwright test --update-snapshots || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-snapshots
+          path: tests/visual/__screenshots__/
