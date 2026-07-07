@@ -15,17 +15,19 @@
 
   body {
     @apply bg-asphalt text-ink font-display antialiased;
-    /* Subtle asphalt grain + a faint diagonal "start straight" gradient */
+    /* Subtle asphalt grain + a faint diagonal "start straight" gradient.
+       Fixed attachment + a 1px repeating step caused moire/tearing artifacts
+       on mobile Chrome/WebView when scrolling; scroll attachment + a wider
+       step avoids that while keeping the same visual texture. */
     background-image:
       radial-gradient(120% 80% at 50% -10%, rgba(225, 6, 0, 0.06), transparent 60%),
       repeating-linear-gradient(
         115deg,
         rgba(255, 255, 255, 0.012) 0px,
-        rgba(255, 255, 255, 0.012) 1px,
-        transparent 1px,
-        transparent 7px
+        rgba(255, 255, 255, 0.012) 2px,
+        transparent 2px,
+        transparent 12px
       );
-    background-attachment: fixed;
   }
 
   /* Honor users who prefer less motion */
