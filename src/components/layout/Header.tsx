@@ -7,6 +7,9 @@ import { IdentityModal } from "./IdentityModal";
 import { LanguageSelector } from "./LanguageSelector";
 import { Stat as StatIcon, Flame } from "@/components/ui/Icon";
 import { on, Events } from "@/lib/events";
+import { homePath } from "@/lib/routes";
+import { useMounted } from "@/lib/useMounted";
+import type { Locale } from "@/i18n";
 
 /** Fecha legible en el idioma actual. */
 function readableDate(d: Date, locale: string): string {
@@ -18,9 +21,9 @@ function readableDate(d: Date, locale: string): string {
 }
 
 /** Logo: chevron de velocidad + wordmark. */
-function Wordmark({ label }: { label: string }) {
+function Wordmark({ label, locale }: { label: string; locale: Locale }) {
   return (
-    <Link to="/" className="group inline-flex items-center gap-2.5" aria-label={label}>
+    <Link to={homePath(locale)} className="group inline-flex items-center gap-2.5" aria-label={label}>
       <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" className="shrink-0">
         <path d="M3 4l7 8-7 8h5l7-8-7-8z" className="fill-racing" />
         <path d="M11 4l7 8-7 8h3l7-8-7-8z" className="fill-white/85" />
@@ -41,6 +44,11 @@ export function Header() {
   const [statsOpen, setStatsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
+  // La fecha de "hoy" difiere entre el momento del prerender (build) y la
+  // visita real: se muestra solo tras montar para no generar mismatch de
+  // hidratación (el HTML prerenderizado no incluye esta fecha).
+  const mounted = useMounted();
+
   // Escuchar el evento global para abrir el modal de stats desde cualquier
   // lugar de la app (ej: botón "Ver ranking del día" del modal de resultado).
   useEffect(() => {
@@ -50,11 +58,11 @@ export function Header() {
   return (
     <header className="sticky top-0 z-30 border-b border-white/5 bg-asphalt-900/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4">
-        <Wordmark label={t("header.home_label")} />
+        <Wordmark label={t("header.home_label")} locale={locale} />
 
         <div className="flex items-center gap-3">
           <span className="hidden text-sm capitalize text-ink-muted sm:inline">
-            {readableDate(new Date(), locale)}
+            {mounted ? readableDate(new Date(), locale) : ""}
           </span>
 
           {summary.currentStreak > 0 && (

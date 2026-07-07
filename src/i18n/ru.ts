@@ -171,6 +171,48 @@ const ru: Translations = {
   "gpresultado.time_up": "Время вышло. Недостающие позиции показаны выше.",
 
   "lang.label": "Язык",
+
+  "profile.name_unique_hint": "Должно быть уникальным: ни у кого другого не может быть такого же имени пользователя.",
+  "profile.name_taken": "Это имя пользователя уже занято. Попробуйте другое.",
+  "profile.name_checking": "Проверка доступности...",
+  "profile.name_available": "✓ Доступно",
+
+  "game.top10-standings.name": "Top 10 Standings",
+  "game.top10-standings.tagline":
+    "Угадай суммарный топ-10 очков чемпионата пилотов за период от 1 до 4 лет.",
+  "top10standings.eyebrow": "Чемпионат пилотов",
+  "top10standings.subtitle": "Суммарный топ-10 очков за период",
+  "top10standings.search_placeholder": "Введите имя гонщика…",
+  "top10standings.found_count": "{{found}} из {{total}} найдено",
+  "top10standings.not_in_top": "{{name}} не входит в суммарный топ-10.",
+  "top10standings.points_label": "{{points}} очк.",
+  "top10standings.time_up": "Время вышло. Недостающие позиции показаны выше.",
+
+  "seo.home.title": "Box Daily Box — Ежедневные мини-игры Формулы 1 | 6 бесплатных головоломок",
+  "seo.home.description":
+    "Шесть ежедневных мини-игр Формулы 1: угадывай пилотов, заполняй топ-10, находи лишнего и многое другое. Бесплатный мировой рейтинг, без регистрации.",
+  "seo.game.pittexto.title": "PitTexto — Угадай секретного пилота F1 | Box Daily Box",
+  "seo.game.pittexto.description":
+    "Угадай секретного пилота Формулы 1 сегодняшнего дня. Каждая попытка показывает, насколько ты близок. Новый вызов каждые 24 часа.",
+  "seo.game.polewordle.title": "PoleWordle — Wordle Формулы 1 | Box Daily Box",
+  "seo.game.polewordle.description":
+    "Угадай фамилию пилота F1 сегодняшнего дня в стиле Wordle за 6 попыток. Новая бесплатная ежедневная головоломка.",
+  "seo.game.el-intruso.title": "El Intruso — Найди лишнего пилота F1 | Box Daily Box",
+  "seo.game.el-intruso.description":
+    "Девять из десяти пилотов F1 объединяет что-то общее. Найди лишнего в этой ежедневной головоломке Формулы 1.",
+  "seo.game.parrilla-bingo.title": "Parrilla Bingo — Бинго команд F1 | Box Daily Box",
+  "seo.game.parrilla-bingo.description":
+    "Заполни каждую ячейку пилотом, который соответствует и команде, и условию. Ежедневное бинго Формулы 1.",
+  "seo.game.gp-resultado.title": "GP Resultado — Угадай топ-10 Гран-при | Box Daily Box",
+  "seo.game.gp-resultado.description":
+    "Заполни топ-10 исторического Гран-при F1 до истечения времени. Новая бесплатная ежедневная головоломка.",
+  "seo.game.top10-standings.title": "Top 10 Standings — Головоломка чемпионата F1 | Box Daily Box",
+  "seo.game.top10-standings.description":
+    "Угадай суммарный топ-10 очков чемпионата пилотов F1 за период от 1 до 4 лет.",
+
+  "gamepage.not_found_title": "Игра не найдена",
+  "gamepage.not_found_body": "Испытание, которое вы ищете, не существует или было перемещено.",
+  "gamepage.see_all": "Посмотреть все испытания",
 };
 
 export default ru;

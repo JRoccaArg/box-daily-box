@@ -157,6 +157,48 @@ const ar: Translations = {
   "gpresultado.time_up": "انتهى الوقت. المراكز المفقودة معروضة أعلاه.",
 
   "lang.label": "اللغة",
+
+  "profile.name_unique_hint": "يجب أن يكون فريدًا: لا يمكن لأي شخص آخر أن يمتلك نفس اسم المستخدم.",
+  "profile.name_taken": "اسم المستخدم هذا مستخدم بالفعل. جرّب اسمًا آخر.",
+  "profile.name_checking": "جارٍ التحقق من التوفر...",
+  "profile.name_available": "✓ متاح",
+
+  "game.top10-standings.name": "Top 10 Standings",
+  "game.top10-standings.tagline":
+    "خمّن مجموع أفضل 10 نقاط في بطولة السائقين خلال فترة من 1 إلى 4 سنوات.",
+  "top10standings.eyebrow": "بطولة السائقين",
+  "top10standings.subtitle": "مجموع أفضل 10 نقاط للفترة",
+  "top10standings.search_placeholder": "اكتب اسم سائق…",
+  "top10standings.found_count": "{{found}} من {{total}} تم إيجادهم",
+  "top10standings.not_in_top": "{{name}} ليس ضمن المجموع الأفضل 10.",
+  "top10standings.points_label": "{{points}} نقطة",
+  "top10standings.time_up": "انتهى الوقت. المراكز المفقودة معروضة أعلاه.",
+
+  "seo.home.title": "Box Daily Box — ألعاب فورمولا 1 المصغّرة اليومية | 6 ألغاز مجانية",
+  "seo.home.description":
+    "ست ألعاب فورمولا 1 مصغّرة يومية: خمّن السائقين، أكمل أفضل 10، اعثر على الدخيل والمزيد. تصنيف عالمي مجاني، دون تسجيل.",
+  "seo.game.pittexto.title": "PitTexto — خمّن سائق F1 السري | Box Daily Box",
+  "seo.game.pittexto.description":
+    "خمّن سائق فورمولا 1 السري لهذا اليوم. كل محاولة تخبرك بمدى قربك. تحدٍ جديد كل 24 ساعة.",
+  "seo.game.polewordle.title": "PoleWordle — لعبة Wordle الخاصة بالفورمولا 1 | Box Daily Box",
+  "seo.game.polewordle.description":
+    "خمّن الاسم الأخير لسائق F1 لهذا اليوم، على طريقة Wordle، في 6 محاولات. لغز يومي مجاني جديد.",
+  "seo.game.el-intruso.title": "El Intruso — اعثر على سائق F1 غير المنتمي | Box Daily Box",
+  "seo.game.el-intruso.description":
+    "تسعة من كل عشرة سائقي F1 يشتركون في شيء ما. اعثر على الدخيل في هذا اللغز اليومي لفورمولا 1.",
+  "seo.game.parrilla-bingo.title": "Parrilla Bingo — بينغو فرق F1 | Box Daily Box",
+  "seo.game.parrilla-bingo.description":
+    "املأ كل خانة بسائق يتوافق مع الفريق والشرط معًا. بينغو فورمولا 1 اليومي.",
+  "seo.game.gp-resultado.title": "GP Resultado — خمّن أفضل 10 في جائزة كبرى | Box Daily Box",
+  "seo.game.gp-resultado.description":
+    "أكمل أفضل 10 في جائزة كبرى تاريخية لفورمولا 1 قبل انتهاء الوقت. لغز يومي مجاني جديد.",
+  "seo.game.top10-standings.title": "Top 10 Standings — لغز بطولة F1 | Box Daily Box",
+  "seo.game.top10-standings.description":
+    "خمّن مجموع أفضل 10 نقاط في بطولة سائقي F1 خلال فترة من 1 إلى 4 سنوات.",
+
+  "gamepage.not_found_title": "اللعبة غير موجودة",
+  "gamepage.not_found_body": "التحدي الذي تبحث عنه غير موجود أو تم نقله.",
+  "gamepage.see_all": "عرض كل التحديات",
 };
 
 export default ar;

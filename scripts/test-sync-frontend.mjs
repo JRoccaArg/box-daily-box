@@ -83,7 +83,11 @@ function syncFromServer(serverAttempts, dateKey_) {
     if (!resultsDay[att.gameId]) {
       resultsDay[att.gameId] = {
         status, date: dateKey_, finishedAt,
-        meta: { serverPoints: att.points, timeSeconds: att.timeSeconds },
+        meta: {
+          serverPoints: att.points,
+          timeSeconds: att.timeSeconds,
+          ...(att.difficulty ? { difficulty: att.difficulty } : {}),
+        },
       };
     }
   }
@@ -154,11 +158,36 @@ function test3_IdempotentNoPisar() {
   assert(r.meta.serverPoints === 500, "no pisó el local (mantiene 500, no 999)");
 }
 
+function test4_PreservesDifficulty() {
+  console.log("\n▶ Test 4: sync PRESERVA difficulty (regresión del bug de ranking por dificultad)");
+  clear();
+  const today = dateKey(new Date());
+  // El server manda difficulty (ver ServerAttempt en src/lib/api.ts).
+  syncFromServer(
+    [{ gameId: "gp-resultado", won: true, timeSeconds: 55, points: 150, difficulty: "dificil", finishedAt: new Date().toISOString() }],
+    today,
+  );
+  const r = getResult("gp-resultado");
+  assert(r?.meta?.difficulty === "dificil", `meta.difficulty preservado (recibido: ${r?.meta?.difficulty})`);
+
+  // Sin difficulty en la respuesta del server (compatibilidad hacia atrás:
+  // respuestas viejas o casos donde el campo no viene), no debe reventar ni
+  // inventar un valor — simplemente no queda seteado en meta.
+  clear();
+  syncFromServer(
+    [{ gameId: "polewordle", won: true, timeSeconds: 20, points: 100, finishedAt: new Date().toISOString() }],
+    today,
+  );
+  const r2 = getResult("polewordle");
+  assert(r2?.meta?.difficulty === undefined, "sin difficulty en la respuesta, no se inventa un valor");
+}
+
 (async () => {
   console.log("═══ TEST SYNC FRONTEND (jsdom + localStorage real) ═══");
   test1_SyncSameDateKey();
   test2_SyncMismatchedDateKey();
   test3_IdempotentNoPisar();
+  test4_PreservesDifficulty();
   console.log(`\n═══ RESULTADO: ${passed} passed, ${failed} failed ═══`);
   process.exit(failed > 0 ? 1 : 0);
 })();

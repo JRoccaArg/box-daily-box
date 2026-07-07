@@ -284,6 +284,34 @@ const en: Translations = {
   "top10standings.time_up": "Time is up. Missing positions are shown above.",
 
   "lang.label": "Language",
+
+  // ─── SEO (title/description per page) ─────────────────────────────────
+  "seo.home.title": "Box Daily Box — Daily Formula 1 Minigames | 6 Free Puzzles",
+  "seo.home.description":
+    "Six daily Formula 1 minigames: guess drivers, complete the top 10, find the odd one out, and more. Free global ranking, no sign-up.",
+  "seo.game.pittexto.title": "PitTexto — Guess the Secret F1 Driver | Box Daily Box",
+  "seo.game.pittexto.description":
+    "Guess today's secret Formula 1 driver. Each guess tells you how close you are. A new challenge every 24 hours.",
+  "seo.game.polewordle.title": "PoleWordle — The Formula 1 Wordle | Box Daily Box",
+  "seo.game.polewordle.description":
+    "Guess today's F1 driver's last name, Wordle-style, in 6 tries. A new free daily puzzle.",
+  "seo.game.el-intruso.title": "The Intruder — Spot the Odd F1 Driver Out | Box Daily Box",
+  "seo.game.el-intruso.description":
+    "Nine out of ten F1 drivers share something in common. Find the intruder in this daily Formula 1 puzzle.",
+  "seo.game.parrilla-bingo.title": "Grid Bingo — F1 Team Bingo | Box Daily Box",
+  "seo.game.parrilla-bingo.description":
+    "Fill each cell with a driver that matches both the team and the condition. The daily Formula 1 bingo.",
+  "seo.game.gp-resultado.title": "GP Result — Guess a Grand Prix Top 10 | Box Daily Box",
+  "seo.game.gp-resultado.description":
+    "Complete the top 10 finishers of a historic F1 Grand Prix before time runs out. A new free daily puzzle.",
+  "seo.game.top10-standings.title": "Top 10 Standings — F1 Championship Puzzle | Box Daily Box",
+  "seo.game.top10-standings.description":
+    "Guess the top 10 accumulated points in the F1 drivers' championship over a 1-4 year span.",
+
+  // ─── GamePage (not found) ──────────────────────────────────────────────
+  "gamepage.not_found_title": "Game not found",
+  "gamepage.not_found_body": "The challenge you're looking for doesn't exist or moved.",
+  "gamepage.see_all": "See all challenges",
 };
 
 export default en;

@@ -157,6 +157,48 @@ const nl: Translations = {
   "gpresultado.time_up": "Tijd is op. Ontbrekende posities worden hierboven getoond.",
 
   "lang.label": "Taal",
+
+  "profile.name_unique_hint": "Moet uniek zijn: niemand anders kan dezelfde gebruikersnaam hebben.",
+  "profile.name_taken": "Die gebruikersnaam is al in gebruik. Probeer een andere.",
+  "profile.name_checking": "Beschikbaarheid controleren...",
+  "profile.name_available": "✓ Beschikbaar",
+
+  "game.top10-standings.name": "Top 10 Standings",
+  "game.top10-standings.tagline":
+    "Raad de opgetelde top 10 punten van het coureurskampioenschap over een periode van 1-4 jaar.",
+  "top10standings.eyebrow": "Coureurskampioenschap",
+  "top10standings.subtitle": "Opgetelde top 10 punten van de periode",
+  "top10standings.search_placeholder": "Typ een coureursnaam…",
+  "top10standings.found_count": "{{found}} van {{total}} gevonden",
+  "top10standings.not_in_top": "{{name}} staat niet in de opgetelde top 10.",
+  "top10standings.points_label": "{{points}} pt",
+  "top10standings.time_up": "Tijd is op. Ontbrekende posities worden hierboven getoond.",
+
+  "seo.home.title": "Box Daily Box — Dagelijkse Formule 1-minigames | 6 gratis puzzels",
+  "seo.home.description":
+    "Zes dagelijkse Formule 1-minigames: raad coureurs, vul de top 10 in, vind de indringer en meer. Gratis wereldwijde ranglijst, geen registratie nodig.",
+  "seo.game.pittexto.title": "PitTexto — Raad de geheime F1-coureur | Box Daily Box",
+  "seo.game.pittexto.description":
+    "Raad de geheime Formule 1-coureur van vandaag. Elke poging laat zien hoe dichtbij je zit. Elke 24 uur een nieuwe uitdaging.",
+  "seo.game.polewordle.title": "PoleWordle — De Wordle van de Formule 1 | Box Daily Box",
+  "seo.game.polewordle.description":
+    "Raad de achternaam van de F1-coureur van vandaag, in Wordle-stijl, in 6 pogingen. Een nieuwe gratis dagelijkse puzzel.",
+  "seo.game.el-intruso.title": "El Intruso — Vind de coureur die er niet bij hoort | Box Daily Box",
+  "seo.game.el-intruso.description":
+    "Negen van de tien F1-coureurs hebben iets gemeen. Vind de indringer in deze dagelijkse Formule 1-puzzel.",
+  "seo.game.parrilla-bingo.title": "Parrilla Bingo — De F1-teambingo | Box Daily Box",
+  "seo.game.parrilla-bingo.description":
+    "Vul elk vakje met een coureur die zowel bij het team als de voorwaarde past. De dagelijkse Formule 1-bingo.",
+  "seo.game.gp-resultado.title": "GP Resultado — Raad de top 10 van een Grand Prix | Box Daily Box",
+  "seo.game.gp-resultado.description":
+    "Vul de top 10 van een historische F1 Grand Prix in voordat de tijd op is. Een nieuwe gratis dagelijkse puzzel.",
+  "seo.game.top10-standings.title": "Top 10 Standings — De F1-kampioenschapspuzzel | Box Daily Box",
+  "seo.game.top10-standings.description":
+    "Raad de opgetelde top 10 punten van het F1-coureurskampioenschap over een periode van 1-4 jaar.",
+
+  "gamepage.not_found_title": "Spel niet gevonden",
+  "gamepage.not_found_body": "De uitdaging die je zoekt bestaat niet of is verplaatst.",
+  "gamepage.see_all": "Bekijk alle uitdagingen",
 };
 
 export default nl;

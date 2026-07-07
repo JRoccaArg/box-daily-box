@@ -271,6 +271,48 @@ const tr: Translations = {
 
   // ─── Language ───────────────────────────────────────────────────────
   "lang.label": "Dil",
+
+  "profile.name_unique_hint": "Benzersiz olmalı: başka kimse aynı kullanıcı adına sahip olamaz.",
+  "profile.name_taken": "Bu kullanıcı adı zaten kullanılıyor. Başka bir tane deneyin.",
+  "profile.name_checking": "Uygunluk kontrol ediliyor...",
+  "profile.name_available": "✓ Uygun",
+
+  "game.top10-standings.name": "Top 10 Standings",
+  "game.top10-standings.tagline":
+    "1-4 yıllık bir dönemde pilotlar şampiyonasının birikmiş top 10 puanını tahmin edin.",
+  "top10standings.eyebrow": "Pilotlar Şampiyonası",
+  "top10standings.subtitle": "Dönemin birikmiş top 10 puanı",
+  "top10standings.search_placeholder": "Bir pilot adı yazın…",
+  "top10standings.found_count": "{{total}} üzerinden {{found}} bulundu",
+  "top10standings.not_in_top": "{{name}} birikmiş top 10'da değil.",
+  "top10standings.points_label": "{{points}} puan",
+  "top10standings.time_up": "Süre doldu. Eksik pozisyonlar yukarıda gösteriliyor.",
+
+  "seo.home.title": "Box Daily Box — Günlük Formula 1 Mini Oyunları | 6 Ücretsiz Bulmaca",
+  "seo.home.description":
+    "Altı günlük Formula 1 mini oyunu: pilotları tahmin edin, top 10'u tamamlayın, arayı bulan kişiyi bulun ve daha fazlası. Ücretsiz küresel sıralama, kayıt gerekmez.",
+  "seo.game.pittexto.title": "PitTexto — Gizli F1 pilotunu tahmin edin | Box Daily Box",
+  "seo.game.pittexto.description":
+    "Günün gizli Formula 1 pilotunu tahmin edin. Her tahmin ne kadar yakın olduğunuzu gösterir. Her 24 saatte yeni bir meydan okuma.",
+  "seo.game.polewordle.title": "PoleWordle — Formula 1'in Wordle'ı | Box Daily Box",
+  "seo.game.polewordle.description":
+    "Günün F1 pilotunun soyadını, Wordle tarzında, 6 denemede tahmin edin. Yeni ücretsiz günlük bulmaca.",
+  "seo.game.el-intruso.title": "El Intruso — Uymayan F1 pilotunu bulun | Box Daily Box",
+  "seo.game.el-intruso.description":
+    "On F1 pilotundan dokuzu ortak bir şey paylaşıyor. Bu günlük Formula 1 bulmacasında araya karışanı bulun.",
+  "seo.game.parrilla-bingo.title": "Parrilla Bingo — F1 takım bingosu | Box Daily Box",
+  "seo.game.parrilla-bingo.description":
+    "Her hücreyi hem takıma hem de koşula uyan bir pilotla doldurun. Günlük Formula 1 bingosu.",
+  "seo.game.gp-resultado.title": "GP Resultado — Bir Grand Prix'nin top 10'unu tahmin edin | Box Daily Box",
+  "seo.game.gp-resultado.description":
+    "Süre dolmadan önce tarihi bir F1 Grand Prix'sinin top 10'unu tamamlayın. Yeni ücretsiz günlük bulmaca.",
+  "seo.game.top10-standings.title": "Top 10 Standings — F1 şampiyona bulmacası | Box Daily Box",
+  "seo.game.top10-standings.description":
+    "1-4 yıllık bir dönemde F1 pilotlar şampiyonasının birikmiş top 10 puanını tahmin edin.",
+
+  "gamepage.not_found_title": "Oyun bulunamadı",
+  "gamepage.not_found_body": "Aradığınız meydan okuma mevcut değil veya taşındı.",
+  "gamepage.see_all": "Tüm meydan okumaları gör",
 };
 
 export default tr;

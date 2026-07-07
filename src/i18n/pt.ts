@@ -256,6 +256,48 @@ const pt: Translations = {
   "gpresultado.time_up": "Tempo esgotado. As posições faltantes são mostradas acima.",
 
   "lang.label": "Idioma",
+
+  "profile.name_unique_hint": "Deve ser único: ninguém mais pode ter o mesmo nome de usuário.",
+  "profile.name_taken": "Esse nome de usuário já está em uso. Tente outro.",
+  "profile.name_checking": "Verificando disponibilidade...",
+  "profile.name_available": "✓ Disponível",
+
+  "game.top10-standings.name": "Top 10 Standings",
+  "game.top10-standings.tagline":
+    "Adivinhe o top 10 acumulado de pontos do campeonato de pilotos em um período de 1 a 4 anos.",
+  "top10standings.eyebrow": "Campeonato de Pilotos",
+  "top10standings.subtitle": "Top 10 acumulado de pontos do período",
+  "top10standings.search_placeholder": "Digite um piloto…",
+  "top10standings.found_count": "{{found}} de {{total}} encontrados",
+  "top10standings.not_in_top": "{{name}} não está no top 10 acumulado.",
+  "top10standings.points_label": "{{points}} pts",
+  "top10standings.time_up": "Tempo esgotado. As posições faltantes são mostradas acima.",
+
+  "seo.home.title": "Box Daily Box — Minijogos diários de Fórmula 1 | 6 puzzles grátis",
+  "seo.home.description":
+    "Seis minijogos diários de Fórmula 1: adivinhe pilotos, complete o top 10, encontre o intruso e mais. Ranking global grátis, sem cadastro.",
+  "seo.game.pittexto.title": "PitTexto — Adivinhe o piloto secreto de F1 | Box Daily Box",
+  "seo.game.pittexto.description":
+    "Adivinhe o piloto de Fórmula 1 secreto do dia. Cada tentativa mostra o quão perto você está. Novo desafio a cada 24 horas.",
+  "seo.game.polewordle.title": "PoleWordle — O Wordle da Fórmula 1 | Box Daily Box",
+  "seo.game.polewordle.description":
+    "Adivinhe o sobrenome do piloto de F1 do dia, estilo Wordle, em 6 tentativas. Puzzle diário grátis.",
+  "seo.game.el-intruso.title": "El Intruso — Encontre o piloto que não combina | Box Daily Box",
+  "seo.game.el-intruso.description":
+    "Nove de dez pilotos de F1 compartilham algo em comum. Encontre o intruso neste puzzle diário de Fórmula 1.",
+  "seo.game.parrilla-bingo.title": "Parrilla Bingo — Bingo de equipes de F1 | Box Daily Box",
+  "seo.game.parrilla-bingo.description":
+    "Complete cada célula com um piloto que cumpra sua equipe e sua condição. O bingo diário de Fórmula 1.",
+  "seo.game.gp-resultado.title": "GP Resultado — Adivinhe o top 10 de um Grande Prêmio | Box Daily Box",
+  "seo.game.gp-resultado.description":
+    "Complete o top 10 de um Grande Prêmio histórico de F1 antes que o tempo acabe. Puzzle diário grátis.",
+  "seo.game.top10-standings.title": "Top 10 Standings — Campeonato acumulado de F1 | Box Daily Box",
+  "seo.game.top10-standings.description":
+    "Adivinhe o top 10 acumulado de pontos do campeonato de pilotos de F1 em um período de 1 a 4 anos.",
+
+  "gamepage.not_found_title": "Jogo não encontrado",
+  "gamepage.not_found_body": "O desafio que você procura não existe ou mudou de endereço.",
+  "gamepage.see_all": "Ver todos os desafios",
 };
 
 export default pt;

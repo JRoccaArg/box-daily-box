@@ -9,6 +9,7 @@ import { isIdentityComplete } from "@/lib/identity";
 import { updateServerPoints, saveSolution } from "@/lib/stats";
 import { emit, Events } from "@/lib/events";
 import { IdentityModal } from "@/components/layout/IdentityModal";
+import { homePath } from "@/lib/routes";
 import { useTimer } from "@/hooks/useTimer";
 import { Panel } from "@/components/ui/Panel";
 import { Button } from "@/components/ui/Button";
@@ -43,7 +44,7 @@ type GameShellProps = {
  */
 export function GameShell({ game, date = new Date() }: GameShellProps) {
   const { record, playedStatus, refreshStats } = useStats();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const lockedStatus = playedStatus(game.id, date);
 
   // Dificultad inicial: la primera permitida por el juego.
@@ -267,7 +268,7 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
             {t("locked.wait")}
           </div>
           <div className="mt-6">
-            <Link to="/">
+            <Link to={homePath(locale)}>
               <Button variant="outline">{t("result.go_home")}</Button>
             </Link>
           </div>
@@ -370,7 +371,7 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
         onSurrender={() => finish("lost")}
         onBackRequest={() => {
           if (phase === "playing") setLeaveConfirmOpen(true);
-          else navigate("/");
+          else navigate(homePath(locale));
         }}
       />
 
@@ -405,7 +406,7 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
             block
             onClick={() => {
               setLeaveConfirmOpen(false);
-              navigate("/");
+              navigate(homePath(locale));
             }}
           >
             {t("leave.confirm")}
@@ -477,7 +478,7 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
             >
               {t("result.view_ranking")}
             </Button>
-            <Link to="/" className="block">
+            <Link to={homePath(locale)} className="block">
               <Button variant="ghost" block>
                 {t("result.go_home")}
               </Button>
@@ -499,10 +500,10 @@ export function GameShell({ game, date = new Date() }: GameShellProps) {
 /* ===================================================================== */
 
 function BackLink() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   return (
     <Link
-      to="/"
+      to={homePath(locale)}
       className="inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
     >
       <ChevronLeft size={16} />

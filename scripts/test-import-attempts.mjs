@@ -36,7 +36,11 @@ function fakeComputeScore({ won, difficulty }) {
   return base[difficulty] ?? 100;
 }
 
-const VALID_GAME_IDS = new Set(["pittexto", "polewordle", "el-intruso", "parrilla-bingo"]);
+// Réplica de VALID_GAME_IDS en src/api/auth.ts. Mantener sincronizado: en su
+// momento gp-resultado y top10-standings quedaron AFUERA de esta lista real
+// (bug ya corregido — ver test7_NewGamesAlsoMigrate) y esta réplica del test
+// no se había actualizado, dando una falsa sensación de cobertura.
+const VALID_GAME_IDS = new Set(["pittexto", "polewordle", "el-intruso", "parrilla-bingo", "gp-resultado", "top10-standings"]);
 const VALID_DIFFICULTIES = new Set(["facil", "medio", "dificil", "leyenda"]);
 
 // Réplica de importLocalAttempts (auth.ts)
@@ -213,6 +217,27 @@ async function test6_ScenarioReal() {
   assert(wordleAfter.won === false, "el Wordle sigue perdido (inmutable, no lo cambió a ganado)");
 }
 
+async function test7_NewGamesAlsoMigrate() {
+  console.log("\n▶ Test 7: REGRESIÓN — gp-resultado y top10-standings migran igual que los 4 originales");
+  // Antes, estos 2 juegos (agregados después) no estaban en VALID_GAME_IDS/
+  // IMPORT_TIME_LIMITS de auth.ts: sus intentos locales se descartaban en
+  // silencio al loguearse (bug real, ya corregido). Este test asegura que no
+  // vuelva a pasar.
+  await reset();
+
+  const imported = await importLocalAttempts(USER, TODAY, [
+    { gameId: "gp-resultado", difficulty: "dificil", solution: { correct: true } },
+    { gameId: "top10-standings", difficulty: "leyenda", solution: { correct: true } },
+  ], "1.1.1.1");
+
+  assert(imported === 2, "ambos juegos nuevos se importan (antes se descartaban)");
+  const gp = await pointsOf("gp-resultado");
+  const t10 = await pointsOf("top10-standings");
+  assert(gp?.won === true, "gp-resultado importado como ganado");
+  assert(t10?.won === true, "top10-standings importado como ganado");
+  assert(gp.points === 150 && t10.points === 200, "puntos recalculados server-side según dificultad (dificil=150, leyenda=200)");
+}
+
 (async () => {
   console.log("═══ TEST importLocalAttempts (PGlite real) ═══");
   await setup();
@@ -222,6 +247,7 @@ async function test6_ScenarioReal() {
   await test4_NoSolutionIsLost();
   await test5_InvalidGamesSkipped();
   await test6_ScenarioReal();
+  await test7_NewGamesAlsoMigrate();
   console.log(`\n═══ RESULTADO: ${passed} passed, ${failed} failed ═══`);
   process.exit(failed > 0 ? 1 : 0);
 })();
