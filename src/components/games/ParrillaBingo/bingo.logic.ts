@@ -10,7 +10,10 @@ export type Constraint = {
   kind: "team" | "nat" | "champion" | "stat";
   /** Id de escuderia (kind=team) o codigo de nacionalidad (kind=nat). */
   ref?: string;
+  /** Nombre propio (kind=team: nombre de escuderia). Vacio para kind=stat (ver labelKey). */
   label: string;
+  /** Solo para kind=stat: key i18n a traducir en el render (label es un logro, no un nombre propio). */
+  labelKey?: string;
   /** Ids de pilotos del pool que cumplen la restriccion. */
   ids: Set<string>;
   match: (d: Driver) => boolean;
@@ -182,13 +185,13 @@ function buildColConstraints(pool: Driver[], teamCols: Constraint[]): Constraint
   }
 
   // Columnas de logro (carrera): dan variedad y hacen factible el reto.
-  const statCol = (key: string, label: string, pred: (d: Driver) => boolean) => {
+  const statCol = (key: string, labelKey: string, pred: (d: Driver) => boolean) => {
     const ids = new Set(pool.filter(pred).map((d) => d.id));
-    if (ids.size >= 3) out.push({ key, kind: "stat", label, ids, match: pred });
+    if (ids.size >= 3) out.push({ key, kind: "stat", label: "", labelKey, ids, match: pred });
   };
-  statCol("stat:winner", "Ganó un GP", (d) => (d.wins ?? 0) > 0);
-  statCol("stat:podium", "Subió al podio", (d) => (d.podiums ?? 0) > 0);
-  statCol("stat:pole", "Hizo una pole", (d) => (d.poles ?? 0) > 0);
+  statCol("stat:winner", "bingo.stat.winner", (d) => (d.wins ?? 0) > 0);
+  statCol("stat:podium", "bingo.stat.podium", (d) => (d.podiums ?? 0) > 0);
+  statCol("stat:pole", "bingo.stat.pole", (d) => (d.poles ?? 0) > 0);
 
   // Escuderias como columnas (un piloto que corrió en AMBAS). Es el formato
   // "immaculate grid": muy intuitivo y multiplica las combinaciones posibles.

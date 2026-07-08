@@ -226,6 +226,14 @@ const sl: Translations = {
   "pittexto.hint":
     "Vsak poskus pokaže, kako podoben je dirkač skrivnemu. Bolj vroče = bližje.",
   "pittexto.attempt": "Poskus {{current}} od {{max}}",
+  "pittexto.factor.nationality": "Narodnost",
+  "pittexto.factor.team": "Ekipa",
+  "pittexto.factor.debut": "Debi",
+  "pittexto.factor.titles": "Naslovi",
+  "pittexto.factor.mates": "Soigralci",
+  "pittexto.no_team_match": "Ni ujemanja",
+  "common.yes": "Da",
+  "common.no": "Ne",
 
   // ─── PoleWordle extra ─────────────────────────────────────────────────
   "polewordle.eyebrow": "Priimek dirkača",
@@ -243,6 +251,11 @@ const sl: Translations = {
   "intruso.hint":
     "9 od teh 10 dirkačev ima nekaj skupnega. Najdi tistega, ki ne spada zraven.",
   "intruso.rule_label": "Ostalih 9",
+  "intruso.rule.team": "Vozili so za {{team}}",
+  "intruso.rule.champ": "Bili so svetovni prvaki",
+  "intruso.rule.non_champ": "Nikoli niso bili svetovni prvaki",
+  "intruso.rule.nationality": "So iste narodnosti ({{nat}})",
+  "intruso.rule.none": "Pravilo ni na voljo",
 
   // ─── ParrillaBingo extra ──────────────────────────────────────────────
   "bingo.eyebrow": "Grid Bingo",
@@ -259,6 +272,9 @@ const sl: Translations = {
   "bingo.empty_cell": "Prazna celica",
   "bingo.example": "npr.",
   "bingo.champion_label": "Prvak",
+  "bingo.stat.winner": "Zmagal je na VN",
+  "bingo.stat.podium": "Stal je na stopničkah",
+  "bingo.stat.pole": "Osvojil je najboljši štartni položaj",
 
   // ─── GP Resultado ───────────────────────────────────────────────────
   "game.gp-resultado.name": "GP Rezultat",

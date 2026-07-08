@@ -106,9 +106,9 @@ export type TimerConfig =
 /** Definicion declarativa de un juego para el registro. */
 export type GameDefinition = {
   id: string; // slug usado en la URL: /juego/:id
-  name: string;
-  /** Frase corta para la tarjeta del home. */
-  tagline: string;
+  // Nombre y tagline NO viven aqui: se resuelven con t(`game.${id}.name`/`.tagline`)
+  // en cada consumidor (Home, GameShell, MonthlyRanking...). Este objeto es
+  // estatico (no un componente), no puede ser reactivo al locale.
   /** Glyph corto para la insignia (1-3 caracteres). */
   glyph: string;
   /** Como se eligen los niveles de dificultad permitidos. */

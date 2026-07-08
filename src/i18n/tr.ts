@@ -226,6 +226,14 @@ const tr: Translations = {
   "pittexto.hint":
     "Her deneme pilotun gizli olana ne kadar benzediğini gösterir. Sıcak = yakın.",
   "pittexto.attempt": "Deneme {{current}} / {{max}}",
+  "pittexto.factor.nationality": "Uyruk",
+  "pittexto.factor.team": "Takım",
+  "pittexto.factor.debut": "Debüt",
+  "pittexto.factor.titles": "Şampiyonluk",
+  "pittexto.factor.mates": "Takım arkadaşları",
+  "pittexto.no_team_match": "Eşleşme yok",
+  "common.yes": "Evet",
+  "common.no": "Hayır",
 
   // ─── PoleWordle extra ─────────────────────────────────────────────────
   "polewordle.eyebrow": "Pilotun soyadı",
@@ -243,6 +251,11 @@ const tr: Translations = {
   "intruso.hint":
     "Bu 10 pilottan 9'u ortak bir şeyi paylaşıyor. Ait olmayanı bul.",
   "intruso.rule_label": "Diğer 9",
+  "intruso.rule.team": "{{team}} için yarıştılar",
+  "intruso.rule.champ": "Dünya şampiyonu oldular",
+  "intruso.rule.non_champ": "Hiç dünya şampiyonu olmadılar",
+  "intruso.rule.nationality": "Aynı uyruğa sahipler ({{nat}})",
+  "intruso.rule.none": "Kural yok",
 
   // ─── ParrillaBingo extra ──────────────────────────────────────────────
   "bingo.eyebrow": "Grid Bingo",
@@ -259,6 +272,9 @@ const tr: Translations = {
   "bingo.empty_cell": "Boş hücre",
   "bingo.example": "örn.",
   "bingo.champion_label": "Şampiyon",
+  "bingo.stat.winner": "Bir GP kazandı",
+  "bingo.stat.podium": "Podyuma çıktı",
+  "bingo.stat.pole": "Pol pozisyonu aldı",
 
   // ─── GP Resultado ───────────────────────────────────────────────────
   "game.gp-resultado.name": "GP Sonucu",

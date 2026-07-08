@@ -215,6 +215,14 @@ const hi: Translations = {
   "pittexto.hint":
     "हर प्रयास दिखाता है कि ड्राइवर गुप्त ड्राइवर से कितना मिलता-जुलता है। गर्म = करीब।",
   "pittexto.attempt": "प्रयास {{current}} / {{max}}",
+  "pittexto.factor.nationality": "राष्ट्रीयता",
+  "pittexto.factor.team": "टीम",
+  "pittexto.factor.debut": "पदार्पण",
+  "pittexto.factor.titles": "खिताब",
+  "pittexto.factor.mates": "टीम साथी",
+  "pittexto.no_team_match": "कोई मेल नहीं",
+  "common.yes": "हाँ",
+  "common.no": "नहीं",
 
   "polewordle.eyebrow": "ड्राइवर का उपनाम",
   "polewordle.hint":
@@ -230,6 +238,11 @@ const hi: Translations = {
   "intruso.hint":
     "इन 10 में से 9 ड्राइवरों में कुछ समान है। वह ढूंढें जो फिट नहीं होता।",
   "intruso.rule_label": "अन्य 9",
+  "intruso.rule.team": "{{team}} के लिए दौड़े",
+  "intruso.rule.champ": "विश्व चैंपियन रहे",
+  "intruso.rule.non_champ": "कभी विश्व चैंपियन नहीं रहे",
+  "intruso.rule.nationality": "एक ही राष्ट्रीयता के हैं ({{nat}})",
+  "intruso.rule.none": "कोई नियम उपलब्ध नहीं",
 
   "bingo.eyebrow": "ग्रिड बिंगो",
   "bingo.hint":
@@ -245,6 +258,9 @@ const hi: Translations = {
   "bingo.empty_cell": "खाली सेल",
   "bingo.example": "उदा.",
   "bingo.champion_label": "चैंपियन",
+  "bingo.stat.winner": "एक जीपी जीता",
+  "bingo.stat.podium": "पोडियम पर पहुंचा",
+  "bingo.stat.pole": "पोल हासिल की",
 
     "game.gp-resultado.name": "GP परिणाम",
   "game.gp-resultado.tagline": "समय समाप्त होने से पहले एक ऐतिहासिक ग्रां प्री का टॉप 10 पूरा करें।",
