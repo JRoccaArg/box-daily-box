@@ -54,14 +54,22 @@ Seguridad: HMAC-SHA256 (sessionToken + identityToken). Server-authoritative.
   la lógica de generación de un juego (labels, reglas, condiciones reveladas al terminar)
   debe devolver `I18nText` (`{ key: string; vars?: Record<string, string|number> }`,
   definido en `src/i18n/types.ts`), nunca un string ya armado. La traducción ocurre en el
-  render con `t(text.key, text.vars)`. Excepción: nombres propios del dataset (nombre de
-  escudería, código de país) — esos SÍ son strings crudos, no se traducen. Ejemplos del
+  render con `t(text.key, text.vars)`. Excepción: nombres propios del dataset sin
+  traducción propia (nombre de escudería, años, cantidad de títulos) — esos SÍ son
+  strings crudos. El nombre de país NO es excepción: se traduce con
+  `countryName(code, t)` (`src/data/nationalities.ts`) en el render. Ejemplos del
   patrón: `Factor.label`/`Factor.value` en `PitTexto/pittexto.logic.ts`,
   `IntrusoPuzzle.rule` en `ElIntruso/intruso.logic.ts`, `Constraint.labelKey` en
   `ParrillaBingo/bingo.logic.ts`. `registry.ts` tampoco define `name`/`tagline`: los
   resuelve cada consumidor con `t(\`game.${id}.name\`/\`.tagline\`)`.
-- Detalle completo (historial de estos bugs, por qué "fire-and-forget" es peligroso) en
-  `Box_Daily_Box_Context.md`, sección "Sistema de juegos — invariantes y checklist".
+- **Cualquier botón interactivo debe llevar `touch-action: manipulation`** (ya aplicado
+  globalmente a `button` en `src/index.css`) — sin esto, un doble-tap rápido y cercano
+  en mobile (ej. confirmar una acción) puede ser interpretado como gesto de
+  doble-tap-zoom y el navegador descarta el segundo click.
+- Para agregar un juego nuevo con i18n + SEO correctos, seguí el checklist completo de
+  `Box_Daily_Box_Context.md` sección 7 — es la fuente autoritativa (incluye keys SEO,
+  patrón `I18nText`, y las 6 listas backend); este archivo solo resume los invariantes
+  críticos. Detalle de historial de bugs en la sección 9 del mismo archivo.
 
 ## Comandos
 ```

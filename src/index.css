@@ -47,6 +47,15 @@
     @apply outline-none ring-2 ring-racing ring-offset-2 ring-offset-asphalt;
   }
 
+  /* Sin esto, un doble-tap rapido y cercano (ej: "Rendirse" -> confirmar
+     "Rendirse") puede ser interpretado por mobile Safari/Chrome como el
+     gesto de doble-tap-para-zoom: el navegador espera ~300ms para
+     desambiguar y en algunos casos directamente descarta el segundo click.
+     Resultado: el boton de confirmacion "no hace nada" en mobile. */
+  button {
+    touch-action: manipulation;
+  }
+
   ::selection {
     background: rgba(225, 6, 0, 0.35);
   }

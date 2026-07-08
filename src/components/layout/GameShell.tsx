@@ -586,7 +586,7 @@ function ControlBar({
 
         {playing &&
           (confirm ? (
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-2">
               <Button variant="danger" size="sm" onClick={onSurrender}>
                 {t("shell.surrender")}
               </Button>
