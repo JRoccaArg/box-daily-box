@@ -1,4 +1,5 @@
 import type { Difficulty, Driver } from "@/types";
+import type { I18nText } from "@/i18n/types";
 import { DATA_AS_OF_SEASON, teamIdsOf, teamName, wereTeammates } from "@/data";
 import { getDriverPoolAtLeast } from "@/lib/filters";
 import { dailyPick } from "@/lib/daily";
@@ -11,8 +12,10 @@ export type Direction = "up" | "down" | "eq";
 
 export type Factor = {
   key: string;
-  label: string;
-  value: string;
+  label: I18nText;
+  /** string cuando el valor es un nombre propio del dataset (equipo, año, cantidad);
+   *  I18nText cuando es un texto que debe traducirse ("Si"/"No", "Sin coincidencia"). */
+  value: I18nText | string;
   state: FactorState;
   dir?: Direction;
 };
@@ -73,11 +76,11 @@ export function scoreGuess(guess: Driver, target: Driver): Score {
     return {
       total: 100,
       factors: [
-        { key: "nat", label: "Nacionalidad", value: guess.nationalityCode, state: "match" },
-        { key: "team", label: "Escuderia", value: teamName(teamIdsOf(guess)[0] ?? ""), state: "match" },
-        { key: "debut", label: "Debut", value: String(guess.active.start), state: "match", dir: "eq" },
-        { key: "titles", label: "Titulos", value: String(guess.championships), state: "match", dir: "eq" },
-        { key: "mates", label: "Companeros", value: "Si", state: "match" },
+        { key: "nat", label: { key: "pittexto.factor.nationality" }, value: guess.nationalityCode, state: "match" },
+        { key: "team", label: { key: "pittexto.factor.team" }, value: teamName(teamIdsOf(guess)[0] ?? ""), state: "match" },
+        { key: "debut", label: { key: "pittexto.factor.debut" }, value: String(guess.active.start), state: "match", dir: "eq" },
+        { key: "titles", label: { key: "pittexto.factor.titles" }, value: String(guess.championships), state: "match", dir: "eq" },
+        { key: "mates", label: { key: "pittexto.factor.mates" }, value: { key: "common.yes" }, state: "match" },
       ],
     };
   }
@@ -107,34 +110,34 @@ export function scoreGuess(guess: Driver, target: Driver): Score {
   const factors: Factor[] = [
     {
       key: "nat",
-      label: "Nacionalidad",
+      label: { key: "pittexto.factor.nationality" },
       value: guess.nationalityCode,
       state: natMatch ? "match" : "none",
     },
     {
       key: "team",
-      label: "Escuderia",
-      value: shared.length > 0 ? teamName(shared[0] as string) : "Sin coincidencia",
+      label: { key: "pittexto.factor.team" },
+      value: shared.length > 0 ? teamName(shared[0] as string) : { key: "pittexto.no_team_match" },
       state: shared.length > 0 ? "match" : "none",
     },
     {
       key: "debut",
-      label: "Debut",
+      label: { key: "pittexto.factor.debut" },
       value: String(guess.active.start),
       state: debutDelta === 0 ? "match" : debutDelta <= 4 ? "partial" : "none",
       dir: debutDir,
     },
     {
       key: "titles",
-      label: "Titulos",
+      label: { key: "pittexto.factor.titles" },
       value: String(guess.championships),
       state: champDiff === 0 ? "match" : champDiff === 1 ? "partial" : "none",
       dir: titleDir,
     },
     {
       key: "mates",
-      label: "Companeros",
-      value: mates ? "Si" : "No",
+      label: { key: "pittexto.factor.mates" },
+      value: mates ? { key: "common.yes" } : { key: "common.no" },
       state: mates ? "match" : "none",
     },
   ];

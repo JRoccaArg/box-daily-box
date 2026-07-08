@@ -50,7 +50,17 @@ Seguridad: HMAC-SHA256 (sessionToken + identityToken). Server-authoritative.
   `IMPORT_TIME_LIMITS` (`src/api/auth.ts`). Hay un test que lo valida automáticamente:
   `scripts/test-game-registry.mjs` (parte de `npm test`) — si falta en una lista, el
   test falla y dice cuál.
-- Detalle completo (historial de este bug, por qué "fire-and-forget" es peligroso) en
+- **Ningún string user-facing generado por `*.logic.ts` puede ser un literal en español**:
+  la lógica de generación de un juego (labels, reglas, condiciones reveladas al terminar)
+  debe devolver `I18nText` (`{ key: string; vars?: Record<string, string|number> }`,
+  definido en `src/i18n/types.ts`), nunca un string ya armado. La traducción ocurre en el
+  render con `t(text.key, text.vars)`. Excepción: nombres propios del dataset (nombre de
+  escudería, código de país) — esos SÍ son strings crudos, no se traducen. Ejemplos del
+  patrón: `Factor.label`/`Factor.value` en `PitTexto/pittexto.logic.ts`,
+  `IntrusoPuzzle.rule` en `ElIntruso/intruso.logic.ts`, `Constraint.labelKey` en
+  `ParrillaBingo/bingo.logic.ts`. `registry.ts` tampoco define `name`/`tagline`: los
+  resuelve cada consumidor con `t(\`game.${id}.name\`/\`.tagline\`)`.
+- Detalle completo (historial de estos bugs, por qué "fire-and-forget" es peligroso) en
   `Box_Daily_Box_Context.md`, sección "Sistema de juegos — invariantes y checklist".
 
 ## Comandos

@@ -35,3 +35,9 @@ export const LOCALE_META: LocaleMeta[] = [
 /** Diccionario plano de traducciones. Las claves usan dot-notation
  *  agrupadas por sección (ej: "home.title", "game.surrender"). */
 export type Translations = Record<string, string>;
+
+/** String user-facing generado por la logica de un juego (*.logic.ts).
+ *  Nunca debe devolverse un string ya traducido: la logica solo produce
+ *  `I18nText`, y el render la resuelve con `t(key, vars)`. Excepcion:
+ *  nombres propios del dataset (equipos, paises) siguen siendo `string`. */
+export type I18nText = { key: string; vars?: Record<string, string | number> };

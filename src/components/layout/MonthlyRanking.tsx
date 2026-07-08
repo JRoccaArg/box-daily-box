@@ -28,7 +28,7 @@ export function MonthlyRanking({ refreshKey }: { refreshKey?: number }) {
   const today = now.getDate();
 
   const gameRows = Object.entries(score.byGame)
-    .map(([id, pts]) => ({ name: gameById(id)?.name ?? id, pts }))
+    .map(([id, pts]) => ({ name: gameById(id) ? t(`game.${id}.name`) : id, pts }))
     .sort((a, b) => b.pts - a.pts);
 
   const diffs: Difficulty[] = ["facil", "medio", "dificil", "leyenda"];

@@ -244,6 +244,14 @@ const es: Translations = {
   "pittexto.hint":
     "Cada intento muestra cuanto se parece al piloto secreto. Mas caliente = mas cerca.",
   "pittexto.attempt": "Intento {{current}} de {{max}}",
+  "pittexto.factor.nationality": "Nacionalidad",
+  "pittexto.factor.team": "Escuderia",
+  "pittexto.factor.debut": "Debut",
+  "pittexto.factor.titles": "Titulos",
+  "pittexto.factor.mates": "Companeros",
+  "pittexto.no_team_match": "Sin coincidencia",
+  "common.yes": "Si",
+  "common.no": "No",
 
   // ─── PoleWordle extra ─────────────────────────────────────────────────
   "polewordle.eyebrow": "Apellido del piloto",
@@ -261,6 +269,11 @@ const es: Translations = {
   "intruso.hint":
     "9 de estos 10 pilotos comparten algo en comun. Encontra al que no encaja.",
   "intruso.rule_label": "Los otros 9",
+  "intruso.rule.team": "Condujeron para {{team}}",
+  "intruso.rule.champ": "Fueron campeones del mundo",
+  "intruso.rule.non_champ": "Nunca fueron campeones del mundo",
+  "intruso.rule.nationality": "Son de la misma nacionalidad ({{nat}})",
+  "intruso.rule.none": "Sin regla disponible",
 
   // ─── ParrillaBingo extra ──────────────────────────────────────────────
   "bingo.eyebrow": "Parrilla Bingo",
@@ -277,6 +290,9 @@ const es: Translations = {
   "bingo.empty_cell": "Casilla vacia",
   "bingo.example": "ej.",
   "bingo.champion_label": "Campeon",
+  "bingo.stat.winner": "Gano un GP",
+  "bingo.stat.podium": "Subio al podio",
+  "bingo.stat.pole": "Hizo una pole",
 
   // ─── Idioma ─────────────────────────────────────────────────────────
     "game.gp-resultado.name": "GP Resultado",

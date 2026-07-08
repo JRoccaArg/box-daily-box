@@ -67,7 +67,7 @@ export function ElIntruso({ difficulty, date, status, onWin, onLose }: GameProps
       {revealed ? (
         <div className="mt-5 rounded-lg border border-white/10 bg-asphalt-700 px-4 py-3 text-center">
           <p className="eyebrow">{t("intruso.rule_label")}</p>
-          <p className="mt-1 font-display text-lg font-semibold text-white">{puzzle.rule}</p>
+          <p className="mt-1 font-display text-lg font-semibold text-white">{t(puzzle.rule.key, puzzle.rule.vars)}</p>
         </div>
       ) : (
         <div className="mt-5">

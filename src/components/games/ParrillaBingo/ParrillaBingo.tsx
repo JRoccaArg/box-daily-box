@@ -74,7 +74,7 @@ export function ParrillaBingo({ difficulty, date, status, onWin }: GameProps) {
   function describe(c: Constraint): string {
     if (c.kind === "team") return t("bingo.drove_for", { team: c.label });
     if (c.kind === "nat") return t("bingo.nationality", { name: nationality(c.ref ?? "").name });
-    if (c.kind === "stat") return c.label;
+    if (c.kind === "stat") return t(c.labelKey ?? "");
     return t("bingo.world_champion");
   }
 
@@ -207,7 +207,7 @@ function ConstraintLabel({ constraint }: { constraint: Constraint }) {
     return (
       <div className="flex flex-col items-center gap-1 text-center text-ink">
         <StatIcon size={16} />
-        <span className="text-[11px] font-semibold leading-tight">{constraint.label}</span>
+        <span className="text-[11px] font-semibold leading-tight">{t(constraint.labelKey ?? "")}</span>
       </div>
     );
   }

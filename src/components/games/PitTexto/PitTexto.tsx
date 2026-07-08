@@ -167,17 +167,20 @@ function DirArrow({ dir }: { dir?: Factor["dir"] }) {
 }
 
 function FactorChip({ factor }: { factor: Factor }) {
+  const { t } = useI18n();
+  const label = t(factor.label.key, factor.label.vars);
+  const value = typeof factor.value === "string" ? factor.value : t(factor.value.key, factor.value.vars);
   return (
     <span
       className={[
         "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium",
         CHIP_STATE[factor.state],
       ].join(" ")}
-      title={factor.label}
+      title={label}
     >
-      <span className="font-mono uppercase tracking-wide opacity-70">{factor.label}</span>
+      <span className="font-mono uppercase tracking-wide opacity-70">{label}</span>
       <span className="inline-flex items-center">
-        {factor.value}
+        {value}
         {factor.state === "match" && factor.key === "mates" ? (
           <Check size={12} className="ml-0.5" />
         ) : factor.key === "mates" ? (

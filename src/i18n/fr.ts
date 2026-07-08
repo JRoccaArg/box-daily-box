@@ -217,6 +217,14 @@ const fr: Translations = {
   "pittexto.hint":
     "Chaque essai montre à quel point le pilote ressemble au secret. Plus chaud = plus proche.",
   "pittexto.attempt": "Essai {{current}} sur {{max}}",
+  "pittexto.factor.nationality": "Nationalité",
+  "pittexto.factor.team": "Écurie",
+  "pittexto.factor.debut": "Débuts",
+  "pittexto.factor.titles": "Titres",
+  "pittexto.factor.mates": "Coéquipiers",
+  "pittexto.no_team_match": "Aucune correspondance",
+  "common.yes": "Oui",
+  "common.no": "Non",
 
   "polewordle.eyebrow": "Nom du pilote",
   "polewordle.hint":
@@ -232,6 +240,11 @@ const fr: Translations = {
   "intruso.hint":
     "9 de ces 10 pilotes ont quelque chose en commun. Trouvez celui qui ne correspond pas.",
   "intruso.rule_label": "Les 9 autres",
+  "intruso.rule.team": "Ont couru pour {{team}}",
+  "intruso.rule.champ": "Ont été champions du monde",
+  "intruso.rule.non_champ": "N'ont jamais été champions du monde",
+  "intruso.rule.nationality": "Sont de la même nationalité ({{nat}})",
+  "intruso.rule.none": "Aucune règle disponible",
 
   "bingo.eyebrow": "Grille Bingo",
   "bingo.hint":
@@ -247,6 +260,9 @@ const fr: Translations = {
   "bingo.empty_cell": "Case vide",
   "bingo.example": "ex.",
   "bingo.champion_label": "Champion",
+  "bingo.stat.winner": "A gagné un GP",
+  "bingo.stat.podium": "Est monté sur le podium",
+  "bingo.stat.pole": "A obtenu une pole",
 
     "game.gp-resultado.name": "GP Résultat",
   "game.gp-resultado.tagline": "Complétez le top 10 d'un Grand Prix historique avant la fin du temps.",

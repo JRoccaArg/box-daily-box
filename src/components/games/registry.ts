@@ -23,8 +23,6 @@ const DIFFS = ["facil", "medio", "dificil", "leyenda"] as const;
 export const GAMES: GameDefinition[] = [
   {
     id: "pittexto",
-    name: "PitTexto",
-    tagline: "Adivina al piloto secreto. Cada intento te dice que tan cerca estas.",
     glyph: "PT",
     difficulties: [...DIFFS],
     timer: { kind: "choice", options: [120, 180] },
@@ -32,8 +30,6 @@ export const GAMES: GameDefinition[] = [
   },
   {
     id: "polewordle",
-    name: "PoleWordle",
-    tagline: "Adivina el apellido del piloto del dia, estilo Wordle, en 6 intentos.",
     glyph: "PW",
     difficulties: [...DIFFS],
     timer: { kind: "choice", options: [90, 120] },
@@ -41,8 +37,6 @@ export const GAMES: GameDefinition[] = [
   },
   {
     id: "el-intruso",
-    name: "El Intruso",
-    tagline: "Nueve de diez pilotos comparten algo. Toca al que no encaja.",
     glyph: "IN",
     difficulties: [...DIFFS],
     timer: { kind: "choice", options: [45, 60] },
@@ -50,8 +44,6 @@ export const GAMES: GameDefinition[] = [
   },
   {
     id: "parrilla-bingo",
-    name: "Parrilla Bingo",
-    tagline: "Pon en cada celda un piloto que cumpla su escuderia y su condicion.",
     glyph: "BG",
     difficulties: [...DIFFS],
     timer: { kind: "fixed", seconds: 150 },
@@ -59,8 +51,6 @@ export const GAMES: GameDefinition[] = [
   },
   {
     id: "gp-resultado",
-    name: "GP Resultado",
-    tagline: "Completa el top 10 de un Gran Premio historico antes de que se acabe el tiempo.",
     glyph: "GP",
     difficulties: [...DIFFS],
     timer: { kind: "choice", options: [90, 120, 150, 180] },
@@ -68,8 +58,6 @@ export const GAMES: GameDefinition[] = [
   },
   {
     id: "top10-standings",
-    name: "Top 10 Standings",
-    tagline: "Adivina el top 10 acumulado de puntos de un periodo de 1 a 4 anios.",
     glyph: "TS",
     difficulties: [...DIFFS],
     timer: { kind: "choice", options: [90, 120, 150, 180] },
