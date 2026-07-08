@@ -1,6 +1,6 @@
 import type { Difficulty, Driver } from "@/types";
 import type { I18nText } from "@/i18n/types";
-import { teamIdsOf, teamName, nationality } from "@/data";
+import { teamIdsOf, teamName } from "@/data";
 import { getDriverPoolAtLeast } from "@/lib/filters";
 import { dailyRng } from "@/lib/daily";
 
@@ -57,7 +57,7 @@ function feasibleCategories(pool: Driver[]): Category[] {
     const intruders = pool.filter((d) => d.nationalityCode !== code);
     cats.push({
       key: `nat:${code}`,
-      rule: { key: "intruso.rule.nationality", vars: { nat: nationality(code).name } },
+      rule: { key: "intruso.rule.nationality", vars: { natCode: code } },
       members,
       intruders,
     });

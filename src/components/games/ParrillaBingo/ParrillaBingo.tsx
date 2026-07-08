@@ -1,6 +1,6 @@
 import { Fragment, useMemo, useState } from "react";
 import type { GameProps, Driver } from "@/types";
-import { findDriversByText, fullName, nationality, team } from "@/data";
+import { findDriversByText, fullName, nationality, countryName, team } from "@/data";
 import { buildBingo, completeGrid } from "./bingo.logic";
 import type { Constraint } from "./bingo.logic";
 import { driverColor } from "../shared/driverColor";
@@ -73,7 +73,7 @@ export function ParrillaBingo({ difficulty, date, status, onWin }: GameProps) {
   /** Texto humano de una restriccion para mensajes de error. */
   function describe(c: Constraint): string {
     if (c.kind === "team") return t("bingo.drove_for", { team: c.label });
-    if (c.kind === "nat") return t("bingo.nationality", { name: nationality(c.ref ?? "").name });
+    if (c.kind === "nat") return t("bingo.nationality", { name: countryName(c.ref ?? "", t) });
     if (c.kind === "stat") return t(c.labelKey ?? "");
     return t("bingo.world_champion");
   }
@@ -192,7 +192,7 @@ function ConstraintLabel({ constraint }: { constraint: Constraint }) {
     const nat = nationality(constraint.ref ?? "");
     return (
       <div className="flex flex-col items-center gap-0.5 text-center">
-        <span className={`fi fi-${nat.alpha2} text-base leading-none`} role="img" aria-label={nat.name} />
+        <span className={`fi fi-${nat.alpha2} text-base leading-none`} role="img" aria-label={countryName(nat.code, t)} />
         <span className="font-mono text-[11px] text-ink">{nat.code}</span>
       </div>
     );
@@ -381,7 +381,7 @@ function CellPicker({
                   onClick={() => tryPick(d)}
                   className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm text-ink transition-colors hover:bg-asphalt-600"
                 >
-                  <span className={`fi fi-${nationality(d.nationalityCode).alpha2}`} role="img" aria-label={nationality(d.nationalityCode).name} />
+                  <span className={`fi fi-${nationality(d.nationalityCode).alpha2}`} role="img" aria-label={countryName(d.nationalityCode, t)} />
                   <span className="font-medium">{fullName(d)}</span>
                 </button>
               </li>
@@ -402,7 +402,7 @@ function CellPicker({
       {current && (
         <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-asphalt-700 px-3 py-2.5">
           <span className="inline-flex items-center gap-2 text-sm text-ink-muted">
-            <span className={`fi fi-${nationality(current.nationalityCode).alpha2}`} role="img" aria-label={nationality(current.nationalityCode).name} />
+            <span className={`fi fi-${nationality(current.nationalityCode).alpha2}`} role="img" aria-label={countryName(current.nationalityCode, t)} />
             {t("bingo.in_cell")} <span className="font-semibold text-ink">{current.lastName}</span>
           </span>
           <button

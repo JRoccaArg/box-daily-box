@@ -214,3 +214,14 @@ export const NATIONALITIES: Record<string, Nationality> = {
 export function nationality(code: string): Nationality {
   return NATIONALITIES[code] ?? { code, alpha2: code.slice(0, 2).toLowerCase(), name: code, flag: "🏁" };
 }
+
+/**
+ * Nombre de pais traducido al idioma activo (banderas de pilotos). Solo
+ * cubre los codigos presentes en el dataset de pilotos de F1; si falta la
+ * key `country.<CODE>` en el diccionario, cae al nombre en español fijo.
+ */
+export function countryName(code: string, t: (key: string) => string): string {
+  const key = `country.${code}`;
+  const translated = t(key);
+  return translated === key ? nationality(code).name : translated;
+}

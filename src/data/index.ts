@@ -7,7 +7,7 @@ import { DRIVERS, DRIVERS_BY_ID } from "./drivers";
 
 export { DRIVERS, DRIVERS_BY_ID, driver, DATA_AS_OF_SEASON } from "./drivers";
 export { TEAMS, team, teamName } from "./teams";
-export { NATIONALITIES, nationality } from "./nationalities";
+export { NATIONALITIES, nationality, countryName } from "./nationalities";
 
 /** ¿El piloto estuvo activo en `year`? */
 export function activeInYear(d: Driver, year: number): boolean {

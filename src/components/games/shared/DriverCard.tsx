@@ -1,5 +1,6 @@
 import type { Driver } from "@/types";
-import { nationality } from "@/data";
+import { nationality, countryName } from "@/data";
+import { useI18n } from "@/context";
 import { driverColor } from "./driverColor";
 
 type Selectable = "idle" | "selected" | "correct" | "wrong" | "muted";
@@ -47,7 +48,9 @@ function Helmet({ color }: { color: string }) {
  * evocando la F1 sin depender de imagenes externas.
  */
 export function DriverCard({ driver, onClick, state = "idle", disabled, full = false }: DriverCardProps) {
+  const { t } = useI18n();
   const nat = nationality(driver.nationalityCode);
+  const natName = countryName(driver.nationalityCode, t);
   const Tag = onClick ? "button" : "div";
   return (
     <Tag
@@ -67,7 +70,7 @@ export function DriverCard({ driver, onClick, state = "idle", disabled, full = f
           {driver.lastName}
         </div>
         <div className="mt-0.5 inline-flex items-center gap-1 text-xs text-ink-muted">
-          <span className={`fi fi-${nat.alpha2}`} role="img" aria-label={nat.name} />
+          <span className={`fi fi-${nat.alpha2}`} role="img" aria-label={natName} />
           <span className="font-mono">{driver.nationalityCode}</span>
         </div>
       </div>

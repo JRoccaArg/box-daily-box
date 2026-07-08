@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import type { GameProps } from "@/types";
 import type { Driver } from "@/types";
-import { findDriversByText, fullName, nationality } from "@/data";
+import { findDriversByText, fullName, nationality, countryName } from "@/data";
 import { getDriverPoolAtLeast } from "@/lib/filters";
 import { buildTarget, scoreGuess, heatColor } from "./pittexto.logic";
 import type { Factor } from "./pittexto.logic";
@@ -84,7 +84,7 @@ export function PitTexto({ difficulty, date, status, onWin, onLose }: GameProps)
                     onClick={() => addGuess(d)}
                     className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-ink transition-colors hover:bg-asphalt-600"
                   >
-                    <span className={`fi fi-${nationality(d.nationalityCode).alpha2}`} role="img" aria-label={nationality(d.nationalityCode).name} />
+                    <span className={`fi fi-${nationality(d.nationalityCode).alpha2}`} role="img" aria-label={countryName(d.nationalityCode, t)} />
                     <span className="font-medium">{fullName(d)}</span>
                   </button>
                 </li>
@@ -108,7 +108,7 @@ export function PitTexto({ difficulty, date, status, onWin, onLose }: GameProps)
             {solved ? t("pittexto.found") : t("pittexto.answer_was")}
           </p>
           <p className="mt-0.5 font-display text-lg font-bold text-white">
-            <span className={`fi fi-${nationality(target.nationalityCode).alpha2}`} role="img" aria-label={nationality(target.nationalityCode).name} /> {fullName(target)}
+            <span className={`fi fi-${nationality(target.nationalityCode).alpha2}`} role="img" aria-label={countryName(target.nationalityCode, t)} /> {fullName(target)}
           </p>
         </div>
       )}
@@ -124,6 +124,7 @@ export function PitTexto({ difficulty, date, status, onWin, onLose }: GameProps)
 }
 
 function GuessRow({ guess, target }: { guess: Driver; target: Driver }) {
+  const { t } = useI18n();
   const score = useMemo(() => scoreGuess(guess, target), [guess, target]);
   const color = heatColor(score.total);
 
@@ -138,7 +139,7 @@ function GuessRow({ guess, target }: { guess: Driver; target: Driver }) {
         </div>
         <div className="min-w-0 flex-1">
           <div className="truncate font-display font-semibold text-white">
-            <span className={`fi fi-${nationality(guess.nationalityCode).alpha2}`} role="img" aria-label={nationality(guess.nationalityCode).name} /> {fullName(guess)}
+            <span className={`fi fi-${nationality(guess.nationalityCode).alpha2}`} role="img" aria-label={countryName(guess.nationalityCode, t)} /> {fullName(guess)}
           </div>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {score.factors.map((f) => (

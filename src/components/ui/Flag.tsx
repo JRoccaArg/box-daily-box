@@ -1,4 +1,5 @@
-import { nationality } from "@/data";
+import { nationality, countryName } from "@/data";
+import { useI18n } from "@/context";
 
 type FlagProps = {
   /** Codigo de nacionalidad (p.ej. "ARG"). */
@@ -16,13 +17,15 @@ const FLAG_SIZE: Record<NonNullable<FlagProps["size"]>, string> = {
 
 /** Bandera de nacionalidad renderizada como SVG via flag-icons. */
 export function Flag({ code, showCode = false, size = "md" }: FlagProps) {
+  const { t } = useI18n();
   const nat = nationality(code);
+  const name = countryName(code, t);
   return (
-    <span className="inline-flex items-center gap-1.5" title={nat.name}>
+    <span className="inline-flex items-center gap-1.5" title={name}>
       <span
         className={`fi fi-${nat.alpha2} ${FLAG_SIZE[size]} leading-none`}
         role="img"
-        aria-label={nat.name}
+        aria-label={name}
       />
       {showCode && <span className="font-mono text-xs text-ink-muted">{code}</span>}
     </span>
