@@ -15,6 +15,9 @@ export function Layout({ children }: { children: ReactNode }) {
             {t("footer.line1")}
             <br className="hidden sm:inline" /> {t("footer.line2")}
           </p>
+          <p className="mt-2 text-center text-[11px] leading-relaxed text-ink-faint/70">
+            {t("footer.photo_credit")}
+          </p>
         </div>
       </footer>
     </div>

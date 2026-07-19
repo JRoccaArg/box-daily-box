@@ -104,6 +104,8 @@ const es: Translations = {
   "footer.line1":
     "Box Box Daily · Proyecto de fans, sin afiliacion oficial con la Formula 1.",
   "footer.line2": "Un reto nuevo cada dia a la medianoche.",
+  "footer.photo_credit": "Fotos de pilotos: Wikimedia Commons (CC BY-SA / dominio publico).",
+  "header.progress": "{{played}} de {{total}} juegos jugados hoy",
 
   // ─── Perfil (IdentityModal) ─────────────────────────────────────────
   "profile.title": "Tu perfil",
@@ -171,6 +173,7 @@ const es: Translations = {
   "ranking.challenges_won": "{{count}} {{label}} ganados",
   "ranking.challenge_singular": "reto",
   "ranking.challenge_plural": "retos",
+  "ranking.played_no_win": "Jugó, sin victorias",
   "ranking.pts": "pts",
   "ranking.monthly_note":
     "El ranking mensual se reinicia el 1 de cada mes.",

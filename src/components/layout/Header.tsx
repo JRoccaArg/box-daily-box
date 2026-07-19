@@ -5,10 +5,11 @@ import { useI18n } from "@/context";
 import { StatsModal } from "./StatsModal";
 import { IdentityModal } from "./IdentityModal";
 import { LanguageSelector } from "./LanguageSelector";
-import { Stat as StatIcon, Flame } from "@/components/ui/Icon";
+import { Stat as StatIcon, Flame, Check } from "@/components/ui/Icon";
 import { on, Events } from "@/lib/events";
 import { homePath } from "@/lib/routes";
 import { useMounted } from "@/lib/useMounted";
+import { GAMES } from "@/components/games/registry";
 import type { Locale } from "@/i18n";
 
 /** Fecha legible en el idioma actual. */
@@ -39,7 +40,7 @@ function Wordmark({ label, locale }: { label: string; locale: Locale }) {
 }
 
 export function Header() {
-  const { summary } = useStats();
+  const { summary, playedStatus } = useStats();
   const { t, locale } = useI18n();
   const [statsOpen, setStatsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -48,6 +49,14 @@ export function Header() {
   // visita real: se muestra solo tras montar para no generar mismatch de
   // hidratación (el HTML prerenderizado no incluye esta fecha).
   const mounted = useMounted();
+
+  // Progreso del día: cuántos de los juegos ya se jugaron hoy. Solo tras
+  // montar (lee localStorage): en el HTML prerenderizado no existe.
+  const totalGames = GAMES.length;
+  const playedToday = mounted
+    ? GAMES.reduce((n, g) => (playedStatus(g.id) ? n + 1 : n), 0)
+    : 0;
+  const allDone = mounted && playedToday === totalGames;
 
   // Escuchar el evento global para abrir el modal de stats desde cualquier
   // lugar de la app (ej: botón "Ver ranking del día" del modal de resultado).
@@ -60,10 +69,25 @@ export function Header() {
       <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4">
         <Wordmark label={t("header.home_label")} locale={locale} />
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <span className="hidden text-sm capitalize text-ink-muted sm:inline">
             {mounted ? readableDate(new Date(), locale) : ""}
           </span>
+
+          {mounted && playedToday > 0 && (
+            <span
+              className={[
+                "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 font-mono text-xs font-semibold",
+                allDone
+                  ? "border-sector-green/40 bg-sector-green/10 text-sector-green"
+                  : "border-white/15 bg-white/5 text-ink-muted",
+              ].join(" ")}
+              title={t("header.progress", { played: playedToday, total: totalGames })}
+            >
+              {allDone ? <Check size={13} /> : null}
+              {playedToday}/{totalGames}
+            </span>
+          )}
 
           {summary.currentStreak > 0 && (
             <span

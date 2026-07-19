@@ -39,6 +39,7 @@ yarn-error.log*
 # Local Claude/docs
 .claude/
 Box_Daily_Box_Context.md
+Box_Daily_Box_Context_PENDING_2026-07-19.md
 Box_Daily_Box_Business_Architecture.docx
 Box_Daily_Box_Business_Architecture.md
 Box_Daily_Box_Technical_Reference.md

@@ -60,6 +60,8 @@ const nl: Translations = {
 
   "footer.line1": "Box Box Daily · Fanproject, geen officiële band met Formule 1.",
   "footer.line2": "Elke dag om middernacht een nieuwe uitdaging.",
+  "footer.photo_credit": "Coureurfoto's: Wikimedia Commons (CC BY-SA / publiek domein).",
+  "header.progress": "{{played}} van {{total}} spellen vandaag gespeeld",
 
   "profile.title": "Jouw profiel",
   "profile.subtitle": "Je verschijnt in de wereldranglijst met deze naam en dit land.",
@@ -93,6 +95,7 @@ const nl: Translations = {
   "ranking.anonymous": "Anoniem", "ranking.you": "(jij)",
   "ranking.challenges_won": "{{count}} {{label}} gewonnen",
   "ranking.challenge_singular": "uitdaging", "ranking.challenge_plural": "uitdagingen",
+  "ranking.played_no_win": "Gespeeld, geen overwinningen",
   "ranking.pts": "ptn",
   "ranking.monthly_note": "De maandelijkse ranglijst wordt op de 1e van elke maand gereset.",
   "ranking.daily_note": "De dagelijkse ranglijst toont de resultaten van vandaag.",

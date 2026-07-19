@@ -98,6 +98,8 @@ const sl: Translations = {
   "footer.line1":
     "Box Box Daily · Navijački projekt, ni uradno povezan s Formulo 1.",
   "footer.line2": "Nov izziv vsak dan ob polnoči.",
+  "footer.photo_credit": "Fotografije voznikov: Wikimedia Commons (CC BY-SA / javna last).",
+  "header.progress": "Danes odigranih {{played}} od {{total}} iger",
 
   // ─── Profile (IdentityModal) ────────────────────────────────────────
   "profile.title": "Tvoj profil",
@@ -160,6 +162,7 @@ const sl: Translations = {
   "ranking.challenges_won": "{{count}} {{label}} dobljenih",
   "ranking.challenge_singular": "izziv",
   "ranking.challenge_plural": "izzivov",
+  "ranking.played_no_win": "Igral, brez zmag",
   "ranking.pts": "točk",
   "ranking.monthly_note": "Mesečna lestvica se ponastavi 1. v mesecu.",
   "ranking.daily_note": "Dnevna lestvica prikazuje današnje rezultate.",

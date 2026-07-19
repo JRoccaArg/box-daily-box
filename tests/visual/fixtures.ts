@@ -12,6 +12,12 @@ const FIXED_IDENTITY = {
 
 export const test = base.extend<Record<string, never>>({
   page: async ({ page }, use) => {
+    // Las fotos de pilotos vienen de Wikimedia (red externa). En los snapshots
+    // eso seria no-determinista (a veces cargada, a veces a medio cargar). Se
+    // bloquean para que DriverAvatar caiga siempre al casco SVG: el contenedor
+    // circular ocupa el mismo espacio, asi que el layout se sigue validando.
+    await page.route(/upload\.wikimedia\.org/, (route) => route.abort());
+
     await page.addInitScript(
       ({ iso, identity }) => {
         const fixed = new Date(iso).valueOf();

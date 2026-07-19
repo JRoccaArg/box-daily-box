@@ -57,23 +57,26 @@ async function play(uid, gameId, ip, won = true, points = 100) {
   return ranked;
 }
 
-// Réplica de getUserRank (con filtro ranked)
+// Réplica de getUserRank (con filtro ranked).
+// Nuevo criterio: aparece en el ranking si tiene ≥1 intento rankeable
+// (ganado o perdido). Solo se excluye si NO tiene ningún intento rankeable.
 async function getUserRank(userId, dateKey) {
   const up = await q(
-    `SELECT COALESCE(SUM(points),0) as points FROM attempts
-     WHERE user_id=$1 AND date_key=$2::date AND won AND NOT flagged AND ranked`,
+    `SELECT COALESCE(SUM(points),0) as points, COUNT(*) as attempts FROM attempts
+     WHERE user_id=$1 AND date_key=$2::date AND NOT flagged AND ranked`,
     [userId, dateKey]);
   const userPoints = Number(up.rows[0].points);
-  if (userPoints === 0) return { rank: null, points: 0, totalPlayers: 0 };
+  const userAttempts = Number(up.rows[0].attempts);
+  if (userAttempts === 0) return { rank: null, points: 0, totalPlayers: 0 };
   const ahead = await q(
     `SELECT COUNT(*) as ahead FROM (
        SELECT user_id, SUM(points) as total FROM attempts
-       WHERE date_key=$1::date AND won AND NOT flagged AND ranked
+       WHERE date_key=$1::date AND NOT flagged AND ranked
        GROUP BY user_id HAVING SUM(points) > $2) t`,
     [dateKey, userPoints]);
   const total = await q(
     `SELECT COUNT(DISTINCT user_id) as total FROM attempts
-     WHERE date_key=$1::date AND won AND NOT flagged AND ranked`, [dateKey]);
+     WHERE date_key=$1::date AND NOT flagged AND ranked`, [dateKey]);
   return { rank: Number(ahead.rows[0].ahead) + 1, points: userPoints, totalPlayers: Number(total.rows[0].total) };
 }
 

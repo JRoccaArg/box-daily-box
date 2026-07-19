@@ -60,6 +60,8 @@ const ar: Translations = {
 
   "footer.line1": "Box Box Daily · مشروع معجبين، بدون ارتباط رسمي بالفورمولا 1.",
   "footer.line2": "تحدٍ جديد كل يوم عند منتصف الليل.",
+  "footer.photo_credit": "صور السائقين: Wikimedia Commons (CC BY-SA / الملكية العامة).",
+  "header.progress": "لعبت {{played}} من {{total}} ألعاب اليوم",
 
   "profile.title": "ملفك الشخصي",
   "profile.subtitle": "ستظهر في التصنيف العالمي بهذا الاسم والبلد.",
@@ -93,6 +95,7 @@ const ar: Translations = {
   "ranking.anonymous": "مجهول", "ranking.you": "(أنت)",
   "ranking.challenges_won": "{{count}} {{label}} فوز",
   "ranking.challenge_singular": "تحدي", "ranking.challenge_plural": "تحديات",
+  "ranking.played_no_win": "لعب، بدون انتصارات",
   "ranking.pts": "نقاط",
   "ranking.monthly_note": "يُعاد تعيين التصنيف الشهري في الأول من كل شهر.",
   "ranking.daily_note": "التصنيف اليومي يعرض نتائج اليوم.",

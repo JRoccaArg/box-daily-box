@@ -448,19 +448,22 @@ export async function getRankingMonthly(
       countryClause = `AND u.country_code = $${params.length}`;
     }
 
+    // Incluye a todos los que jugaron algo rankeable (aunque perdieran).
+    // La regla IP-block se conserva vía `a.ranked`: intentos IP-blockeados
+    // ya se persistieron con ranked=false y quedan fuera.
     const topResult = await query(
       `SELECT u.id, u.display_name, u.country_code,
-              SUM(a.points) as points,
-              COUNT(a.id) as games_won,
+              COALESCE(SUM(a.points), 0) as points,
+              COUNT(*) FILTER (WHERE a.won) as games_won,
               COUNT(DISTINCT a.date_key) as days_played
        FROM attempts a
        JOIN users u ON a.user_id = u.id
-       WHERE a.won AND NOT a.flagged AND a.ranked
+       WHERE NOT a.flagged AND a.ranked
        AND a.date_key >= $1::date
        AND a.date_key < ($1::date + INTERVAL '1 month')
        ${countryClause}
        GROUP BY u.id, u.display_name, u.country_code
-       ORDER BY points DESC
+       ORDER BY points DESC, games_won DESC, days_played DESC, u.display_name ASC
        LIMIT 50`,
       params,
     );
@@ -495,17 +498,19 @@ export async function getRankingDaily(
       : new Date().toISOString().substring(0, 10);
     const countryFilter = isValidCountry(country) ? country : null;
 
+    // Incluye a todos los que jugaron algo rankeable (aunque perdieran).
+    // La regla IP-block se conserva vía `a.ranked`.
     const topResult = await query(
       `SELECT u.id, u.display_name, u.country_code,
-              SUM(a.points) as points,
-              COUNT(a.id) as games_won
+              COALESCE(SUM(a.points), 0) as points,
+              COUNT(*) FILTER (WHERE a.won) as games_won
        FROM attempts a
        JOIN users u ON a.user_id = u.id
-       WHERE a.won AND NOT a.flagged AND a.ranked
+       WHERE NOT a.flagged AND a.ranked
        AND a.date_key = $1::date
        ${countryFilter ? "AND u.country_code = $2" : ""}
        GROUP BY u.id, u.display_name, u.country_code
-       ORDER BY points DESC
+       ORDER BY points DESC, games_won DESC, u.display_name ASC
        LIMIT 50`,
       countryFilter ? [target, countryFilter] : [target],
     );
@@ -982,21 +987,21 @@ export async function getUserRank(
       ? date
       : new Date().toISOString().slice(0, 10);
 
-    // 1. Puntos RANKEABLES del usuario ese día (ganados, no flagged, ranked).
-    const userPointsResult = await query(
-      `SELECT COALESCE(SUM(points), 0) as points
+    // 1. ¿El usuario tiene algún intento rankeable ese día (ganado o perdido)?
+    //    Si no jugó nada rankeable, no aparece en el ranking → rank null.
+    const userAttemptResult = await query(
+      `SELECT COALESCE(SUM(points), 0) as points, COUNT(*) as attempts
        FROM attempts
        WHERE user_id = $1
          AND date_key = $2::date
-         AND won
          AND NOT flagged
          AND ranked`,
       [userId, dateKey],
     );
-    const userPoints = Number(userPointsResult.rows[0]?.points ?? 0);
+    const userPoints = Number(userAttemptResult.rows[0]?.points ?? 0);
+    const userAttempts = Number(userAttemptResult.rows[0]?.attempts ?? 0);
 
-    // Regla: si el usuario no tiene puntos rankeables, no rankea → null.
-    if (userPoints === 0) {
+    if (userAttempts === 0) {
       reply.code(200).send({
         dateKey,
         rank: null,
@@ -1007,11 +1012,12 @@ export async function getUserRank(
     }
 
     // 2. Contar cuántos usuarios distintos tienen MÁS puntos rankeables.
+    //    Los empates comparten posición (rank = ahead + 1).
     const aheadResult = await query(
       `SELECT COUNT(*) as ahead FROM (
          SELECT user_id, SUM(points) as total
          FROM attempts
-         WHERE date_key = $1::date AND won AND NOT flagged AND ranked
+         WHERE date_key = $1::date AND NOT flagged AND ranked
          GROUP BY user_id
          HAVING SUM(points) > $2
        ) t`,
@@ -1019,11 +1025,11 @@ export async function getUserRank(
     );
     const rank = Number(aheadResult.rows[0]?.ahead ?? 0) + 1;
 
-    // 3. Total de jugadores rankeados ese día (para dar contexto).
+    // 3. Total de jugadores con al menos 1 intento rankeable ese día.
     const totalResult = await query(
       `SELECT COUNT(DISTINCT user_id) as total
        FROM attempts
-       WHERE date_key = $1::date AND won AND NOT flagged AND ranked`,
+       WHERE date_key = $1::date AND NOT flagged AND ranked`,
       [dateKey],
     );
     const totalPlayers = Number(totalResult.rows[0]?.total ?? 0);

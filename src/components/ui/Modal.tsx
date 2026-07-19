@@ -54,7 +54,7 @@ export function Modal({ open, onClose, title, children, hideClose = false }: Mod
       />
       <div
         ref={panelRef}
-        className="panel relative z-10 m-3 max-h-[calc(100vh-1.5rem)] w-full max-w-md animate-rise overflow-y-auto p-5 sm:m-0"
+        className="panel relative z-10 m-3 max-h-[calc(100dvh-1.5rem)] w-full max-w-md animate-rise overflow-y-auto p-5 sm:m-0"
       >
         {(title || !hideClose) && (
           <div className="mb-4 flex items-start justify-between gap-4">

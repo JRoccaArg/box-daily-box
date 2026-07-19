@@ -5,6 +5,7 @@ import { findDriversByText, fullName, nationality, countryName } from "@/data";
 import { getDriverPoolAtLeast } from "@/lib/filters";
 import { buildTarget, scoreGuess, heatColor } from "./pittexto.logic";
 import type { Factor } from "./pittexto.logic";
+import { DriverAvatar } from "../shared/DriverAvatar";
 import { useI18n } from "@/context";
 import { Panel } from "@/components/ui/Panel";
 import { Check, Close } from "@/components/ui/Icon";
@@ -82,8 +83,9 @@ export function PitTexto({ difficulty, date, status, onWin, onLose }: GameProps)
                 <li key={d.id}>
                   <button
                     onClick={() => addGuess(d)}
-                    className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-ink transition-colors hover:bg-asphalt-600"
+                    className="flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm text-ink transition-colors hover:bg-asphalt-600"
                   >
+                    <DriverAvatar driver={d} size="sm" />
                     <span className={`fi fi-${nationality(d.nationalityCode).alpha2}`} role="img" aria-label={countryName(d.nationalityCode, t)} />
                     <span className="font-medium">{fullName(d)}</span>
                   </button>
@@ -107,8 +109,11 @@ export function PitTexto({ difficulty, date, status, onWin, onLose }: GameProps)
           <p className="text-sm text-ink-muted">
             {solved ? t("pittexto.found") : t("pittexto.answer_was")}
           </p>
-          <p className="mt-0.5 font-display text-lg font-bold text-white">
-            <span className={`fi fi-${nationality(target.nationalityCode).alpha2}`} role="img" aria-label={countryName(target.nationalityCode, t)} /> {fullName(target)}
+          <p className="mt-1 flex items-center justify-center gap-2 font-display text-lg font-bold text-white">
+            <DriverAvatar driver={target} size="md" />
+            <span>
+              <span className={`fi fi-${nationality(target.nationalityCode).alpha2}`} role="img" aria-label={countryName(target.nationalityCode, t)} /> {fullName(target)}
+            </span>
           </p>
         </div>
       )}
@@ -138,8 +143,11 @@ function GuessRow({ guess, target }: { guess: Driver; target: Driver }) {
           {score.total}%
         </div>
         <div className="min-w-0 flex-1">
-          <div className="truncate font-display font-semibold text-white">
-            <span className={`fi fi-${nationality(guess.nationalityCode).alpha2}`} role="img" aria-label={countryName(guess.nationalityCode, t)} /> {fullName(guess)}
+          <div className="flex items-center gap-2">
+            <DriverAvatar driver={guess} size="sm" />
+            <span className="truncate font-display font-semibold text-white">
+              <span className={`fi fi-${nationality(guess.nationalityCode).alpha2}`} role="img" aria-label={countryName(guess.nationalityCode, t)} /> {fullName(guess)}
+            </span>
           </div>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {score.factors.map((f) => (

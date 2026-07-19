@@ -93,6 +93,8 @@ const hi: Translations = {
   "footer.line1":
     "Box Box Daily · प्रशंसक परियोजना, फ़ॉर्मूला 1 से कोई आधिकारिक संबंध नहीं।",
   "footer.line2": "हर रात 12 बजे एक नई चुनौती।",
+  "footer.photo_credit": "ड्राइवर तस्वीरें: Wikimedia Commons (CC BY-SA / सार्वजनिक डोमेन)।",
+  "header.progress": "आज {{total}} में से {{played}} गेम खेले",
 
   "profile.title": "आपकी प्रोफ़ाइल",
   "profile.subtitle":
@@ -153,6 +155,7 @@ const hi: Translations = {
   "ranking.challenges_won": "{{count}} {{label}} जीते",
   "ranking.challenge_singular": "चुनौती",
   "ranking.challenge_plural": "चुनौतियाँ",
+  "ranking.played_no_win": "खेला, कोई जीत नहीं",
   "ranking.pts": "अंक",
   "ranking.monthly_note":
     "मासिक रैंकिंग हर महीने की 1 तारीख को रीसेट होती है।",

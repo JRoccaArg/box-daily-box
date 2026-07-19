@@ -98,6 +98,8 @@ const tr: Translations = {
   "footer.line1":
     "Box Box Daily · Taraftar projesi, Formula 1 ile resmi bağlantısı yoktur.",
   "footer.line2": "Her gün gece yarısı yeni bir meydan okuma.",
+  "footer.photo_credit": "Sürücü fotoğrafları: Wikimedia Commons (CC BY-SA / kamu malı).",
+  "header.progress": "Bugün {{total}} oyundan {{played}} tanesi oynandı",
 
   // ─── Profile (IdentityModal) ────────────────────────────────────────
   "profile.title": "Profilin",
@@ -160,6 +162,7 @@ const tr: Translations = {
   "ranking.challenges_won": "{{count}} {{label}} kazanıldı",
   "ranking.challenge_singular": "meydan okuma",
   "ranking.challenge_plural": "meydan okuma",
+  "ranking.played_no_win": "Oynadı, kazanamadı",
   "ranking.pts": "puan",
   "ranking.monthly_note": "Aylık sıralama her ayın 1'inde sıfırlanır.",
   "ranking.daily_note": "Günlük sıralama bugünün sonuçlarını gösterir.",

@@ -142,6 +142,14 @@ export async function initializeDatabase(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_attempts_monthly
       ON attempts (date_key, won, flagged);
     `);
+    // Ranking global incluye jugadores sin victorias (perdieron pero jugaron).
+    // Filtro parcial que cubre `WHERE NOT flagged AND ranked` de las queries
+    // de ranking en routes.ts.
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_attempts_ranked_bydate
+      ON attempts (date_key, user_id)
+      WHERE NOT flagged AND ranked;
+    `);
 
     // Índice para buscar por IP + game + fecha (anti multi-dispositivo)
     await client.query(`

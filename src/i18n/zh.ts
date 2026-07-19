@@ -87,6 +87,8 @@ const zh: Translations = {
 
   "footer.line1": "Box Box Daily · 粉丝项目，与一级方程式无官方关联。",
   "footer.line2": "每天午夜更新新挑战。",
+  "footer.photo_credit": "车手照片：Wikimedia Commons（CC BY-SA / 公有领域）。",
+  "header.progress": "今天已玩 {{total}} 个游戏中的 {{played}} 个",
 
   "profile.title": "你的资料",
   "profile.subtitle": "你将以此名字和国家出现在全球排名中。",
@@ -140,6 +142,7 @@ const zh: Translations = {
   "ranking.challenges_won": "{{count}}个{{label}}获胜",
   "ranking.challenge_singular": "挑战",
   "ranking.challenge_plural": "挑战",
+  "ranking.played_no_win": "已参赛，未获胜",
   "ranking.pts": "分",
   "ranking.monthly_note": "月度排名在每月1日重置。",
   "ranking.daily_note": "每日排名显示今天的结果。",

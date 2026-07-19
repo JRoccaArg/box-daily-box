@@ -2,9 +2,10 @@
 //
 // Test REAL del cálculo de posición del usuario en el ranking diario global.
 // Valida las reglas de negocio:
-//  - Sin puntos ganados → rank = null
-//  - Con puntos → posición correcta según cuántos usuarios tienen más
-//  - Attempts perdidos o flagged NO cuentan
+//  - Sin intentos rankeables → rank = null
+//  - Con intentos (ganados o perdidos) → posición según puntos
+//  - Attempts perdidos SUMAN al total de jugadores (aparecen con 0 pts)
+//  - Attempts flagged NO cuentan (fraude)
 //  - Empates: mismo puntaje = mismo rank (según implementación: STRICTLY greater)
 
 import { PGlite } from "@electric-sql/pglite";
@@ -54,17 +55,21 @@ async function reset() {
 }
 
 // ─── Réplica de getUserRank (backend) ───────────────────────────────
+// Nuevo criterio: aparece si tiene ≥1 intento no-flagged (ganado o perdido).
+// (Este test omite la columna `ranked` porque cubre el algoritmo puro; la
+// interacción con IP-block se cubre en test-ranked-by-ip.mjs.)
 async function getUserRank(userId, dateKey) {
-  // 1. Puntos del usuario ese día
+  // 1. Puntos del usuario + cantidad de intentos ese día.
   const userRow = await q(
-    `SELECT COALESCE(SUM(points), 0) as points
+    `SELECT COALESCE(SUM(points), 0) as points, COUNT(*) as attempts
      FROM attempts
-     WHERE user_id = $1 AND date_key = $2::date AND won AND NOT flagged`,
+     WHERE user_id = $1 AND date_key = $2::date AND NOT flagged`,
     [userId, dateKey],
   );
   const userPoints = Number(userRow.rows[0]?.points ?? 0);
+  const userAttempts = Number(userRow.rows[0]?.attempts ?? 0);
 
-  if (userPoints === 0) {
+  if (userAttempts === 0) {
     return { rank: null, points: 0, totalPlayers: 0 };
   }
 
@@ -73,7 +78,7 @@ async function getUserRank(userId, dateKey) {
     `SELECT COUNT(*) as ahead FROM (
        SELECT user_id, SUM(points) as total
        FROM attempts
-       WHERE date_key = $1::date AND won AND NOT flagged
+       WHERE date_key = $1::date AND NOT flagged
        GROUP BY user_id
        HAVING SUM(points) > $2
      ) t`,
@@ -81,11 +86,11 @@ async function getUserRank(userId, dateKey) {
   );
   const rank = Number(aheadRow.rows[0]?.ahead ?? 0) + 1;
 
-  // 3. Total de jugadores rankeados
+  // 3. Total de jugadores con intentos ese día
   const totalRow = await q(
     `SELECT COUNT(DISTINCT user_id) as total
      FROM attempts
-     WHERE date_key = $1::date AND won AND NOT flagged`,
+     WHERE date_key = $1::date AND NOT flagged`,
     [dateKey],
   );
   const totalPlayers = Number(totalRow.rows[0]?.total ?? 0);
@@ -135,13 +140,31 @@ async function test3_ThreePlayersRanked() {
   assert(r1.totalPlayers === 3 && r2.totalPlayers === 3 && r3.totalPlayers === 3, "total = 3 para todos");
 }
 
-async function test4_LostAttemptsDontCount() {
-  console.log("\n▶ Test 4: attempts perdidos no cuentan");
+async function test4_LostAttemptsAppearWithZero() {
+  console.log("\n▶ Test 4: attempts perdidos aparecen con 0 pts (jugó, cuenta)");
   await reset();
   await insertUser("u1");
-  await insertAttempt("u1", "pittexto", 100, false); // perdido
+  await insertAttempt("u1", "pittexto", 0, false); // perdido: 0 pts
   const r = await getUserRank("u1", TODAY);
-  assert(r.rank === null, "attempt perdido no rankea");
+  assert(r.rank === 1, "único jugador (perdió) → rank #1");
+  assert(r.points === 0, "puntos = 0 (perdió)");
+  assert(r.totalPlayers === 1, "totalPlayers = 1 (jugó aunque perdió)");
+}
+
+async function test4b_LosersRankBelowWinners() {
+  console.log("\n▶ Test 4b: perdedores quedan por debajo de ganadores");
+  await reset();
+  await insertUser("u1"); await insertAttempt("u1", "pittexto", 100, true);   // ganó
+  await insertUser("u2"); await insertAttempt("u2", "pittexto", 0, false);    // perdió
+  await insertUser("u3"); await insertAttempt("u3", "pittexto", 0, false);    // perdió
+
+  const r1 = await getUserRank("u1", TODAY);
+  const r2 = await getUserRank("u2", TODAY);
+  const r3 = await getUserRank("u3", TODAY);
+  assert(r1.rank === 1, "u1 ganador es #1");
+  assert(r2.rank === 2, "u2 perdedor empatado con u3 → #2 (0 pts, 1 usuario con más)");
+  assert(r3.rank === 2, "u3 perdedor empatado con u2 → #2");
+  assert(r1.totalPlayers === 3, "3 jugadores en total (ganador + 2 perdedores)");
 }
 
 async function test5_FlaggedAttemptsDontCount() {
@@ -215,7 +238,8 @@ async function test8_OtherDayDoesntInterfere() {
   await test1_NoPointsNoRank();
   await test2_OnlyPlayerFirstPlace();
   await test3_ThreePlayersRanked();
-  await test4_LostAttemptsDontCount();
+  await test4_LostAttemptsAppearWithZero();
+  await test4b_LosersRankBelowWinners();
   await test5_FlaggedAttemptsDontCount();
   await test6_TiedPlayers();
   await test7_MultipleGamesSameUser();

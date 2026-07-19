@@ -1,7 +1,7 @@
 import type { Driver } from "@/types";
 import { nationality, countryName } from "@/data";
 import { useI18n } from "@/context";
-import { driverColor } from "./driverColor";
+import { DriverAvatar } from "./DriverAvatar";
 
 type Selectable = "idle" | "selected" | "correct" | "wrong" | "muted";
 
@@ -22,30 +22,10 @@ const RING: Record<Selectable, string> = {
   muted: "border-white/5 opacity-50",
 };
 
-/** Casco estilizado teñido con el color de la escuderia. */
-function Helmet({ color }: { color: string }) {
-  return (
-    <svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M3 13a9 9 0 0 1 18 0v1a2 2 0 0 1-2 2h-5l-1 3H7a4 4 0 0 1-4-4z"
-        fill={color}
-        opacity="0.9"
-      />
-      <path d="M8 13h11" stroke="rgba(0,0,0,0.45)" strokeWidth="1.4" strokeLinecap="round" />
-      <path
-        d="M3 13a9 9 0 0 1 18 0v1a2 2 0 0 1-2 2h-5l-1 3H7a4 4 0 0 1-4-4z"
-        fill="none"
-        stroke="rgba(255,255,255,0.25)"
-        strokeWidth="0.8"
-      />
-    </svg>
-  );
-}
-
 /**
  * Tarjeta de piloto reutilizable (El Intruso, Parrilla Bingo). Representa al
- * piloto con un casco teñido del color de su escuderia + apellido + bandera,
- * evocando la F1 sin depender de imagenes externas.
+ * piloto con su foto (Wikimedia) o, en su defecto, un casco teñido del color de
+ * su escuderia, más apellido + bandera.
  */
 export function DriverCard({ driver, onClick, state = "idle", disabled, full = false }: DriverCardProps) {
   const { t } = useI18n();
@@ -63,7 +43,7 @@ export function DriverCard({ driver, onClick, state = "idle", disabled, full = f
         RING[state],
       ].join(" ")}
     >
-      <Helmet color={driverColor(driver)} />
+      <DriverAvatar driver={driver} size="md" />
       <div className="leading-tight">
         <div className="font-display text-sm font-bold tracking-tight text-white">
           {full ? `${driver.firstName} ` : ""}

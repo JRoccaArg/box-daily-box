@@ -87,6 +87,8 @@ const ja: Translations = {
 
   "footer.line1": "Box Box Daily · ファンプロジェクト。F1との公式提携はありません。",
   "footer.line2": "毎日午前0時に新しいチャレンジ。",
+  "footer.photo_credit": "ドライバー写真：Wikimedia Commons（CC BY-SA / パブリックドメイン）。",
+  "header.progress": "本日 {{total}} 個中 {{played}} 個プレイ済み",
 
   "profile.title": "あなたのプロフィール",
   "profile.subtitle": "この名前と国でグローバルランキングに表示されます。",
@@ -140,6 +142,7 @@ const ja: Translations = {
   "ranking.challenges_won": "{{count}}{{label}}勝利",
   "ranking.challenge_singular": "チャレンジ",
   "ranking.challenge_plural": "チャレンジ",
+  "ranking.played_no_win": "参加、勝利なし",
   "ranking.pts": "pt",
   "ranking.monthly_note": "月間ランキングは毎月1日にリセットされます。",
   "ranking.daily_note": "デイリーランキングは今日の結果を表示します。",

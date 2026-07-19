@@ -3,7 +3,7 @@ import type { GameProps, Driver } from "@/types";
 import { findDriversByText, fullName, nationality, countryName, team } from "@/data";
 import { buildBingo, completeGrid } from "./bingo.logic";
 import type { Constraint } from "./bingo.logic";
-import { driverColor } from "../shared/driverColor";
+import { DriverAvatar } from "../shared/DriverAvatar";
 import { useI18n } from "@/context";
 import { Panel } from "@/components/ui/Panel";
 import { Modal } from "@/components/ui/Modal";
@@ -224,19 +224,6 @@ function ConstraintLabel({ constraint }: { constraint: Constraint }) {
 /* Celda                                                                  */
 /* ===================================================================== */
 
-function MiniHelmet({ color }: { color: string }) {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M3 13a9 9 0 0 1 18 0v1a2 2 0 0 1-2 2h-5l-1 3H7a4 4 0 0 1-4-4z"
-        fill={color}
-        opacity="0.9"
-      />
-      <path d="M8 13h11" stroke="rgba(0,0,0,0.45)" strokeWidth="1.4" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 function BingoCell({
   placed,
   example,
@@ -273,7 +260,7 @@ function BingoCell({
     >
       {shown ? (
         <>
-          <MiniHelmet color={driverColor(shown)} />
+          <DriverAvatar driver={shown} size="sm" />
           <span className="w-full truncate px-0.5 font-display text-[11px] font-bold leading-tight text-white">
             {shown.lastName}
           </span>
@@ -379,8 +366,9 @@ function CellPicker({
               <li key={d.id}>
                 <button
                   onClick={() => tryPick(d)}
-                  className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm text-ink transition-colors hover:bg-asphalt-600"
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-ink transition-colors hover:bg-asphalt-600"
                 >
+                  <DriverAvatar driver={d} size="sm" />
                   <span className={`fi fi-${nationality(d.nationalityCode).alpha2}`} role="img" aria-label={countryName(d.nationalityCode, t)} />
                   <span className="font-medium">{fullName(d)}</span>
                 </button>

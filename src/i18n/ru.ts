@@ -74,6 +74,8 @@ const ru: Translations = {
 
   "footer.line1": "Box Box Daily · Фан-проект, без официальной связи с Формулой 1.",
   "footer.line2": "Новое испытание каждый день в полночь.",
+  "footer.photo_credit": "Фото пилотов: Wikimedia Commons (CC BY-SA / общественное достояние).",
+  "header.progress": "Сыграно {{played}} из {{total}} игр сегодня",
 
   "profile.title": "Твой профиль",
   "profile.subtitle": "Ты появишься в глобальном рейтинге с этим именем и страной.",
@@ -107,6 +109,7 @@ const ru: Translations = {
   "ranking.anonymous": "Аноним", "ranking.you": "(ты)",
   "ranking.challenges_won": "{{count}} {{label}} выиграно",
   "ranking.challenge_singular": "испытание", "ranking.challenge_plural": "испытаний",
+  "ranking.played_no_win": "Играл, без побед",
   "ranking.pts": "очк.",
   "ranking.monthly_note": "Месячный рейтинг обнуляется 1-го числа каждого месяца.",
   "ranking.daily_note": "Дневной рейтинг показывает результаты сегодня.",

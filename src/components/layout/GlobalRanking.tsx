@@ -110,9 +110,10 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
 
         {!loading && !error && entries.length > 0 && (
           <div className="space-y-1.5">
-            {entries.map((entry) => {
+            {entries.map((entry, i) => {
               const isMe = entry.userId === userId;
               const natData = entry.countryCode ? NATIONALITIES[entry.countryCode] : null;
+              const hasWins = entry.gamesWon > 0;
               const challengeLabel =
                 entry.gamesWon === 1
                   ? t("ranking.challenge_singular")
@@ -121,11 +122,13 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
               return (
                 <div
                   key={entry.userId}
+                  style={{ animationDelay: `${Math.min(i, 8) * 30}ms` }}
                   className={[
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors",
+                    "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors motion-safe:animate-rise",
                     isMe
                       ? "border border-racing/30 bg-racing/10"
                       : "border border-transparent bg-asphalt-700/50",
+                    hasWins ? "" : "opacity-70",
                   ].join(" ")}
                 >
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-asphalt-600 text-xs font-bold text-ink-muted">
@@ -158,15 +161,22 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
                       </span>
                     </div>
                     <span className="text-xs text-ink-faint">
-                      {t("ranking.challenges_won", {
-                        count: entry.gamesWon,
-                        label: challengeLabel,
-                      })}
+                      {hasWins
+                        ? t("ranking.challenges_won", {
+                            count: entry.gamesWon,
+                            label: challengeLabel,
+                          })
+                        : t("ranking.played_no_win")}
                     </span>
                   </div>
 
                   <div className="text-right">
-                    <span className="tnum font-display text-lg font-bold text-white">
+                    <span
+                      className={[
+                        "tnum font-display text-lg font-bold",
+                        hasWins ? "text-white" : "text-ink-muted",
+                      ].join(" ")}
+                    >
                       {entry.points}
                     </span>
                     <span className="ml-1 text-xs text-ink-faint">{t("ranking.pts")}</span>
