@@ -371,6 +371,26 @@ const tr: Translations = {
   "country.VEN": "Venezuela",
   "country.ZAF": "Güney Afrika",
   "country.ZWE": "Zimbabve",
+
+  "badge.monthly_gold": "Altın",
+  "badge.monthly_silver": "Gümüş",
+  "badge.monthly_bronze": "Bronz",
+  "badge.admin": "Yönetici",
+  "badge.superadmin": "Süper Yönetici",
+  "badge.more": "+{{count}}",
+  "badge.gallery_title": "Rozetlerim",
+  "badge.gallery_empty":
+    "Henüz hiçbir rozet kazanmadınız. Aylık sıralamada ilk 3'te yer alın!",
+  "badge.gallery_hint": "Bir rozeti sıralamada göstermek için dokunun (en fazla 3).",
+  "badge.featured_count": "{{count}}/3 gösterilen",
+  "badge.won_months": "Kazanıldığı ay: {{months}}",
+  "badge.show_grouped": "Gruplandırılmış (×{{count}})",
+  "badge.show_individual": "Bireysel",
+  "badge.max_reached": "Zaten maksimum 3 gösterilen rozeti seçtiniz",
+  "badge.save": "Seçimi Kaydet",
+  "badge.saving": "Kaydediliyor...",
+  "badge.save_error": "Kaydedilemedi. Tekrar deneyin.",
+  "badge.saved": "Seçim kaydedildi",
 };
 
 export default tr;

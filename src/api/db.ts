@@ -149,6 +149,50 @@ export async function initializeDatabase(): Promise<void> {
       ON attempts (ip_address, game_id, date_key);
     `);
 
+    // ─── Sistema de badges ───────────────────────────────────────────
+    // Rol del usuario. 'user' por defecto; 'admin'/'superadmin' se asignan
+    // SOLO a mano en la DB (nunca por API). El badge admin/superadmin se DERIVA
+    // de esta columna en tiempo de lectura (no se guarda en `badges`).
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user';
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
+    `);
+    // CHECK del rol (idempotente).
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE users ADD CONSTRAINT users_role_check
+          CHECK (role IN ('user', 'admin', 'superadmin'));
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$;
+    `);
+    // Selección de badges destacados del usuario (hasta 3 slots) que se muestran
+    // inline en el ranking. NULL => default por jerarquía. Validado server-side.
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS featured_badges JSONB;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
+    `);
+
+    // Tabla badges: solo guarda badges GANADOS (podio mensual). Un badge por
+    // (usuario, tipo, mes). La UNIQUE hace idempotente la entrega concurrente.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS badges (
+        id BIGSERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        badge_type TEXT NOT NULL
+          CHECK (badge_type IN ('monthly_gold', 'monthly_silver', 'monthly_bronze')),
+        reference_month DATE NOT NULL,
+        awarded_at TIMESTAMPTZ DEFAULT now(),
+        UNIQUE(user_id, badge_type, reference_month)
+      );
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_badges_user ON badges(user_id);
+    `);
+
     // Tabla sessions
     await client.query(`
       CREATE TABLE IF NOT EXISTS sessions (

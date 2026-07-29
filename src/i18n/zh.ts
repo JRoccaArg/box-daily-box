@@ -316,6 +316,26 @@ const zh: Translations = {
   "country.VEN": "委内瑞拉",
   "country.ZAF": "南非",
   "country.ZWE": "津巴布韦",
+
+  "badge.monthly_gold": "金牌",
+  "badge.monthly_silver": "银牌",
+  "badge.monthly_bronze": "铜牌",
+  "badge.admin": "管理员",
+  "badge.superadmin": "超级管理员",
+  "badge.more": "+{{count}}",
+  "badge.gallery_title": "我的徽章",
+  "badge.gallery_empty":
+    "您还没有获得任何徽章。在月度排名中排名前3!",
+  "badge.gallery_hint": "点击徽章以在排名中显示(最多3个)。",
+  "badge.featured_count": "{{count}}/3 已显示",
+  "badge.won_months": "获得于: {{months}}",
+  "badge.show_grouped": "分组(×{{count}})",
+  "badge.show_individual": "单个",
+  "badge.max_reached": "您已选择最多3个徽章显示",
+  "badge.save": "保存选择",
+  "badge.saving": "保存中...",
+  "badge.save_error": "无法保存。请重试。",
+  "badge.saved": "已保存选择",
 };
 
 export default zh;

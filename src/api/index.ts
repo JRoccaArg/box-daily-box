@@ -23,6 +23,9 @@ import {
   getUserAttempts,
   getUserRank,
   checkUsernameAvailable,
+  adminCloseMonth,
+  getUserBadges,
+  setFeaturedBadges,
 } from "./routes";
 import { googleAuthCallback, logout } from "./auth";
 
@@ -204,6 +207,37 @@ async function start(): Promise<void> {
       config: { rateLimit: { max: 60, timeWindow: "1 minute" } },
     },
     checkUsernameAvailable as any,
+  );
+
+  // ─── Badges ────────────────────────────────────────────────────────
+  // Cierre mensual del podio (admin, secreto en header). Rate limit bajo.
+  app.post(
+    "/admin/badges/close-month",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
+    },
+    adminCloseMonth as any,
+  );
+
+  // Colección de badges de un usuario (público, para la galería).
+  app.get(
+    "/user/:userId/badges",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 60, timeWindow: "1 minute" } },
+    },
+    getUserBadges as any,
+  );
+
+  // Setear badges destacados (requiere identityToken del propio usuario).
+  app.post(
+    "/user/:userId/badges/featured",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
+    },
+    setFeaturedBadges as any,
   );
 
   // ─── Inicializar BD en background ─────────────────────────────────

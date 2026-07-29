@@ -30,6 +30,17 @@ type FinishResponse = {
   ranked?: boolean;
 };
 
+/** Tipos de badge. Los monthly_* se ganan; admin/superadmin derivan del rol. */
+export type BadgeType =
+  | "monthly_gold"
+  | "monthly_silver"
+  | "monthly_bronze"
+  | "admin"
+  | "superadmin";
+
+/** Badge listo para renderizar inline junto al nombre (count > 1 => contador). */
+export type DisplayBadge = { type: BadgeType; count: number };
+
 export type RankingEntry = {
   rank: number;
   userId: string;
@@ -38,6 +49,8 @@ export type RankingEntry = {
   points: number;
   gamesWon: number;
   daysPlayed: number;
+  /** Badges a mostrar inline (admin/superadmin primero + hasta 3 destacados). */
+  displayBadges: DisplayBadge[];
 };
 
 type RankingResponse = {
@@ -319,5 +332,63 @@ export async function apiGetUserRank(
   if (token) params.set("identityToken", token);
   return apiFetch<UserRank>(
     `/user/${encodeURIComponent(userId)}/rank?${params.toString()}`,
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── Badges ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+/** Un slot de la selección de destacados (solo badges mensuales son elegibles). */
+export type FeaturedSlot = {
+  type: "monthly_gold" | "monthly_silver" | "monthly_bronze";
+  grouped?: boolean;
+};
+
+export type OwnedBadge = {
+  id: number;
+  type: BadgeType;
+  /** Mes al que corresponde (YYYY-MM), null para badges sin mes. */
+  referenceMonth: string | null;
+  awardedAt: string;
+};
+
+export type UserBadges = {
+  userId: string;
+  role: string;
+  owned: OwnedBadge[];
+  counts: Record<string, number>;
+  featured: FeaturedSlot[] | null;
+};
+
+/** GET /user/:userId/badges — colección pública de badges de un usuario. */
+export async function apiGetUserBadges(
+  userId: string,
+): Promise<UserBadges | null> {
+  return apiFetch<UserBadges>(`/user/${encodeURIComponent(userId)}/badges`);
+}
+
+/**
+ * POST /user/:userId/badges/featured — setea los badges destacados.
+ * Manda el identityToken guardado localmente (anti-IDOR server-side).
+ * Devuelve el body de errores 4xx (ej. selección inválida) para mostrarlos.
+ */
+export async function apiSetFeaturedBadges(
+  userId: string,
+  featured: FeaturedSlot[],
+  identityToken?: string | null,
+): Promise<{ userId: string; featured: FeaturedSlot[] } | { error: string } | null> {
+  const token = identityToken ?? getIdentityToken();
+  return apiFetch<{ userId: string; featured: FeaturedSlot[] } | { error: string }>(
+    `/user/${encodeURIComponent(userId)}/badges/featured`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        featured,
+        ...(token ? { identityToken: token } : {}),
+      }),
+    },
+    8000,
+    true, // preservar errores 4xx (selección inválida, no autorizado)
   );
 }

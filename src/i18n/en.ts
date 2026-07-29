@@ -168,6 +168,27 @@ const en: Translations = {
   "ranking.monthly_note": "The monthly ranking resets on the 1st of each month.",
   "ranking.daily_note": "The daily ranking shows today's results.",
 
+  // ─── Badges ─────────────────────────────────────────────────────────
+  "badge.monthly_gold": "Gold",
+  "badge.monthly_silver": "Silver",
+  "badge.monthly_bronze": "Bronze",
+  "badge.admin": "Admin",
+  "badge.superadmin": "Superadmin",
+  "badge.more": "+{{count}}",
+  "badge.gallery_title": "My Badges",
+  "badge.gallery_empty":
+    "You haven't earned any badges yet. Finish in the top 3 of the monthly ranking!",
+  "badge.gallery_hint": "Tap a badge to feature it on the ranking (up to 3).",
+  "badge.featured_count": "{{count}}/3 featured",
+  "badge.won_months": "Earned in: {{months}}",
+  "badge.show_grouped": "Grouped (×{{count}})",
+  "badge.show_individual": "Individual",
+  "badge.max_reached": "You already picked the max of 3 featured badges",
+  "badge.save": "Save selection",
+  "badge.saving": "Saving...",
+  "badge.save_error": "Couldn't save. Try again.",
+  "badge.saved": "Selection saved",
+
   // ─── Monthly Ranking (personal) ─────────────────────────────────────
   "monthly.title": "{{month}} ranking",
   "monthly.challenges_won": "{{count}} challenges won",

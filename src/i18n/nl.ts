@@ -257,6 +257,26 @@ const nl: Translations = {
   "country.VEN": "Venezuela",
   "country.ZAF": "Zuid-Afrika",
   "country.ZWE": "Zimbabwe",
+
+  "badge.monthly_gold": "Goud",
+  "badge.monthly_silver": "Zilver",
+  "badge.monthly_bronze": "Brons",
+  "badge.admin": "Beheerder",
+  "badge.superadmin": "Superbeheerder",
+  "badge.more": "+{{count}}",
+  "badge.gallery_title": "Mijn Badges",
+  "badge.gallery_empty":
+    "Je hebt nog geen badges verdiend. Finish in de top 3 van de maandelijkse ranking!",
+  "badge.gallery_hint": "Tik op een badge om het in de ranking weer te geven (tot 3).",
+  "badge.featured_count": "{{count}}/3 uitgelicht",
+  "badge.won_months": "Verdiend in: {{months}}",
+  "badge.show_grouped": "Gegroepeerd (×{{count}})",
+  "badge.show_individual": "Individueel",
+  "badge.max_reached": "Je hebt al het maximum van 3 uitgelichte badges geselecteerd",
+  "badge.save": "Selectie opslaan",
+  "badge.saving": "Opslaan...",
+  "badge.save_error": "Kon niet opslaan. Probeer het opnieuw.",
+  "badge.saved": "Selectie opgeslagen",
 };
 
 export default nl;

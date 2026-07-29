@@ -176,6 +176,27 @@ const es: Translations = {
     "El ranking mensual se reinicia el 1 de cada mes.",
   "ranking.daily_note": "El ranking diario muestra los resultados de hoy.",
 
+  // ─── Badges ─────────────────────────────────────────────────────────
+  "badge.monthly_gold": "Oro",
+  "badge.monthly_silver": "Plata",
+  "badge.monthly_bronze": "Bronce",
+  "badge.admin": "Admin",
+  "badge.superadmin": "Superadmin",
+  "badge.more": "+{{count}}",
+  "badge.gallery_title": "Mis Badges",
+  "badge.gallery_empty":
+    "Todavía no ganaste ningún badge. ¡Terminá entre los 3 primeros del ranking mensual!",
+  "badge.gallery_hint": "Tocá un badge para destacarlo en el ranking (hasta 3).",
+  "badge.featured_count": "{{count}}/3 destacados",
+  "badge.won_months": "Ganado en: {{months}}",
+  "badge.show_grouped": "Agrupado (×{{count}})",
+  "badge.show_individual": "Individual",
+  "badge.max_reached": "Ya elegiste el máximo de 3 badges destacados",
+  "badge.save": "Guardar selección",
+  "badge.saving": "Guardando...",
+  "badge.save_error": "No se pudo guardar. Intentá de nuevo.",
+  "badge.saved": "Selección guardada",
+
   // ─── Ranking Mensual (personal) ─────────────────────────────────────
   "monthly.title": "Ranking de {{month}}",
   "monthly.challenges_won": "{{count}} retos ganados",

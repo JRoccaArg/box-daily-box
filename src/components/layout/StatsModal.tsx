@@ -8,6 +8,7 @@ import { Flame } from "@/components/ui/Icon";
 import { MonthlyRanking } from "./MonthlyRanking";
 import { GlobalRanking } from "./GlobalRanking";
 import { IdentityModal } from "./IdentityModal";
+import { BadgeGallery } from "./BadgeGallery";
 import { getIdentity } from "@/lib/identity";
 import { NATIONALITIES } from "@/data/nationalities";
 
@@ -78,6 +79,8 @@ export function StatsModal({ open, onClose }: StatsModalProps) {
           <GlobalRanking refreshKey={summary.won + summary.lost} />
         ) : (
           <>
+            <BadgeGallery userId={identity.userId} />
+
             <div className="mb-4">
               <MonthlyRanking refreshKey={summary.won + summary.lost} />
             </div>

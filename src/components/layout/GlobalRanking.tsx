@@ -9,6 +9,10 @@ import { getIdentity } from "@/lib/identity";
 import { NATIONALITIES } from "@/data/nationalities";
 import { CountrySelect } from "@/components/ui/CountrySelect";
 import { Trophy } from "@/components/ui/Icon";
+import { BadgeIcon } from "@/components/ui/BadgeIcon";
+
+/** Máximo de badges visibles inline antes de colapsar en "+N" (espacio limitado en mobile). */
+const MAX_INLINE_BADGES = 2;
 
 type Tab = "monthly" | "daily";
 
@@ -156,6 +160,30 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
                           <span className="ml-1.5 text-xs text-racing-400">{t("ranking.you")}</span>
                         )}
                       </span>
+                      {entry.displayBadges.length > 0 && (
+                        <span className="flex shrink-0 items-center gap-1">
+                          {entry.displayBadges.slice(0, MAX_INLINE_BADGES).map((b, i) => (
+                            <BadgeIcon
+                              key={`${b.type}-${i}`}
+                              type={b.type}
+                              count={b.count}
+                              size={14}
+                              title={
+                                b.count > 1
+                                  ? `${t(`badge.${b.type}`)} ×${b.count}`
+                                  : t(`badge.${b.type}`)
+                              }
+                            />
+                          ))}
+                          {entry.displayBadges.length > MAX_INLINE_BADGES && (
+                            <span className="text-[10px] font-semibold text-ink-faint">
+                              {t("badge.more", {
+                                count: entry.displayBadges.length - MAX_INLINE_BADGES,
+                              })}
+                            </span>
+                          )}
+                        </span>
+                      )}
                     </div>
                     <span className="text-xs text-ink-faint">
                       {t("ranking.challenges_won", {

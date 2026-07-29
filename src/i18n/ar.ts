@@ -257,6 +257,26 @@ const ar: Translations = {
   "country.VEN": "فنزويلا",
   "country.ZAF": "جنوب أفريقيا",
   "country.ZWE": "زيمبابوي",
+
+  "badge.monthly_gold": "ذهب",
+  "badge.monthly_silver": "فضة",
+  "badge.monthly_bronze": "برونز",
+  "badge.admin": "مسؤول",
+  "badge.superadmin": "مسؤول سوبر",
+  "badge.more": "+{{count}}",
+  "badge.gallery_title": "شاراتي",
+  "badge.gallery_empty":
+    "لم تكسب أي شارات حتى الآن. انته ضمن أفضل 3 في الترتيب الشهري!",
+  "badge.gallery_hint": "اضغط على شارة لعرضها في الترتيب (حتى 3).",
+  "badge.featured_count": "{{count}}/3 معروضة",
+  "badge.won_months": "كسبت في: {{months}}",
+  "badge.show_grouped": "مجمعة (×{{count}})",
+  "badge.show_individual": "فردية",
+  "badge.max_reached": "لقد اخترت بالفعل الحد الأقصى من 3 شارات معروضة",
+  "badge.save": "حفظ الاختيار",
+  "badge.saving": "جاري الحفظ...",
+  "badge.save_error": "تعذر الحفظ. حاول مرة أخرى.",
+  "badge.saved": "تم حفظ الاختيار",
 };
 
 export default ar;

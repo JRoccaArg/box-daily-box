@@ -356,6 +356,26 @@ const pt: Translations = {
   "country.VEN": "Venezuela",
   "country.ZAF": "África do Sul",
   "country.ZWE": "Zimbábue",
+
+  "badge.monthly_gold": "Ouro",
+  "badge.monthly_silver": "Prata",
+  "badge.monthly_bronze": "Bronze",
+  "badge.admin": "Admin",
+  "badge.superadmin": "Superadmin",
+  "badge.more": "+{{count}}",
+  "badge.gallery_title": "Meus Badges",
+  "badge.gallery_empty":
+    "Você ainda não ganhou nenhum badge. Termine entre os 3 primeiros do ranking mensal!",
+  "badge.gallery_hint": "Toque em um badge para destacá-lo no ranking (até 3).",
+  "badge.featured_count": "{{count}}/3 destacados",
+  "badge.won_months": "Ganho em: {{months}}",
+  "badge.show_grouped": "Agrupado (×{{count}})",
+  "badge.show_individual": "Individual",
+  "badge.max_reached": "Você já escolheu o máximo de 3 badges destacados",
+  "badge.save": "Salvar seleção",
+  "badge.saving": "Salvando...",
+  "badge.save_error": "Não foi possível salvar. Tente novamente.",
+  "badge.saved": "Seleção salva",
 };
 
 export default pt;

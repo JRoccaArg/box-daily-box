@@ -271,6 +271,26 @@ const ru: Translations = {
   "country.VEN": "Венесуэла",
   "country.ZAF": "Южная Африка",
   "country.ZWE": "Зимбабве",
+
+  "badge.monthly_gold": "Золото",
+  "badge.monthly_silver": "Серебро",
+  "badge.monthly_bronze": "Бронза",
+  "badge.admin": "Админ",
+  "badge.superadmin": "Супер-админ",
+  "badge.more": "+{{count}}",
+  "badge.gallery_title": "Мои Значки",
+  "badge.gallery_empty":
+    "Вы еще не получили ни одного значка. Финишируйте в тройке лучших в ежемесячном рейтинге!",
+  "badge.gallery_hint": "Нажмите на значок, чтобы выделить его в рейтинге (до 3).",
+  "badge.featured_count": "{{count}}/3 выделено",
+  "badge.won_months": "Получено в: {{months}}",
+  "badge.show_grouped": "Сгруппировано (×{{count}})",
+  "badge.show_individual": "По отдельности",
+  "badge.max_reached": "Вы уже выбрали максимум 3 выделенных значка",
+  "badge.save": "Сохранить выбор",
+  "badge.saving": "Сохранение...",
+  "badge.save_error": "Не удалось сохранить. Попробуйте еще раз.",
+  "badge.saved": "Выбор сохранен",
 };
 
 export default ru;

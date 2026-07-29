@@ -20,6 +20,14 @@ import {
 } from "./validate";
 import { signIdentityToken, ownsIdentity } from "./identity-token";
 import { TOKEN_SECRET, ADMIN_SECRET } from "./secrets";
+import {
+  awardMonthlyPodium,
+  MonthNotClosedError,
+  deriveDisplayBadges,
+  validateFeaturedSelection,
+  type DisplayBadge,
+  type FeaturedSlot,
+} from "./badges";
 
 const SESSION_TTL = 15 * 60 * 1000; // 15 minutos
 
@@ -423,6 +431,42 @@ export async function finishChallenge(
   }
 }
 
+// ─── Badges inline en el ranking ────────────────────────────────────
+
+/**
+ * Dado un conjunto de entradas de ranking (con su rol y su selección de
+ * destacados), calcula los `displayBadges` de cada una en UNA sola query batch
+ * de badges (evita N+1). admin/superadmin se derivan del rol; el resto de la
+ * lógica vive en `deriveDisplayBadges`.
+ */
+async function computeDisplayBadgesForRanking(
+  entries: Array<{ userId: string; role: string; featured: FeaturedSlot[] | null }>,
+): Promise<Map<string, DisplayBadge[]>> {
+  const map = new Map<string, DisplayBadge[]>();
+  if (entries.length === 0) return map;
+
+  const userIds = entries.map((e) => e.userId);
+  const res = await query(
+    `SELECT user_id, badge_type, COUNT(*)::int AS c
+       FROM badges
+      WHERE user_id = ANY($1::text[])
+      GROUP BY user_id, badge_type`,
+    [userIds] as any,
+  );
+
+  const counts = new Map<string, Record<string, number>>();
+  for (const r of res.rows as Array<{ user_id: string; badge_type: string; c: number }>) {
+    const rec = counts.get(r.user_id) ?? {};
+    rec[r.badge_type] = Number(r.c);
+    counts.set(r.user_id, rec);
+  }
+
+  for (const e of entries) {
+    map.set(e.userId, deriveDisplayBadges(counts.get(e.userId) ?? {}, e.role, e.featured));
+  }
+  return map;
+}
+
 // ─── GET /ranking/monthly ───────────────────────────────────────────
 
 export async function getRankingMonthly(
@@ -449,7 +493,7 @@ export async function getRankingMonthly(
     }
 
     const topResult = await query(
-      `SELECT u.id, u.display_name, u.country_code,
+      `SELECT u.id, u.display_name, u.country_code, u.role, u.featured_badges,
               SUM(a.points) as points,
               COUNT(a.id) as games_won,
               COUNT(DISTINCT a.date_key) as days_played
@@ -459,13 +503,13 @@ export async function getRankingMonthly(
        AND a.date_key >= $1::date
        AND a.date_key < ($1::date + INTERVAL '1 month')
        ${countryClause}
-       GROUP BY u.id, u.display_name, u.country_code
+       GROUP BY u.id, u.display_name, u.country_code, u.role, u.featured_badges
        ORDER BY points DESC
        LIMIT 50`,
       params,
     );
 
-    const top = topResult.rows.map((row: any, idx: number) => ({
+    const rawTop = topResult.rows.map((row: any, idx: number) => ({
       rank: idx + 1,
       userId: row.id as string,
       displayName: row.display_name as string,
@@ -473,6 +517,20 @@ export async function getRankingMonthly(
       points: Number(row.points ?? 0),
       gamesWon: Number(row.games_won ?? 0),
       daysPlayed: Number(row.days_played ?? 0),
+      role: (row.role as string) || "user",
+      featured: (row.featured_badges as FeaturedSlot[] | null) ?? null,
+    }));
+
+    const badgeMap = await computeDisplayBadgesForRanking(rawTop);
+    const top = rawTop.map((e) => ({
+      rank: e.rank,
+      userId: e.userId,
+      displayName: e.displayName,
+      countryCode: e.countryCode,
+      points: e.points,
+      gamesWon: e.gamesWon,
+      daysPlayed: e.daysPlayed,
+      displayBadges: badgeMap.get(e.userId) ?? [],
     }));
 
     reply.code(200).send({ month: target.substring(0, 7), top });
@@ -496,7 +554,7 @@ export async function getRankingDaily(
     const countryFilter = isValidCountry(country) ? country : null;
 
     const topResult = await query(
-      `SELECT u.id, u.display_name, u.country_code,
+      `SELECT u.id, u.display_name, u.country_code, u.role, u.featured_badges,
               SUM(a.points) as points,
               COUNT(a.id) as games_won
        FROM attempts a
@@ -504,13 +562,13 @@ export async function getRankingDaily(
        WHERE a.won AND NOT a.flagged AND a.ranked
        AND a.date_key = $1::date
        ${countryFilter ? "AND u.country_code = $2" : ""}
-       GROUP BY u.id, u.display_name, u.country_code
+       GROUP BY u.id, u.display_name, u.country_code, u.role, u.featured_badges
        ORDER BY points DESC
        LIMIT 50`,
       countryFilter ? [target, countryFilter] : [target],
     );
 
-    const top = topResult.rows.map((row: any, idx: number) => ({
+    const rawTop = topResult.rows.map((row: any, idx: number) => ({
       rank: idx + 1,
       userId: row.id as string,
       displayName: row.display_name as string,
@@ -518,6 +576,20 @@ export async function getRankingDaily(
       points: Number(row.points ?? 0),
       gamesWon: Number(row.games_won ?? 0),
       daysPlayed: 1,
+      role: (row.role as string) || "user",
+      featured: (row.featured_badges as FeaturedSlot[] | null) ?? null,
+    }));
+
+    const badgeMap = await computeDisplayBadgesForRanking(rawTop);
+    const top = rawTop.map((e) => ({
+      rank: e.rank,
+      userId: e.userId,
+      displayName: e.displayName,
+      countryCode: e.countryCode,
+      points: e.points,
+      gamesWon: e.gamesWon,
+      daysPlayed: e.daysPlayed,
+      displayBadges: badgeMap.get(e.userId) ?? [],
     }));
 
     reply.code(200).send({ date: target, top });
@@ -616,6 +688,191 @@ export async function adminDebug(
     });
   } catch (err) {
     console.error("adminDebug error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+// ─── POST /admin/badges/close-month ─────────────────────────────────
+
+/**
+ * Cierra un mes y entrega los badges de podio (oro/plata/bronce) al top 3.
+ * Idempotente y solo-agrega (nunca revoca). Autorización: mismo secreto admin
+ * en header que /admin/debug (server-to-server / curl, no desde el navegador).
+ * Body: { month: 'YYYY-MM' }.
+ */
+export async function adminCloseMonth(
+  req: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  try {
+    const headerSecret = req.headers["x-admin-secret"];
+    const provided = typeof headerSecret === "string" ? headerSecret : "";
+    // Comparación timing-safe (igual que adminDebug).
+    const a = Buffer.from(String(provided));
+    const b = Buffer.from(ADMIN_SECRET);
+    const ok = a.length === b.length && timingSafeEqual(a, b);
+    if (!ok) {
+      reply.code(403).send({ error: "Acceso denegado" });
+      return;
+    }
+
+    const { month } = (req.body ?? {}) as { month?: string };
+    if (!isValidMonth(month)) {
+      reply.code(422).send({ error: "month inválido (formato YYYY-MM)" });
+      return;
+    }
+
+    // Transacción: el cálculo del podio + los inserts idempotentes van atómicos.
+    const result = await transaction(async (client) =>
+      awardMonthlyPodium((sql, params) => client.query(sql, params), month),
+    );
+
+    reply.code(200).send({
+      month: result.month,
+      monthStart: result.monthStart,
+      awardedCount: result.awarded.length,
+      awarded: result.awarded,
+    });
+  } catch (err) {
+    if (err instanceof MonthNotClosedError) {
+      reply.code(422).send({ error: "El mes no está cerrado todavía" });
+      return;
+    }
+    console.error("adminCloseMonth error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+// ─── Badges del usuario ──────────────────────────────────────────────
+
+/** Formatea una columna DATE (o string) a 'YYYY-MM' en hora local. */
+function toMonthStr(d: unknown): string | null {
+  if (d instanceof Date) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    return `${y}-${m}`;
+  }
+  if (typeof d === "string") return d.substring(0, 7);
+  return null;
+}
+
+/**
+ * GET /user/:userId/badges
+ *
+ * Colección completa de badges de un usuario (público: los badges se muestran
+ * públicamente en el ranking). Incluye rol, conteos por tipo y la selección de
+ * destacados actual. Usado por la galería del frontend (Etapa 3).
+ */
+export async function getUserBadges(
+  req: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  try {
+    const { userId } = req.params as { userId?: string };
+    if (!userId || !isValidUserId(userId)) {
+      reply.code(422).send({ error: "userId inválido" });
+      return;
+    }
+
+    const userRow = await query(
+      "SELECT role, featured_badges FROM users WHERE id = $1",
+      [userId],
+    );
+    if (userRow.rows.length === 0) {
+      reply.code(404).send({ error: "Usuario no encontrado" });
+      return;
+    }
+
+    const badgesRes = await query(
+      `SELECT id, badge_type, reference_month, awarded_at
+         FROM badges WHERE user_id = $1
+        ORDER BY badge_type ASC, reference_month DESC`,
+      [userId],
+    );
+
+    const counts: Record<string, number> = {};
+    const owned = badgesRes.rows.map((b: any) => {
+      counts[b.badge_type] = (counts[b.badge_type] ?? 0) + 1;
+      return {
+        id: Number(b.id),
+        type: b.badge_type as string,
+        referenceMonth: toMonthStr(b.reference_month),
+        awardedAt: b.awarded_at,
+      };
+    });
+
+    reply.code(200).send({
+      userId,
+      role: (userRow.rows[0].role as string) || "user",
+      owned,
+      counts,
+      featured: (userRow.rows[0].featured_badges as FeaturedSlot[] | null) ?? null,
+    });
+  } catch (err) {
+    console.error("getUserBadges error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/**
+ * POST /user/:userId/badges/featured
+ *
+ * Setea la selección de badges destacados que se muestran inline en el ranking.
+ * Autorización anti-IDOR: exige identityToken del propio usuario (ownsIdentity).
+ * Body: { featured: FeaturedSlot[], identityToken: string }.
+ */
+export async function setFeaturedBadges(
+  req: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  try {
+    const { userId } = req.params as { userId?: string };
+    if (!userId || !isValidUserId(userId)) {
+      reply.code(422).send({ error: "userId inválido" });
+      return;
+    }
+
+    const { featured, identityToken } = req.body as {
+      featured?: unknown;
+      identityToken?: string;
+    };
+
+    if (!ownsIdentity(identityToken, userId)) {
+      reply.code(403).send({ error: "No autorizado para modificar este perfil" });
+      return;
+    }
+
+    // El usuario debe existir.
+    const exists = await query("SELECT 1 FROM users WHERE id = $1", [userId]);
+    if (exists.rows.length === 0) {
+      reply.code(404).send({ error: "Usuario no encontrado" });
+      return;
+    }
+
+    // Conteo de badges realmente poseídos, para validar la selección (anti-inflado).
+    const owned = await query(
+      "SELECT badge_type, COUNT(*)::int AS c FROM badges WHERE user_id = $1 GROUP BY badge_type",
+      [userId],
+    );
+    const counts: Record<string, number> = {};
+    for (const r of owned.rows as Array<{ badge_type: string; c: number }>) {
+      counts[r.badge_type] = Number(r.c);
+    }
+
+    const validated = validateFeaturedSelection(featured, counts);
+    if (!validated.ok) {
+      reply.code(422).send({ error: validated.error });
+      return;
+    }
+
+    await query(
+      "UPDATE users SET featured_badges = $1::jsonb WHERE id = $2",
+      [JSON.stringify(validated.value), userId],
+    );
+
+    reply.code(200).send({ userId, featured: validated.value });
+  } catch (err) {
+    console.error("setFeaturedBadges error:", err);
     reply.code(500).send({ error: "Error interno" });
   }
 }

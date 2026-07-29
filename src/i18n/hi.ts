@@ -355,6 +355,26 @@ const hi: Translations = {
   "country.VEN": "वेनेज़ुएला",
   "country.ZAF": "दक्षिण अफ़्रीका",
   "country.ZWE": "ज़िम्बाब्वे",
+
+  "badge.monthly_gold": "सोना",
+  "badge.monthly_silver": "चाँदी",
+  "badge.monthly_bronze": "कांस्य",
+  "badge.admin": "प्रशासक",
+  "badge.superadmin": "सुपरप्रशासक",
+  "badge.more": "+{{count}}",
+  "badge.gallery_title": "मेरे बैज",
+  "badge.gallery_empty":
+    "आपने अभी तक कोई बैज नहीं जीता है। मासिक रैंकिंग में शीर्ष 3 में समाप्त करें!",
+  "badge.gallery_hint": "रैंकिंग में दिखाने के लिए एक बैज को टैप करें (अधिकतम 3)।",
+  "badge.featured_count": "{{count}}/3 दिखाए गए",
+  "badge.won_months": "इसमें जीता गया: {{months}}",
+  "badge.show_grouped": "समूहबद्ध (×{{count}})",
+  "badge.show_individual": "व्यक्तिगत",
+  "badge.max_reached": "आपने पहले से ही अधिकतम 3 बैज दिखाने का चयन किया है",
+  "badge.save": "चयन सहेजें",
+  "badge.saving": "सहेज रहे हैं...",
+  "badge.save_error": "सहेज नहीं सके। फिर से कोशिश करें।",
+  "badge.saved": "चयन सहेजा गया",
 };
 
 export default hi;

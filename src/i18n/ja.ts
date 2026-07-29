@@ -323,6 +323,26 @@ const ja: Translations = {
   "country.VEN": "ベネズエラ",
   "country.ZAF": "南アフリカ",
   "country.ZWE": "ジンバブエ",
+
+  "badge.monthly_gold": "ゴールド",
+  "badge.monthly_silver": "シルバー",
+  "badge.monthly_bronze": "ブロンズ",
+  "badge.admin": "管理者",
+  "badge.superadmin": "スーパー管理者",
+  "badge.more": "+{{count}}",
+  "badge.gallery_title": "マイバッジ",
+  "badge.gallery_empty":
+    "まだバッジを獲得していません。月間ランキングのトップ3に入ります!",
+  "badge.gallery_hint": "バッジをタップしてランキングで表示します(最大3個)。",
+  "badge.featured_count": "{{count}}/3 表示中",
+  "badge.won_months": "獲得日: {{months}}",
+  "badge.show_grouped": "グループ化(×{{count}})",
+  "badge.show_individual": "個別",
+  "badge.max_reached": "既に最大3個のバッジを表示するように選択しています",
+  "badge.save": "選択を保存",
+  "badge.saving": "保存中...",
+  "badge.save_error": "保存できませんでした。もう一度お試しください。",
+  "badge.saved": "選択を保存しました",
 };
 
 export default ja;

@@ -271,6 +271,26 @@ const de: Translations = {
   "country.VEN": "Venezuela",
   "country.ZAF": "Südafrika",
   "country.ZWE": "Simbabwe",
+
+  "badge.monthly_gold": "Gold",
+  "badge.monthly_silver": "Silber",
+  "badge.monthly_bronze": "Bronze",
+  "badge.admin": "Admin",
+  "badge.superadmin": "Superadmin",
+  "badge.more": "+{{count}}",
+  "badge.gallery_title": "Meine Abzeichen",
+  "badge.gallery_empty":
+    "Sie haben noch kein Abzeichen verdient. Beenden Sie in den Top 3 der monatlichen Rangliste!",
+  "badge.gallery_hint": "Tippen Sie auf ein Abzeichen, um es in der Rangliste anzuzeigen (bis zu 3).",
+  "badge.featured_count": "{{count}}/3 hervorgehoben",
+  "badge.won_months": "Verdient in: {{months}}",
+  "badge.show_grouped": "Gruppiert (×{{count}})",
+  "badge.show_individual": "Einzeln",
+  "badge.max_reached": "Sie haben bereits das Maximum von 3 hervorgehobenen Abzeichen ausgewählt",
+  "badge.save": "Auswahl speichern",
+  "badge.saving": "Wird gespeichert...",
+  "badge.save_error": "Konnte nicht gespeichert werden. Versuchen Sie es erneut.",
+  "badge.saved": "Auswahl gespeichert",
 };
 
 export default de;

@@ -371,6 +371,26 @@ const sl: Translations = {
   "country.VEN": "Venezuela",
   "country.ZAF": "Južna Afrika",
   "country.ZWE": "Zimbabve",
+
+  "badge.monthly_gold": "Zlato",
+  "badge.monthly_silver": "Srebro",
+  "badge.monthly_bronze": "Brons",
+  "badge.admin": "Skrbnik",
+  "badge.superadmin": "Super skrbnik",
+  "badge.more": "+{{count}}",
+  "badge.gallery_title": "Moje Značke",
+  "badge.gallery_empty":
+    "Še niste si pridobili nobene značke. Končajte v prvih 3 na mesečni lestvici!",
+  "badge.gallery_hint": "Tapnite na značko, da jo izpopolnite na lestvici (do 3).",
+  "badge.featured_count": "{{count}}/3 prikazane",
+  "badge.won_months": "Pridobljeno v: {{months}}",
+  "badge.show_grouped": "Razvrščeno (×{{count}})",
+  "badge.show_individual": "Individualno",
+  "badge.max_reached": "Že ste izbrali največ 3 prikazane značke",
+  "badge.save": "Shrani izbor",
+  "badge.saving": "Shranjevanje...",
+  "badge.save_error": "Ni bilo mogoče shraniti. Poskusite znova.",
+  "badge.saved": "Izbor je shranjen",
 };
 
 export default sl;
