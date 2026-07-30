@@ -450,7 +450,10 @@ export async function apiCloseDebugMonth(): Promise<{
 } | { error: string } | null> {
   return apiFetch<{ month: string; awardedCount: number } | { error: string }>(
     "/admin/close-debug-month",
-    { method: "POST" },
+    // Body vacío EXPLÍCITO: mandar Content-Type: application/json (que pone
+    // apiFetch siempre) sin body hace que Fastify rechace la request con
+    // 400 "Bad Request" antes de llegar al handler.
+    { method: "POST", body: "{}" },
     8000,
     true, // preservar el 422 de "mes no cerrado" para mostrarlo
   );
