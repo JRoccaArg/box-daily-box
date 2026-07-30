@@ -29,6 +29,7 @@ import {
   setFeaturedBadges,
   adminSeedBadges,
   adminGrantBadges,
+  adminCloseDebugMonth,
 } from "./routes";
 import { googleAuthCallback, logout } from "./auth";
 
@@ -282,6 +283,16 @@ async function start(): Promise<void> {
       config: { rateLimit: { max: 5, timeWindow: "1 minute" } },
     },
     adminGrantBadges as any,
+  );
+
+  // Cerrar el mes anterior al simulado con el date picker (SOLO STAGING).
+  app.post(
+    "/admin/close-debug-month",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
+    },
+    adminCloseDebugMonth as any,
   );
 
   // ─── Inicializar BD en background ─────────────────────────────────

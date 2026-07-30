@@ -436,3 +436,22 @@ export async function apiGrantSelfBadges(
     },
   );
 }
+
+/**
+ * POST /admin/close-debug-month — SOLO responde 200 si el backend tiene
+ * STAGING_DEBUG=true (si no, 404). Cierra el mes ANTERIOR al que está
+ * simulando el date picker del panel de debug (lee X-Debug-Date, que
+ * apiFetch ya adjunta solo). El cron automático de producción nunca honra
+ * el override, así que sin esto un mes "simulado" nunca se cierra solo.
+ */
+export async function apiCloseDebugMonth(): Promise<{
+  month: string;
+  awardedCount: number;
+} | { error: string } | null> {
+  return apiFetch<{ month: string; awardedCount: number } | { error: string }>(
+    "/admin/close-debug-month",
+    { method: "POST" },
+    8000,
+    true, // preservar el 422 de "mes no cerrado" para mostrarlo
+  );
+}

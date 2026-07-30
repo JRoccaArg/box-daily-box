@@ -12,7 +12,7 @@
 
 import { useState } from "react";
 import { isStagingBuild, getDebugDateOverride, setDebugDateOverride } from "@/lib/debugDate";
-import { apiSeedBadges, apiGrantSelfBadges } from "@/lib/api";
+import { apiSeedBadges, apiGrantSelfBadges, apiCloseDebugMonth } from "@/lib/api";
 import { dateKey } from "@/lib/seed";
 import { getIdentity } from "@/lib/identity";
 
@@ -65,6 +65,22 @@ function DebugDatePanelInner() {
       `Te di ${res.grantedCount} badges nuevos (3 oro + 1 plata + 1 bronce). ` +
         "Abrí Stats → Mi Progreso para probar el selector.",
     );
+  }
+
+  async function closeDebugMonth() {
+    setSeeding(true);
+    setMessage(null);
+    const res = await apiCloseDebugMonth();
+    setSeeding(false);
+    if (!res) {
+      setMessage("Error: el backend no respondió (¿STAGING_DEBUG=true en Railway?)");
+      return;
+    }
+    if ("error" in res) {
+      setMessage(`Error: ${res.error}`);
+      return;
+    }
+    setMessage(`Mes ${res.month} cerrado: ${res.awardedCount} badges otorgados.`);
   }
 
   return (
@@ -138,9 +154,23 @@ function DebugDatePanelInner() {
               </button>
             )}
           </div>
-          <p style={{ color: "#a1a1aa", marginBottom: 10 }}>
+          <p style={{ color: "#a1a1aa", marginBottom: 6 }}>
             Hoy real: {dateKey(new Date())}
             {active && ` — simulando: ${active}`}
+          </p>
+          {active && (
+            <button
+              type="button"
+              disabled={seeding}
+              onClick={closeDebugMonth}
+              style={{ ...btnStyle("#ea580c"), width: "100%", marginBottom: 4 }}
+            >
+              {seeding ? "..." : "Cerrar mes anterior al simulado"}
+            </button>
+          )}
+          <p style={{ color: "#71717a", marginBottom: 10, fontSize: 10 }}>
+            El cron real de producción nunca usa la fecha simulada — sin este
+            botón, un mes "simulado" nunca se cierra solo en staging.
           </p>
 
           <hr style={{ border: "none", borderTop: "1px solid #3f3f46", margin: "8px 0" }} />

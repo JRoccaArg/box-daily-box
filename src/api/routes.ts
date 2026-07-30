@@ -25,6 +25,7 @@ import {
   MonthNotClosedError,
   deriveDisplayBadges,
   validateFeaturedSelection,
+  previousMonthKey,
   type DisplayBadge,
   type FeaturedSlot,
 } from "./badges";
@@ -864,6 +865,51 @@ export async function adminGrantBadges(
     reply.code(200).send({ ok: true, userId, grantedCount: inserted });
   } catch (err) {
     console.error("adminGrantBadges error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+// ─── POST /admin/close-debug-month (SOLO STAGING) ───────────────────
+
+/**
+ * Cierra el mes ANTERIOR al que estás simulando con el date picker del panel
+ * de debug. Existe porque el cierre automático de producción
+ * (`closePreviousMonthBadges` en index.ts) usa A PROPÓSITO el reloj real del
+ * server, nunca el override — así que simular "estar en septiembre" con el
+ * panel no le avisa nada al cron real, y agosto nunca se cierra solo.
+ *
+ * Reusa la MISMA `awardMonthlyPodium` (mismo camino que el cierre real y que
+ * `/admin/badges/close-month`), solo que el mes a cerrar y el "ahora" para
+ * validar que esté cerrado salen del header `X-Debug-Date` en vez de un
+ * body explícito. Gateado únicamente por STAGING_DEBUG (mismo razonamiento
+ * que adminSeedBadges/adminGrantBadges: sin ADMIN_SECRET, para no exponerlo
+ * en el bundle del frontend).
+ */
+export async function adminCloseDebugMonth(
+  req: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  if (!isStagingDebugEnabled()) {
+    reply.code(404).send({ error: "No encontrado" });
+    return;
+  }
+  try {
+    const now = resolveNow(req);
+    const month = previousMonthKey(now);
+    const result = await transaction(async (client) =>
+      awardMonthlyPodium((sql, params) => client.query(sql, params), month, now),
+    );
+    reply.code(200).send({
+      month: result.month,
+      awardedCount: result.awarded.length,
+      awarded: result.awarded,
+    });
+  } catch (err) {
+    if (err instanceof MonthNotClosedError) {
+      reply.code(422).send({ error: "El mes no está cerrado todavía" });
+      return;
+    }
+    console.error("adminCloseDebugMonth error:", err);
     reply.code(500).send({ error: "Error interno" });
   }
 }
