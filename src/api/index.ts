@@ -30,6 +30,7 @@ import {
   adminSeedBadges,
   adminGrantBadges,
   adminCloseDebugMonth,
+  adminSeedDuels,
   createDuel,
   acceptDuel,
   declineDuel,
@@ -307,6 +308,16 @@ async function start(): Promise<void> {
       config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
     },
     adminCloseDebugMonth as any,
+  );
+
+  // Seed de amigos/duelos de prueba dirigidos a la propia cuenta (SOLO STAGING).
+  app.post(
+    "/admin/seed-duels",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 5, timeWindow: "1 minute" } },
+    },
+    adminSeedDuels as any,
   );
 
   // ─── Amigos y Duelos (Roadmap §4) ─────────────────────────────────

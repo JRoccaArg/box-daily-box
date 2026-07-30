@@ -12,7 +12,7 @@
 
 import { useState } from "react";
 import { isStagingBuild, getDebugDateOverride, setDebugDateOverride } from "@/lib/debugDate";
-import { apiSeedBadges, apiGrantSelfBadges, apiCloseDebugMonth } from "@/lib/api";
+import { apiSeedBadges, apiGrantSelfBadges, apiCloseDebugMonth, apiSeedDuels } from "@/lib/api";
 import { dateKey } from "@/lib/seed";
 import { getIdentity } from "@/lib/identity";
 
@@ -81,6 +81,27 @@ function DebugDatePanelInner() {
       return;
     }
     setMessage(`Mes ${res.month} cerrado: ${res.awardedCount} badges otorgados.`);
+  }
+
+  async function runSeedDuels(reset: boolean) {
+    setSeeding(true);
+    setMessage(null);
+    const { userId } = getIdentity();
+    const res = await apiSeedDuels(userId, reset);
+    setSeeding(false);
+    if (!res) {
+      setMessage("Error: el backend no respondió (¿STAGING_DEBUG=true en Railway?)");
+      return;
+    }
+    if ("error" in res) {
+      setMessage(`Error: ${res.error}`);
+      return;
+    }
+    setMessage(
+      reset
+        ? "Datos de seed de amigos/duelos eliminados."
+        : "Seed de amigos/duelos cargado: 1 amigo, 1 solicitud entrante, 1 saliente, 1 duelo pendiente y 1 resuelto.",
+    );
   }
 
   return (
@@ -187,6 +208,18 @@ function DebugDatePanelInner() {
           <button type="button" disabled={seeding} onClick={grantSelf} style={{ ...btnStyle("#0ea5e9"), width: "100%" }}>
             {seeding ? "..." : "Darme badges (mi cuenta)"}
           </button>
+
+          <hr style={{ border: "none", borderTop: "1px solid #3f3f46", margin: "8px 0" }} />
+
+          <label style={{ display: "block", marginBottom: 4 }}>Datos de prueba (amigos/duelos)</label>
+          <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+            <button type="button" disabled={seeding} onClick={() => runSeedDuels(false)} style={btnStyle("#16a34a")}>
+              {seeding ? "..." : "Cargar seed de duelos"}
+            </button>
+            <button type="button" disabled={seeding} onClick={() => runSeedDuels(true)} style={btnStyle("#dc2626")}>
+              {seeding ? "..." : "Limpiar"}
+            </button>
+          </div>
           {message && <p style={{ marginTop: 6, color: "#a1a1aa" }}>{message}</p>}
         </div>
       )}

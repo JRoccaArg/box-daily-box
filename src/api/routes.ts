@@ -937,6 +937,41 @@ export async function adminCloseDebugMonth(
   }
 }
 
+// ─── POST /admin/seed-duels (SOLO STAGING) ──────────────────────────
+
+/**
+ * Puebla la DB con los escenarios de prueba de scripts/seed-duels.ts (amigos +
+ * duelos DIRIGIDOS a la propia cuenta del que prueba en staging), desde el
+ * botón del panel de debug (Roadmap §4, Etapa 2). Mismo gate y razonamiento
+ * que adminSeedBadges/adminGrantBadges: solo STAGING_DEBUG, sin ADMIN_SECRET.
+ * Body: { userId: string, reset?: boolean }.
+ */
+export async function adminSeedDuels(
+  req: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  if (!isStagingDebugEnabled()) {
+    reply.code(404).send({ error: "No encontrado" });
+    return;
+  }
+  try {
+    const { userId, reset } = (req.body ?? {}) as { userId?: string; reset?: boolean };
+    const { cleanupSeedData, seed } = await import("../../scripts/seed-duels");
+    await cleanupSeedData();
+    if (!reset) {
+      if (!userId || !isValidUserId(userId)) {
+        reply.code(422).send({ error: "userId inválido" });
+        return;
+      }
+      await seed(userId, resolveNow(req));
+    }
+    reply.code(200).send({ ok: true, reset: Boolean(reset) });
+  } catch (err) {
+    console.error("adminSeedDuels error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
 // ─── Badges del usuario ──────────────────────────────────────────────
 
 /** Formatea una columna DATE (o string) a 'YYYY-MM' en hora local. */

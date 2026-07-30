@@ -459,6 +459,24 @@ export async function apiCloseDebugMonth(): Promise<{
   );
 }
 
+/**
+ * POST /admin/seed-duels — SOLO responde 200 si el backend tiene
+ * STAGING_DEBUG=true (si no, 404). Usado por el panel de debug de staging
+ * (roadmap §4, Etapa 2) para poblar amigos/duelos ficticios DIRIGIDOS a la
+ * propia cuenta del que prueba (banner de invitación, solicitudes, etc.).
+ */
+export async function apiSeedDuels(
+  userId: string,
+  reset = false,
+): Promise<{ ok: boolean; reset: boolean } | { error: string } | null> {
+  return apiFetch<{ ok: boolean; reset: boolean } | { error: string }>(
+    "/admin/seed-duels",
+    { method: "POST", body: JSON.stringify({ userId, reset }) },
+    8000,
+    true, // preservar el 422 (userId inválido) para mostrarlo
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // ─── Amigos y Duelos (Roadmap §4) ──────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════
