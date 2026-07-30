@@ -50,6 +50,14 @@ export function monthStartOf(d: Date): string {
   return `${y}-${m}-01`;
 }
 
+/** Mes anterior (UTC) al de `now`, como 'YYYY-MM'. Usado por el cron de cierre automático. */
+export function previousMonthKey(now: Date): string {
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
+}
+
 /**
  * Calcula el podio (posiciones 1..3, incluyendo empates) de un mes.
  *
@@ -146,8 +154,13 @@ export async function awardMonthlyPodium(
 
 // ─── Visualización de badges (inline en el ranking) ──────────────────
 
-/** Un badge listo para renderizar inline junto al nombre. `count > 1` => contador. */
-export type DisplayBadge = { type: string; count: number };
+/**
+ * Un badge listo para renderizar inline junto al nombre. `count > 1` => contador.
+ * `months` ('YYYY-MM'[], orden descendente) solo aplica a tipos mensuales
+ * (oro/plata/bronce) — alimenta el tooltip ("Ganador de Junio 2026", etc.).
+ * admin/superadmin no tienen meses (se derivan del rol, no de un evento puntual).
+ */
+export type DisplayBadge = { type: string; count: number; months?: string[] };
 
 /** Un slot de la selección de destacados del usuario. */
 export type FeaturedSlot = { type: MonthlyBadgeType; grouped?: boolean };
@@ -163,14 +176,17 @@ export type FeaturedSlot = { type: MonthlyBadgeType; grouped?: boolean };
  * Es DEFENSIVO: descarta slots inválidos o desactualizados (badges que el usuario
  * ya no posee) para que una selección vieja nunca rompa el ranking.
  *
- * @param ownedCounts { badge_type -> cantidad } de badges ganados por el usuario.
- * @param role        'user' | 'admin' | 'superadmin'
- * @param featured    selección del usuario o null (usar default).
+ * @param ownedCounts   { badge_type -> cantidad } de badges ganados por el usuario.
+ * @param role          'user' | 'admin' | 'superadmin'
+ * @param featured      selección del usuario o null (usar default).
+ * @param monthsByType  { badge_type -> ['YYYY-MM', ...] } para el tooltip (opcional,
+ *                      retrocompatible con llamadas/tests que no lo pasan).
  */
 export function deriveDisplayBadges(
   ownedCounts: Record<string, number>,
   role: string,
   featured: FeaturedSlot[] | null,
+  monthsByType: Record<string, string[]> = {},
 ): DisplayBadge[] {
   const out: DisplayBadge[] = [];
   if (role === "superadmin") out.push({ type: "superadmin", count: 1 });
@@ -181,7 +197,7 @@ export function deriveDisplayBadges(
     for (const type of BADGE_HIERARCHY) {
       if (out.length - baseAdminCount(role) >= MAX_FEATURED) break;
       const c = ownedCounts[type] ?? 0;
-      if (c > 0) out.push({ type, count: c });
+      if (c > 0) out.push({ type, count: c, months: monthsByType[type] ?? [] });
     }
     return out;
   }
@@ -193,13 +209,14 @@ export function deriveDisplayBadges(
     if (!slot || !isMonthlyBadgeType(slot.type)) continue;
     const owned = ownedCounts[slot.type] ?? 0;
     if (owned <= 0) continue;
+    const months = monthsByType[slot.type] ?? [];
     if (slot.grouped) {
-      out.push({ type: slot.type, count: owned });
+      out.push({ type: slot.type, count: owned, months });
     } else {
       const used = individualUsed[slot.type] ?? 0;
       if (used >= owned) continue; // no puede mostrar más de los que tiene
       individualUsed[slot.type] = used + 1;
-      out.push({ type: slot.type, count: 1 });
+      out.push({ type: slot.type, count: 1, months });
     }
   }
   return out;

@@ -277,6 +277,10 @@ const nl: Translations = {
   "badge.saving": "Opslaan...",
   "badge.save_error": "Kon niet opslaan. Probeer het opnieuw.",
   "badge.saved": "Selectie opgeslagen",
+  "badge.tooltip_admin": "Sitebeheerder",
+  "badge.tooltip_superadmin": "Superbeheerder",
+  "badge.tooltip_monthly_one": "Winnaar van {{month}}",
+  "badge.tooltip_monthly_many": "Winnaar van: {{months}}",
 };
 
 export default nl;

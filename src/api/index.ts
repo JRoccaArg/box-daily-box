@@ -11,7 +11,8 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
-import { initializeDatabase, cleanupExpiredSessions } from "./db";
+import { initializeDatabase, cleanupExpiredSessions, transaction } from "./db";
+import { awardMonthlyPodium, previousMonthKey } from "./badges";
 import {
   startChallenge,
   finishChallenge,
@@ -27,6 +28,7 @@ import {
   getUserBadges,
   setFeaturedBadges,
   adminSeedBadges,
+  adminGrantBadges,
 } from "./routes";
 import { googleAuthCallback, logout } from "./auth";
 
@@ -60,6 +62,27 @@ const requireDb = async (_req: any, reply: any) => {
     reply.code(503).send({ error: "DB no lista, reintenta en unos segundos" });
   }
 };
+
+/**
+ * Cierra automáticamente el mes anterior (oro/plata/bronce del podio) sin
+ * intervención manual. Mismo camino que `POST /admin/badges/close-month`
+ * (misma función, misma transacción), solo que lo dispara el propio server
+ * en vez de un curl manual. Nunca lanza: un error acá no debe tumbar el
+ * proceso (se loguea y se reintenta en el próximo tick, a la hora).
+ */
+async function closePreviousMonthBadges(): Promise<void> {
+  const month = previousMonthKey(new Date());
+  try {
+    const result = await transaction((client) =>
+      awardMonthlyPodium((sql, params) => client.query(sql, params), month),
+    );
+    if (result.awarded.length > 0) {
+      console.log(`🏆 Badges de ${result.month} otorgados: ${result.awarded.length}`);
+    }
+  } catch (err) {
+    console.error(`⚠️  Error cerrando badges de ${month}:`, err);
+  }
+}
 
 async function start(): Promise<void> {
   // ─── Helmet: headers de seguridad ─────────────────────────────────
@@ -251,6 +274,16 @@ async function start(): Promise<void> {
     adminSeedBadges as any,
   );
 
+  // Otorgar badges de prueba a la cuenta propia (SOLO STAGING).
+  app.post(
+    "/admin/grant-badges",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 5, timeWindow: "1 minute" } },
+    },
+    adminGrantBadges as any,
+  );
+
   // ─── Inicializar BD en background ─────────────────────────────────
   initializeDatabase()
     .then(() => {
@@ -265,6 +298,17 @@ async function start(): Promise<void> {
           })
           .catch(() => {});
       }, 60 * 60 * 1000); // cada hora
+
+      // Cierre automático del podio mensual (badges), sin intervención manual.
+      // Corre al arrancar + cada hora; SIEMPRE usa el reloj real del server
+      // (nunca el override de debug de staging, que solo aplica por request).
+      // Idempotente (ON CONFLICT DO NOTHING) y siempre pide el MES ANTERIOR
+      // al actual, que por definición ya está cerrado — así que no hace
+      // falta ningún cron externo ni disparo manual: apenas cruza la
+      // medianoche del día 1, el próximo tick (dentro de la hora) lo cierra
+      // solo.
+      closePreviousMonthBadges();
+      setInterval(closePreviousMonthBadges, 60 * 60 * 1000); // cada hora
     })
     .catch((err) => {
       console.error("⚠️  Database init error:", err);

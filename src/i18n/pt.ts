@@ -376,6 +376,10 @@ const pt: Translations = {
   "badge.saving": "Salvando...",
   "badge.save_error": "Não foi possível salvar. Tente novamente.",
   "badge.saved": "Seleção salva",
+  "badge.tooltip_admin": "Administrador do site",
+  "badge.tooltip_superadmin": "Super administrador",
+  "badge.tooltip_monthly_one": "Vencedor de {{month}}",
+  "badge.tooltip_monthly_many": "Vencedor de: {{months}}",
 };
 
 export default pt;

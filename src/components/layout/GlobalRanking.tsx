@@ -11,6 +11,7 @@ import { CountrySelect } from "@/components/ui/CountrySelect";
 import { Trophy } from "@/components/ui/Icon";
 import { BadgeIcon } from "@/components/ui/BadgeIcon";
 import { getEffectiveNow } from "@/lib/debugDate";
+import { formatBadgeTooltip } from "@/lib/badgeFormat";
 
 /** Máximo de badges visibles inline antes de colapsar en "+N" (espacio limitado en mobile). */
 const MAX_INLINE_BADGES = 2;
@@ -169,11 +170,7 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
                               type={b.type}
                               count={b.count}
                               size={14}
-                              title={
-                                b.count > 1
-                                  ? `${t(`badge.${b.type}`)} ×${b.count}`
-                                  : t(`badge.${b.type}`)
-                              }
+                              title={formatBadgeTooltip(b.type, b.months, t)}
                             />
                           ))}
                           {entry.displayBadges.length > MAX_INLINE_BADGES && (

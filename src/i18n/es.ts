@@ -196,6 +196,10 @@ const es: Translations = {
   "badge.saving": "Guardando...",
   "badge.save_error": "No se pudo guardar. Intentá de nuevo.",
   "badge.saved": "Selección guardada",
+  "badge.tooltip_admin": "Administrador del sitio",
+  "badge.tooltip_superadmin": "Super administrador",
+  "badge.tooltip_monthly_one": "Ganador de {{month}}",
+  "badge.tooltip_monthly_many": "Ganador de: {{months}}",
 
   // ─── Ranking Mensual (personal) ─────────────────────────────────────
   "monthly.title": "Ranking de {{month}}",

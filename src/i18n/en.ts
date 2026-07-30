@@ -188,6 +188,10 @@ const en: Translations = {
   "badge.saving": "Saving...",
   "badge.save_error": "Couldn't save. Try again.",
   "badge.saved": "Selection saved",
+  "badge.tooltip_admin": "Site administrator",
+  "badge.tooltip_superadmin": "Super administrator",
+  "badge.tooltip_monthly_one": "Winner of {{month}}",
+  "badge.tooltip_monthly_many": "Winner of: {{months}}",
 
   // ─── Monthly Ranking (personal) ─────────────────────────────────────
   "monthly.title": "{{month}} ranking",

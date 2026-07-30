@@ -448,7 +448,8 @@ async function computeDisplayBadgesForRanking(
 
   const userIds = entries.map((e) => e.userId);
   const res = await query(
-    `SELECT user_id, badge_type, COUNT(*)::int AS c
+    `SELECT user_id, badge_type, COUNT(*)::int AS c,
+            array_agg(reference_month::text ORDER BY reference_month DESC) AS months
        FROM badges
       WHERE user_id = ANY($1::text[])
       GROUP BY user_id, badge_type`,
@@ -456,14 +457,33 @@ async function computeDisplayBadgesForRanking(
   );
 
   const counts = new Map<string, Record<string, number>>();
-  for (const r of res.rows as Array<{ user_id: string; badge_type: string; c: number }>) {
+  const monthsByUser = new Map<string, Record<string, string[]>>();
+  for (const r of res.rows as Array<{
+    user_id: string;
+    badge_type: string;
+    c: number;
+    months: string[];
+  }>) {
     const rec = counts.get(r.user_id) ?? {};
     rec[r.badge_type] = Number(r.c);
     counts.set(r.user_id, rec);
+
+    const monthsRec = monthsByUser.get(r.user_id) ?? {};
+    // reference_month es DATE ('YYYY-MM-01T...'); nos quedamos con 'YYYY-MM'.
+    monthsRec[r.badge_type] = r.months.map((m) => m.substring(0, 7));
+    monthsByUser.set(r.user_id, monthsRec);
   }
 
   for (const e of entries) {
-    map.set(e.userId, deriveDisplayBadges(counts.get(e.userId) ?? {}, e.role, e.featured));
+    map.set(
+      e.userId,
+      deriveDisplayBadges(
+        counts.get(e.userId) ?? {},
+        e.role,
+        e.featured,
+        monthsByUser.get(e.userId) ?? {},
+      ),
+    );
   }
   return map;
 }
@@ -773,6 +793,77 @@ export async function adminSeedBadges(
     reply.code(200).send({ ok: true, reset: Boolean(reset) });
   } catch (err) {
     console.error("adminSeedBadges error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/** 'YYYY-MM-01' de `now` menos `n` meses (UTC). */
+function monthsAgoStartUtc(n: number, now: Date): string {
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - n, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`;
+}
+
+// ─── POST /admin/grant-badges (SOLO STAGING) ────────────────────────
+
+/**
+ * Otorga un set fijo de badges (3 oros + 1 plata + 1 bronce, en 5 meses YA
+ * cerrados y bien alejados de cualquier escenario de scripts/seed-badges.ts
+ * para que nunca colisionen) a la cuenta real del que está probando en
+ * staging — así puede abrir "Mi Progreso" y probar la galería/selector con
+ * sus propios badges, sin depender de los usuarios ficticios del seed.
+ * Inserta las filas DIRECTO en `badges` (no juega attempts ni recalcula
+ * ranking): no afecta el ranking de ningún mes, solo la colección propia
+ * del usuario. Gateado únicamente por STAGING_DEBUG (mismo razonamiento que
+ * adminSeedBadges: no debe requerir ADMIN_SECRET en el frontend).
+ * Body: { userId: string }.
+ */
+export async function adminGrantBadges(
+  req: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  if (!isStagingDebugEnabled()) {
+    reply.code(404).send({ error: "No encontrado" });
+    return;
+  }
+  try {
+    const { userId } = (req.body ?? {}) as { userId?: string };
+    if (!userId || !isValidUserId(userId)) {
+      reply.code(422).send({ error: "userId inválido" });
+      return;
+    }
+
+    // Asegura que exista la fila (si el usuario ya existe, no la toca).
+    await query(
+      `INSERT INTO users (id, display_name, country_code)
+       VALUES ($1, 'Debug Tester', 'ARG')
+       ON CONFLICT (id) DO NOTHING`,
+      [userId],
+    );
+
+    const now = resolveNow(req);
+    const grants: Array<{ type: "monthly_gold" | "monthly_silver" | "monthly_bronze"; monthsAgo: number }> = [
+      { type: "monthly_gold", monthsAgo: 20 },
+      { type: "monthly_gold", monthsAgo: 21 },
+      { type: "monthly_gold", monthsAgo: 22 },
+      { type: "monthly_silver", monthsAgo: 23 },
+      { type: "monthly_bronze", monthsAgo: 24 },
+    ];
+    let inserted = 0;
+    for (const g of grants) {
+      const monthStart = monthsAgoStartUtc(g.monthsAgo, now);
+      const res = await query(
+        `INSERT INTO badges (user_id, badge_type, reference_month)
+         VALUES ($1, $2, $3::date)
+         ON CONFLICT (user_id, badge_type, reference_month) DO NOTHING
+         RETURNING id`,
+        [userId, g.type, monthStart],
+      );
+      inserted += res.rows.length;
+    }
+
+    reply.code(200).send({ ok: true, userId, grantedCount: inserted });
+  } catch (err) {
+    console.error("adminGrantBadges error:", err);
     reply.code(500).send({ error: "Error interno" });
   }
 }

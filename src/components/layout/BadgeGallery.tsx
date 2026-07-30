@@ -17,6 +17,7 @@ import {
   type UserBadges,
   type FeaturedSlot,
 } from "@/lib/api";
+import { formatBadgeTooltip } from "@/lib/badgeFormat";
 
 const MONTHLY_TYPES: FeaturedSlot["type"][] = [
   "monthly_gold",
@@ -142,7 +143,11 @@ export function BadgeGallery({ userId }: BadgeGalleryProps) {
 
       {hasRoleBadge && (
         <div className="mt-2 flex items-center gap-2 rounded-md bg-asphalt-800/60 px-2.5 py-1.5">
-          <BadgeIcon type={data.role as "admin" | "superadmin"} size={16} />
+          <BadgeIcon
+            type={data.role as "admin" | "superadmin"}
+            size={16}
+            title={formatBadgeTooltip(data.role as "admin" | "superadmin", undefined, t)}
+          />
           <span className="text-xs font-medium text-ink">{t(`badge.${data.role}`)}</span>
         </div>
       )}
@@ -170,7 +175,16 @@ export function BadgeGallery({ userId }: BadgeGalleryProps) {
                       disabled ? "cursor-not-allowed opacity-40" : "",
                     ].join(" ")}
                   >
-                    <BadgeIcon type={ty} count={owned} size={18} />
+                    <BadgeIcon
+                      type={ty}
+                      count={owned}
+                      size={18}
+                      title={formatBadgeTooltip(
+                        ty,
+                        data.owned.filter((b) => b.type === ty && b.referenceMonth).map((b) => b.referenceMonth as string),
+                        t,
+                      )}
+                    />
                     <span className="text-sm font-medium text-ink">{t(`badge.${ty}`)}</span>
                     {owned > 1 && (
                       <span className="text-xs text-ink-faint">×{owned}</span>

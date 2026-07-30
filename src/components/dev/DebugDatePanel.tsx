@@ -12,8 +12,9 @@
 
 import { useState } from "react";
 import { isStagingBuild, getDebugDateOverride, setDebugDateOverride } from "@/lib/debugDate";
-import { apiSeedBadges } from "@/lib/api";
+import { apiSeedBadges, apiGrantSelfBadges } from "@/lib/api";
 import { dateKey } from "@/lib/seed";
+import { getIdentity } from "@/lib/identity";
 
 export function DebugDatePanel() {
   if (!isStagingBuild()) return null;
@@ -48,6 +49,22 @@ function DebugDatePanelInner() {
       return;
     }
     setMessage(reset ? "Datos de seed eliminados." : "Seed de badges cargado.");
+  }
+
+  async function grantSelf() {
+    setSeeding(true);
+    setMessage(null);
+    const { userId } = getIdentity();
+    const res = await apiGrantSelfBadges(userId);
+    setSeeding(false);
+    if (!res) {
+      setMessage("Error: el backend no respondió (¿STAGING_DEBUG=true en Railway?)");
+      return;
+    }
+    setMessage(
+      `Te di ${res.grantedCount} badges nuevos (3 oro + 1 plata + 1 bronce). ` +
+        "Abrí Stats → Mi Progreso para probar el selector.",
+    );
   }
 
   return (
@@ -129,7 +146,7 @@ function DebugDatePanelInner() {
           <hr style={{ border: "none", borderTop: "1px solid #3f3f46", margin: "8px 0" }} />
 
           <label style={{ display: "block", marginBottom: 4 }}>Datos de prueba (badges)</label>
-          <div style={{ display: "flex", gap: 6 }}>
+          <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
             <button type="button" disabled={seeding} onClick={() => runSeed(false)} style={btnStyle("#16a34a")}>
               {seeding ? "..." : "Cargar seed"}
             </button>
@@ -137,6 +154,9 @@ function DebugDatePanelInner() {
               {seeding ? "..." : "Limpiar"}
             </button>
           </div>
+          <button type="button" disabled={seeding} onClick={grantSelf} style={{ ...btnStyle("#0ea5e9"), width: "100%" }}>
+            {seeding ? "..." : "Darme badges (mi cuenta)"}
+          </button>
           {message && <p style={{ marginTop: 6, color: "#a1a1aa" }}>{message}</p>}
         </div>
       )}

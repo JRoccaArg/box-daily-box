@@ -291,6 +291,10 @@ const ru: Translations = {
   "badge.saving": "Сохранение...",
   "badge.save_error": "Не удалось сохранить. Попробуйте еще раз.",
   "badge.saved": "Выбор сохранен",
+  "badge.tooltip_admin": "Администратор сайта",
+  "badge.tooltip_superadmin": "Супер-администратор",
+  "badge.tooltip_monthly_one": "Победитель {{month}}",
+  "badge.tooltip_monthly_many": "Победитель: {{months}}",
 };
 
 export default ru;

@@ -343,6 +343,10 @@ const ja: Translations = {
   "badge.saving": "保存中...",
   "badge.save_error": "保存できませんでした。もう一度お試しください。",
   "badge.saved": "選択を保存しました",
+  "badge.tooltip_admin": "サイト管理者",
+  "badge.tooltip_superadmin": "スーパー管理者",
+  "badge.tooltip_monthly_one": "{{month}}の優勝者",
+  "badge.tooltip_monthly_many": "優勝: {{months}}",
 };
 
 export default ja;

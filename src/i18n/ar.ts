@@ -277,6 +277,10 @@ const ar: Translations = {
   "badge.saving": "جاري الحفظ...",
   "badge.save_error": "تعذر الحفظ. حاول مرة أخرى.",
   "badge.saved": "تم حفظ الاختيار",
+  "badge.tooltip_admin": "مسؤول الموقع",
+  "badge.tooltip_superadmin": "مسؤول سوبر",
+  "badge.tooltip_monthly_one": "الفائز في {{month}}",
+  "badge.tooltip_monthly_many": "الفائز في: {{months}}",
 };
 
 export default ar;

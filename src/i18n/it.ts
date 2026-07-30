@@ -376,6 +376,10 @@ const it: Translations = {
   "badge.saving": "Salvataggio in corso...",
   "badge.save_error": "Impossibile salvare. Riprova.",
   "badge.saved": "Selezione salvata",
+  "badge.tooltip_admin": "Amministratore del sito",
+  "badge.tooltip_superadmin": "Super amministratore",
+  "badge.tooltip_monthly_one": "Vincitore di {{month}}",
+  "badge.tooltip_monthly_many": "Vincitore di: {{months}}",
 };
 
 export default it;

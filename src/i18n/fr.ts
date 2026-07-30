@@ -377,6 +377,10 @@ const fr: Translations = {
   "badge.saving": "Enregistrement...",
   "badge.save_error": "Impossible d'enregistrer. Réessayez.",
   "badge.saved": "Sélection enregistrée",
+  "badge.tooltip_admin": "Administrateur du site",
+  "badge.tooltip_superadmin": "Super administrateur",
+  "badge.tooltip_monthly_one": "Vainqueur de {{month}}",
+  "badge.tooltip_monthly_many": "Vainqueur de: {{months}}",
 };
 
 export default fr;

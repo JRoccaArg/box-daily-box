@@ -336,6 +336,10 @@ const zh: Translations = {
   "badge.saving": "保存中...",
   "badge.save_error": "无法保存。请重试。",
   "badge.saved": "已保存选择",
+  "badge.tooltip_admin": "网站管理员",
+  "badge.tooltip_superadmin": "超级管理员",
+  "badge.tooltip_monthly_one": "{{month}}的获胜者",
+  "badge.tooltip_monthly_many": "获胜于: {{months}}",
 };
 
 export default zh;

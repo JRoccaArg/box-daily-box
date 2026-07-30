@@ -375,6 +375,10 @@ const hi: Translations = {
   "badge.saving": "सहेज रहे हैं...",
   "badge.save_error": "सहेज नहीं सके। फिर से कोशिश करें।",
   "badge.saved": "चयन सहेजा गया",
+  "badge.tooltip_admin": "साइट प्रशासक",
+  "badge.tooltip_superadmin": "सुपर प्रशासक",
+  "badge.tooltip_monthly_one": "{{month}} का विजेता",
+  "badge.tooltip_monthly_many": "विजेता: {{months}}",
 };
 
 export default hi;

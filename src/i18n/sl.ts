@@ -391,6 +391,10 @@ const sl: Translations = {
   "badge.saving": "Shranjevanje...",
   "badge.save_error": "Ni bilo mogoče shraniti. Poskusite znova.",
   "badge.saved": "Izbor je shranjen",
+  "badge.tooltip_admin": "Skrbnik strani",
+  "badge.tooltip_superadmin": "Super skrbnik",
+  "badge.tooltip_monthly_one": "Zmagovalec {{month}}",
+  "badge.tooltip_monthly_many": "Zmagovalec: {{months}}",
 };
 
 export default sl;

@@ -391,6 +391,10 @@ const tr: Translations = {
   "badge.saving": "Kaydediliyor...",
   "badge.save_error": "Kaydedilemedi. Tekrar deneyin.",
   "badge.saved": "Seçim kaydedildi",
+  "badge.tooltip_admin": "Site yöneticisi",
+  "badge.tooltip_superadmin": "Süper yönetici",
+  "badge.tooltip_monthly_one": "{{month}} kazananı",
+  "badge.tooltip_monthly_many": "Kazanan: {{months}}",
 };
 
 export default tr;

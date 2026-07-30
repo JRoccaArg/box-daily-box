@@ -39,8 +39,11 @@ export type BadgeType =
   | "admin"
   | "superadmin";
 
-/** Badge listo para renderizar inline junto al nombre (count > 1 => contador). */
-export type DisplayBadge = { type: BadgeType; count: number };
+/**
+ * Badge listo para renderizar inline junto al nombre (count > 1 => contador).
+ * `months` ('YYYY-MM'[]) solo en tipos mensuales — alimenta el tooltip.
+ */
+export type DisplayBadge = { type: BadgeType; count: number; months?: string[] };
 
 export type RankingEntry = {
   rank: number;
@@ -414,4 +417,22 @@ export async function apiSeedBadges(
     method: "POST",
     body: JSON.stringify({ reset }),
   });
+}
+
+/**
+ * POST /admin/grant-badges — SOLO responde 200 si el backend tiene
+ * STAGING_DEBUG=true (si no, 404). Otorga 3 oros + 1 plata + 1 bronce a la
+ * cuenta indicada (pensado para la propia cuenta del que prueba en staging),
+ * para poder abrir "Mi Progreso" y probar la galería con badges reales.
+ */
+export async function apiGrantSelfBadges(
+  userId: string,
+): Promise<{ ok: boolean; userId: string; grantedCount: number } | null> {
+  return apiFetch<{ ok: boolean; userId: string; grantedCount: number }>(
+    "/admin/grant-badges",
+    {
+      method: "POST",
+      body: JSON.stringify({ userId }),
+    },
+  );
 }

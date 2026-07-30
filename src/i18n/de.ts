@@ -291,6 +291,10 @@ const de: Translations = {
   "badge.saving": "Wird gespeichert...",
   "badge.save_error": "Konnte nicht gespeichert werden. Versuchen Sie es erneut.",
   "badge.saved": "Auswahl gespeichert",
+  "badge.tooltip_admin": "Website-Administrator",
+  "badge.tooltip_superadmin": "Super-Administrator",
+  "badge.tooltip_monthly_one": "Gewinner von {{month}}",
+  "badge.tooltip_monthly_many": "Gewinner von: {{months}}",
 };
 
 export default de;
