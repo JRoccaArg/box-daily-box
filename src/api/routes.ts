@@ -1655,6 +1655,9 @@ type DuelRow = {
   opponent_result: any;
   expires_at: Date;
   finished_at: Date | null;
+  // Solo presentes cuando la query los joinea explícitamente (getDuel).
+  creator_name?: string | null;
+  creator_country?: string | null;
 };
 
 /** Serializa un duelo para el cliente, aplicando el modo A CIEGAS: el resultado
@@ -1672,6 +1675,8 @@ function serializeDuel(d: DuelRow, viewerId: string) {
     status: d.status,
     creatorId: d.creator_id,
     opponentId: d.opponent_id,
+    creatorName: d.creator_name ?? null,
+    creatorCountry: d.creator_country ?? null,
     youAre: isCreator ? "creator" : "opponent",
     myResult: myResult ?? null,
     // A ciegas: solo se revela el resultado ajeno cuando ambos terminaron.
@@ -2051,7 +2056,19 @@ export async function cancelDuel(req: FastifyRequest, reply: FastifyReply): Prom
   }
 }
 
-/** GET /duels/:id — estado del duelo (para polling). Ownership + modo a ciegas. */
+/**
+ * GET /duels/:id — estado del duelo (para polling). Ownership estricto salvo
+ * UNA excepción: un duelo por LINK ABIERTO (`opponent_id IS NULL`, todavía
+ * 'pending') puede ser leído por cualquiera SIN identityToken — es lo que le
+ * permite a quien recibe el link por WhatsApp ver juego/dificultad/tiempo/
+ * quién desafía ANTES de aceptar (si no, el primer contacto con el duelo
+ * sería un "aceptar a ciegas", que rompe la promesa de "ver antes de
+ * aceptar"). No es una filtración: nadie jugó todavía (no hay resultados que
+ * proteger) y el link ya es, por diseño, algo que el creador decidió
+ * compartir. En cuanto alguien lo acepta (o si el duelo iba dirigido a un
+ * amigo específico, con opponent_id ya seteado), vuelve a aplicar el
+ * ownership estricto de siempre.
+ */
 export async function getDuel(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     const { id } = req.params as { id: string };
@@ -2060,18 +2077,29 @@ export async function getDuel(req: FastifyRequest, reply: FastifyReply): Promise
       reply.code(422).send({ error: "duelId inválido" });
       return;
     }
-    if (!requireOwnership(reply, identityToken, userId)) return;
 
-    const found = await query("SELECT * FROM duels WHERE id = $1", [id]);
+    const found = await query(
+      `SELECT d.*, u.display_name AS creator_name, u.country_code AS creator_country
+       FROM duels d JOIN users u ON u.id = d.creator_id
+       WHERE d.id = $1`,
+      [id],
+    );
     const duel = found.rows[0] as DuelRow | undefined;
     if (!duel) {
       reply.code(404).send({ error: "Duelo no encontrado" });
       return;
     }
-    if (userId !== duel.creator_id && userId !== duel.opponent_id) {
+
+    const isOpenPreview = duel.status === "pending" && duel.opponent_id === null;
+    const isParticipant = !!userId && (userId === duel.creator_id || userId === duel.opponent_id);
+
+    if (isParticipant) {
+      if (!requireOwnership(reply, identityToken, userId)) return;
+    } else if (!isOpenPreview) {
       reply.code(403).send({ error: "No sos participante de este duelo" });
       return;
     }
+
     // Marcar expirado si venció sin terminar (lazy).
     if (
       (duel.status === "pending" || duel.status === "active") &&
@@ -2080,7 +2108,7 @@ export async function getDuel(req: FastifyRequest, reply: FastifyReply): Promise
       await query("UPDATE duels SET status = 'expired' WHERE id = $1 AND status IN ('pending','active')", [id]);
       duel.status = "expired";
     }
-    reply.code(200).send(serializeDuel(duel, userId));
+    reply.code(200).send(serializeDuel(duel, userId ?? ""));
   } catch (err) {
     console.error("getDuel error:", err);
     reply.code(500).send({ error: "Error interno" });

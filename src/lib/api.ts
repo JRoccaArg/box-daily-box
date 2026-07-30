@@ -493,6 +493,8 @@ export type DuelState = {
   status: DuelStatus;
   creatorId: string;
   opponentId: string | null;
+  creatorName: string | null;
+  creatorCountry: string | null;
   youAre: "creator" | "opponent";
   myResult: DuelResult | null;
   /** Solo revelado cuando ambos terminaron (status='finished'). */

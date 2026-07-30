@@ -9,6 +9,7 @@ import { MonthlyRanking } from "./MonthlyRanking";
 import { GlobalRanking } from "./GlobalRanking";
 import { IdentityModal } from "./IdentityModal";
 import { BadgeGallery } from "./BadgeGallery";
+import { FriendsTab } from "./FriendsTab";
 import { getIdentity } from "@/lib/identity";
 import { NATIONALITIES } from "@/data/nationalities";
 
@@ -17,7 +18,7 @@ type StatsModalProps = {
   onClose: () => void;
 };
 
-type View = "personal" | "global";
+type View = "personal" | "global" | "friends";
 
 /** Panel de estadisticas + ranking global + perfil. */
 export function StatsModal({ open, onClose }: StatsModalProps) {
@@ -65,7 +66,7 @@ export function StatsModal({ open, onClose }: StatsModalProps) {
           </button>
         </div>
 
-        {/* Tabs personal/global */}
+        {/* Tabs personal/global/amigos */}
         <div className="mb-4 flex gap-1 rounded-lg border border-white/10 bg-asphalt-800 p-1">
           <ViewTab active={view === "global"} onClick={() => setView("global")}>
             {t("stats.tab_global")}
@@ -73,11 +74,14 @@ export function StatsModal({ open, onClose }: StatsModalProps) {
           <ViewTab active={view === "personal"} onClick={() => setView("personal")}>
             {t("stats.tab_personal")}
           </ViewTab>
+          <ViewTab active={view === "friends"} onClick={() => setView("friends")}>
+            {t("friends.tab_title")}
+          </ViewTab>
         </div>
 
-        {view === "global" ? (
-          <GlobalRanking refreshKey={summary.won + summary.lost} />
-        ) : (
+        {view === "global" && <GlobalRanking refreshKey={summary.won + summary.lost} />}
+        {view === "friends" && <FriendsTab />}
+        {view === "personal" && (
           <>
             <BadgeGallery userId={identity.userId} />
 

@@ -6,6 +6,7 @@ import { StatsProvider } from "@/context";
 import { Layout } from "@/components/layout/Layout";
 import { Home } from "@/pages/Home";
 import { GamePage } from "@/pages/GamePage";
+import { DuelPage } from "@/pages/DuelPage";
 import { AuthCallback } from "@/pages/AuthCallback";
 import { RootRedirect } from "@/pages/RootRedirect";
 import { GAMES } from "@/components/games/registry";
@@ -78,6 +79,11 @@ export const routes: RouteRecord[] = [
         Component: GamePage,
         getStaticPaths: () => GAMES.map((g) => `juego/${g.id}`),
       },
+      // Sin getStaticPaths: el duelId es dinámico, no existe en build-time.
+      // vercel.json reescribe esta ruta al HTML ya generado de "/:lang" para
+      // que el link de invitación no dé 404 al abrirse en frío; el router
+      // client-side monta DuelPage normalmente después de hidratar.
+      { path: "duelo/:duelId", Component: DuelPage },
     ],
   },
   // "/" (x-default): redirige al idioma preferido. Se prerenderiza con

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Header } from "./Header";
 import { useI18n } from "@/context";
 import { DebugDatePanel } from "@/components/dev/DebugDatePanel";
+import { DuelBanner } from "./DuelBanner";
 
 /** Marco de pagina: header pegajoso + contenedor centrado + footer. */
 export function Layout({ children }: { children: ReactNode }) {
@@ -19,6 +20,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
       </footer>
       <DebugDatePanel />
+      <DuelBanner />
     </div>
   );
 }

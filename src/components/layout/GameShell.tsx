@@ -9,6 +9,8 @@ import { isIdentityComplete } from "@/lib/identity";
 import { updateServerPoints, saveSolution } from "@/lib/stats";
 import { emit, Events } from "@/lib/events";
 import { getEffectiveNow } from "@/lib/debugDate";
+import { setGameplayActive } from "@/lib/gameplayState";
+import { DuelChallengeModal } from "@/components/layout/DuelChallengeModal";
 import { IdentityModal } from "@/components/layout/IdentityModal";
 import { homePath } from "@/lib/routes";
 import { useTimer } from "@/hooks/useTimer";
@@ -23,6 +25,7 @@ import {
   Flag as FlagIcon,
   Lock,
   Timer as TimerIcon,
+  Swords,
 } from "@/components/ui/Icon";
 
 type Phase = "config" | "playing" | "finished";
@@ -68,6 +71,8 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   // Modal de identidad (si el usuario no configuró nombre/pais).
   const [identityOpen, setIdentityOpen] = useState(false);
+  // Modal "Desafiar amigo" (Roadmap §4).
+  const [challengeOpen, setChallengeOpen] = useState(false);
   // true si el resultado NO entró al ranking (otra cuenta de la IP ya jugó).
   const [notRanked, setNotRanked] = useState(false);
   const navigate = useNavigate();
@@ -216,6 +221,13 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
     if (phase === "playing") startTimer();
     else pauseTimer();
   }, [phase, startTimer, pauseTimer]);
+
+  // Le avisa a DuelBanner (Roadmap §4) que no debe interrumpir mientras se
+  // juega. Se limpia al desmontar para no dejar la bandera "trabada" en true.
+  useEffect(() => {
+    setGameplayActive(phase === "playing");
+    return () => setGameplayActive(false);
+  }, [phase]);
 
   const beginPlaying = () => {
     if (!isIdentityComplete()) {
@@ -375,14 +387,23 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
             </p>
           )}
 
-          <div className="mt-7">
+          <div className="mt-7 space-y-2">
             <Button size="lg" block onClick={beginPlaying}>
               {t("shell.start")}
+            </Button>
+            <Button size="md" variant="outline" block onClick={() => setChallengeOpen(true)}>
+              <Swords size={16} />
+              {t("duel.challenge_button")}
             </Button>
           </div>
         </Panel>
 
         <IdentityModal open={identityOpen} onClose={handleIdentitySaved} />
+        <DuelChallengeModal
+          open={challengeOpen}
+          onClose={() => setChallengeOpen(false)}
+          mode={{ kind: "fromGame", gameId: game.id, difficulty, timeLimit }}
+        />
       </div>
     );
   }

@@ -128,9 +128,12 @@ async function partA() {
 
   console.log("\n▶ GET /duels/:id (getDuel) y /duels/pending");
   {
+    // Validación de formato corre ANTES de tocar la DB (a diferencia de la
+    // autorización de ownership, que desde el "preview de link abierto"
+    // depende de leer el duelo primero — ver Parte B para esos casos).
     const r = mockReply();
-    await getDuel({ params: { id: DUEL_ID }, query: { userId: CREATOR } } as any, r);
-    assert(r._state.code === 403, `sin identityToken → 403 (recibido: ${r._state.code})`);
+    await getDuel({ params: { id: "corto" }, query: { userId: CREATOR } } as any, r);
+    assert(r._state.code === 422, `duelId con formato inválido → 422 (recibido: ${r._state.code})`);
   }
   {
     const r = mockReply();
@@ -384,6 +387,50 @@ async function partB() {
   assert(
     Number(creatorRanked?.points ?? 0) === 300,
     `el ranking solo cuenta el attempt diario (300 pts), no los 500+999 de duelo (obtenido: ${creatorRanked?.points})`,
+  );
+
+  // ─── getDuel: preview de link abierto vs ownership estricto ─────────
+  // Réplica de la lógica de autorización agregada a getDuel (Etapa 3):
+  // un duelo 'pending' con opponent_id NULL (link abierto, sin reclamar)
+  // es legible por cualquiera SIN identityToken; cualquier otro caso exige
+  // ser participante.
+  console.log("\n[getDuel: preview de link abierto vs ownership]");
+  await resetData();
+  await q(
+    `INSERT INTO duels (id, creator_id, opponent_id, game_id, difficulty, seed, status, expires_at)
+     VALUES ('DUELOPEN', $1, NULL, 'pittexto', 'medio', 'DUELOPEN', 'pending', now() + interval '60 seconds')`,
+    [CREATOR],
+  );
+  const THIRD_PARTY = "anon-99999999-9999-9999-9999-999999999999";
+  await q("INSERT INTO users (id) VALUES ($1) ON CONFLICT DO NOTHING", [THIRD_PARTY]);
+  // Otro creador (OPPONENT) para no chocar con el índice "1 activo" de CREATOR.
+  await q(
+    `INSERT INTO duels (id, creator_id, opponent_id, game_id, difficulty, seed, status, expires_at)
+     VALUES ('DUELDIR1', $1, $2, 'pittexto', 'medio', 'DUELDIR1', 'active', now() + interval '15 minutes')`,
+    [OPPONENT, CREATOR],
+  );
+  function canPreview(status: string, opponentId: string | null): boolean {
+    return status === "pending" && opponentId === null;
+  }
+  function canRead(viewerId: string | null, status: string, creatorId: string, opponentId: string | null): boolean {
+    const isParticipant = !!viewerId && (viewerId === creatorId || viewerId === opponentId);
+    return isParticipant || canPreview(status, opponentId);
+  }
+  assert(
+    canRead(null, "pending", CREATOR, null),
+    "duelo pending + link abierto: legible SIN identityToken (preview antes de aceptar)",
+  );
+  assert(
+    !canRead(null, "active", OPPONENT, CREATOR),
+    "duelo active y dirigido: NO legible sin ser participante (ownership estricto se mantiene)",
+  );
+  assert(
+    !canRead(THIRD_PARTY, "active", OPPONENT, CREATOR),
+    "duelo active: un tercero ajeno tampoco puede leerlo",
+  );
+  assert(
+    canRead(CREATOR, "active", OPPONENT, CREATOR),
+    "duelo active: el propio oponente sí puede leerlo",
   );
 }
 

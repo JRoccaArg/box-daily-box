@@ -14,3 +14,8 @@ export function homePath(locale: Locale): string {
 export function gamePath(locale: Locale, gameId: string): string {
   return `/${locale}/juego/${gameId}`;
 }
+
+/** Página de un duelo (invitación/juego en vivo, Roadmap §4), ej: duelPath("en", "ABCDEFGH") -> "/en/duelo/ABCDEFGH" */
+export function duelPath(locale: Locale, duelId: string): string {
+  return `/${locale}/duelo/${duelId}`;
+}

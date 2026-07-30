@@ -21,5 +21,11 @@
       "destination": "/es/juego/:gameId",
       "permanent": true
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/:lang/duelo/:duelId",
+      "destination": "/:lang"
+    }
   ]
 }
