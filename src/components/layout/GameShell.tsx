@@ -8,6 +8,7 @@ import { apiStartChallenge, apiFinishChallenge } from "@/lib/api";
 import { isIdentityComplete } from "@/lib/identity";
 import { updateServerPoints, saveSolution } from "@/lib/stats";
 import { emit, Events } from "@/lib/events";
+import { getEffectiveNow } from "@/lib/debugDate";
 import { IdentityModal } from "@/components/layout/IdentityModal";
 import { homePath } from "@/lib/routes";
 import { useTimer } from "@/hooks/useTimer";
@@ -42,7 +43,7 @@ type GameShellProps = {
  * Cada juego solo implementa su logica y recibe `GameProps`. Asi se evita
  * duplicar el andamiaje y se mantiene un contrato unico y estable.
  */
-export function GameShell({ game, date = new Date() }: GameShellProps) {
+export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
   const { record, playedStatus, refreshStats } = useStats();
   const { t, locale } = useI18n();
   const lockedStatus = playedStatus(game.id, date);

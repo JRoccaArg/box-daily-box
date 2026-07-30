@@ -8,6 +8,7 @@
 
 import { getIdentity, setIdentityToken, getIdentityToken } from "./identity";
 import { dateKey } from "./seed";
+import { getDebugDateOverride } from "./debugDate";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "";
 
@@ -78,11 +79,19 @@ async function apiFetch<T>(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
+    // Solo tiene efecto real si el backend corre con STAGING_DEBUG=true
+    // (servicio de Railway aislado de producción); si no, el header se
+    // ignora en el server. `getDebugDateOverride` ya devuelve null fuera
+    // de un build de staging (VITE_STAGING=true), así que esto es un
+    // no-op inerte en producción.
+    const debugDate = getDebugDateOverride();
+
     const res = await fetch(`${API_URL}${path}`, {
       ...options,
       signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
+        ...(debugDate ? { "X-Debug-Date": debugDate } : {}),
         ...options.headers,
       },
     });
@@ -391,4 +400,18 @@ export async function apiSetFeaturedBadges(
     8000,
     true, // preservar errores 4xx (selección inválida, no autorizado)
   );
+}
+
+/**
+ * POST /admin/seed-badges — SOLO responde 200 si el backend tiene
+ * STAGING_DEBUG=true (si no, 404). Usado por el panel de debug de staging
+ * (roadmap #1) para poblar/limpiar los escenarios de prueba de badges.
+ */
+export async function apiSeedBadges(
+  reset = false,
+): Promise<{ ok: boolean; reset: boolean } | null> {
+  return apiFetch<{ ok: boolean; reset: boolean }>("/admin/seed-badges", {
+    method: "POST",
+    body: JSON.stringify({ reset }),
+  });
 }

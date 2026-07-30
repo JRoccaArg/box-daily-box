@@ -23,6 +23,7 @@
  *   DATABASE_URL=postgresql://... npx tsx --tsconfig tsconfig.app.json scripts/seed-badges.ts --yes
  *   DATABASE_URL=postgresql://... npx tsx --tsconfig tsconfig.app.json scripts/seed-badges.ts --yes --reset
  */
+import { pathToFileURL } from "node:url";
 import { initializeDatabase, query, transaction } from "../src/api/db";
 import { awardMonthlyPodium } from "../src/api/badges";
 
@@ -76,7 +77,7 @@ function redactedHost(databaseUrl: string): string {
   }
 }
 
-async function cleanupSeedData(): Promise<void> {
+export async function cleanupSeedData(): Promise<void> {
   // Alcance ESTRICTO: solo estos userId fijos. Nunca toca datos reales.
   await query("DELETE FROM badges WHERE user_id = ANY($1::text[])", [ALL_USER_IDS] as any);
   await query("DELETE FROM attempts WHERE user_id = ANY($1::text[])", [ALL_USER_IDS] as any);
@@ -89,7 +90,7 @@ async function insertUsers(): Promise<void> {
       `INSERT INTO users (id, display_name, country_code)
        VALUES ($1, $2, 'ARG')
        ON CONFLICT (id) DO NOTHING`,
-      [id, DISPLAY_NAMES[id]],
+      [id, DISPLAY_NAMES[id] as string],
     );
   }
   await query("UPDATE users SET role = 'admin' WHERE id = $1", [USERS.admin]);
@@ -108,7 +109,7 @@ async function playWin(userId: string, monthStart: string, points: number): Prom
   );
 }
 
-async function seed(now: Date): Promise<void> {
+export async function seed(now: Date): Promise<void> {
   const monthMinus1 = monthsAgoStart(1, now); // podio limpio
   const monthMinus2 = monthsAgoStart(2, now); // empate en 1er puesto
   // El "triple campeón" usa meses APARTE (-3,-4,-5): si compartiera mes con los
@@ -200,7 +201,17 @@ async function main(): Promise<void> {
   process.exit(0);
 }
 
-main().catch((err) => {
-  console.error("Error inesperado en el seed:", err);
-  process.exit(1);
-});
+// Solo corre `main()` (que valida --yes y puede hacer process.exit) cuando el
+// archivo se ejecuta directamente como CLI (`tsx scripts/seed-badges.ts`).
+// Si en cambio se hace `import { seed, cleanupSeedData }` desde el server
+// (endpoint /admin/seed-badges), este bloque NO debe correr — de lo
+// contrario un simple import mataría el proceso del backend con
+// process.exit(1) por no tener --yes.
+const isDirectRun =
+  Boolean(process.argv[1]) && import.meta.url === pathToFileURL(process.argv[1] as string).href;
+if (isDirectRun) {
+  main().catch((err) => {
+    console.error("Error inesperado en el seed:", err);
+    process.exit(1);
+  });
+}

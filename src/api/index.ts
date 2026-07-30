@@ -26,6 +26,7 @@ import {
   adminCloseMonth,
   getUserBadges,
   setFeaturedBadges,
+  adminSeedBadges,
 } from "./routes";
 import { googleAuthCallback, logout } from "./auth";
 
@@ -238,6 +239,16 @@ async function start(): Promise<void> {
       config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
     },
     setFeaturedBadges as any,
+  );
+
+  // Seed de datos de prueba (SOLO STAGING — 404 si STAGING_DEBUG no está en 'true').
+  app.post(
+    "/admin/seed-badges",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 5, timeWindow: "1 minute" } },
+    },
+    adminSeedBadges as any,
   );
 
   // ─── Inicializar BD en background ─────────────────────────────────

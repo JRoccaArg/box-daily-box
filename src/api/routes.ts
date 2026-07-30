@@ -28,6 +28,7 @@ import {
   type DisplayBadge,
   type FeaturedSlot,
 } from "./badges";
+import { resolveNow, isStagingDebugEnabled } from "./debugDate";
 
 const SESSION_TTL = 15 * 60 * 1000; // 15 minutos
 
@@ -132,7 +133,7 @@ export async function startChallenge(
     const country = isValidCountry(countryCode) ? countryCode : null;
 
     // Usar la fecha LOCAL del cliente si es valida (±1 dia de UTC).
-    const utcToday = new Date().toISOString().substring(0, 10);
+    const utcToday = resolveNow(req).toISOString().substring(0, 10);
     let today = utcToday;
     if (isValidDateKey(clientDateKey)) {
       const clientMs = new Date(clientDateKey + "T12:00:00Z").getTime();
@@ -478,7 +479,7 @@ export async function getRankingMonthly(
     // Validar month: si es basura, usar mes actual.
     const target = isValidMonth(month)
       ? `${month}-01`
-      : new Date().toISOString().substring(0, 7) + "-01";
+      : resolveNow(req).toISOString().substring(0, 7) + "-01";
 
     const countryFilter = isValidCountry(country) ? country : null;
 
@@ -550,7 +551,7 @@ export async function getRankingDaily(
     const { date, country } = req.query as { date?: string; country?: string };
     const target = isValidDateKey(date)
       ? date
-      : new Date().toISOString().substring(0, 10);
+      : resolveNow(req).toISOString().substring(0, 10);
     const countryFilter = isValidCountry(country) ? country : null;
 
     const topResult = await query(
@@ -724,7 +725,7 @@ export async function adminCloseMonth(
 
     // Transacción: el cálculo del podio + los inserts idempotentes van atómicos.
     const result = await transaction(async (client) =>
-      awardMonthlyPodium((sql, params) => client.query(sql, params), month),
+      awardMonthlyPodium((sql, params) => client.query(sql, params), month, resolveNow(req)),
     );
 
     reply.code(200).send({
@@ -739,6 +740,39 @@ export async function adminCloseMonth(
       return;
     }
     console.error("adminCloseMonth error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+// ─── POST /admin/seed-badges (SOLO STAGING) ─────────────────────────
+
+/**
+ * Puebla la DB con los escenarios de prueba de scripts/seed-badges.ts desde
+ * la UI de debug (botón flotante, Etapa Roadmap #1). Gateado ÚNICAMENTE por
+ * STAGING_DEBUG (variable que solo existe en el servicio Railway de staging,
+ * nunca en producción — son servicios completamente separados). A propósito
+ * NO exige ADMIN_SECRET: ese secreto no debe viajar al bundle del frontend,
+ * y este endpoint ya es inalcanzable en producción por el gate de env var.
+ * Body: { reset?: boolean }.
+ */
+export async function adminSeedBadges(
+  req: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  if (!isStagingDebugEnabled()) {
+    reply.code(404).send({ error: "No encontrado" });
+    return;
+  }
+  try {
+    const { reset } = (req.body ?? {}) as { reset?: boolean };
+    const { cleanupSeedData, seed } = await import("../../scripts/seed-badges");
+    await cleanupSeedData();
+    if (!reset) {
+      await seed(resolveNow(req));
+    }
+    reply.code(200).send({ ok: true, reset: Boolean(reset) });
+  } catch (err) {
+    console.error("adminSeedBadges error:", err);
     reply.code(500).send({ error: "Error interno" });
   }
 }
@@ -1170,7 +1204,7 @@ export async function getUserAttempts(
     }
 
     const { date, from, to } = req.query as { date?: string; from?: string; to?: string };
-    const todayKey = new Date().toISOString().slice(0, 10);
+    const todayKey = resolveNow(req).toISOString().slice(0, 10);
     const singleDate = typeof date === "string" && isValidDateKey(date) ? date : todayKey;
     const fromKey = typeof from === "string" && isValidDateKey(from) ? from : singleDate;
     const toKey = typeof to === "string" && isValidDateKey(to) ? to : singleDate;
@@ -1237,7 +1271,7 @@ export async function getUserRank(
     const { date } = req.query as { date?: string };
     const dateKey = typeof date === "string" && isValidDateKey(date)
       ? date
-      : new Date().toISOString().slice(0, 10);
+      : resolveNow(req).toISOString().slice(0, 10);
 
     // 1. Puntos RANKEABLES del usuario ese día (ganados, no flagged, ranked).
     const userPointsResult = await query(

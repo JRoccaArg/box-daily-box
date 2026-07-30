@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { ChevronLeft } from "@/components/ui/Icon";
 import { useI18n } from "@/context";
 import { homePath } from "@/lib/routes";
+import { getEffectiveNow } from "@/lib/debugDate";
 
 /**
  * Pagina de un juego: resuelve el slug de la URL (/:lang/juego/:gameId)
@@ -46,7 +47,7 @@ export function GamePage() {
     <>
       <Seo locale={locale} route={{ kind: "game", gameId: game.id }} />
       {/* `key` reinicia el estado del shell al cambiar de juego entre rutas. */}
-      <GameShell key={game.id} game={game} date={new Date()} />
+      <GameShell key={game.id} game={game} date={getEffectiveNow()} />
     </>
   );
 }

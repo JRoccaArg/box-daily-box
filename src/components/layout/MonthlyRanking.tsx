@@ -4,6 +4,7 @@ import { BASE_POINTS } from "@/lib/scoring";
 import { gameById } from "@/components/games/registry";
 import { useI18n } from "@/context";
 import { Trophy, Flame } from "@/components/ui/Icon";
+import { getEffectiveNow } from "@/lib/debugDate";
 import type { Difficulty } from "@/types";
 
 const DIFF_ACCENT: Record<Difficulty, string> = {
@@ -22,7 +23,7 @@ export function MonthlyRanking({ refreshKey }: { refreshKey?: number }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const score = useMemo(() => getMonthlyScore(), [refreshKey]);
 
-  const now = new Date();
+  const now = getEffectiveNow();
   const monthName = t(`month.${now.getMonth()}`);
   const maxDaily = Math.max(1, ...score.daily.map((d) => d.points));
   const today = now.getDate();

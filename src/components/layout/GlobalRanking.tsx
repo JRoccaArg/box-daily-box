@@ -10,6 +10,7 @@ import { NATIONALITIES } from "@/data/nationalities";
 import { CountrySelect } from "@/components/ui/CountrySelect";
 import { Trophy } from "@/components/ui/Icon";
 import { BadgeIcon } from "@/components/ui/BadgeIcon";
+import { getEffectiveNow } from "@/lib/debugDate";
 
 /** Máximo de badges visibles inline antes de colapsar en "+N" (espacio limitado en mobile). */
 const MAX_INLINE_BADGES = 2;
@@ -27,7 +28,7 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
   const [retryTick, setRetryTick] = useState(0);
 
   const { userId } = getIdentity();
-  const now = new Date();
+  const now = getEffectiveNow();
   const monthName = t(`month.${now.getMonth()}`);
 
   useEffect(() => {

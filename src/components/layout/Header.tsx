@@ -9,6 +9,7 @@ import { Stat as StatIcon, Flame } from "@/components/ui/Icon";
 import { on, Events } from "@/lib/events";
 import { homePath } from "@/lib/routes";
 import { useMounted } from "@/lib/useMounted";
+import { getEffectiveNow } from "@/lib/debugDate";
 import type { Locale } from "@/i18n";
 
 /** Fecha legible en el idioma actual. */
@@ -62,7 +63,7 @@ export function Header() {
 
         <div className="flex items-center gap-3">
           <span className="hidden text-sm capitalize text-ink-muted sm:inline">
-            {mounted ? readableDate(new Date(), locale) : ""}
+            {mounted ? readableDate(getEffectiveNow(), locale) : ""}
           </span>
 
           {summary.currentStreak > 0 && (

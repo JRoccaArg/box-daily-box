@@ -105,13 +105,13 @@ export function StatsProvider({ children }: { children: ReactNode }) {
     if (!userId) return;
 
     let cancelled = false;
-    const today = dateKey(new Date());
+    const today = dateKey();
 
     (async () => {
       // Mes completo (no solo hoy): si el usuario borró localStorage estando
       // logueado, esto reconstruye también el gráfico mensual, no solo el
       // lock de "ya jugado hoy".
-      const response = await apiGetUserAttempts(userId, { from: monthStartKey(new Date()), to: today });
+      const response = await apiGetUserAttempts(userId, { from: monthStartKey(), to: today });
       if (cancelled || !response) return;
       if (response.attempts.length === 0) return;
 
