@@ -274,7 +274,7 @@ function systematicSearch(
 }
 
 /** Construye la parrilla del dia de forma determinista. */
-export function buildBingo(difficulty: Difficulty, date: Date): BingoPuzzle {
+export function buildBingo(difficulty: Difficulty, date: Date, seed?: string): BingoPuzzle {
   const ceil = DATA_AS_OF_SEASON;
 
   // Intenta en la dificultad pedida; si no se logra una grilla VALIDA (9
@@ -299,7 +299,7 @@ export function buildBingo(difficulty: Difficulty, date: Date): BingoPuzzle {
     const teams = buildTeamConstraints(pool, floor, ceil);
     const cols = buildColConstraints(pool, teams);
 
-    const rng = dailyRng(date, `bingo::${difficulty}::w${idx}`);
+    const rng = dailyRng(date, `bingo::${difficulty}::w${idx}`, seed);
     const found =
       search(rng, teams, cols, 1200) ?? systematicSearch(rng, teams, cols);
     if (found) return { rows: found.rows, cols: found.cols, pool, solution: found.solution };
@@ -310,7 +310,7 @@ export function buildBingo(difficulty: Difficulty, date: Date): BingoPuzzle {
   const pool = DRIVERS.slice();
   const teams = buildTeamConstraints(pool, 1950, ceil);
   const cols = buildColConstraints(pool, teams);
-  const rng = dailyRng(date, `bingo::${difficulty}::last`);
+  const rng = dailyRng(date, `bingo::${difficulty}::last`, seed);
   const found = systematicSearch(rng, teams, cols);
   if (found) return { rows: found.rows, cols: found.cols, pool, solution: found.solution };
   return { rows: teams.slice(0, 3), cols: cols.slice(0, 3), pool, solution: new Array(9).fill("") };

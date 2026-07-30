@@ -93,7 +93,11 @@ export async function initializeDatabase(): Promise<void> {
       WHERE display_name IS NOT NULL;
     `);
 
-    // Tabla attempts
+    // Tabla attempts.
+    // OJO: la unicidad "un intento por juego por día" NO va como constraint
+    // inline acá. Se maneja con un ÍNDICE ÚNICO PARCIAL (WHERE duel_id IS NULL)
+    // más abajo, para que los intentos de DUELO (duel_id no nulo) puedan
+    // repetir (user_id, game_id, date_key) sin chocar con el reto diario.
     await client.query(`
       CREATE TABLE IF NOT EXISTS attempts (
         id BIGSERIAL PRIMARY KEY,
@@ -107,8 +111,7 @@ export async function initializeDatabase(): Promise<void> {
         flagged BOOLEAN DEFAULT false,
         ranked BOOLEAN DEFAULT true,
         ip_address TEXT,
-        created_at TIMESTAMPTZ DEFAULT now(),
-        UNIQUE(user_id, game_id, date_key)
+        created_at TIMESTAMPTZ DEFAULT now()
       );
     `);
 
@@ -130,6 +133,44 @@ export async function initializeDatabase(): Promise<void> {
         ALTER TABLE attempts ADD COLUMN IF NOT EXISTS ranked BOOLEAN DEFAULT true;
       EXCEPTION WHEN duplicate_column THEN NULL;
       END $$;
+    `);
+
+    // ─── Sistema de duelos (Roadmap §4): duel_id en attempts ─────────
+    // Un intento de duelo se guarda en la MISMA tabla attempts, con duel_id
+    // no nulo y ranked=false (nunca entra al ranking global). La columna es
+    // nullable: los intentos del reto diario tienen duel_id NULL.
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE attempts ADD COLUMN IF NOT EXISTS duel_id TEXT;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
+    `);
+    // Migración del constraint viejo: la unicidad "un intento por juego por día"
+    // era un UNIQUE de tabla (nombre autogenerado por Postgres). Lo quitamos y
+    // lo reemplazamos por un índice único PARCIAL que solo aplica al reto diario
+    // (duel_id IS NULL). Así los duelos pueden repetir (user,game,fecha).
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE attempts DROP CONSTRAINT IF EXISTS attempts_user_id_game_id_date_key_key;
+      END $$;
+    `);
+    // Unicidad del reto diario (solo intentos NO-duelo).
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_attempts_unique_daily
+      ON attempts (user_id, game_id, date_key)
+      WHERE duel_id IS NULL;
+    `);
+    // Unicidad por duelo: cada usuario puede tener 1 solo intento por duelo.
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_attempts_unique_duel
+      ON attempts (duel_id, user_id)
+      WHERE duel_id IS NOT NULL;
+    `);
+    // Historial de duelos: buscar intentos por duel_id.
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_attempts_duel
+      ON attempts (duel_id)
+      WHERE duel_id IS NOT NULL;
     `);
 
     // Índices
@@ -191,6 +232,116 @@ export async function initializeDatabase(): Promise<void> {
     `);
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_badges_user ON badges(user_id);
+    `);
+
+    // ─── Sistema de amigos y duelos (Roadmap §4) ─────────────────────
+    // Código de amigo: string corto, único, compartible (tipo "friend code"
+    // de Nintendo/Discord). Se genera on-demand la primera vez que se pide.
+    // NULL hasta entonces. UNIQUE garantiza que dos usuarios nunca comparten
+    // código (a diferencia de derivarlo de un hash del id, que podía colisionar).
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS friend_code TEXT;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
+    `);
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_users_friend_code
+      ON users (friend_code)
+      WHERE friend_code IS NOT NULL;
+    `);
+
+    // Amistades (bidireccional). Se guarda SIEMPRE con user_a < user_b para
+    // evitar filas duplicadas (A-B y B-A). El CHECK lo fuerza a nivel DB.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS friendships (
+        user_a TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        user_b TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        PRIMARY KEY (user_a, user_b),
+        CHECK (user_a < user_b)
+      );
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_friendships_a ON friendships(user_a);
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_friendships_b ON friendships(user_b);
+    `);
+
+    // Solicitudes de amistad (pendientes → aceptadas/rechazadas).
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS friend_requests (
+        id BIGSERIAL PRIMARY KEY,
+        from_user TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        to_user TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        status TEXT NOT NULL DEFAULT 'pending'
+          CHECK (status IN ('pending', 'accepted', 'rejected')),
+        created_at TIMESTAMPTZ DEFAULT now(),
+        resolved_at TIMESTAMPTZ,
+        CHECK (from_user <> to_user)
+      );
+    `);
+    // Una sola solicitud pendiente por par (from, to) a la vez.
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_friend_requests_pending
+      ON friend_requests (from_user, to_user)
+      WHERE status = 'pending';
+    `);
+    // Buscar solicitudes pendientes que me llegaron.
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_friend_requests_to
+      ON friend_requests (to_user)
+      WHERE status = 'pending';
+    `);
+
+    // Duelos. id = código corto url-safe (8 chars sin ambigüedad). El seed del
+    // puzzle se deriva del id (guardado explícito para trazabilidad). Estados:
+    // pending (esperando aceptación, TTL 60s) → active (jugando, TTL 15min) →
+    // finished / expired / cancelled.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS duels (
+        id TEXT PRIMARY KEY,
+        creator_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        opponent_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        game_id TEXT NOT NULL,
+        difficulty TEXT NOT NULL,
+        time_limit INT,
+        seed TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending'
+          CHECK (status IN ('pending', 'active', 'finished', 'expired', 'cancelled')),
+        creator_result JSONB,
+        opponent_result JSONB,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        expires_at TIMESTAMPTZ NOT NULL,
+        finished_at TIMESTAMPTZ,
+        CHECK (opponent_id IS NULL OR opponent_id <> creator_id)
+      );
+    `);
+    // "Máx 1 duelo activo por usuario": índices únicos parciales. El creador no
+    // puede tener dos duelos pending/active; el oponente tampoco. Esto es la
+    // garantía REAL (a nivel DB), no solo la validación del handler.
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_duels_creator_active
+      ON duels (creator_id)
+      WHERE status IN ('pending', 'active');
+    `);
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_duels_opponent_active
+      ON duels (opponent_id)
+      WHERE status IN ('pending', 'active') AND opponent_id IS NOT NULL;
+    `);
+    // Buscar duelos pendientes que me llegaron (para el banner in-app).
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_duels_opponent_pending
+      ON duels (opponent_id)
+      WHERE status = 'pending' AND opponent_id IS NOT NULL;
+    `);
+    // Cleanup de expirados: buscar por estado + expiración.
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_duels_expiry
+      ON duels (expires_at)
+      WHERE status IN ('pending', 'active');
     `);
 
     // Tabla sessions

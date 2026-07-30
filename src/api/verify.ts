@@ -84,22 +84,24 @@ export function verifyChallenge(
   difficulty: Difficulty,
   dateKeyStr: string,
   solution: AnySolution,
+  /** Si viene, el puzzle se regenera con esta semilla (duelo) en vez de la fecha. */
+  duelSeed?: string,
 ): VerifyResult {
   const date = dateFromKey(dateKeyStr);
 
   switch (gameId) {
     case "pittexto":
-      return verifyPitTexto(difficulty, date, solution as PitTextoSolution);
+      return verifyPitTexto(difficulty, date, solution as PitTextoSolution, duelSeed);
     case "polewordle":
-      return verifyPoleWordle(difficulty, date, solution as PoleWordleSolution);
+      return verifyPoleWordle(difficulty, date, solution as PoleWordleSolution, duelSeed);
     case "el-intruso":
-      return verifyElIntruso(difficulty, date, solution as IntrusoSolution);
+      return verifyElIntruso(difficulty, date, solution as IntrusoSolution, duelSeed);
     case "parrilla-bingo":
-      return verifyParrillaBingo(difficulty, date, solution as BingoSolution);
+      return verifyParrillaBingo(difficulty, date, solution as BingoSolution, duelSeed);
     case "gp-resultado":
-      return verifyGPResultado(difficulty, date, solution as GPResultadoSolution);
+      return verifyGPResultado(difficulty, date, solution as GPResultadoSolution, duelSeed);
     case "top10-standings":
-      return verifyTop10Standings(difficulty, date, solution as Top10StandingsSolution);
+      return verifyTop10Standings(difficulty, date, solution as Top10StandingsSolution, duelSeed);
     default:
       return { won: false, detail: `Juego desconocido: ${gameId}` };
   }
@@ -114,12 +116,13 @@ function verifyPitTexto(
   difficulty: Difficulty,
   date: Date,
   solution: PitTextoSolution,
+  seed?: string,
 ): VerifyResult {
   if (!solution.driverId) {
     return { won: false, detail: "Falta driverId en la solución" };
   }
 
-  const target = buildTarget(difficulty, date);
+  const target = buildTarget(difficulty, date, seed);
   const won = solution.driverId === target.id;
 
   return {
@@ -139,6 +142,7 @@ function verifyPoleWordle(
   difficulty: Difficulty,
   date: Date,
   solution: PoleWordleSolution,
+  seed?: string,
 ): VerifyResult {
   if (!solution.guesses || !Array.isArray(solution.guesses) || solution.guesses.length === 0) {
     return { won: false, detail: "Falta guesses en la solución" };
@@ -148,7 +152,7 @@ function verifyPoleWordle(
   const base = getDriverPoolAtLeast(difficulty, 10);
   const sane = base.filter((d) => d.wordleKey.length >= 4 && d.wordleKey.length <= 11);
   const pool = sane.length >= 8 ? sane : base;
-  const target = dailyPick(pool, date, `polewordle::${difficulty}`);
+  const target = dailyPick(pool, date, `polewordle::${difficulty}`, seed);
   const answer = target.wordleKey;
 
   // Verificar: gana si algún guess coincide (case-insensitive, normalizado)
@@ -173,12 +177,13 @@ function verifyElIntruso(
   difficulty: Difficulty,
   date: Date,
   solution: IntrusoSolution,
+  seed?: string,
 ): VerifyResult {
   if (!solution.driverId) {
     return { won: false, detail: "Falta driverId en la solución" };
   }
 
-  const puzzle = buildIntruso(difficulty, date);
+  const puzzle = buildIntruso(difficulty, date, seed);
   const won = solution.driverId === puzzle.intruderId;
 
   return {
@@ -204,12 +209,13 @@ function verifyParrillaBingo(
   difficulty: Difficulty,
   date: Date,
   solution: BingoSolution,
+  seed?: string,
 ): VerifyResult {
   if (!solution.grid || !Array.isArray(solution.grid) || solution.grid.length !== 9) {
     return { won: false, detail: "Falta grid (9 elementos) en la solución" };
   }
 
-  const puzzle = buildBingo(difficulty, date);
+  const puzzle = buildBingo(difficulty, date, seed);
   const { rows, cols } = puzzle;
 
   // Validar que hay 3 filas y 3 columnas
@@ -280,12 +286,13 @@ function verifyGPResultado(
   difficulty: Difficulty,
   date: Date,
   solution: GPResultadoSolution,
+  seed?: string,
 ): VerifyResult {
   if (!solution.grid || !Array.isArray(solution.grid) || solution.grid.length !== 10) {
     return { won: false, detail: "Falta grid (10 elementos) en la solución" };
   }
 
-  const gp = buildGPChallenge(difficulty, date);
+  const gp = buildGPChallenge(difficulty, date, seed);
 
   const errors: string[] = [];
   for (let i = 0; i < 10; i++) {
@@ -322,12 +329,13 @@ function verifyTop10Standings(
   difficulty: Difficulty,
   date: Date,
   solution: Top10StandingsSolution,
+  seed?: string,
 ): VerifyResult {
   if (!solution.grid || !Array.isArray(solution.grid) || solution.grid.length !== 10) {
     return { won: false, detail: "Falta grid (10 elementos) en la solución" };
   }
 
-  const challenge = buildTop10StandingsChallenge(difficulty, date);
+  const challenge = buildTop10StandingsChallenge(difficulty, date, seed);
 
   const errors: string[] = [];
   for (let i = 0; i < 10; i++) {

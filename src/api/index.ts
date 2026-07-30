@@ -30,6 +30,20 @@ import {
   adminSeedBadges,
   adminGrantBadges,
   adminCloseDebugMonth,
+  createDuel,
+  acceptDuel,
+  declineDuel,
+  cancelDuel,
+  getDuel,
+  getPendingDuels,
+  getMyFriendCode,
+  resolveFriendByCode,
+  sendFriendRequest,
+  respondFriendRequest,
+  getFriends,
+  getFriendRequests,
+  removeFriend,
+  sweepExpiredDuels,
 } from "./routes";
 import { googleAuthCallback, logout } from "./auth";
 
@@ -295,6 +309,26 @@ async function start(): Promise<void> {
     adminCloseDebugMonth as any,
   );
 
+  // ─── Amigos y Duelos (Roadmap §4) ─────────────────────────────────
+  // Duelos: crear (10/min, sensible), aceptar/rechazar/cancelar (20/min),
+  // leer estado + pendientes (60/min, polling frecuente).
+  app.post("/duels", { preHandler: requireDb, config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, createDuel as any);
+  app.post("/duels/:id/accept", { preHandler: requireDb, config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, acceptDuel as any);
+  app.post("/duels/:id/decline", { preHandler: requireDb, config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, declineDuel as any);
+  app.post("/duels/:id/cancel", { preHandler: requireDb, config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, cancelDuel as any);
+  app.get("/duels/pending", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getPendingDuels as any);
+  app.get("/duels/:id", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getDuel as any);
+
+  // Amigos: código propio (60/min), resolver código público (30/min),
+  // solicitudes/responder/remover (20/min), listas (60/min).
+  app.get("/me/friend-code", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getMyFriendCode as any);
+  app.get("/friends/by-code/:code", { preHandler: requireDb, config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, resolveFriendByCode as any);
+  app.post("/friends/request", { preHandler: requireDb, config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, sendFriendRequest as any);
+  app.post("/friends/respond", { preHandler: requireDb, config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, respondFriendRequest as any);
+  app.post("/friends/remove", { preHandler: requireDb, config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, removeFriend as any);
+  app.get("/friends", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getFriends as any);
+  app.get("/friends/requests", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getFriendRequests as any);
+
   // ─── Inicializar BD en background ─────────────────────────────────
   initializeDatabase()
     .then(() => {
@@ -320,6 +354,19 @@ async function start(): Promise<void> {
       // solo.
       closePreviousMonthBadges();
       setInterval(closePreviousMonthBadges, 60 * 60 * 1000); // cada hora
+
+      // Barrido de duelos vencidos (Roadmap §4). La corrección real la dan los
+      // barridos "lazy" en los handlers (TTL de 60s), pero este cron periódico
+      // marca 'expired' los duelos que nadie vuelve a consultar, manteniendo la
+      // tabla y la regla "1 duelo activo" limpias. Cada 5 minutos.
+      sweepExpiredDuels().catch(() => {});
+      setInterval(() => {
+        sweepExpiredDuels()
+          .then((n) => {
+            if (n > 0) console.log(`🧹 ${n} duelos expirados marcados`);
+          })
+          .catch(() => {});
+      }, 5 * 60 * 1000);
     })
     .catch((err) => {
       console.error("⚠️  Database init error:", err);

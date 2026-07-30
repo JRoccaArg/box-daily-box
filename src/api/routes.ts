@@ -4,7 +4,7 @@
 // Verificación server-authoritative con tokens firmados HMAC.
 
 import { FastifyRequest, FastifyReply } from "fastify";
-import { randomUUID, createHmac, timingSafeEqual } from "crypto";
+import { randomUUID, createHmac, timingSafeEqual, randomInt } from "crypto";
 import { query, transaction } from "./db";
 import { verifyChallenge } from "./verify";
 import { computeScore } from "../lib/scoring";
@@ -73,6 +73,10 @@ type SessionPayload = {
   /** Si el attempt entrará al ranking global (false si otra cuenta de la IP
    *  ya jugó este juego hoy). Firmado en el token: no se puede falsificar. */
   ranked: boolean;
+  /** Si la sesión es de un DUELO (Roadmap §4). Firmados para que el cliente no
+   *  pueda inyectar un duelId/seed ajeno: se leen del token, no del body. */
+  duelId?: string;
+  duelSeed?: string;
 };
 
 function signToken(payload: SessionPayload): string {
@@ -108,14 +112,25 @@ export async function startChallenge(
 ): Promise<void> {
   try {
     const { gameId } = req.params as { gameId: string };
-    const { difficulty, userId, displayName, countryCode, clientDateKey, timeLimit: rawTimeLimit } = req.body as {
+    const { difficulty, userId, displayName, countryCode, clientDateKey, timeLimit: rawTimeLimit, duelId, identityToken } = req.body as {
       difficulty: Difficulty;
       userId?: string;
       displayName?: string;
       countryCode?: string;
       clientDateKey?: string;
       timeLimit?: number;
+      duelId?: string;
+      identityToken?: string;
     };
+
+    // ─── Rama DUELO (Roadmap §4) ───────────────────────────────────────
+    // Si viene duelId, es una partida de duelo: el juego/dificultad/tiempo y
+    // la semilla salen de la fila `duels` (no se confía en el cliente), no
+    // cuenta al ranking, no bloquea ni es bloqueada por el reto diario.
+    if (duelId !== undefined) {
+      await startDuelChallenge(req, reply, { gameId, duelId, userId, identityToken });
+      return;
+    }
 
     if (!difficulty || !VALID_DIFFS.includes(difficulty)) {
       reply.code(422).send({ error: "Dificultad inválida" });
@@ -152,9 +167,11 @@ export async function startChallenge(
     const ipUsable = clientIp !== "unknown" && clientIp.length > 0;
 
     // ─── ANTI MULTI-DISPOSITIVO ───
-    // 1. Verificar que ESTE usuario no jugó ya hoy
+    // 1. Verificar que ESTE usuario no jugó ya hoy el RETO DIARIO.
+    // Los intentos de duelo (duel_id no nulo) NO cuentan: un duelo no bloquea
+    // el reto oficial del mismo juego/día.
     const existing = await query(
-      "SELECT id FROM attempts WHERE user_id = $1 AND game_id = $2 AND date_key = $3",
+      "SELECT id FROM attempts WHERE user_id = $1 AND game_id = $2 AND date_key = $3 AND duel_id IS NULL",
       [uid, gameId, today],
     );
     if (existing.rows.length > 0) {
@@ -316,6 +333,12 @@ export async function finishChallenge(
     }
     if (sessionRow.rows[0]?.consumed) {
       reply.code(409).send({ error: "Sesión ya consumida" });
+      return;
+    }
+
+    // ─── Rama DUELO (Roadmap §4) ───────────────────────────────────────
+    if (session.duelId) {
+      await finishDuelChallenge(req, reply, { session, solution, isAbandon });
       return;
     }
 
@@ -1464,6 +1487,841 @@ export async function getUserRank(
     });
   } catch (err) {
     console.error("getUserRank error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// ─── Sistema de Amigos y Duelos (Roadmap §4) ────────────────────────
+// ════════════════════════════════════════════════════════════════════
+
+/** Alfabeto sin ambigüedad (sin I, L, O, 0, 1) para códigos legibles/dictables. */
+const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const FRIEND_CODE_LEN = 6;
+const DUEL_ID_LEN = 8;
+/** TTL de un duelo pendiente (esperando aceptación): 60s, "en vivo". */
+const DUEL_PENDING_TTL_MS = 60 * 1000;
+/** TTL de un duelo activo (jugándose): igual que una sesión normal (15 min). */
+const DUEL_ACTIVE_TTL_MS = SESSION_TTL;
+
+/** Genera un código aleatorio criptográficamente uniforme del alfabeto seguro. */
+function randomCode(len: number): string {
+  let s = "";
+  for (let i = 0; i < len; i++) s += CODE_ALPHABET[randomInt(CODE_ALPHABET.length)];
+  return s;
+}
+
+/** Valida que un string tenga el formato exacto de código (largo + alfabeto). */
+function isCodeFormat(s: unknown, len: number): boolean {
+  return (
+    typeof s === "string" &&
+    s.length === len &&
+    [...s].every((c) => CODE_ALPHABET.includes(c))
+  );
+}
+
+/**
+ * Devuelve el friend_code del usuario, generándolo (único) la primera vez.
+ * Crea la fila del usuario si no existe. Reintenta ante colisión del índice
+ * único. Concurrency-safe: si otro request lo setea a la vez, re-lee y lo usa.
+ */
+async function ensureFriendCode(userId: string): Promise<string> {
+  await query("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING", [userId]);
+  const cur = await query("SELECT friend_code FROM users WHERE id = $1", [userId]);
+  const existing = cur.rows[0]?.friend_code as string | null | undefined;
+  if (existing) return existing;
+
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const code = randomCode(FRIEND_CODE_LEN);
+    try {
+      const res = await query(
+        "UPDATE users SET friend_code = $1 WHERE id = $2 AND friend_code IS NULL RETURNING friend_code",
+        [code, userId],
+      );
+      if (res.rows.length > 0) return res.rows[0].friend_code as string;
+      // Otro request lo seteó concurrentemente: re-leer y usar ese.
+      const reread = await query("SELECT friend_code FROM users WHERE id = $1", [userId]);
+      if (reread.rows[0]?.friend_code) return reread.rows[0].friend_code as string;
+    } catch (err: any) {
+      if (err.code === "23505") continue; // código ya usado por otro: reintentar
+      throw err;
+    }
+  }
+  throw new Error("No se pudo generar friend_code único");
+}
+
+/** Ordena un par de userIds alfabéticamente (para la PK de friendships). */
+function orderedPair(a: string, b: string): [string, string] {
+  return a < b ? [a, b] : [b, a];
+}
+
+/** Verifica identityToken del usuario que actúa; responde 403 si no. Devuelve true si ok. */
+function requireOwnership(
+  reply: FastifyReply,
+  identityToken: string | undefined,
+  userId: string | undefined,
+): userId is string {
+  if (!userId || !isValidUserId(userId)) {
+    reply.code(422).send({ error: "userId inválido" });
+    return false;
+  }
+  if (!ownsIdentity(identityToken, userId)) {
+    reply.code(403).send({ error: "No autorizado" });
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Marca como 'expired' los duelos vencidos de un usuario (o de todos si no se
+ * pasa userId). Lazy sweep: el cron corre cada hora, pero con TTL de 60s los
+ * handlers deben limpiar los vencidos al vuelo para que la regla "1 duelo
+ * activo" y "código de un solo uso" no queden bloqueadas por un duelo muerto.
+ */
+export async function sweepExpiredDuels(userId?: string): Promise<number> {
+  const res = userId
+    ? await query(
+        `UPDATE duels SET status = 'expired'
+         WHERE status IN ('pending', 'active') AND expires_at < now()
+           AND (creator_id = $1 OR opponent_id = $1)`,
+        [userId],
+      )
+    : await query(
+        `UPDATE duels SET status = 'expired'
+         WHERE status IN ('pending', 'active') AND expires_at < now()`,
+      );
+  return res.rowCount ?? 0;
+}
+
+/** ¿El usuario ya tiene un duelo pending/active (vivo)? Excluye `exceptId`. */
+async function hasActiveDuel(userId: string, exceptId?: string): Promise<boolean> {
+  const res = await query(
+    `SELECT 1 FROM duels
+     WHERE (creator_id = $1 OR opponent_id = $1)
+       AND status IN ('pending', 'active')
+       AND expires_at > now()
+       AND ($2::text IS NULL OR id <> $2)
+     LIMIT 1`,
+    [userId, exceptId ?? null],
+  );
+  return res.rows.length > 0;
+}
+
+type DuelRow = {
+  id: string;
+  creator_id: string;
+  opponent_id: string | null;
+  game_id: string;
+  difficulty: Difficulty;
+  time_limit: number | null;
+  seed: string;
+  status: string;
+  creator_result: any;
+  opponent_result: any;
+  expires_at: Date;
+  finished_at: Date | null;
+};
+
+/** Serializa un duelo para el cliente, aplicando el modo A CIEGAS: el resultado
+ *  del oponente NO se revela hasta que AMBOS terminaron (status='finished'). */
+function serializeDuel(d: DuelRow, viewerId: string) {
+  const isCreator = viewerId === d.creator_id;
+  const bothFinished = d.status === "finished";
+  const myResult = isCreator ? d.creator_result : d.opponent_result;
+  const otherResultRaw = isCreator ? d.opponent_result : d.creator_result;
+  return {
+    id: d.id,
+    gameId: d.game_id,
+    difficulty: d.difficulty,
+    timeLimit: d.time_limit,
+    status: d.status,
+    creatorId: d.creator_id,
+    opponentId: d.opponent_id,
+    youAre: isCreator ? "creator" : "opponent",
+    myResult: myResult ?? null,
+    // A ciegas: solo se revela el resultado ajeno cuando ambos terminaron.
+    opponentResult: bothFinished ? otherResultRaw ?? null : null,
+    opponentFinished: otherResultRaw != null,
+    expiresAt: d.expires_at,
+    secondsLeft: Math.max(0, Math.round((new Date(d.expires_at).getTime() - Date.now()) / 1000)),
+  };
+}
+
+// ─── start/finish para el flujo de duelo (invocados desde start/finishChallenge) ───
+
+async function startDuelChallenge(
+  req: FastifyRequest,
+  reply: FastifyReply,
+  args: { gameId: string; duelId: string; userId?: string; identityToken?: string },
+): Promise<void> {
+  const { duelId, userId, identityToken } = args;
+  if (!isCodeFormat(duelId, DUEL_ID_LEN)) {
+    reply.code(422).send({ error: "duelId inválido" });
+    return;
+  }
+  if (!requireOwnership(reply, identityToken, userId)) return;
+
+  const found = await query("SELECT * FROM duels WHERE id = $1", [duelId]);
+  const duel = found.rows[0] as DuelRow | undefined;
+  if (!duel) {
+    reply.code(404).send({ error: "Duelo no encontrado" });
+    return;
+  }
+  if (duel.status !== "active") {
+    reply.code(409).send({ error: "El duelo no está activo" });
+    return;
+  }
+  if (new Date(duel.expires_at).getTime() < Date.now()) {
+    await query("UPDATE duels SET status = 'expired' WHERE id = $1 AND status = 'active'", [duelId]);
+    reply.code(410).send({ error: "El duelo expiró" });
+    return;
+  }
+  const side = userId === duel.creator_id ? "creator" : userId === duel.opponent_id ? "opponent" : null;
+  if (!side) {
+    reply.code(403).send({ error: "No sos participante de este duelo" });
+    return;
+  }
+  const already = side === "creator" ? duel.creator_result : duel.opponent_result;
+  if (already != null) {
+    reply.code(409).send({ error: "Ya jugaste este duelo" });
+    return;
+  }
+
+  const gameId = duel.game_id;
+  const difficulty = duel.difficulty;
+  const validOptions = GAME_TIME_OPTIONS[gameId] ?? [];
+  const timeLimit = validOptions.includes(duel.time_limit as number)
+    ? (duel.time_limit as number)
+    : (validOptions.length > 0 ? Math.max(...validOptions) : TIME_LIMITS[gameId] ?? 180);
+
+  const today = resolveNow(req).toISOString().substring(0, 10);
+  const startedAt = Date.now();
+  const expiresAt = startedAt + SESSION_TTL;
+  const sessionId = randomUUID();
+  const clientIp = req.ip || "unknown";
+
+  const payload: SessionPayload = {
+    sessionId, uid: userId!, gameId, difficulty, today, startedAt, timeLimit,
+    ranked: false, duelId, duelSeed: duel.seed,
+  };
+  const sessionToken = signToken(payload);
+
+  await query(
+    `INSERT INTO sessions (id, user_id, game_id, difficulty, date_key, started_at, expires_at, ip_address)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+    [sessionId, userId!, gameId, difficulty, today, startedAt, expiresAt, clientIp],
+  );
+
+  reply.code(200).send({
+    puzzle: { gameId, difficulty, dateKey: today, duelId },
+    sessionToken,
+    serverNow: startedAt,
+    identityToken: signIdentityToken(userId!),
+  });
+}
+
+async function finishDuelChallenge(
+  req: FastifyRequest,
+  reply: FastifyReply,
+  args: { session: SessionPayload; solution?: Record<string, unknown> | null; isAbandon: boolean },
+): Promise<void> {
+  const { session, solution, isAbandon } = args;
+  const duelId = session.duelId!;
+
+  const verifyResult = isAbandon
+    ? { won: false, detail: "Abandono o tiempo agotado" }
+    : verifyChallenge(session.gameId, session.difficulty, session.today, solution as any, session.duelSeed);
+
+  const now = Date.now();
+  const timeSeconds = Math.round((now - session.startedAt) / 1000);
+  const sessionTimeLimit = session.timeLimit ?? TIME_LIMITS[session.gameId] ?? 180;
+  const gameOptions = GAME_TIME_OPTIONS[session.gameId] ?? [];
+  const maxTimeOption = gameOptions.length > 0 ? Math.max(...gameOptions) : sessionTimeLimit;
+  const points = computeScore({
+    won: verifyResult.won,
+    difficulty: session.difficulty,
+    timeSeconds,
+    timeLimit: sessionTimeLimit,
+    maxTimeOption,
+  });
+
+  const uid = session.uid;
+  const clientIp = req.ip || "unknown";
+
+  const found = await query("SELECT creator_id, opponent_id, creator_result, opponent_result FROM duels WHERE id = $1", [duelId]);
+  const duel = found.rows[0] as { creator_id: string; opponent_id: string | null; creator_result: any; opponent_result: any } | undefined;
+  if (!duel) {
+    reply.code(410).send({ error: "El duelo ya no existe" });
+    return;
+  }
+  const side = uid === duel.creator_id ? "creator" : uid === duel.opponent_id ? "opponent" : null;
+  if (!side) {
+    reply.code(403).send({ error: "No sos participante de este duelo" });
+    return;
+  }
+  const alreadyMine = side === "creator" ? duel.creator_result : duel.opponent_result;
+  if (alreadyMine != null) {
+    reply.code(409).send({ error: "Ya jugaste este duelo" });
+    return;
+  }
+  const otherHadResult = (side === "creator" ? duel.opponent_result : duel.creator_result) != null;
+
+  const resultJson = JSON.stringify({
+    won: verifyResult.won,
+    points,
+    timeSeconds,
+    finishedAt: new Date(now).toISOString(),
+  });
+
+  let duplicated = false;
+  try {
+    await transaction(async (client) => {
+      await client.query("UPDATE sessions SET consumed = true WHERE id = $1", [session.sessionId]);
+      await client.query(
+        `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, time_seconds, points, flagged, ranked, ip_address, duel_id)
+         VALUES ($1, $2, $3::date, $4, $5, $6, $7, false, false, $8, $9)`,
+        [uid, session.gameId, session.today, session.difficulty, verifyResult.won, timeSeconds, points, clientIp, duelId],
+      );
+      // Setea el resultado de MI lado; si el otro ya terminó, cierra el duelo.
+      await client.query(
+        `UPDATE duels
+         SET creator_result  = CASE WHEN $2 = 'creator'  THEN $3::jsonb ELSE creator_result  END,
+             opponent_result = CASE WHEN $2 = 'opponent' THEN $3::jsonb ELSE opponent_result END,
+             status = CASE WHEN $4 THEN 'finished' ELSE status END,
+             finished_at = CASE WHEN $4 THEN now() ELSE finished_at END
+         WHERE id = $1`,
+        [duelId, side, resultJson, otherHadResult],
+      );
+    });
+  } catch (err: any) {
+    if (err.code === "23505") {
+      duplicated = true;
+    } else {
+      throw err;
+    }
+  }
+
+  reply.code(200).send({
+    won: verifyResult.won,
+    points,
+    timeSeconds,
+    duelId,
+    duelFinished: otherHadResult,
+    duplicated,
+    ranked: false,
+  });
+}
+
+// ─── Endpoints de DUELOS ────────────────────────────────────────────
+
+/** POST /duels — crea un duelo pendiente (TTL 60s). */
+export async function createDuel(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { userId, gameId, difficulty, timeLimit, opponentUserId, identityToken } = (req.body ?? {}) as {
+      userId?: string; gameId?: string; difficulty?: Difficulty; timeLimit?: number;
+      opponentUserId?: string; identityToken?: string;
+    };
+    if (!requireOwnership(reply, identityToken, userId)) return;
+    if (!gameId || !VALID_GAMES.includes(gameId)) {
+      reply.code(422).send({ error: "Juego inválido" });
+      return;
+    }
+    if (!difficulty || !VALID_DIFFS.includes(difficulty)) {
+      reply.code(422).send({ error: "Dificultad inválida" });
+      return;
+    }
+    const validOptions = GAME_TIME_OPTIONS[gameId] ?? [];
+    const tl = validOptions.includes(timeLimit as number)
+      ? (timeLimit as number)
+      : (validOptions.length > 0 ? Math.max(...validOptions) : TIME_LIMITS[gameId] ?? 180);
+
+    // Oponente directo (opcional): debe ser un amigo, para no spamear a extraños.
+    let opponent: string | null = null;
+    if (opponentUserId !== undefined && opponentUserId !== null && opponentUserId !== "") {
+      if (!isValidUserId(opponentUserId) || opponentUserId === userId) {
+        reply.code(422).send({ error: "opponentUserId inválido" });
+        return;
+      }
+      const [a, b] = orderedPair(userId, opponentUserId);
+      const fr = await query("SELECT 1 FROM friendships WHERE user_a = $1 AND user_b = $2", [a, b]);
+      if (fr.rows.length === 0) {
+        reply.code(403).send({ error: "Solo podés desafiar directamente a un amigo" });
+        return;
+      }
+      opponent = opponentUserId;
+    }
+
+    // Limpieza lazy + regla "1 duelo activo por usuario".
+    await sweepExpiredDuels(userId);
+    if (await hasActiveDuel(userId)) {
+      reply.code(409).send({ error: "Ya tenés un duelo activo. Terminalo o cancelalo antes de crear otro." });
+      return;
+    }
+    if (opponent) {
+      await sweepExpiredDuels(opponent);
+      if (await hasActiveDuel(opponent)) {
+        reply.code(409).send({ error: "Tu amigo ya tiene un duelo activo" });
+        return;
+      }
+    }
+
+    // Insertar con reintento de colisión de id.
+    const expiresAt = new Date(Date.now() + DUEL_PENDING_TTL_MS).toISOString();
+    let duelId = "";
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const candidate = randomCode(DUEL_ID_LEN);
+      try {
+        await query(
+          `INSERT INTO duels (id, creator_id, opponent_id, game_id, difficulty, time_limit, seed, status, expires_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8)`,
+          [candidate, userId, opponent, gameId, difficulty, tl, candidate, expiresAt],
+        );
+        duelId = candidate;
+        break;
+      } catch (err: any) {
+        if (err.code === "23505") {
+          // Colisión: puede ser id repetido (reintentar) o el índice de "1 activo".
+          const msg = String(err.constraint || "");
+          if (msg.includes("creator_active") || msg.includes("opponent_active")) {
+            reply.code(409).send({ error: "Ya tenés un duelo activo. Terminalo o cancelalo antes de crear otro." });
+            return;
+          }
+          continue; // id colisionó, probar otro
+        }
+        throw err;
+      }
+    }
+    if (!duelId) {
+      reply.code(500).send({ error: "No se pudo crear el duelo" });
+      return;
+    }
+
+    reply.code(200).send({
+      duelId,
+      gameId,
+      difficulty,
+      timeLimit: tl,
+      status: "pending",
+      expiresAt,
+      secondsLeft: Math.round(DUEL_PENDING_TTL_MS / 1000),
+    });
+  } catch (err) {
+    console.error("createDuel error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/** POST /duels/:id/accept — acepta un duelo pendiente. Race-safe. */
+export async function acceptDuel(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { id } = req.params as { id: string };
+    const { userId, identityToken } = (req.body ?? {}) as { userId?: string; identityToken?: string };
+    if (!isCodeFormat(id, DUEL_ID_LEN)) {
+      reply.code(422).send({ error: "duelId inválido" });
+      return;
+    }
+    if (!requireOwnership(reply, identityToken, userId)) return;
+
+    // Marcar expirado si venció, antes de intentar aceptar.
+    await query("UPDATE duels SET status = 'expired' WHERE id = $1 AND status = 'pending' AND expires_at < now()", [id]);
+
+    // El que acepta no puede tener ya otro duelo activo.
+    await sweepExpiredDuels(userId);
+    if (await hasActiveDuel(userId, id)) {
+      reply.code(409).send({ error: "Ya tenés un duelo activo. Terminalo o cancelalo antes de aceptar otro." });
+      return;
+    }
+
+    const newExpiry = new Date(Date.now() + DUEL_ACTIVE_TTL_MS).toISOString();
+    // UPDATE atómico: gana el primero. La condición opponent_id IS NULL/=userId
+    // permite tanto duelos abiertos (link) como dirigidos a este usuario.
+    let updated;
+    try {
+      updated = await query(
+        `UPDATE duels
+         SET opponent_id = $1, status = 'active', expires_at = $2
+         WHERE id = $3 AND status = 'pending' AND expires_at > now()
+           AND creator_id <> $1
+           AND (opponent_id IS NULL OR opponent_id = $1)
+         RETURNING *`,
+        [userId, newExpiry, id],
+      );
+    } catch (err: any) {
+      if (err.code === "23505") {
+        reply.code(409).send({ error: "Ya tenés un duelo activo. Terminalo o cancelalo antes de aceptar otro." });
+        return;
+      }
+      throw err;
+    }
+    if (updated.rows.length === 0) {
+      reply.code(409).send({ error: "El duelo ya no está disponible (aceptado, cancelado o expirado)" });
+      return;
+    }
+    reply.code(200).send(serializeDuel(updated.rows[0] as DuelRow, userId));
+  } catch (err) {
+    console.error("acceptDuel error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/** POST /duels/:id/decline — el oponente rechaza un duelo dirigido a él. */
+export async function declineDuel(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { id } = req.params as { id: string };
+    const { userId, identityToken } = (req.body ?? {}) as { userId?: string; identityToken?: string };
+    if (!isCodeFormat(id, DUEL_ID_LEN)) {
+      reply.code(422).send({ error: "duelId inválido" });
+      return;
+    }
+    if (!requireOwnership(reply, identityToken, userId)) return;
+    const res = await query(
+      `UPDATE duels SET status = 'cancelled'
+       WHERE id = $1 AND status = 'pending' AND opponent_id = $2 RETURNING id`,
+      [id, userId],
+    );
+    if (res.rows.length === 0) {
+      reply.code(409).send({ error: "No se pudo rechazar (ya no está pendiente o no es para vos)" });
+      return;
+    }
+    reply.code(200).send({ ok: true });
+  } catch (err) {
+    console.error("declineDuel error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/** POST /duels/:id/cancel — el creador cancela su propio duelo pendiente. */
+export async function cancelDuel(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { id } = req.params as { id: string };
+    const { userId, identityToken } = (req.body ?? {}) as { userId?: string; identityToken?: string };
+    if (!isCodeFormat(id, DUEL_ID_LEN)) {
+      reply.code(422).send({ error: "duelId inválido" });
+      return;
+    }
+    if (!requireOwnership(reply, identityToken, userId)) return;
+    const res = await query(
+      `UPDATE duels SET status = 'cancelled'
+       WHERE id = $1 AND creator_id = $2 AND status = 'pending' RETURNING id`,
+      [id, userId],
+    );
+    if (res.rows.length === 0) {
+      reply.code(409).send({ error: "No se pudo cancelar (ya fue aceptado o no es tuyo)" });
+      return;
+    }
+    reply.code(200).send({ ok: true });
+  } catch (err) {
+    console.error("cancelDuel error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/** GET /duels/:id — estado del duelo (para polling). Ownership + modo a ciegas. */
+export async function getDuel(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { id } = req.params as { id: string };
+    const { userId, identityToken } = req.query as { userId?: string; identityToken?: string };
+    if (!isCodeFormat(id, DUEL_ID_LEN)) {
+      reply.code(422).send({ error: "duelId inválido" });
+      return;
+    }
+    if (!requireOwnership(reply, identityToken, userId)) return;
+
+    const found = await query("SELECT * FROM duels WHERE id = $1", [id]);
+    const duel = found.rows[0] as DuelRow | undefined;
+    if (!duel) {
+      reply.code(404).send({ error: "Duelo no encontrado" });
+      return;
+    }
+    if (userId !== duel.creator_id && userId !== duel.opponent_id) {
+      reply.code(403).send({ error: "No sos participante de este duelo" });
+      return;
+    }
+    // Marcar expirado si venció sin terminar (lazy).
+    if (
+      (duel.status === "pending" || duel.status === "active") &&
+      new Date(duel.expires_at).getTime() < Date.now()
+    ) {
+      await query("UPDATE duels SET status = 'expired' WHERE id = $1 AND status IN ('pending','active')", [id]);
+      duel.status = "expired";
+    }
+    reply.code(200).send(serializeDuel(duel, userId));
+  } catch (err) {
+    console.error("getDuel error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/** GET /duels/pending — invitaciones pendientes dirigidas a mí (banner in-app). */
+export async function getPendingDuels(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { userId, identityToken } = req.query as { userId?: string; identityToken?: string };
+    if (!requireOwnership(reply, identityToken, userId)) return;
+    await sweepExpiredDuels(userId);
+    const res = await query(
+      `SELECT d.id, d.game_id, d.difficulty, d.time_limit, d.expires_at,
+              u.display_name AS creator_name, u.country_code AS creator_country
+       FROM duels d
+       JOIN users u ON u.id = d.creator_id
+       WHERE d.opponent_id = $1 AND d.status = 'pending' AND d.expires_at > now()
+       ORDER BY d.created_at DESC`,
+      [userId],
+    );
+    const duels = res.rows.map((r: any) => ({
+      id: r.id,
+      gameId: r.game_id,
+      difficulty: r.difficulty,
+      timeLimit: r.time_limit,
+      creatorName: r.creator_name,
+      creatorCountry: r.creator_country,
+      secondsLeft: Math.max(0, Math.round((new Date(r.expires_at).getTime() - Date.now()) / 1000)),
+    }));
+    reply.code(200).send({ duels });
+  } catch (err) {
+    console.error("getPendingDuels error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+// ─── Endpoints de AMIGOS ────────────────────────────────────────────
+
+/** GET /me/friend-code — mi código de amigo (lo genera si no existe). */
+export async function getMyFriendCode(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { userId, identityToken } = req.query as { userId?: string; identityToken?: string };
+    if (!requireOwnership(reply, identityToken, userId)) return;
+    const code = await ensureFriendCode(userId);
+    reply.code(200).send({ code });
+  } catch (err) {
+    console.error("getMyFriendCode error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/** GET /friends/by-code/:code — resuelve un código a un usuario (público). */
+export async function resolveFriendByCode(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { code } = req.params as { code: string };
+    if (!isCodeFormat(code, FRIEND_CODE_LEN)) {
+      reply.code(422).send({ error: "Código inválido" });
+      return;
+    }
+    const res = await query(
+      "SELECT id, display_name, country_code FROM users WHERE friend_code = $1",
+      [code],
+    );
+    if (res.rows.length === 0) {
+      reply.code(404).send({ error: "Código no encontrado" });
+      return;
+    }
+    const u = res.rows[0] as any;
+    reply.code(200).send({ userId: u.id, displayName: u.display_name, countryCode: u.country_code });
+  } catch (err) {
+    console.error("resolveFriendByCode error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/** POST /friends/request — envía solicitud (por code o userId). Auto-acepta si hay recíproca. */
+export async function sendFriendRequest(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { userId, targetCode, targetUserId, identityToken } = (req.body ?? {}) as {
+      userId?: string; targetCode?: string; targetUserId?: string; identityToken?: string;
+    };
+    if (!requireOwnership(reply, identityToken, userId)) return;
+
+    // Resolver destino.
+    let target: string | null = null;
+    if (targetCode !== undefined && targetCode !== null && targetCode !== "") {
+      if (!isCodeFormat(targetCode, FRIEND_CODE_LEN)) {
+        reply.code(422).send({ error: "Código inválido" });
+        return;
+      }
+      const r = await query("SELECT id FROM users WHERE friend_code = $1", [targetCode]);
+      if (r.rows.length === 0) {
+        reply.code(404).send({ error: "Código no encontrado" });
+        return;
+      }
+      target = r.rows[0].id as string;
+    } else if (isValidUserId(targetUserId)) {
+      const r = await query("SELECT id FROM users WHERE id = $1", [targetUserId]);
+      if (r.rows.length === 0) {
+        reply.code(404).send({ error: "Usuario no encontrado" });
+        return;
+      }
+      target = targetUserId as string;
+    } else {
+      reply.code(422).send({ error: "Falta targetCode o targetUserId válido" });
+      return;
+    }
+
+    if (target === userId) {
+      reply.code(422).send({ error: "No podés agregarte a vos mismo" });
+      return;
+    }
+
+    // ¿Ya son amigos?
+    const [a, b] = orderedPair(userId, target);
+    const fr = await query("SELECT 1 FROM friendships WHERE user_a = $1 AND user_b = $2", [a, b]);
+    if (fr.rows.length > 0) {
+      reply.code(409).send({ error: "Ya son amigos" });
+      return;
+    }
+
+    // ¿Hay una solicitud recíproca pendiente (target → yo)? Entonces auto-aceptar.
+    const reverse = await query(
+      "SELECT id FROM friend_requests WHERE from_user = $1 AND to_user = $2 AND status = 'pending'",
+      [target, userId],
+    );
+    if (reverse.rows.length > 0) {
+      await transaction(async (client) => {
+        await client.query(
+          "UPDATE friend_requests SET status = 'accepted', resolved_at = now() WHERE id = $1",
+          [reverse.rows[0].id],
+        );
+        await client.query(
+          "INSERT INTO friendships (user_a, user_b) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+          [a, b],
+        );
+      });
+      reply.code(200).send({ ok: true, status: "auto_accepted" });
+      return;
+    }
+
+    // Crear solicitud (idempotente sobre pendiente).
+    try {
+      const ins = await query(
+        "INSERT INTO friend_requests (from_user, to_user) VALUES ($1, $2) RETURNING id",
+        [userId, target],
+      );
+      reply.code(200).send({ ok: true, status: "sent", requestId: Number(ins.rows[0].id) });
+    } catch (err: any) {
+      if (err.code === "23505") {
+        reply.code(409).send({ error: "Ya enviaste una solicitud a este usuario" });
+        return;
+      }
+      throw err;
+    }
+  } catch (err) {
+    console.error("sendFriendRequest error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/** POST /friends/respond — acepta o rechaza una solicitud recibida. */
+export async function respondFriendRequest(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { userId, requestId, accept, identityToken } = (req.body ?? {}) as {
+      userId?: string; requestId?: number; accept?: boolean; identityToken?: string;
+    };
+    if (!requireOwnership(reply, identityToken, userId)) return;
+    if (typeof requestId !== "number" || !Number.isInteger(requestId)) {
+      reply.code(422).send({ error: "requestId inválido" });
+      return;
+    }
+    const found = await query(
+      "SELECT from_user, to_user, status FROM friend_requests WHERE id = $1",
+      [requestId],
+    );
+    const reqRow = found.rows[0] as { from_user: string; to_user: string; status: string } | undefined;
+    if (!reqRow || reqRow.to_user !== userId || reqRow.status !== "pending") {
+      reply.code(404).send({ error: "Solicitud no encontrada o ya resuelta" });
+      return;
+    }
+    if (accept) {
+      const [a, b] = orderedPair(reqRow.from_user, reqRow.to_user);
+      await transaction(async (client) => {
+        await client.query(
+          "UPDATE friend_requests SET status = 'accepted', resolved_at = now() WHERE id = $1",
+          [requestId],
+        );
+        await client.query(
+          "INSERT INTO friendships (user_a, user_b) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+          [a, b],
+        );
+      });
+      reply.code(200).send({ ok: true, status: "accepted" });
+    } else {
+      await query(
+        "UPDATE friend_requests SET status = 'rejected', resolved_at = now() WHERE id = $1",
+        [requestId],
+      );
+      reply.code(200).send({ ok: true, status: "rejected" });
+    }
+  } catch (err) {
+    console.error("respondFriendRequest error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/** GET /friends — lista de amigos actuales. */
+export async function getFriends(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { userId, identityToken } = req.query as { userId?: string; identityToken?: string };
+    if (!requireOwnership(reply, identityToken, userId)) return;
+    const res = await query(
+      `SELECT (CASE WHEN f.user_a = $1 THEN f.user_b ELSE f.user_a END) AS friend_id,
+              u.display_name, u.country_code
+       FROM friendships f
+       JOIN users u ON u.id = (CASE WHEN f.user_a = $1 THEN f.user_b ELSE f.user_a END)
+       WHERE f.user_a = $1 OR f.user_b = $1
+       ORDER BY f.created_at DESC`,
+      [userId],
+    );
+    const friends = res.rows.map((r: any) => ({
+      userId: r.friend_id,
+      displayName: r.display_name,
+      countryCode: r.country_code,
+    }));
+    reply.code(200).send({ friends });
+  } catch (err) {
+    console.error("getFriends error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/** GET /friends/requests — solicitudes pendientes RECIBIDAS. */
+export async function getFriendRequests(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { userId, identityToken } = req.query as { userId?: string; identityToken?: string };
+    if (!requireOwnership(reply, identityToken, userId)) return;
+    const res = await query(
+      `SELECT r.id, r.from_user, u.display_name, u.country_code, r.created_at
+       FROM friend_requests r
+       JOIN users u ON u.id = r.from_user
+       WHERE r.to_user = $1 AND r.status = 'pending'
+       ORDER BY r.created_at DESC`,
+      [userId],
+    );
+    const requests = res.rows.map((r: any) => ({
+      requestId: Number(r.id),
+      fromUserId: r.from_user,
+      displayName: r.display_name,
+      countryCode: r.country_code,
+    }));
+    reply.code(200).send({ requests });
+  } catch (err) {
+    console.error("getFriendRequests error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/** POST /friends/remove — desamigar. */
+export async function removeFriend(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { userId, friendUserId, identityToken } = (req.body ?? {}) as {
+      userId?: string; friendUserId?: string; identityToken?: string;
+    };
+    if (!requireOwnership(reply, identityToken, userId)) return;
+    if (!isValidUserId(friendUserId)) {
+      reply.code(422).send({ error: "friendUserId inválido" });
+      return;
+    }
+    const [a, b] = orderedPair(userId, friendUserId as string);
+    await query("DELETE FROM friendships WHERE user_a = $1 AND user_b = $2", [a, b]);
+    reply.code(200).send({ ok: true });
+  } catch (err) {
+    console.error("removeFriend error:", err);
     reply.code(500).send({ error: "Error interno" });
   }
 }

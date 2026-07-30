@@ -26,15 +26,16 @@ const RANGES: Record<Difficulty, [number, number]> = {
 export function buildGPChallenge(
   difficulty: Difficulty,
   date: Date,
+  seed?: string,
 ): GPEntry {
   const [min, max] = RANGES[difficulty] ?? RANGES.medio;
   const pool = gpsByRange(min, max);
   if (pool.length === 0) {
     // Fallback: si no hay carreras en el rango, usar todo el dataset.
     const all = gpsByRange(1950, 2025);
-    return dailyPick(all, date, `gpresultado::${difficulty}`);
+    return dailyPick(all, date, `gpresultado::${difficulty}`, seed);
   }
-  return dailyPick(pool, date, `gpresultado::${difficulty}`);
+  return dailyPick(pool, date, `gpresultado::${difficulty}`, seed);
 }
 
 /** Solución que el cliente envía: el top 10 en orden de posición (P1→P10). */

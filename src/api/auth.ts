@@ -336,16 +336,26 @@ async function migrateAnonymousAttempts(
     // 1. Traer todos los attempts del anónimo (lock FOR UPDATE para evitar
     //    que otra request los modifique mientras migramos).
     const anonAttempts = await client.query(
-      "SELECT id, game_id, date_key FROM attempts WHERE user_id = $1 FOR UPDATE",
+      "SELECT id, game_id, date_key, duel_id FROM attempts WHERE user_id = $1 FOR UPDATE",
       [fromUserId],
     );
 
     let migrated = 0;
 
     for (const row of anonAttempts.rows) {
-      // ¿El destino ya tiene attempt para (game, date)?
+      // Los attempts de DUELO (duel_id no nulo) se migran siempre: no compiten
+      // por (game, date) con el reto diario y el destino no puede tener ya un
+      // intento para ese mismo duelo. La regla de conflicto por (game, date)
+      // aplica SOLO al reto diario (duel_id IS NULL).
+      if (row.duel_id != null) {
+        await client.query("UPDATE attempts SET user_id = $1 WHERE id = $2", [toUserId, row.id]);
+        migrated++;
+        continue;
+      }
+
+      // ¿El destino ya tiene attempt DIARIO para (game, date)?
       const conflict = await client.query(
-        "SELECT id FROM attempts WHERE user_id = $1 AND game_id = $2 AND date_key = $3",
+        "SELECT id FROM attempts WHERE user_id = $1 AND game_id = $2 AND date_key = $3 AND duel_id IS NULL",
         [toUserId, row.game_id, row.date_key],
       );
 
@@ -362,9 +372,46 @@ async function migrateAnonymousAttempts(
       }
     }
 
-    // 2. Borrar el usuario anónimo. Sus sesiones quedan huérfanas pero se
-    //    limpian por expiración (cleanupExpiredSessions). Los attempts ya
-    //    se movieron o borraron arriba.
+    // 2. Amigos y duelos (Roadmap §4).
+    //    a) Amistades: insertar la equivalente para el destino (par ordenado)
+    //       y saltar si el "otro" ES el destino (evita auto-amistad). Las filas
+    //       del anónimo se borran solas por ON DELETE CASCADE al borrar el user.
+    const anonFriends = await client.query(
+      `SELECT (CASE WHEN user_a = $1 THEN user_b ELSE user_a END) AS other
+       FROM friendships WHERE user_a = $1 OR user_b = $1`,
+      [fromUserId],
+    );
+    for (const f of anonFriends.rows) {
+      const other = f.other as string;
+      if (other === toUserId) continue; // no auto-amistad
+      const [a, b] = other < toUserId ? [other, toUserId] : [toUserId, other];
+      await client.query(
+        "INSERT INTO friendships (user_a, user_b) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+        [a, b],
+      );
+    }
+
+    //    b) Duelos: primero borrar cualquier duelo entre anónimo y destino
+    //       (tras el merge sería un auto-duelo, viola el CHECK). Después expirar
+    //       los pending/active del anónimo (no continúan tras cambiar identidad)
+    //       y recién ahí repuntar los ya cerrados (finished/expired/cancelled),
+    //       que no están en los índices de "1 activo" y no generan conflicto.
+    await client.query(
+      `DELETE FROM duels
+       WHERE (creator_id = $1 AND opponent_id = $2) OR (creator_id = $2 AND opponent_id = $1)`,
+      [fromUserId, toUserId],
+    );
+    await client.query(
+      `UPDATE duels SET status = 'expired'
+       WHERE (creator_id = $1 OR opponent_id = $1) AND status IN ('pending', 'active')`,
+      [fromUserId],
+    );
+    await client.query("UPDATE duels SET creator_id = $1 WHERE creator_id = $2", [toUserId, fromUserId]);
+    await client.query("UPDATE duels SET opponent_id = $1 WHERE opponent_id = $2", [toUserId, fromUserId]);
+
+    // 3. Borrar el usuario anónimo. Sus sesiones quedan huérfanas pero se
+    //    limpian por expiración (cleanupExpiredSessions). Attempts ya migrados,
+    //    friendships/friend_requests del anónimo se borran por CASCADE.
     await client.query("DELETE FROM sessions WHERE user_id = $1", [fromUserId]);
     await client.query("DELETE FROM users WHERE id = $1", [fromUserId]);
 

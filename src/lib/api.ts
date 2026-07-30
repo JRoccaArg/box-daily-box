@@ -458,3 +458,188 @@ export async function apiCloseDebugMonth(): Promise<{
     true, // preservar el 422 de "mes no cerrado" para mostrarlo
   );
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── Amigos y Duelos (Roadmap §4) ──────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+export type DuelResult = { won: boolean; points: number; timeSeconds: number; finishedAt: string };
+export type DuelStatus = "pending" | "active" | "finished" | "expired" | "cancelled";
+
+/** Estado de un duelo tal como lo ve un participante (modo a ciegas aplicado por el server). */
+export type DuelState = {
+  id: string;
+  gameId: string;
+  difficulty: string;
+  timeLimit: number | null;
+  status: DuelStatus;
+  creatorId: string;
+  opponentId: string | null;
+  youAre: "creator" | "opponent";
+  myResult: DuelResult | null;
+  /** Solo revelado cuando ambos terminaron (status='finished'). */
+  opponentResult: DuelResult | null;
+  opponentFinished: boolean;
+  expiresAt: string;
+  secondsLeft: number;
+};
+
+export type PendingDuel = {
+  id: string;
+  gameId: string;
+  difficulty: string;
+  timeLimit: number | null;
+  creatorName: string | null;
+  creatorCountry: string | null;
+  secondsLeft: number;
+};
+
+export type Friend = { userId: string; displayName: string | null; countryCode: string | null };
+export type FriendRequest = {
+  requestId: number;
+  fromUserId: string;
+  displayName: string | null;
+  countryCode: string | null;
+};
+
+type ErrShape = { error: string };
+function isErr<T>(v: T | ErrShape | null): v is ErrShape {
+  return v != null && typeof (v as ErrShape).error === "string";
+}
+
+/** Inicia una partida de DUELO. El server toma juego/dificultad/tiempo/semilla
+ *  de la fila del duelo (no del cliente); acá solo mandamos duelId + identidad. */
+export async function apiStartDuelChallenge(
+  gameId: string,
+  duelId: string,
+): Promise<StartResult> {
+  if (!API_URL) return { ok: false };
+  const { userId } = getIdentity();
+  const data = await apiFetch<StartResponse>(`/challenges/${gameId}/start`, {
+    method: "POST",
+    body: JSON.stringify({ duelId, userId, identityToken: getIdentityToken() }),
+  });
+  if (!data) return { ok: false };
+  if (data.identityToken) setIdentityToken(data.identityToken);
+  return { ok: true, sessionToken: data.sessionToken, serverNow: data.serverNow };
+}
+
+/** Crea un duelo. `opponentUserId` opcional = desafío directo a un amigo. */
+export async function apiCreateDuel(
+  gameId: string,
+  difficulty: string,
+  timeLimit: number | null,
+  opponentUserId?: string,
+): Promise<{ duelId: string; expiresAt: string; secondsLeft: number } | ErrShape | null> {
+  const { userId } = getIdentity();
+  return apiFetch(
+    "/duels",
+    {
+      method: "POST",
+      body: JSON.stringify({ userId, gameId, difficulty, timeLimit, opponentUserId, identityToken: getIdentityToken() }),
+    },
+    8000,
+    true,
+  );
+}
+
+export async function apiAcceptDuel(duelId: string): Promise<DuelState | ErrShape | null> {
+  const { userId } = getIdentity();
+  return apiFetch(`/duels/${encodeURIComponent(duelId)}/accept`, {
+    method: "POST",
+    body: JSON.stringify({ userId, identityToken: getIdentityToken() }),
+  }, 8000, true);
+}
+
+export async function apiDeclineDuel(duelId: string): Promise<{ ok: boolean } | ErrShape | null> {
+  const { userId } = getIdentity();
+  return apiFetch(`/duels/${encodeURIComponent(duelId)}/decline`, {
+    method: "POST",
+    body: JSON.stringify({ userId, identityToken: getIdentityToken() }),
+  }, 8000, true);
+}
+
+export async function apiCancelDuel(duelId: string): Promise<{ ok: boolean } | ErrShape | null> {
+  const { userId } = getIdentity();
+  return apiFetch(`/duels/${encodeURIComponent(duelId)}/cancel`, {
+    method: "POST",
+    body: JSON.stringify({ userId, identityToken: getIdentityToken() }),
+  }, 8000, true);
+}
+
+export async function apiGetDuel(duelId: string): Promise<DuelState | null> {
+  const { userId } = getIdentity();
+  const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
+  return apiFetch<DuelState>(`/duels/${encodeURIComponent(duelId)}?${params.toString()}`);
+}
+
+export async function apiGetPendingDuels(): Promise<PendingDuel[]> {
+  const { userId } = getIdentity();
+  if (!userId) return [];
+  const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
+  const res = await apiFetch<{ duels: PendingDuel[] }>(`/duels/pending?${params.toString()}`);
+  return res?.duels ?? [];
+}
+
+export async function apiGetMyFriendCode(): Promise<string | null> {
+  const { userId } = getIdentity();
+  if (!userId) return null;
+  const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
+  const res = await apiFetch<{ code: string }>(`/me/friend-code?${params.toString()}`);
+  return res?.code ?? null;
+}
+
+export async function apiResolveFriendByCode(
+  code: string,
+): Promise<Friend | ErrShape | null> {
+  return apiFetch<Friend | ErrShape>(`/friends/by-code/${encodeURIComponent(code)}`, {}, 8000, true);
+}
+
+/** Envía solicitud de amistad por código o por userId. */
+export async function apiSendFriendRequest(
+  target: { targetCode?: string; targetUserId?: string },
+): Promise<{ ok: boolean; status: string; requestId?: number } | ErrShape | null> {
+  const { userId } = getIdentity();
+  return apiFetch("/friends/request", {
+    method: "POST",
+    body: JSON.stringify({ userId, ...target, identityToken: getIdentityToken() }),
+  }, 8000, true);
+}
+
+export async function apiRespondFriendRequest(
+  requestId: number,
+  accept: boolean,
+): Promise<{ ok: boolean; status: string } | ErrShape | null> {
+  const { userId } = getIdentity();
+  return apiFetch("/friends/respond", {
+    method: "POST",
+    body: JSON.stringify({ userId, requestId, accept, identityToken: getIdentityToken() }),
+  }, 8000, true);
+}
+
+export async function apiRemoveFriend(friendUserId: string): Promise<{ ok: boolean } | ErrShape | null> {
+  const { userId } = getIdentity();
+  return apiFetch("/friends/remove", {
+    method: "POST",
+    body: JSON.stringify({ userId, friendUserId, identityToken: getIdentityToken() }),
+  }, 8000, true);
+}
+
+export async function apiListFriends(): Promise<Friend[]> {
+  const { userId } = getIdentity();
+  if (!userId) return [];
+  const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
+  const res = await apiFetch<{ friends: Friend[] }>(`/friends?${params.toString()}`);
+  return res?.friends ?? [];
+}
+
+export async function apiListFriendRequests(): Promise<FriendRequest[]> {
+  const { userId } = getIdentity();
+  if (!userId) return [];
+  const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
+  const res = await apiFetch<{ requests: FriendRequest[] }>(`/friends/requests?${params.toString()}`);
+  return res?.requests ?? [];
+}
+
+// Reexport util para que la UI distinga respuestas de error de las de éxito.
+export { isErr as isApiError };

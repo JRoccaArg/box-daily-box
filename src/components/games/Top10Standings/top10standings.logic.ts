@@ -77,10 +77,10 @@ export type ChallengeEntry = {
  * Usa dailyPick (semilla determinista por día) para que todos los
  * usuarios obtengan el mismo período en el mismo día.
  */
-export function buildChallenge(difficulty: Difficulty, date: Date): ChallengeEntry {
+export function buildChallenge(difficulty: Difficulty, date: Date, seed?: string): ChallengeEntry {
   const periods = validPeriods(difficulty);
   const period = periods.length > 0
-    ? dailyPick(periods, date, `top10-standings::${difficulty}`)
+    ? dailyPick(periods, date, `top10-standings::${difficulty}`, seed)
     : { startYear: RANGES.medio[0], length: 1 }; // fallback defensivo, no debería ocurrir
 
   const top10 = accumulate(period.startYear, period.length).slice(0, 10);

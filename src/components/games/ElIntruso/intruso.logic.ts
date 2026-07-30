@@ -69,10 +69,10 @@ function feasibleCategories(pool: Driver[]): Category[] {
     .sort((a, b) => a.key.localeCompare(b.key));
 }
 
-/** Genera el puzzle del dia de forma determinista. */
-export function buildIntruso(difficulty: Difficulty, date: Date): IntrusoPuzzle {
+/** Genera el puzzle del dia de forma determinista (o de un duelo si hay `seed`). */
+export function buildIntruso(difficulty: Difficulty, date: Date, seed?: string): IntrusoPuzzle {
   const pool = getDriverPoolAtLeast(difficulty, 30);
-  const rng = dailyRng(date, `intruso::${difficulty}`);
+  const rng = dailyRng(date, `intruso::${difficulty}`, seed);
 
   const cats = feasibleCategories(pool);
   // Siempre habra al menos una categoria factible (campeones/no campeones en
