@@ -6,7 +6,8 @@
 
 import { useEffect, useState } from "react";
 import { useI18n } from "@/context";
-import { getIdentity } from "@/lib/identity";
+import { getIdentityToken } from "@/lib/identity";
+import { isLoggedIn } from "@/lib/auth";
 import {
   apiGetMyFriendCode,
   apiListFriends,
@@ -15,6 +16,7 @@ import {
   apiRespondFriendRequest,
   apiRemoveFriend,
   isApiError,
+  friendlyApiError,
   type Friend,
   type FriendRequest,
 } from "@/lib/api";
@@ -25,8 +27,17 @@ import { DuelChallengeModal } from "./DuelChallengeModal";
 
 export function FriendsTab() {
   const { t } = useI18n();
-  const { userId } = getIdentity();
-  const isAnon = userId.startsWith("anon-");
+  // Dos capas distintas de "no soy una cuenta de Google":
+  //  - noToken: todavía no jugué NADA, nunca reclamé mi userId con el server
+  //    (getIdentityToken() null). Todos los endpoints de /friends exigen
+  //    identityToken (requireOwnership en routes.ts) — sin él, CUALQUIER
+  //    acción devuelve 403 "No autorizado". No tiene sentido mostrar
+  //    inputs que van a fallar siempre: se bloquean.
+  //  - isAnon: sí tengo identityToken (jugué al menos un reto), pero no
+  //    linkeé la cuenta a Google (isLoggedIn() false) — amigos funciona
+  //    normal, solo se avisa que se pierde la lista si borra el navegador.
+  const noToken = getIdentityToken() === null;
+  const isAnon = !noToken && !isLoggedIn();
 
   const [code, setCode] = useState<string | null>(null);
   const [friends, setFriends] = useState<Friend[] | null>(null);
@@ -37,11 +48,15 @@ export function FriendsTab() {
   const [removing, setRemoving] = useState<string | null>(null);
 
   const reload = () => {
+    // Sin identityToken, las 3 llamadas van a devolver 403 siempre
+    // (requireOwnership en el backend) — evita el roundtrip inútil.
+    if (noToken) return;
     apiGetMyFriendCode().then(setCode);
     apiListFriends().then(setFriends);
     apiListFriendRequests().then(setRequests);
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- solo debe correr una vez al montar; noToken no cambia durante la vida del componente (requiere recargar la página para pasar de anónimo a con token).
   useEffect(reload, []);
 
   async function addByCode() {
@@ -53,7 +68,7 @@ export function FriendsTab() {
     }
     const res = await apiSendFriendRequest({ targetCode: trimmed });
     if (!res || isApiError(res)) {
-      setMessage(res && "error" in res ? res.error : t("duel.error_generic"));
+      setMessage(res && "error" in res ? friendlyApiError(res.error, t) : t("duel.error_generic"));
       return;
     }
     setMessage(res.status === "auto_accepted" ? t("friends.request_accepted") : t("friends.request_sent"));
@@ -80,35 +95,43 @@ export function FriendsTab() {
 
   return (
     <div className="space-y-4">
+      {noToken && (
+        <p className="rounded-lg border border-white/10 bg-asphalt-700 px-3 py-2 text-xs leading-relaxed text-ink-muted">
+          {t("friends.need_to_play")}
+        </p>
+      )}
+
       {isAnon && (
         <p className="rounded-lg border border-sector-yellow/30 bg-sector-yellow/10 px-3 py-2 text-xs leading-relaxed text-sector-yellow/90">
           {t("friends.anon_warning")}
         </p>
       )}
 
-      <div className="rounded-lg border border-white/10 bg-asphalt-700 px-3 py-2.5">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-ink">
-            {code ? t("friends.your_code", { code }) : "…"}
-          </span>
-          <Button size="sm" variant="ghost" onClick={copyCode} disabled={!code}>
-            {t("friends.copy_code")}
-          </Button>
+      {!noToken && (
+        <div className="rounded-lg border border-white/10 bg-asphalt-700 px-3 py-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-ink">
+              {code ? t("friends.your_code", { code }) : "…"}
+            </span>
+            <Button size="sm" variant="ghost" onClick={copyCode} disabled={!code}>
+              {t("friends.copy_code")}
+            </Button>
+          </div>
+          <div className="mt-2 flex gap-2">
+            <input
+              value={codeInput}
+              onChange={(e) => setCodeInput(e.target.value)}
+              placeholder={t("friends.code_placeholder")}
+              maxLength={6}
+              className="min-w-0 flex-1 rounded-lg border border-white/10 bg-asphalt-800 px-3 py-2 text-sm uppercase text-ink outline-none focus:border-racing/50"
+            />
+            <Button size="sm" onClick={addByCode}>{t("friends.add_by_code")}</Button>
+          </div>
+          {message && <p className="mt-2 text-xs text-ink-muted">{message}</p>}
         </div>
-        <div className="mt-2 flex gap-2">
-          <input
-            value={codeInput}
-            onChange={(e) => setCodeInput(e.target.value)}
-            placeholder={t("friends.code_placeholder")}
-            maxLength={6}
-            className="min-w-0 flex-1 rounded-lg border border-white/10 bg-asphalt-800 px-3 py-2 text-sm uppercase text-ink outline-none focus:border-racing/50"
-          />
-          <Button size="sm" onClick={addByCode}>{t("friends.add_by_code")}</Button>
-        </div>
-        {message && <p className="mt-2 text-xs text-ink-muted">{message}</p>}
-      </div>
+      )}
 
-      {requests !== null && requests.length > 0 && (
+      {!noToken && requests !== null && requests.length > 0 && (
         <div>
           <p className="eyebrow mb-2">{t("friends.pending_requests", { count: requests.length })}</p>
           <ul className="space-y-2">
@@ -134,6 +157,7 @@ export function FriendsTab() {
         </div>
       )}
 
+      {!noToken && (
       <div>
         <p className="eyebrow mb-2">{t("friends.tab_title")}</p>
         {friends === null && <p className="text-sm text-ink-muted">…</p>}
@@ -177,6 +201,7 @@ export function FriendsTab() {
           </ul>
         )}
       </div>
+      )}
 
       {challengeTarget && (
         <DuelChallengeModal

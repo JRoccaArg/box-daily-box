@@ -703,3 +703,16 @@ export async function apiListFriendRequests(): Promise<FriendRequest[]> {
 
 // Reexport util para que la UI distinga respuestas de error de las de éxito.
 export { isErr as isApiError };
+
+/**
+ * Traduce mensajes de error crudos del server (literales en español, ver
+ * `requireOwnership` en `src/api/routes.ts`) a una clave i18n. El server no
+ * devuelve códigos de error, solo el string — este mapeo es la traducción
+ * del lado del cliente para no tener que tocar el backend (ver Etapa C del
+ * plan de bugfixes de Amigos y Duelos). Si no reconoce el string, cae a
+ * `duel.error_generic` en vez de mostrar el literal en español.
+ */
+export function friendlyApiError(error: string, t: (key: string) => string): string {
+  if (error === "No autorizado") return t("friends.need_to_play");
+  return t("duel.error_generic");
+}

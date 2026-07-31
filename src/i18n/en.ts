@@ -410,6 +410,7 @@ const en: Translations = {
   "friends.reject": "Reject",
   "friends.no_friends": "You haven't added any friends yet. Share your code so they can add you.",
   "friends.anon_warning": "You're anonymous: if you clear your browser or change device, you lose this list. Sign in with Google to keep it.",
+  "friends.need_to_play": "Play a challenge first to unlock Friends.",
   "friends.request_sent": "Request sent",
   "friends.request_accepted": "You're now friends!",
   "friends.remove": "Remove friend",

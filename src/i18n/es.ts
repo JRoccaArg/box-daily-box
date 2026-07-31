@@ -424,6 +424,7 @@ const es: Translations = {
   "friends.reject": "Rechazar",
   "friends.no_friends": "Todavía no agregaste amigos. Compartí tu código para que te agreguen.",
   "friends.anon_warning": "Sos anónimo: si borrás el navegador o cambiás de dispositivo, perdés esta lista. Iniciá sesión con Google para no perderla.",
+  "friends.need_to_play": "Jugá un reto primero para desbloquear Amigos.",
   "friends.request_sent": "Solicitud enviada",
   "friends.request_accepted": "¡Ahora son amigos!",
   "friends.remove": "Eliminar amigo",
