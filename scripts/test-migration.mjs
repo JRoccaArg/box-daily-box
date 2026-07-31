@@ -242,8 +242,12 @@ function testCase5_NameChangeRule() {
   const now = new Date();
   assert(canChangeNameThisMonth(now) === false, "cambió hoy → NO puede");
 
-  const lastMonth = new Date();
-  lastMonth.setUTCMonth(lastMonth.getUTCMonth() - 1);
+  // Se construye con Date.UTC y día fijo 15 a propósito: hacer
+  // `setUTCMonth(getUTCMonth() - 1)` sobre un día 29/30/31 DESBORDA cuando el
+  // mes anterior es más corto (ej. 31 de julio → "31 de junio" → 1 de julio),
+  // y el test fallaba solo en esas fechas del calendario. Día 15 siempre
+  // existe, y Date.UTC resuelve solo el mes -1 de enero → diciembre anterior.
+  const lastMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 15));
   assert(canChangeNameThisMonth(lastMonth) === true, "cambió el mes pasado → puede");
 }
 

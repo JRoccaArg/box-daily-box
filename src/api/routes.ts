@@ -402,9 +402,13 @@ export async function finishChallenge(
     let finalWon = flagged ? false : verifyResult.won;
     let finalPoints = flagged ? 0 : points;
     if (duplicated) {
+      // `AND duel_id IS NULL`: esta rama es la del RETO DIARIO. Si el usuario
+      // además jugó un duelo del mismo juego hoy, sin el filtro habría dos
+      // filas para (user, game, fecha) y `rows[0]` podía traer la del duelo,
+      // devolviéndole al jugador el resultado equivocado.
       const prev = await query(
         `SELECT won, points FROM attempts
-         WHERE user_id = $1 AND game_id = $2 AND date_key = $3`,
+         WHERE user_id = $1 AND game_id = $2 AND date_key = $3 AND duel_id IS NULL`,
         [uid, gameId, session.today],
       );
       if (prev.rows.length > 0) {
@@ -1404,10 +1408,19 @@ export async function getUserAttempts(
     const fromKey = typeof from === "string" && isValidDateKey(from) ? from : singleDate;
     const toKey = typeof to === "string" && isValidDateKey(to) ? to : singleDate;
 
+    // `AND duel_id IS NULL` es CRÍTICO: esta respuesta alimenta
+    // `syncFromServer` (src/lib/stats.ts), que escribe el lock durable
+    // `played[dia][juego]`. Sin el filtro, jugar un DUELO de PitTexto hoy
+    // bloqueaba el RETO DIARIO de PitTexto al recargar o entrar desde otro
+    // dispositivo — rompiendo el invariante "un duelo nunca bloquea el reto
+    // diario ni viceversa" (el mismo filtro está en el pre-check de
+    // `startChallenge`). Los intentos de duelo son `ranked:false` y no deben
+    // afectar racha, gráfico mensual ni bloqueo del reto.
     const rows = await query(
       `SELECT game_id, difficulty, won, time_seconds, points, created_at, date_key
        FROM attempts
        WHERE user_id = $1 AND date_key BETWEEN $2::date AND $3::date
+         AND duel_id IS NULL
        ORDER BY date_key DESC, created_at DESC`,
       [userId, fromKey, toKey],
     );
@@ -1536,8 +1549,21 @@ const FRIEND_CODE_LEN = 6;
 const DUEL_ID_LEN = 8;
 /** TTL de un duelo pendiente (esperando aceptación): 60s, "en vivo". */
 const DUEL_PENDING_TTL_MS = 60 * 1000;
-/** TTL de un duelo activo (jugándose): igual que una sesión normal (15 min). */
-const DUEL_ACTIVE_TTL_MS = SESSION_TTL;
+/**
+ * TTL de un duelo activo (jugándose). Es la RED DE SEGURIDAD para duelos que
+ * quedaron colgados sin que ningún cliente pudiera avisar (crash del browser,
+ * kill del proceso, pérdida de red) — el camino normal de abandono es
+ * `POST /duels/:id/forfeit` o `finishChallenge` con solution nula, ambos
+ * inmediatos.
+ *
+ * INVARIANTE: debe superar cómodamente al timer más largo de cualquier juego
+ * (`TIME_LIMITS`, hoy 180s), porque `getDuel` marca 'expired' de forma lazy y
+ * si el TTL venciera mientras alguien todavía juega, la UI lo sacaría de su
+ * partida a mitad de camino. 5 min = 180s de juego + 120s de margen (carga
+ * del juego, latencia, aceptación tardía). Si algún juego nuevo supera los
+ * 180s de timer, HAY que subir este valor.
+ */
+const DUEL_ACTIVE_TTL_MS = 5 * 60 * 1000;
 
 /** Genera un código aleatorio criptográficamente uniforme del alfabeto seguro. */
 function randomCode(len: number): string {
@@ -1760,6 +1786,105 @@ async function startDuelChallenge(
   });
 }
 
+// ─── Cierre de un lado del duelo (compartido por finish y forfeit) ──
+
+export type DuelSide = "creator" | "opponent";
+
+/** Lo que se guarda en `duels.creator_result` / `duels.opponent_result`. */
+export type DuelSideResult = {
+  won: boolean;
+  points: number;
+  timeSeconds: number;
+  finishedAt: string;
+  /** true si ganó porque el rival abandonó (este lado nunca llegó a jugar). */
+  walkover?: boolean;
+};
+
+type DuelLockCheck =
+  | { ok: false; reason: "gone" | "not_participant" | "already_played" }
+  | { ok: true; side: DuelSide; otherHadResult: boolean; status: string };
+
+/** Cliente de transacción (pg PoolClient); `transaction()` lo tipa como any. */
+type TxClient = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
+
+/**
+ * Toma el lock de la fila del duelo y valida que este usuario pueda cerrar su
+ * lado. DEBE llamarse DENTRO de una transacción.
+ *
+ * El `FOR UPDATE` no es opcional: sin él, dos finalizaciones simultáneas (el
+ * caso real de "ambos abandonan a la vez") leerían ambas que el rival todavía
+ * no tiene resultado, y cada una le otorgaría el walkover a la otra — quedaría
+ * un duelo con dos ganadores. Con el lock, la segunda espera a que la primera
+ * commitee, re-lee, ve que su propio lado ya está resuelto y devuelve 409.
+ */
+export async function lockDuelForSettle(
+  client: TxClient,
+  duelId: string,
+  userId: string,
+): Promise<DuelLockCheck> {
+  const found = await client.query(
+    `SELECT creator_id, opponent_id, creator_result, opponent_result, status
+     FROM duels WHERE id = $1 FOR UPDATE`,
+    [duelId],
+  );
+  const duel = found.rows[0];
+  if (!duel) return { ok: false, reason: "gone" };
+
+  const side: DuelSide | null =
+    userId === duel.creator_id ? "creator" : userId === duel.opponent_id ? "opponent" : null;
+  if (!side) return { ok: false, reason: "not_participant" };
+
+  const mine = side === "creator" ? duel.creator_result : duel.opponent_result;
+  if (mine != null) return { ok: false, reason: "already_played" };
+
+  const other = side === "creator" ? duel.opponent_result : duel.creator_result;
+  return { ok: true, side, otherHadResult: other != null, status: String(duel.status) };
+}
+
+/** Resultado sintético del que GANA por abandono del rival (nunca jugó). */
+export function walkoverResult(nowMs: number): DuelSideResult {
+  return {
+    won: true,
+    points: 0,
+    timeSeconds: 0,
+    walkover: true,
+    finishedAt: new Date(nowMs).toISOString(),
+  };
+}
+
+/**
+ * Escribe el resultado de MI lado y, si corresponde, el walkover del rival.
+ * `COALESCE($5, ...)` deja intacto el lado ajeno cuando no hay walkover.
+ */
+export async function writeDuelSideResult(
+  client: TxClient,
+  args: {
+    duelId: string;
+    side: DuelSide;
+    result: DuelSideResult;
+    /** Resultado a forzar en el rival (walkover), o null si no corresponde. */
+    walkoverForOther: DuelSideResult | null;
+    /** Si el duelo queda cerrado con esta escritura. */
+    finished: boolean;
+  },
+): Promise<void> {
+  await client.query(
+    `UPDATE duels
+     SET creator_result  = CASE WHEN $2 = 'creator'  THEN $3::jsonb ELSE COALESCE($5::jsonb, creator_result)  END,
+         opponent_result = CASE WHEN $2 = 'opponent' THEN $3::jsonb ELSE COALESCE($5::jsonb, opponent_result) END,
+         status      = CASE WHEN $4 THEN 'finished' ELSE status      END,
+         finished_at = CASE WHEN $4 THEN now()       ELSE finished_at END
+     WHERE id = $1`,
+    [
+      args.duelId,
+      args.side,
+      JSON.stringify(args.result),
+      args.finished,
+      args.walkoverForOther ? JSON.stringify(args.walkoverForOther) : null,
+    ],
+  );
+}
+
 async function finishDuelChallenge(
   req: FastifyRequest,
   reply: FastifyReply,
@@ -1788,57 +1913,82 @@ async function finishDuelChallenge(
   const uid = session.uid;
   const clientIp = req.ip || "unknown";
 
-  const found = await query("SELECT creator_id, opponent_id, creator_result, opponent_result FROM duels WHERE id = $1", [duelId]);
-  const duel = found.rows[0] as { creator_id: string; opponent_id: string | null; creator_result: any; opponent_result: any } | undefined;
-  if (!duel) {
-    reply.code(410).send({ error: "El duelo ya no existe" });
-    return;
-  }
-  const side = uid === duel.creator_id ? "creator" : uid === duel.opponent_id ? "opponent" : null;
-  if (!side) {
-    reply.code(403).send({ error: "No sos participante de este duelo" });
-    return;
-  }
-  const alreadyMine = side === "creator" ? duel.creator_result : duel.opponent_result;
-  if (alreadyMine != null) {
-    reply.code(409).send({ error: "Ya jugaste este duelo" });
-    return;
-  }
-  const otherHadResult = (side === "creator" ? duel.opponent_result : duel.creator_result) != null;
-
-  const resultJson = JSON.stringify({
+  const myResult: DuelSideResult = {
     won: verifyResult.won,
     points,
     timeSeconds,
     finishedAt: new Date(now).toISOString(),
-  });
+  };
 
-  let duplicated = false;
+  // Todo (lock + attempt + resultado) va en UNA transacción: ver el comentario
+  // de `lockDuelForSettle` sobre por qué el FOR UPDATE es obligatorio acá.
+  let outcome:
+    | { ok: false; reason: "gone" | "not_participant" | "already_played" }
+    | { ok: true; duelFinished: boolean; walkoverGranted: boolean }
+    | { ok: false; reason: "duplicated" };
   try {
-    await transaction(async (client) => {
+    outcome = await transaction(async (client) => {
+      const lock = await lockDuelForSettle(client, duelId, uid);
+      if (!lock.ok) return lock;
+
       await client.query("UPDATE sessions SET consumed = true WHERE id = $1", [session.sessionId]);
       await client.query(
         `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, time_seconds, points, flagged, ranked, ip_address, duel_id)
          VALUES ($1, $2, $3::date, $4, $5, $6, $7, false, false, $8, $9)`,
         [uid, session.gameId, session.today, session.difficulty, verifyResult.won, timeSeconds, points, clientIp, duelId],
       );
-      // Setea el resultado de MI lado; si el otro ya terminó, cierra el duelo.
-      await client.query(
-        `UPDATE duels
-         SET creator_result  = CASE WHEN $2 = 'creator'  THEN $3::jsonb ELSE creator_result  END,
-             opponent_result = CASE WHEN $2 = 'opponent' THEN $3::jsonb ELSE opponent_result END,
-             status = CASE WHEN $4 THEN 'finished' ELSE status END,
-             finished_at = CASE WHEN $4 THEN now() ELSE finished_at END
-         WHERE id = $1`,
-        [duelId, side, resultJson, otherHadResult],
-      );
+
+      // WALKOVER: abandoné y el rival todavía no tenía resultado → gana en el
+      // acto y el duelo se cierra ya (regla de producto: "si uno abandona,
+      // termina el duelo y gana quien no abandonó").
+      const grantWalkover = isAbandon && !lock.otherHadResult;
+      const finished = lock.otherHadResult || grantWalkover;
+
+      await writeDuelSideResult(client, {
+        duelId,
+        side: lock.side,
+        result: myResult,
+        walkoverForOther: grantWalkover ? walkoverResult(now) : null,
+        finished,
+      });
+
+      return { ok: true as const, duelFinished: finished, walkoverGranted: grantWalkover };
     });
   } catch (err: any) {
+    // Defensa en profundidad: con el FOR UPDATE esto ya no debería alcanzarse
+    // (el chequeo de `already_played` corre antes del INSERT), pero si el
+    // índice único de attempts salta igual, se reporta como duplicado.
     if (err.code === "23505") {
-      duplicated = true;
+      outcome = { ok: false, reason: "duplicated" };
     } else {
       throw err;
     }
+  }
+
+  if (!outcome.ok) {
+    if (outcome.reason === "gone") {
+      reply.code(410).send({ error: "El duelo ya no existe" });
+      return;
+    }
+    if (outcome.reason === "not_participant") {
+      reply.code(403).send({ error: "No sos participante de este duelo" });
+      return;
+    }
+    if (outcome.reason === "already_played") {
+      reply.code(409).send({ error: "Ya jugaste este duelo" });
+      return;
+    }
+    // duplicated: el intento ya estaba registrado; se responde 200 con el flag.
+    reply.code(200).send({
+      won: verifyResult.won,
+      points,
+      timeSeconds,
+      duelId,
+      duelFinished: false,
+      duplicated: true,
+      ranked: false,
+    });
+    return;
   }
 
   reply.code(200).send({
@@ -1846,8 +1996,9 @@ async function finishDuelChallenge(
     points,
     timeSeconds,
     duelId,
-    duelFinished: otherHadResult,
-    duplicated,
+    duelFinished: outcome.duelFinished,
+    walkoverGranted: outcome.walkoverGranted,
+    duplicated: false,
     ranked: false,
   });
 }
@@ -2052,6 +2203,84 @@ export async function cancelDuel(req: FastifyRequest, reply: FastifyReply): Prom
     reply.code(200).send({ ok: true });
   } catch (err) {
     console.error("cancelDuel error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/**
+ * POST /duels/:id/forfeit — "me voy de este duelo", SIN necesidad de sessionToken.
+ *
+ * Existe porque el camino normal de abandono (`finishChallenge` con solution
+ * nula) exige un sessionToken que sólo se emite al ARRANCAR la partida: si el
+ * usuario cierra la pestaña antes de que el juego cargue (mientras espera que
+ * el rival acepte, o justo en la transición a la pantalla de juego) no tiene
+ * forma de avisar, y el duelo quedaría colgado hasta el TTL bloqueando a los
+ * DOS participantes. Con esto, el cliente puede rendirse en cualquier momento
+ * usando solo su identityToken.
+ *
+ * Según el estado del duelo:
+ *  - 'active'  → registra mi abandono y, si el rival todavía no tenía
+ *                resultado, le otorga el walkover; el duelo queda 'finished'.
+ *  - 'pending' → equivale a cancelar/rechazar: pasa a 'cancelled' (nadie llegó
+ *                a jugar, no hay resultado que registrar).
+ *  - otro      → no-op idempotente (200): ya estaba cerrado.
+ *
+ * NO inserta fila en `attempts`: no se jugó ningún puzzle. `attempts` registra
+ * partidas reales; el desenlace del duelo vive en `duels.*_result`.
+ */
+export async function forfeitDuel(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { id } = req.params as { id: string };
+    const { userId, identityToken } = (req.body ?? {}) as { userId?: string; identityToken?: string };
+    if (!isCodeFormat(id, DUEL_ID_LEN)) {
+      reply.code(422).send({ error: "duelId inválido" });
+      return;
+    }
+    if (!requireOwnership(reply, identityToken, userId)) return;
+
+    const now = Date.now();
+    const result = await transaction(async (client) => {
+      const lock = await lockDuelForSettle(client, id, userId);
+      if (!lock.ok) return lock;
+
+      if (lock.status === "pending") {
+        await client.query(
+          "UPDATE duels SET status = 'cancelled' WHERE id = $1 AND status = 'pending'",
+          [id],
+        );
+        return { ok: true as const, status: "cancelled" as const };
+      }
+      if (lock.status !== "active") {
+        return { ok: true as const, status: "noop" as const };
+      }
+
+      await writeDuelSideResult(client, {
+        duelId: id,
+        side: lock.side,
+        result: { won: false, points: 0, timeSeconds: 0, finishedAt: new Date(now).toISOString() },
+        walkoverForOther: lock.otherHadResult ? null : walkoverResult(now),
+        finished: true,
+      });
+      return { ok: true as const, status: "forfeited" as const };
+    });
+
+    if (!result.ok) {
+      if (result.reason === "gone") {
+        reply.code(410).send({ error: "El duelo ya no existe" });
+        return;
+      }
+      if (result.reason === "not_participant") {
+        reply.code(403).send({ error: "No sos participante de este duelo" });
+        return;
+      }
+      // already_played: mi lado ya estaba resuelto (p. ej. el finish normal
+      // llegó primero). Idempotente a propósito: rendirse dos veces no es error.
+      reply.code(200).send({ ok: true, status: "already_settled" });
+      return;
+    }
+    reply.code(200).send({ ok: true, status: result.status });
+  } catch (err) {
+    console.error("forfeitDuel error:", err);
     reply.code(500).send({ error: "Error interno" });
   }
 }

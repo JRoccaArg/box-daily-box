@@ -35,6 +35,7 @@ import {
   acceptDuel,
   declineDuel,
   cancelDuel,
+  forfeitDuel,
   getDuel,
   getPendingDuels,
   getMyFriendCode,
@@ -327,6 +328,7 @@ async function start(): Promise<void> {
   app.post("/duels/:id/accept", { preHandler: requireDb, config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, acceptDuel as any);
   app.post("/duels/:id/decline", { preHandler: requireDb, config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, declineDuel as any);
   app.post("/duels/:id/cancel", { preHandler: requireDb, config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, cancelDuel as any);
+  app.post("/duels/:id/forfeit", { preHandler: requireDb, config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, forfeitDuel as any);
   app.get("/duels/pending", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getPendingDuels as any);
   app.get("/duels/:id", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getDuel as any);
 

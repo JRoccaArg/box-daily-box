@@ -481,7 +481,19 @@ export async function apiSeedDuels(
 // ─── Amigos y Duelos (Roadmap §4) ──────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════
 
-export type DuelResult = { won: boolean; points: number; timeSeconds: number; finishedAt: string };
+export type DuelResult = {
+  won: boolean;
+  points: number;
+  timeSeconds: number;
+  finishedAt: string;
+  /**
+   * true cuando este lado ganó porque el RIVAL abandonó antes de que este
+   * jugador llegara a jugar (Roadmap §4). En ese caso `points`/`timeSeconds`
+   * son 0 y NO representan una partida real: la UI debe mostrar un mensaje de
+   * "ganaste por abandono" en vez de un puntaje.
+   */
+  walkover?: boolean;
+};
 export type DuelStatus = "pending" | "active" | "finished" | "expired" | "cancelled";
 
 /** Estado de un duelo tal como lo ve un participante (modo a ciegas aplicado por el server). */
@@ -585,6 +597,33 @@ export async function apiCancelDuel(duelId: string): Promise<{ ok: boolean } | E
     method: "POST",
     body: JSON.stringify({ userId, identityToken: getIdentityToken() }),
   }, 8000, true);
+}
+
+/**
+ * Rendirse / salir de un duelo SIN necesidad de un sessionToken activo.
+ *
+ * Sirve para el caso en que el usuario se va antes de que el juego cargue
+ * (pantalla de espera, transición): ahí `apiFinishChallenge` no es opción
+ * porque todavía no hay sessionToken. Si el duelo estaba 'active', el rival
+ * gana por walkover; si estaba 'pending', el duelo se cancela.
+ *
+ * `keepalive` para que el navegador la despache aunque la pestaña se esté
+ * cerrando (mismo motivo que en `apiFinishChallenge`).
+ */
+export async function apiForfeitDuel(
+  duelId: string,
+): Promise<{ ok: boolean; status: string } | ErrShape | null> {
+  const { userId } = getIdentity();
+  return apiFetch(
+    `/duels/${encodeURIComponent(duelId)}/forfeit`,
+    {
+      method: "POST",
+      body: JSON.stringify({ userId, identityToken: getIdentityToken() }),
+      keepalive: true,
+    },
+    8000,
+    true,
+  );
 }
 
 export async function apiGetDuel(duelId: string): Promise<DuelState | null> {

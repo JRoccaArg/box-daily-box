@@ -66,6 +66,7 @@ async function partA() {
     acceptDuel,
     declineDuel,
     cancelDuel,
+    forfeitDuel,
     getDuel,
     getPendingDuels,
   } = await import("@/api/routes");
@@ -124,6 +125,23 @@ async function partA() {
     const r = mockReply();
     await cancelDuel({ params: { id: DUEL_ID }, body: { userId: CREATOR, identityToken: otherToken } } as any, r);
     assert(r._state.code === 403, `cancel con identityToken ajeno → 403 (recibido: ${r._state.code})`);
+  }
+
+  console.log("\n▶ POST /duels/:id/forfeit");
+  {
+    const r = mockReply();
+    await forfeitDuel({ params: { id: "corto" }, body: { userId: CREATOR, identityToken: myToken } } as any, r);
+    assert(r._state.code === 422, `duelId con formato inválido → 422 (recibido: ${r._state.code})`);
+  }
+  {
+    const r = mockReply();
+    await forfeitDuel({ params: { id: DUEL_ID }, body: { userId: CREATOR } } as any, r);
+    assert(r._state.code === 403, `sin identityToken → 403 (recibido: ${r._state.code})`);
+  }
+  {
+    const r = mockReply();
+    await forfeitDuel({ params: { id: DUEL_ID }, body: { userId: CREATOR, identityToken: otherToken } } as any, r);
+    assert(r._state.code === 403, `identityToken ajeno → 403 (recibido: ${r._state.code})`);
   }
 
   console.log("\n▶ GET /duels/:id (getDuel) y /duels/pending");
@@ -434,6 +452,164 @@ async function partB() {
   );
 }
 
+/**
+ * PARTE D: walkover por abandono. A diferencia del resto de la Parte B (que
+ * replica SQL), esta sección importa y ejercita las funciones REALES de
+ * `src/api/routes.ts` (`lockDuelForSettle` / `writeDuelSideResult` /
+ * `walkoverResult`) pasándoles PGlite como cliente de transacción — su firma
+ * `TxClient` es estructural justamente para permitir esto. Mismo enfoque que
+ * `scripts/test-badges.ts`, que testea la lógica real con un ejecutor
+ * inyectable en vez de duplicar el SQL.
+ */
+async function partD() {
+  console.log("\n═══ PARTE D: walkover por abandono (funciones REALES de routes.ts) ═══");
+  const { lockDuelForSettle, writeDuelSideResult, walkoverResult } = await import("@/api/routes");
+
+  // La Parte B deja duelos activos; el índice parcial "1 duelo activo por
+  // usuario" impediría crear los de esta sección. Se arranca de cero.
+  await q("DELETE FROM duels");
+
+  const NOW = Date.parse("2026-08-10T12:00:00Z");
+  const realResult = (won: boolean, points: number) => ({
+    won,
+    points,
+    timeSeconds: 30,
+    finishedAt: new Date(NOW).toISOString(),
+  });
+
+  /** Crea un duelo activo limpio entre CREATOR y OPPONENT. */
+  async function freshActiveDuel(id: string) {
+    await q("DELETE FROM duels WHERE id = $1", [id]);
+    await q(
+      `INSERT INTO duels (id, creator_id, opponent_id, game_id, difficulty, seed, status, expires_at)
+       VALUES ($1, $2, $3, 'pittexto', 'medio', $1, 'active', now() + interval '5 minutes')`,
+      [id, CREATOR, OPPONENT],
+    );
+  }
+  const readDuel = async (id: string) =>
+    (await q("SELECT * FROM duels WHERE id = $1", [id])).rows[0] as any;
+
+  // ─── Abandono con el rival sin jugar → walkover ─────────────────────
+  console.log("\n[Abandono y el rival no jugó → walkover]");
+  await freshActiveDuel("DUELWO01");
+  {
+    const lock = await lockDuelForSettle(db as any, "DUELWO01", CREATOR);
+    assert(lock.ok && lock.side === "creator", "el creador puede cerrar su lado");
+    if (lock.ok) {
+      // isAbandon = true y el rival no tenía resultado → se otorga walkover.
+      await writeDuelSideResult(db as any, {
+        duelId: "DUELWO01",
+        side: lock.side,
+        result: realResult(false, 0),
+        walkoverForOther: lock.otherHadResult ? null : walkoverResult(NOW),
+        finished: true,
+      });
+    }
+    const d = await readDuel("DUELWO01");
+    assert(d.status === "finished", "el duelo se cierra en el acto ('finished')");
+    assert(d.creator_result?.won === false, "el que abandonó queda como perdedor");
+    assert(d.opponent_result?.won === true, "el rival gana sin haber jugado");
+    assert(d.opponent_result?.walkover === true, "el resultado del rival viene marcado como walkover");
+    assert(d.opponent_result?.points === 0, "el ganador por walkover no recibe puntos inventados");
+  }
+
+  // ─── Abandono con el rival YA jugado → comparación normal ───────────
+  console.log("\n[Abandono pero el rival ya jugó → sin walkover, gana por puntaje real]");
+  await freshActiveDuel("DUELWO02");
+  {
+    // El oponente juega de verdad primero.
+    const lockB = await lockDuelForSettle(db as any, "DUELWO02", OPPONENT);
+    if (lockB.ok) {
+      await writeDuelSideResult(db as any, {
+        duelId: "DUELWO02",
+        side: lockB.side,
+        result: realResult(true, 480),
+        walkoverForOther: null,
+        finished: false,
+      });
+    }
+    const mid = await readDuel("DUELWO02");
+    assert(mid.status === "active", "tras jugar uno solo, el duelo sigue activo");
+
+    // Ahora el creador abandona: el rival YA tiene resultado → NO hay walkover.
+    const lockA = await lockDuelForSettle(db as any, "DUELWO02", CREATOR);
+    assert(lockA.ok && lockA.otherHadResult === true, "se detecta que el rival ya tenía resultado");
+    if (lockA.ok) {
+      await writeDuelSideResult(db as any, {
+        duelId: "DUELWO02",
+        side: lockA.side,
+        result: realResult(false, 0),
+        walkoverForOther: lockA.otherHadResult ? null : walkoverResult(NOW),
+        finished: true,
+      });
+    }
+    const d = await readDuel("DUELWO02");
+    assert(d.status === "finished", "el duelo se cierra cuando ambos tienen resultado");
+    assert(
+      d.opponent_result?.points === 480 && d.opponent_result?.walkover === undefined,
+      "el puntaje real del rival se conserva intacto (no se pisa con un walkover)",
+    );
+  }
+
+  // ─── Doble cierre del mismo lado → rechazado ────────────────────────
+  // Es el desenlace que garantiza el `FOR UPDATE` ante dos abandonos
+  // simultáneos: el segundo en tomar el lock ve su lado ya resuelto y aborta,
+  // en vez de otorgar un segundo walkover y dejar dos ganadores.
+  console.log("\n[Segundo cierre del mismo lado → already_played]");
+  {
+    const again = await lockDuelForSettle(db as any, "DUELWO01", CREATOR);
+    assert(
+      !again.ok && again.reason === "already_played",
+      "cerrar dos veces el mismo lado se rechaza (base del anti-doble-walkover)",
+    );
+    const d = await readDuel("DUELWO01");
+    assert(
+      d.creator_result?.walkover === undefined,
+      "el que abandonó NUNCA termina marcado como ganador por walkover",
+    );
+  }
+
+  // ─── Ajeno al duelo / duelo inexistente ─────────────────────────────
+  console.log("\n[Validaciones de participación]");
+  {
+    const stranger = await lockDuelForSettle(db as any, "DUELWO01", "anon-99999999-9999-9999-9999-999999999999");
+    assert(!stranger.ok && stranger.reason === "not_participant", "un tercero no puede cerrar el duelo");
+    const missing = await lockDuelForSettle(db as any, "NOEXISTE", CREATOR);
+    assert(!missing.ok && missing.reason === "gone", "un duelo inexistente devuelve 'gone'");
+  }
+
+  // ─── REGRESIÓN: los intentos de duelo no entran al historial personal ─
+  // `getUserAttempts` alimenta `syncFromServer`, que escribe el lock durable
+  // `played[dia][juego]`. Sin `AND duel_id IS NULL`, jugar un duelo bloqueaba
+  // el reto diario del mismo juego al recargar o entrar desde otro dispositivo.
+  console.log("\n[Regresión: el historial personal excluye intentos de duelo]");
+  {
+    await q("DELETE FROM attempts");
+    await q(
+      `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, points, ranked, duel_id)
+       VALUES ($1, 'pittexto', '2026-08-10', 'medio', true, 300, true, NULL)`,
+      [CREATOR],
+    );
+    await q(
+      `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, points, ranked, duel_id)
+       VALUES ($1, 'pittexto', '2026-08-10', 'medio', true, 480, false, 'DUELWO01')`,
+      [CREATOR],
+    );
+    const rows = await q(
+      `SELECT game_id, points FROM attempts
+       WHERE user_id = $1 AND date_key BETWEEN $2::date AND $3::date
+         AND duel_id IS NULL
+       ORDER BY date_key DESC, created_at DESC`,
+      [CREATOR, "2026-08-01", "2026-08-31"],
+    );
+    assert(rows.rows.length === 1, "solo vuelve el intento del reto diario, no el del duelo");
+    assert(
+      Number((rows.rows[0] as any).points) === 300,
+      "y es el del reto diario (300 pts), no el del duelo (480)",
+    );
+  }
+}
+
 /** Determinismo del motor de seed para duelos (Roadmap §4, decisión #1). */
 async function partC() {
   console.log("\n═══ PARTE C: motor determinista con seed de duelo (src/lib/daily.ts) ═══");
@@ -457,6 +633,7 @@ async function partC() {
 (async () => {
   await partA();
   await partB();
+  await partD();
   await partC();
   console.log(`\n${failed === 0 ? "✅" : "❌"} ${passed} OK, ${failed} fallidos`);
   await db.close();
