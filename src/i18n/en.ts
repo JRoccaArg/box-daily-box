@@ -431,6 +431,7 @@ const en: Translations = {
   "duel.error_generic": "Couldn't create the duel. Try again.",
   "duel.loading": "Loading duel…",
   "duel.not_found": "This duel doesn't exist or is no longer available.",
+  "duel.error_start": "Couldn't load the duel. Try again from the home page.",
   "duel.waiting_opponent": "Waiting for them to accept…",
   "duel.waiting_finish": "Waiting for your opponent to finish…",
   "duel.cancel": "Cancel",

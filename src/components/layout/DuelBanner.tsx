@@ -9,7 +9,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useI18n } from "@/context";
-import { usePendingDuelsPolling } from "@/lib/duelPolling";
+import { usePendingDuelsPolling, useCountdown } from "@/lib/duelPolling";
 import { apiAcceptDuel, apiDeclineDuel, isApiError } from "@/lib/api";
 import { isGameplayActive, onGameplayChanged } from "@/lib/gameplayState";
 import { duelPath } from "@/lib/routes";
@@ -27,10 +27,15 @@ export function DuelBanner() {
 
   useEffect(() => onGameplayChanged(() => setGameplayActive(isGameplayActive())), []);
 
-  if (gameplayActive) return null;
-
+  // `visible`/`top` se calculan ANTES de cualquier `return null` para que
+  // `useCountdown` (como todo hook) se llame siempre, incondicionalmente, en
+  // el mismo orden en cada render — con `top` undefined, da 0 y no importa
+  // porque el componente igual va a devolver null más abajo.
   const visible = pending.filter((d) => !dismissed.has(d.id));
   const top = visible[0];
+  const secondsLeft = useCountdown(top?.expiresAt);
+
+  if (gameplayActive) return null;
   if (!top) return null;
 
   const nat = top.creatorCountry ? NATIONALITIES[top.creatorCountry] : null;
@@ -66,7 +71,7 @@ export function DuelBanner() {
           {t("duel.invitation_from", { name: top.creatorName || t("duel.someone"), game: t(`game.${top.gameId}.name`) })}
         </p>
         <p className="text-xs text-ink-muted">
-          {t("duel.expires_in", { seconds: top.secondsLeft })}
+          {t("duel.expires_in", { seconds: secondsLeft })}
           {visible.length > 1 && ` · ${t("duel.more_pending", { count: visible.length - 1 })}`}
         </p>
         <div className="flex gap-2">

@@ -2366,7 +2366,10 @@ export async function getPendingDuels(req: FastifyRequest, reply: FastifyReply):
       timeLimit: r.time_limit,
       creatorName: r.creator_name,
       creatorCountry: r.creator_country,
+      // `secondsLeft` es solo para clientes que no lo recalculen; el
+      // countdown fluido del cliente (Etapa B, useCountdown) usa expiresAt.
       secondsLeft: Math.max(0, Math.round((new Date(r.expires_at).getTime() - Date.now()) / 1000)),
+      expiresAt: r.expires_at,
     }));
     reply.code(200).send({ duels });
   } catch (err) {

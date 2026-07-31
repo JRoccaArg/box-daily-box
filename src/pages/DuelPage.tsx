@@ -16,8 +16,8 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Head } from "vite-react-ssg";
 import { useI18n } from "@/context";
-import { useDuelPolling } from "@/lib/duelPolling";
-import { apiAcceptDuel, apiDeclineDuel, apiCancelDuel, apiStartDuelChallenge, apiFinishChallenge, isApiError } from "@/lib/api";
+import { useDuelPolling, useCountdown } from "@/lib/duelPolling";
+import { apiAcceptDuel, apiDeclineDuel, apiCancelDuel, apiForfeitDuel, apiStartDuelChallenge, apiFinishChallenge, isApiError } from "@/lib/api";
 import { getIdentity } from "@/lib/identity";
 import { homePath } from "@/lib/routes";
 import { gameById } from "@/components/games/registry";
@@ -37,6 +37,45 @@ export function DuelPage() {
   const { duel, loading, notFound, refresh } = useDuelPolling(duelId ?? null);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  // ─── Abandono al cerrar/navegar afuera (bug: "si ambos abandonan, el
+  // duelo queda activo para siempre") ─────────────────────────────────
+  //
+  // Cubre TODAS las pantallas de esta página en las que soy participante y
+  // el duelo sigue "vivo" (pending como creador esperando aceptación, o
+  // active mientras juego/espero al rival): si cierro la pestaña o navego
+  // afuera, `/duels/:id/forfeit` avisa al instante en vez de esperar el TTL
+  // (60s en pending, 5min en active). Es idempotente y no requiere
+  // sessionToken, así que es seguro llamarlo incluso si mi lado ya estaba
+  // resuelto (el server responde "already_settled" y no hace nada) — no
+  // hace falta distinguir en qué sub-pantalla exacta estoy parado.
+  const abandonRef = useRef<{ duelId: string | null; shouldReport: boolean }>({
+    duelId: null,
+    shouldReport: false,
+  });
+  useEffect(() => {
+    const isParticipant = !!duel && (userId === duel.creatorId || userId === duel.opponentId);
+    const duelIsLive = !!duel && (duel.status === "pending" || duel.status === "active");
+    abandonRef.current = {
+      duelId: duel?.id ?? null,
+      shouldReport: isParticipant && duelIsLive,
+    };
+  }, [duel, userId]);
+
+  useEffect(() => {
+    const reportAbandon = () => {
+      const { duelId: id, shouldReport } = abandonRef.current;
+      if (!shouldReport || !id) return;
+      abandonRef.current.shouldReport = false;
+      apiForfeitDuel(id).catch(() => {});
+    };
+    const onBeforeUnload = () => reportAbandon();
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      reportAbandon();
+    };
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -110,6 +149,10 @@ function DuelBody({ duel, myUserId, busy, actionError, onAccept, onDecline, onCa
   const isCreator = myUserId === duel.creatorId;
   const isOpponent = myUserId === duel.opponentId;
   const isParticipant = isCreator || isOpponent;
+  // Countdown fluido (no salta de a 3s como el `secondsLeft` que refresca el
+  // polling): siempre se llama, aunque solo se muestre en las 2 pantallas de
+  // 'pending' de abajo — el resto de estados no lo usan pero no está de más.
+  const secondsLeft = useCountdown(duel.expiresAt);
 
   if (duel.status === "expired") {
     return <TerminalMessage text={t("duel.expired")} onHome={() => navigate(homePath(locale))} />;
@@ -128,7 +171,7 @@ function DuelBody({ duel, myUserId, busy, actionError, onAccept, onDecline, onCa
           <p className="mt-1 text-sm text-ink-muted">
             {t("duel.condition", { game: game ? t(`game.${game.id}.name`) : duel.gameId, difficulty: t(`diff.${duel.difficulty}`), time: duel.timeLimit ?? 0 })}
           </p>
-          <TimerDisplay secondsLeft={duel.secondsLeft} total={60} />
+          <TimerDisplay secondsLeft={secondsLeft} total={60} />
           {actionError && <p className="mt-2 text-sm text-racing-400">{actionError}</p>}
           <div className="mt-5">
             <Button variant="danger" disabled={busy} onClick={onCancel}>
@@ -151,7 +194,7 @@ function DuelBody({ duel, myUserId, busy, actionError, onAccept, onDecline, onCa
         <p className="mt-1 text-sm text-ink-muted">
           {t("duel.condition", { game: game ? t(`game.${game.id}.name`) : duel.gameId, difficulty: t(`diff.${duel.difficulty}`), time: duel.timeLimit ?? 0 })}
         </p>
-        <p className="mt-2 text-xs text-ink-faint">{t("duel.expires_in", { seconds: duel.secondsLeft })}</p>
+        <p className="mt-2 text-xs text-ink-faint">{t("duel.expires_in", { seconds: secondsLeft })}</p>
         {actionError && <p className="mt-2 text-sm text-racing-400">{actionError}</p>}
         <div className="mt-5 flex flex-col gap-2">
           <Button size="lg" disabled={busy} onClick={onAccept}>
@@ -226,9 +269,10 @@ function DuelPlayScreen({
   duel: NonNullable<ReturnType<typeof useDuelPolling>["duel"]>;
   game: NonNullable<ReturnType<typeof gameById>>;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const navigate = useNavigate();
   const [status, setStatus] = useState<GameStatus>("idle");
-  const [phase, setPhase] = useState<"connecting" | "playing" | "done">("connecting");
+  const [phase, setPhase] = useState<"connecting" | "playing" | "done" | "error">("connecting");
   const sessionTokenRef = useRef<string | null>(null);
   const finishedRef = useRef(false);
   const startedAtRef = useRef<number | null>(null);
@@ -239,16 +283,35 @@ function DuelPlayScreen({
 
   useEffect(() => {
     let cancelled = false;
-    apiStartDuelChallenge(duel.gameId, duel.id).then((res) => {
-      if (cancelled) return;
-      if (res.ok) {
-        sessionTokenRef.current = res.sessionToken;
-        startedAtRef.current = Date.now();
-        setStatus("playing");
-        setPhase("playing");
-        startTimer();
-      }
-    });
+    // Reintenta si el backend estaba frío (Railway) o hubo un blip de red —
+    // mismo patrón (y mismo backoff) que `startGameSession` en GameShell.tsx.
+    // Sin esto, un fallo transitorio del PRIMER intento dejaba al usuario
+    // trabado en "Cargando…" para siempre (bug reportado: la revancha desde
+    // PC nunca arrancaba aunque el rival ya estaba jugando en el celu).
+    const tryStart = (attempt: number) => {
+      apiStartDuelChallenge(duel.gameId, duel.id).then((res) => {
+        if (cancelled) return;
+        if (res.ok) {
+          sessionTokenRef.current = res.sessionToken;
+          startedAtRef.current = Date.now();
+          setStatus("playing");
+          setPhase("playing");
+          startTimer();
+        } else if (attempt < 2) {
+          window.setTimeout(() => tryStart(attempt + 1), 1500 * (attempt + 1));
+        } else {
+          setPhase("error");
+        }
+      }).catch(() => {
+        if (cancelled) return;
+        if (attempt < 2) {
+          window.setTimeout(() => tryStart(attempt + 1), 1500 * (attempt + 1));
+        } else {
+          setPhase("error");
+        }
+      });
+    };
+    tryStart(0);
     return () => {
       cancelled = true;
     };
@@ -268,6 +331,18 @@ function DuelPlayScreen({
 
   if (phase === "connecting") {
     return <Panel className="text-center text-ink-muted">{t("duel.loading")}</Panel>;
+  }
+  if (phase === "error") {
+    return (
+      <Panel className="text-center">
+        <p className="text-ink-muted">{t("duel.error_start")}</p>
+        <div className="mt-4">
+          <Button variant="outline" onClick={() => navigate(homePath(locale))}>
+            {t("duel.go_home")}
+          </Button>
+        </div>
+      </Panel>
+    );
   }
 
   const GameComponent = game.component;

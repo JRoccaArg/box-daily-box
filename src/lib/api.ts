@@ -524,6 +524,7 @@ export type PendingDuel = {
   creatorName: string | null;
   creatorCountry: string | null;
   secondsLeft: number;
+  expiresAt: string;
 };
 
 export type Friend = { userId: string; displayName: string | null; countryCode: string | null };

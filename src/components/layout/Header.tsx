@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useStats } from "@/context/StatsContext";
 import { useI18n } from "@/context";
 import { StatsModal } from "./StatsModal";
@@ -44,6 +44,7 @@ export function Header() {
   const { t, locale } = useI18n();
   const [statsOpen, setStatsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const { pathname } = useLocation();
 
   // La fecha de "hoy" difiere entre el momento del prerender (build) y la
   // visita real: se muestra solo tras montar para no generar mismatch de
@@ -55,6 +56,16 @@ export function Header() {
   useEffect(() => {
     return on(Events.OPEN_STATS, () => setStatsOpen(true));
   }, []);
+
+  // Cerrar los modales al navegar. Header vive dentro de Layout, que NO se
+  // desmonta al cambiar de ruta hija (home ↔ juego ↔ duelo) — sin esto, un
+  // modal abierto (ej. StatsModal desde el celu) quedaba encima de la
+  // pantalla nueva tras aceptar un duelo desde el banner, tapándola. Cubre
+  // cualquier navegación futura, no solo la de duelos.
+  useEffect(() => {
+    setStatsOpen(false);
+    setProfileOpen(false);
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/5 bg-asphalt-900/80 backdrop-blur-md">
