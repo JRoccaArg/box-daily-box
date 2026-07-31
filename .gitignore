@@ -38,6 +38,7 @@ yarn-error.log*
 
 # Local Claude/docs
 .claude/
+DEV_DUELOS_REFERENCE.md
 Box_Daily_Box_Context.md
 Box_Daily_Box_Business_Architecture.docx
 Box_Daily_Box_Business_Architecture.md
