@@ -53,6 +53,9 @@ export type RankingEntry = {
   points: number;
   gamesWon: number;
   daysPlayed: number;
+  /** Racha diaria actual (días consecutivos ganando). Ya viene con "death-check"
+   *  aplicado server-side: 0 si la racha murió. El UI la muestra solo si >= 2. */
+  currentStreak: number;
   /** Badges a mostrar inline (admin/superadmin primero + hasta 3 destacados). */
   displayBadges: DisplayBadge[];
 };

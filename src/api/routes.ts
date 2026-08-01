@@ -30,6 +30,7 @@ import {
   type FeaturedSlot,
 } from "./badges";
 import { resolveNow, isStagingDebugEnabled } from "./debugDate";
+import { bumpStreakOnWin, displayStreak, toDateKey } from "./streak";
 
 const SESSION_TTL = 15 * 60 * 1000; // 15 minutos
 
@@ -387,6 +388,16 @@ export async function finishChallenge(
            VALUES ($1, $2, $3::date, $4, $5, $6, $7, $8, $9, $10)`,
           [uid, gameId, session.today, session.difficulty, verifyResult.won, timeSeconds, points, flagged, session.ranked, clientIp],
         );
+        // Racha diaria (Roadmap #3): solo al GANAR un reto diario y no-flaggeado.
+        // Dentro de la MISMA transacción: si el INSERT choca por duplicado y hace
+        // ROLLBACK, la racha no se bumpea (no cuenta doble un re-submit).
+        if (verifyResult.won && !flagged) {
+          await bumpStreakOnWin(
+            (sql, params) => client.query(sql, params),
+            uid,
+            session.today,
+          );
+        }
       });
     } catch (err: any) {
       if (err.code === "23505") {
@@ -543,21 +554,24 @@ export async function getRankingMonthly(
 
     const topResult = await query(
       `SELECT u.id, u.display_name, u.country_code, u.role, u.featured_badges,
+              u.current_streak, u.last_win_date,
               SUM(a.points) as points,
-              COUNT(a.id) as games_won,
+              COUNT(*) FILTER (WHERE a.won) as games_won,
               COUNT(DISTINCT a.date_key) as days_played
        FROM attempts a
        JOIN users u ON a.user_id = u.id
-       WHERE a.won AND NOT a.flagged AND a.ranked
+       WHERE NOT a.flagged AND a.ranked
        AND a.date_key >= $1::date
        AND a.date_key < ($1::date + INTERVAL '1 month')
        ${countryClause}
-       GROUP BY u.id, u.display_name, u.country_code, u.role, u.featured_badges
-       ORDER BY points DESC
+       GROUP BY u.id, u.display_name, u.country_code, u.role, u.featured_badges,
+                u.current_streak, u.last_win_date
+       ORDER BY points DESC, u.id ASC
        LIMIT 50`,
       params,
     );
 
+    const todayKey = resolveNow(req).toISOString().slice(0, 10);
     const rawTop = topResult.rows.map((row: any, idx: number) => ({
       rank: idx + 1,
       userId: row.id as string,
@@ -568,6 +582,11 @@ export async function getRankingMonthly(
       daysPlayed: Number(row.days_played ?? 0),
       role: (row.role as string) || "user",
       featured: (row.featured_badges as FeaturedSlot[] | null) ?? null,
+      currentStreak: displayStreak(
+        Number(row.current_streak ?? 0),
+        toDateKey(row.last_win_date),
+        todayKey,
+      ),
     }));
 
     const badgeMap = await computeDisplayBadgesForRanking(rawTop);
@@ -579,6 +598,7 @@ export async function getRankingMonthly(
       points: e.points,
       gamesWon: e.gamesWon,
       daysPlayed: e.daysPlayed,
+      currentStreak: e.currentStreak,
       displayBadges: badgeMap.get(e.userId) ?? [],
     }));
 
@@ -604,19 +624,22 @@ export async function getRankingDaily(
 
     const topResult = await query(
       `SELECT u.id, u.display_name, u.country_code, u.role, u.featured_badges,
+              u.current_streak, u.last_win_date,
               SUM(a.points) as points,
-              COUNT(a.id) as games_won
+              COUNT(*) FILTER (WHERE a.won) as games_won
        FROM attempts a
        JOIN users u ON a.user_id = u.id
-       WHERE a.won AND NOT a.flagged AND a.ranked
+       WHERE NOT a.flagged AND a.ranked
        AND a.date_key = $1::date
        ${countryFilter ? "AND u.country_code = $2" : ""}
-       GROUP BY u.id, u.display_name, u.country_code, u.role, u.featured_badges
-       ORDER BY points DESC
+       GROUP BY u.id, u.display_name, u.country_code, u.role, u.featured_badges,
+                u.current_streak, u.last_win_date
+       ORDER BY points DESC, u.id ASC
        LIMIT 50`,
       countryFilter ? [target, countryFilter] : [target],
     );
 
+    const todayKey = resolveNow(req).toISOString().slice(0, 10);
     const rawTop = topResult.rows.map((row: any, idx: number) => ({
       rank: idx + 1,
       userId: row.id as string,
@@ -627,6 +650,11 @@ export async function getRankingDaily(
       daysPlayed: 1,
       role: (row.role as string) || "user",
       featured: (row.featured_badges as FeaturedSlot[] | null) ?? null,
+      currentStreak: displayStreak(
+        Number(row.current_streak ?? 0),
+        toDateKey(row.last_win_date),
+        todayKey,
+      ),
     }));
 
     const badgeMap = await computeDisplayBadgesForRanking(rawTop);
@@ -638,6 +666,7 @@ export async function getRankingDaily(
       points: e.points,
       gamesWon: e.gamesWon,
       daysPlayed: e.daysPlayed,
+      currentStreak: e.currentStreak,
       displayBadges: badgeMap.get(e.userId) ?? [],
     }));
 

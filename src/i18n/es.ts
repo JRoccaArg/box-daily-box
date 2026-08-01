@@ -100,10 +100,23 @@ const es: Translations = {
   "header.stats_label": "Ver estadisticas",
   "header.stats": "Stats",
 
+  // ─── Configuración de sonido/vibración ───────────────────────────────
+  "settings.trigger_label": "Sonido y vibración",
+  "settings.sound": "Sonido",
+  "settings.haptics": "Vibración",
+  "settings.on": "Activado",
+  "settings.off": "Desactivado",
+
   // ─── Footer ─────────────────────────────────────────────────────────
   "footer.line1":
     "Box Box Daily · Proyecto de fans, sin afiliacion oficial con la Formula 1.",
   "footer.line2": "Un reto nuevo cada dia a la medianoche.",
+  "footer.info": "Cómo jugar",
+  "footer.terms": "Términos y Condiciones",
+  "footer.privacy": "Política de Privacidad",
+
+  // ─── Páginas legales ────────────────────────────────────────────────
+  "legal.updated": "Última actualización: {{date}}",
 
   // ─── Perfil (IdentityModal) ─────────────────────────────────────────
   "profile.title": "Tu perfil",
@@ -172,6 +185,7 @@ const es: Translations = {
   "ranking.challenge_singular": "reto",
   "ranking.challenge_plural": "retos",
   "ranking.pts": "pts",
+  "ranking.streak_title": "Racha de {{count}} días seguidos ganando",
   "ranking.monthly_note":
     "El ranking mensual se reinicia el 1 de cada mes.",
   "ranking.daily_note": "El ranking diario muestra los resultados de hoy.",
@@ -208,6 +222,11 @@ const es: Translations = {
   "monthly.no_wins":
     "Todavía no ganaste retos este mes. ¡Sumá tus primeros puntos!",
   "monthly.best_day": "Mejor día: {{day}} ({{points}} pts)",
+  "monthly.daily_title": "Por día",
+  "monthly.weekly_title": "Por semana",
+  "monthly.week_tooltip": "Semana {{n}}: {{points}} pts",
+  "monthly.by_difficulty": "Por dificultad",
+  "monthly.by_game": "Por juego",
   "monthly.scoring_title": "¿Cómo se puntúa?",
   "monthly.scoring_body":
     "Solo suman los retos ganados. Puntos base por dificultad: Fácil {{easy}}, Medio {{medium}}, Difícil {{hard}}, Leyenda {{legend}}. Cuanto menos tardes, más bonus de rapidez (hasta +120). Abandonar un reto cuenta como derrota (0 puntos).",
@@ -341,6 +360,13 @@ const es: Translations = {
   "lang.label": "Idioma",
 
   // ─── SEO (title/description por página) ──────────────────────────────
+  // Páginas legales (noindex, pero se usa el title para la pestaña del navegador).
+  "seo.terms.title": "Términos y Condiciones | Box Daily Box",
+  "seo.terms.description":
+    "Términos y condiciones de uso de Box Daily Box, plataforma gratuita de minijuegos diarios de Fórmula 1.",
+  "seo.privacy.title": "Política de Privacidad | Box Daily Box",
+  "seo.privacy.description":
+    "Cómo Box Daily Box trata tus datos personales: qué recopila, para qué, y tus derechos.",
   "seo.home.title": "Box Daily Box — Minijuegos diarios de Fórmula 1 | 6 puzzles gratis",
   "seo.home.description":
     "Seis minijuegos diarios de Fórmula 1: adiviná pilotos, completá el top 10, encontrá al intruso y más. Ranking global gratis, sin registro.",

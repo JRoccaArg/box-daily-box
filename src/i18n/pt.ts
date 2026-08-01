@@ -93,6 +93,7 @@ const pt: Translations = {
   "footer.line1":
     "Box Box Daily · Projeto de fãs, sem afiliação oficial com a Fórmula 1.",
   "footer.line2": "Um novo desafio todos os dias à meia-noite.",
+  "footer.info": "Como jogar",
 
   "profile.title": "Seu perfil",
   "profile.subtitle":

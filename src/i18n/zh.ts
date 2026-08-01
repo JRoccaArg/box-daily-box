@@ -87,6 +87,7 @@ const zh: Translations = {
 
   "footer.line1": "Box Box Daily · 粉丝项目，与一级方程式无官方关联。",
   "footer.line2": "每天午夜更新新挑战。",
+  "footer.info": "游戏玩法",
 
   "profile.title": "你的资料",
   "profile.subtitle": "你将以此名字和国家出现在全球排名中。",

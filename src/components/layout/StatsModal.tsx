@@ -4,7 +4,6 @@ import { useI18n } from "@/context";
 import { Modal } from "@/components/ui/Modal";
 import { StatPill } from "@/components/ui/StatPill";
 import { Button } from "@/components/ui/Button";
-import { Flame } from "@/components/ui/Icon";
 import { MonthlyRanking } from "./MonthlyRanking";
 import { GlobalRanking } from "./GlobalRanking";
 import { IdentityModal } from "./IdentityModal";
@@ -86,23 +85,18 @@ export function StatsModal({ open, onClose }: StatsModalProps) {
             <BadgeGallery userId={identity.userId} />
 
             <div className="mb-4">
-              <MonthlyRanking refreshKey={summary.won + summary.lost} />
+              <MonthlyRanking
+                refreshKey={summary.won + summary.lost}
+                currentStreak={summary.currentStreak}
+              />
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+            {/* Racha actual: se muestra prominente arriba, dentro de MonthlyRanking
+                (Roadmap #10) — se saca de acá para no mostrarla 2 veces. */}
+            <div className="grid grid-cols-3 gap-2.5">
               <StatPill label={t("stats.won")} value={summary.won} accent="green" />
               <StatPill label={t("stats.lost")} value={summary.lost} accent="red" />
               <StatPill label={t("stats.win_rate")} value={`${winRate}`} />
-              <StatPill
-                label={t("stats.streak")}
-                value={
-                  <span className="inline-flex items-center gap-1">
-                    {summary.currentStreak > 0 && <Flame size={20} />}
-                    {summary.currentStreak}
-                  </span>
-                }
-                accent="yellow"
-              />
             </div>
 
             <div className="mt-3 rounded-lg border border-white/5 bg-asphalt-700 px-4 py-3">

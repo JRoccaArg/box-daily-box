@@ -60,6 +60,7 @@ const nl: Translations = {
 
   "footer.line1": "Box Box Daily · Fanproject, geen officiële band met Formule 1.",
   "footer.line2": "Elke dag om middernacht een nieuwe uitdaging.",
+  "footer.info": "Hoe te spelen",
 
   "profile.title": "Jouw profiel",
   "profile.subtitle": "Je verschijnt in de wereldranglijst met deze naam en dit land.",

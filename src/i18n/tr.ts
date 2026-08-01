@@ -98,6 +98,7 @@ const tr: Translations = {
   "footer.line1":
     "Box Box Daily · Taraftar projesi, Formula 1 ile resmi bağlantısı yoktur.",
   "footer.line2": "Her gün gece yarısı yeni bir meydan okuma.",
+  "footer.info": "Nasıl oynanır",
 
   // ─── Profile (IdentityModal) ────────────────────────────────────────
   "profile.title": "Profilin",

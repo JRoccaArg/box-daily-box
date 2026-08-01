@@ -94,10 +94,23 @@ const en: Translations = {
   "header.stats_label": "View statistics",
   "header.stats": "Stats",
 
+  // ─── Sound/haptics settings ─────────────────────────────────────────
+  "settings.trigger_label": "Sound and vibration",
+  "settings.sound": "Sound",
+  "settings.haptics": "Vibration",
+  "settings.on": "On",
+  "settings.off": "Off",
+
   // ─── Footer ─────────────────────────────────────────────────────────
   "footer.line1":
     "Box Box Daily · Fan project, not officially affiliated with Formula 1.",
   "footer.line2": "A new challenge every day at midnight.",
+  "footer.info": "How to play",
+  "footer.terms": "Terms and Conditions",
+  "footer.privacy": "Privacy Policy",
+
+  // ─── Legal pages ────────────────────────────────────────────────────
+  "legal.updated": "Last updated: {{date}}",
 
   // ─── Profile (IdentityModal) ────────────────────────────────────────
   "profile.title": "Your profile",
@@ -165,6 +178,7 @@ const en: Translations = {
   "ranking.challenge_singular": "challenge",
   "ranking.challenge_plural": "challenges",
   "ranking.pts": "pts",
+  "ranking.streak_title": "{{count}}-day winning streak",
   "ranking.monthly_note": "The monthly ranking resets on the 1st of each month.",
   "ranking.daily_note": "The daily ranking shows today's results.",
 
@@ -199,6 +213,11 @@ const en: Translations = {
   "monthly.points_month": "points this month",
   "monthly.no_wins": "You haven't won any challenges this month yet. Score your first points!",
   "monthly.best_day": "Best day: {{day}} ({{points}} pts)",
+  "monthly.daily_title": "By day",
+  "monthly.weekly_title": "By week",
+  "monthly.week_tooltip": "Week {{n}}: {{points}} pts",
+  "monthly.by_difficulty": "By difficulty",
+  "monthly.by_game": "By game",
   "monthly.scoring_title": "How is scoring calculated?",
   "monthly.scoring_body":
     "Only won challenges count. Base points by difficulty: Easy {{easy}}, Medium {{medium}}, Hard {{hard}}, Legend {{legend}}. The faster you finish, the more speed bonus you get (up to +120). Giving up counts as a loss (0 points).",
@@ -327,6 +346,13 @@ const en: Translations = {
   "lang.label": "Language",
 
   // ─── SEO (title/description per page) ─────────────────────────────────
+  // Legal pages (noindex, but the title is still used for the browser tab).
+  "seo.terms.title": "Terms and Conditions | Box Daily Box",
+  "seo.terms.description":
+    "Terms and conditions of use for Box Daily Box, a free platform of daily Formula 1 minigames.",
+  "seo.privacy.title": "Privacy Policy | Box Daily Box",
+  "seo.privacy.description":
+    "How Box Daily Box handles your personal data: what it collects, why, and your rights.",
   "seo.home.title": "Box Daily Box — Daily Formula 1 Minigames | 6 Free Puzzles",
   "seo.home.description":
     "Six daily Formula 1 minigames: guess drivers, complete the top 10, find the odd one out, and more. Free global ranking, no sign-up.",

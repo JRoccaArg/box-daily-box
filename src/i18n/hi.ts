@@ -93,6 +93,7 @@ const hi: Translations = {
   "footer.line1":
     "Box Box Daily · प्रशंसक परियोजना, फ़ॉर्मूला 1 से कोई आधिकारिक संबंध नहीं।",
   "footer.line2": "हर रात 12 बजे एक नई चुनौती।",
+  "footer.info": "कैसे खेलें",
 
   "profile.title": "आपकी प्रोफ़ाइल",
   "profile.subtitle":

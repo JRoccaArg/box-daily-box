@@ -74,6 +74,7 @@ const de: Translations = {
 
   "footer.line1": "Box Box Daily · Fanprojekt, ohne offizielle Verbindung zur Formel 1.",
   "footer.line2": "Jeden Tag um Mitternacht eine neue Herausforderung.",
+  "footer.info": "So wird gespielt",
 
   "profile.title": "Dein Profil",
   "profile.subtitle": "Du erscheinst in der globalen Rangliste mit diesem Namen und Land.",
