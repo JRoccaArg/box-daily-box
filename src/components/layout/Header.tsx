@@ -5,6 +5,7 @@ import { useI18n } from "@/context";
 import { StatsModal } from "./StatsModal";
 import { IdentityModal } from "./IdentityModal";
 import { LanguageSelector } from "./LanguageSelector";
+import { SoundSettings } from "./SoundSettings";
 import { Stat as StatIcon, Flame } from "@/components/ui/Icon";
 import { on, Events } from "@/lib/events";
 import { homePath } from "@/lib/routes";
@@ -72,7 +73,7 @@ export function Header() {
       <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4">
         <Wordmark label={t("header.home_label")} locale={locale} />
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           <span className="hidden text-sm capitalize text-ink-muted sm:inline">
             {mounted ? readableDate(getEffectiveNow(), locale) : ""}
           </span>
@@ -87,6 +88,7 @@ export function Header() {
             </span>
           )}
 
+          <SoundSettings />
           <LanguageSelector />
 
           <button

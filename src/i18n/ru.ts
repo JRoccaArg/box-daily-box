@@ -74,6 +74,7 @@ const ru: Translations = {
 
   "footer.line1": "Box Box Daily · Фан-проект, без официальной связи с Формулой 1.",
   "footer.line2": "Новое испытание каждый день в полночь.",
+  "footer.info": "Как играть",
 
   "profile.title": "Твой профиль",
   "profile.subtitle": "Ты появишься в глобальном рейтинге с этим именем и страной.",

@@ -60,6 +60,7 @@ const ar: Translations = {
 
   "footer.line1": "Box Box Daily · مشروع معجبين، بدون ارتباط رسمي بالفورمولا 1.",
   "footer.line2": "تحدٍ جديد كل يوم عند منتصف الليل.",
+  "footer.info": "كيفية اللعب",
 
   "profile.title": "ملفك الشخصي",
   "profile.subtitle": "ستظهر في التصنيف العالمي بهذا الاسم والبلد.",

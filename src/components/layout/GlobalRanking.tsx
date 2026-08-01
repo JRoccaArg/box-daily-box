@@ -8,7 +8,7 @@ import { useI18n } from "@/context";
 import { getIdentity } from "@/lib/identity";
 import { NATIONALITIES } from "@/data/nationalities";
 import { CountrySelect } from "@/components/ui/CountrySelect";
-import { Trophy } from "@/components/ui/Icon";
+import { Trophy, Flame } from "@/components/ui/Icon";
 import { BadgeIcon } from "@/components/ui/BadgeIcon";
 import { getEffectiveNow } from "@/lib/debugDate";
 import { formatBadgeTooltip } from "@/lib/badgeFormat";
@@ -123,6 +123,7 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
                 entry.gamesWon === 1
                   ? t("ranking.challenge_singular")
                   : t("ranking.challenge_plural");
+              const isLoser = entry.points === 0;
 
               return (
                 <div
@@ -132,6 +133,7 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
                     isMe
                       ? "border border-racing/30 bg-racing/10"
                       : "border border-transparent bg-asphalt-700/50",
+                    isLoser && !isMe ? "opacity-60" : "",
                   ].join(" ")}
                 >
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-asphalt-600 text-xs font-bold text-ink-muted">
@@ -180,6 +182,17 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
                               })}
                             </span>
                           )}
+                        </span>
+                      )}
+                      {entry.currentStreak >= 2 && (
+                        <span
+                          className="flex shrink-0 items-center gap-0.5 text-sector-yellow"
+                          title={t("ranking.streak_title", { count: entry.currentStreak })}
+                        >
+                          <Flame size={13} />
+                          <span className="text-[11px] font-semibold tnum">
+                            {entry.currentStreak}
+                          </span>
                         </span>
                       )}
                     </div>

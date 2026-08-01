@@ -19,3 +19,18 @@ export function gamePath(locale: Locale, gameId: string): string {
 export function duelPath(locale: Locale, duelId: string): string {
   return `/${locale}/duelo/${duelId}`;
 }
+
+/** Términos y Condiciones, ej: termsPath("en") -> "/en/terms" */
+export function termsPath(locale: Locale): string {
+  return `/${locale}/terms`;
+}
+
+/** Política de Privacidad, ej: privacyPath("en") -> "/en/privacy" */
+export function privacyPath(locale: Locale): string {
+  return `/${locale}/privacy`;
+}
+
+/** Página de info / cómo jugar, ej: infoPath("en") -> "/en/info" */
+export function infoPath(locale: Locale): string {
+  return `/${locale}/info`;
+}

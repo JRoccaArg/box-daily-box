@@ -98,6 +98,7 @@ const sl: Translations = {
   "footer.line1":
     "Box Box Daily · Navijački projekt, ni uradno povezan s Formulo 1.",
   "footer.line2": "Nov izziv vsak dan ob polnoči.",
+  "footer.info": "Kako igrati",
 
   // ─── Profile (IdentityModal) ────────────────────────────────────────
   "profile.title": "Tvoj profil",

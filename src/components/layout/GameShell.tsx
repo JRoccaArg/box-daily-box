@@ -10,6 +10,7 @@ import { updateServerPoints, saveSolution } from "@/lib/stats";
 import { emit, Events } from "@/lib/events";
 import { getEffectiveNow } from "@/lib/debugDate";
 import { setGameplayActive } from "@/lib/gameplayState";
+import { playGameResultFeedback, playTickFeedback } from "@/lib/audio";
 import { DuelChallengeModal } from "@/components/layout/DuelChallengeModal";
 import { IdentityModal } from "@/components/layout/IdentityModal";
 import { homePath } from "@/lib/routes";
@@ -120,6 +121,7 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
       finishedRef.current = true;
       setStatus(outcome);
       setPhase("finished");
+      playGameResultFeedback(outcome === "won");
       const meta = buildMeta();
       record(game.id, outcome, meta, date);
       // Guardar la solution para poder re-verificarla en el server si el
@@ -221,6 +223,22 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
     if (phase === "playing") startTimer();
     else pauseTimer();
   }, [phase, startTimer, pauseTimer]);
+
+  // Tic de los últimos 10 segundos (Roadmap #9). `secondsLeft` se actualiza
+  // cada 250ms (useTimer); se filtra por segundo entero para no repetir el
+  // tic 4 veces por segundo. No suena en el segundo 0: ahí ya dispara
+  // `handleExpire` -> `finish("lost")`, que reproduce el sonido de derrota.
+  const lastTickRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (phase !== "playing") {
+      lastTickRef.current = null;
+      return;
+    }
+    const sl = timer.secondsLeft;
+    if (sl == null || sl < 1 || sl > 10 || sl === lastTickRef.current) return;
+    lastTickRef.current = sl;
+    playTickFeedback();
+  }, [phase, timer.secondsLeft]);
 
   // Le avisa a DuelBanner (Roadmap §4) que no debe interrumpir mientras se
   // juega. Se limpia al desmontar para no dejar la bandera "trabada" en true.

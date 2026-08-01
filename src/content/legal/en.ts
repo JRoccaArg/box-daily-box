@@ -1,0 +1,278 @@
+// src/content/legal/en.ts
+//
+// ENGLISH version of the legal documents. Offered for convenience; the binding
+// version is the Spanish one (the operator is based in Argentina and the
+// documents are governed by Argentine law). See the "Language" clause.
+
+import type { LegalContent } from "./types";
+
+const LAST_UPDATED = "2026-07-31";
+const CONTACT_EMAIL = "boxdailybox@gmail.com";
+const OPERATOR = "Juan Cruz Rocca";
+
+const content: LegalContent = {
+  terms: {
+    title: "Terms and Conditions",
+    lastUpdated: LAST_UPDATED,
+    intro: [
+      `Box Daily Box ("the Service", "the site") is a personal project operated by ${OPERATOR}, based in Argentina. By accessing or using the Service, you agree to these Terms and Conditions. If you do not agree, please do not use the site.`,
+    ],
+    sections: [
+      {
+        heading: "1. What Box Daily Box is",
+        blocks: [
+          {
+            p: "Box Daily Box is a free platform of daily Formula 1 minigames. A new challenge is published each day for each game. The Service is a fan-made project intended for entertainment.",
+          },
+          {
+            p: "The Service is NOT affiliated with, associated with, authorized by, or endorsed in any way by the Formula One Group, the FIA, or any official Formula 1 team, driver, or organization. All trademarks mentioned belong to their respective owners.",
+          },
+        ],
+      },
+      {
+        heading: "2. Minimum age",
+        blocks: [
+          {
+            p: "You must be at least 13 years old to use the Service. If your local law requires a higher age to consent to the processing of personal data without authorization from a responsible adult, you must have such authorization. The Service is not directed to children under 13.",
+          },
+        ],
+      },
+      {
+        heading: "3. Your identity and account",
+        blocks: [
+          {
+            p: "You may play anonymously (without creating an account) or sign in with your Google account. In either case, you are responsible for your use of the Service under your identity and for the public name you choose.",
+          },
+          {
+            p: "The name you choose is visible to other users in the public rankings. You must not use names that are offensive, unlawful, that impersonate others, or that infringe the rights of others.",
+          },
+        ],
+      },
+      {
+        heading: "4. Acceptable use",
+        blocks: [
+          { p: "When using the Service, you agree NOT to:" },
+          {
+            list: [
+              "Cheat, manipulate results, or attempt to inflate your score or ranking by means not intended by the game.",
+              "Use bots, scripts, automation, or reverse engineering to interact with the Service or its API.",
+              "Create multiple accounts to circumvent ranking limits or the anti-cheat system.",
+              "Interfere with the operation of the Service, overload it, or attempt to access other users' data.",
+              "Use offensive, discriminatory, or unlawful names or content.",
+            ],
+          },
+          {
+            p: "The operator may exclude attempts from the ranking, restrict or suspend access, or delete accounts that violate these Terms, without prior notice where necessary to protect the integrity of the Service.",
+          },
+        ],
+      },
+      {
+        heading: "5. Intellectual property",
+        blocks: [
+          {
+            p: "The code, design, original text, and visual identity of the Service belong to its operator. The names, trademarks, and logos of Formula 1, the FIA, teams, and drivers belong to their respective owners and are used solely for informational and reference purposes in a fan context.",
+          },
+          {
+            p: "The sporting data used (historical results, driver names, teams, nationalities) are facts in the public domain.",
+          },
+        ],
+      },
+      {
+        heading: "6. Service \"as is\"",
+        blocks: [
+          {
+            p: "The Service is provided \"as is\" and \"as available\", without warranties of any kind. We do not guarantee that the Service will be error-free, continuously available, or that the sporting data is accurate. We may modify, suspend, or discontinue the Service (in whole or in part) at any time.",
+          },
+        ],
+      },
+      {
+        heading: "7. Limitation of liability",
+        blocks: [
+          {
+            p: "To the maximum extent permitted by applicable law, the operator shall not be liable for indirect, incidental, or consequential damages arising from the use of, or inability to use, the Service. Nothing in these Terms limits rights that the law grants you as a consumer on a non-waivable basis.",
+          },
+        ],
+      },
+      {
+        heading: "8. Changes to the Service and these Terms",
+        blocks: [
+          {
+            p: "We may update these Terms to reflect changes in the Service or in the law. The current version will always be available on this page, with its last-updated date.",
+          },
+          {
+            p: "The Service is currently free and shows no advertising. In the future, advertising, paid features, or other forms of monetization may be introduced. If that happens, these Terms and the Privacy Policy will be updated accordingly, and you will be informed and asked for your consent where the law so requires.",
+          },
+        ],
+      },
+      {
+        heading: "9. Governing law and jurisdiction",
+        blocks: [
+          {
+            p: "These Terms are governed by the laws of Argentina. Any dispute shall be submitted to the competent courts of Argentina, without prejudice to the rights granted to you by the mandatory consumer protection rules of your country of residence, including the possibility of bringing proceedings before the courts of your domicile where the law so allows.",
+          },
+        ],
+      },
+      {
+        heading: "10. Contact",
+        blocks: [
+          { p: "For questions about these Terms, you can write to:" },
+          { email: CONTACT_EMAIL },
+        ],
+      },
+      {
+        heading: "11. Language",
+        blocks: [
+          {
+            p: "The Spanish version of this document is the binding version. Translations into other languages are provided for convenience only and, in case of any discrepancy, the Spanish version prevails.",
+          },
+        ],
+      },
+    ],
+  },
+
+  privacy: {
+    title: "Privacy Policy",
+    lastUpdated: LAST_UPDATED,
+    intro: [
+      `This Privacy Policy explains what personal data Box Daily Box processes, for what purpose, and on what legal basis. The data controller is ${OPERATOR}, based in Argentina. You can contact him at ${CONTACT_EMAIL}.`,
+    ],
+    sections: [
+      {
+        heading: "1. What data we collect",
+        blocks: [
+          { p: "If you play anonymously (without signing in), we process:" },
+          {
+            list: [
+              "A random identifier generated by your device to recognize you across sessions (stored in the browser's local storage, a technical cookie, and session storage).",
+              "Your game results: what you played, whether you won or lost, score, time, and difficulty.",
+              "The country you choose to display (optional) and the public name you choose.",
+              "Your IP address, used to prevent the use of multiple accounts from the same source (ranking anti-cheat).",
+            ],
+          },
+          { p: "If you sign in with Google, we additionally process:" },
+          {
+            list: [
+              "Your name, email address, profile picture, and Google identifier, provided by Google when you authenticate.",
+            ],
+          },
+          {
+            p: "If you use the friends and duels features, we store the relationships you create yourself (who you add as a friend or challenge).",
+          },
+          {
+            p: "We neither request nor store your password: authentication is performed by Google. We also do not process special categories of sensitive data.",
+          },
+        ],
+      },
+      {
+        heading: "2. How we use the data and legal basis",
+        blocks: [
+          {
+            list: [
+              "To make the game work and preserve your progress across sessions and devices (performance of the service you request).",
+              "To calculate and display rankings and to prevent cheating and abusive use of multiple accounts (legitimate interest in maintaining a fair ranking; the IP is used solely for this purpose).",
+              "To link your progress to your account if you sign in with Google (based on your consent when choosing to sign in).",
+            ],
+          },
+          {
+            p: "We do not use your data for advertising or to make automated decisions with legal effects on you.",
+          },
+        ],
+      },
+      {
+        heading: "3. Cookies and local storage",
+        blocks: [
+          {
+            p: "The Service uses only technical and necessary storage in your browser: to remember your identity, your language, and your progress. We use a technical identity cookie (bdb_uid) and the browser's local and session storage.",
+          },
+          {
+            p: "We currently do NOT use advertising cookies or third-party tracking technologies. That is why the Service does not display a cookie consent banner. If advertising or third-party analytics is introduced in the future, your consent will be requested where the law requires it.",
+          },
+        ],
+      },
+      {
+        heading: "4. Who we share data with",
+        blocks: [
+          {
+            p: "We do not sell your personal data. We share data only with infrastructure providers that process it on our behalf to operate the Service:",
+          },
+          {
+            list: [
+              "Google (authentication via Google OAuth), if you choose to sign in.",
+              "Railway (server and database hosting).",
+              "Vercel (website hosting).",
+            ],
+          },
+          {
+            p: "Some of these providers may process data on servers located outside Argentina or the European Economic Area. In such cases, the transfer relies on the safeguards and legal mechanisms offered by those providers.",
+          },
+        ],
+      },
+      {
+        heading: "5. How long we keep the data",
+        blocks: [
+          {
+            p: "We keep your data for as long as your identity or account remains active and it is necessary to provide the Service. You may request the deletion of your data at any time by writing to us.",
+          },
+        ],
+      },
+      {
+        heading: "6. Your rights",
+        blocks: [
+          {
+            p: "Under applicable law (Argentina's Personal Data Protection Act No. 25.326 and, if you are located in the European Union, the General Data Protection Regulation), you have the right to:",
+          },
+          {
+            list: [
+              "Access the personal data we process about you.",
+              "Rectify inaccurate or incomplete data.",
+              "Request the erasure (deletion) of your data.",
+              "Request the portability of your data.",
+              "Object to or restrict certain processing.",
+            ],
+          },
+          {
+            p: "To exercise these rights, write to us at:",
+          },
+          { email: CONTACT_EMAIL },
+          {
+            p: "You may also lodge a complaint with the competent supervisory authority. In Argentina, the Agency for Access to Public Information (AAIP). In the European Union, the data protection authority of your country.",
+          },
+        ],
+      },
+      {
+        heading: "7. Children",
+        blocks: [
+          {
+            p: "The Service is not directed to children under 13 and we do not knowingly collect data from children under that age. If you believe a child under 13 has provided us with personal data, contact us so we can delete it.",
+          },
+        ],
+      },
+      {
+        heading: "8. Security",
+        blocks: [
+          {
+            p: "We apply reasonable technical measures to protect data, including server-side verification and cryptographic signing of game sessions. No system is completely secure, but we work to protect your information.",
+          },
+        ],
+      },
+      {
+        heading: "9. Changes to this Policy",
+        blocks: [
+          {
+            p: "We may update this Policy to reflect changes in the Service or in the law. In particular, if advertising, third-party analytics, or paid features are introduced in the future, this Policy will be updated to describe that processing, and your consent will be requested where applicable. The current version will always be on this page, with its last-updated date.",
+          },
+        ],
+      },
+      {
+        heading: "10. Language",
+        blocks: [
+          {
+            p: "The Spanish version of this document is the binding version. Translations into other languages are provided for convenience only and, in case of any discrepancy, the Spanish version prevails.",
+          },
+        ],
+      },
+    ],
+  },
+};
+
+export default content;

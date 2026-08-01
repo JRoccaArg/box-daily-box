@@ -1,5 +1,6 @@
 // src/api/db.ts
 import { Pool, QueryResult } from "pg";
+import { backfillStreaks } from "./streak";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -179,6 +180,16 @@ export async function initializeDatabase(): Promise<void> {
       ON attempts (date_key, user_id)
       WHERE won AND NOT flagged;
     `);
+    // Ranking inclusivo (getRankingDaily/getRankingMonthly): ya no filtran por
+    // `won`, así que el índice de arriba no matchea el predicado de la query.
+    // Este cubre el filtro real (NOT flagged AND ranked) sin tocar el índice
+    // anterior, que sigue sirviendo a computeMonthlyPodium (badges.ts), que SÍ
+    // sigue filtrando solo ganadores para el podio mensual.
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_attempts_ranking_inclusive
+      ON attempts (date_key, user_id)
+      WHERE NOT flagged AND ranked;
+    `);
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_attempts_monthly
       ON attempts (date_key, won, flagged);
@@ -213,6 +224,28 @@ export async function initializeDatabase(): Promise<void> {
     await client.query(`
       DO $$ BEGIN
         ALTER TABLE users ADD COLUMN IF NOT EXISTS featured_badges JSONB;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
+    `);
+
+    // ─── Racha diaria (Roadmap #3) ────────────────────────────────────
+    // Cache de la racha para mostrarla O(1) en el ranking. `last_win_date`
+    // permite el "death-check" al leer (ver src/api/streak.ts) sin cron.
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS current_streak INT NOT NULL DEFAULT 0;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
+    `);
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS best_streak INT NOT NULL DEFAULT 0;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
+    `);
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS last_win_date DATE;
       EXCEPTION WHEN duplicate_column THEN NULL;
       END $$;
     `);
@@ -367,6 +400,29 @@ export async function initializeDatabase(): Promise<void> {
       EXCEPTION WHEN duplicate_column THEN NULL;
       END $$;
     `);
+
+    // ─── Metadatos de migración (marcadores de tareas únicas) ─────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS app_meta (
+        key TEXT PRIMARY KEY,
+        value TEXT,
+        updated_at TIMESTAMPTZ DEFAULT now()
+      );
+    `);
+
+    // Backfill de rachas para usuarios preexistentes (una sola vez). Se corre
+    // solo si el marcador no está: a escala, evita pagar el scan de agregación
+    // en cada arranque. La query en sí también es idempotente (solo toca filas
+    // con last_win_date IS NULL). Ver src/api/streak.ts.
+    const backfillDone = await client.query(
+      "SELECT 1 FROM app_meta WHERE key = 'streak_backfilled_v1'",
+    );
+    if (backfillDone.rows.length === 0) {
+      await backfillStreaks((sql, params) => client.query(sql, params));
+      await client.query(
+        "INSERT INTO app_meta (key, value) VALUES ('streak_backfilled_v1', now()::text) ON CONFLICT (key) DO NOTHING",
+      );
+    }
 
     console.log("✅ Database migration completed");
   } finally {

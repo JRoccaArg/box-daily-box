@@ -7,6 +7,8 @@ import { Layout } from "@/components/layout/Layout";
 import { Home } from "@/pages/Home";
 import { GamePage } from "@/pages/GamePage";
 import { DuelPage } from "@/pages/DuelPage";
+import { TermsPage, PrivacyPage } from "@/pages/LegalPage";
+import { InfoPage } from "@/pages/InfoPage";
 import { AuthCallback } from "@/pages/AuthCallback";
 import { RootRedirect } from "@/pages/RootRedirect";
 import { GAMES } from "@/components/games/registry";
@@ -84,6 +86,14 @@ export const routes: RouteRecord[] = [
       // que el link de invitación no dé 404 al abrirse en frío; el router
       // client-side monta DuelPage normalmente después de hidratar.
       { path: "duelo/:duelId", Component: DuelPage },
+      // Páginas legales (Roadmap #6). Rutas estáticas: se prerenderizan una vez
+      // por idioma (la matriz de locales viene del getStaticPaths del padre).
+      // Van con noindex (ver buildSeo), no entran al sitemap.
+      { path: "terms", Component: TermsPage },
+      { path: "privacy", Component: PrivacyPage },
+      // Página de info / cómo jugar (Roadmap #7). A diferencia de las legales,
+      // SÍ se indexa y entra al sitemap (contenido propio en los 14 idiomas).
+      { path: "info", Component: InfoPage },
     ],
   },
   // "/" (x-default): redirige al idioma preferido. Se prerenderiza con

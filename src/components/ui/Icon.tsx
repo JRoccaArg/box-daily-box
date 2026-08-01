@@ -148,3 +148,36 @@ export const Swords = (p: IconProps) => (
     <path d="m9.5 6.5-3 3L3 6l3-3" />
   </svg>
 );
+
+export const Volume = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M4 9h4l5-4v14l-5-4H4z" />
+    <path d="M16 8.5a5 5 0 0 1 0 7" />
+    <path d="M18.5 6a8.5 8.5 0 0 1 0 12" />
+  </svg>
+);
+
+export const VolumeOff = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M4 9h4l5-4v14l-5-4H4z" />
+    <path d="m17 9 4 6" />
+    <path d="m21 9-4 6" />
+  </svg>
+);
+
+export const Vibrate = (p: IconProps) => (
+  <svg {...base(p)}>
+    <rect x="8" y="4" width="8" height="16" rx="1.5" />
+    <path d="M4 9v6" />
+    <path d="M2 11v2" />
+    <path d="M20 9v6" />
+    <path d="M22 11v2" />
+  </svg>
+);
+
+export const VibrateOff = (p: IconProps) => (
+  <svg {...base(p)}>
+    <rect x="8" y="4" width="8" height="16" rx="1.5" />
+    <path d="m3 3 18 18" />
+  </svg>
+);

@@ -7,7 +7,7 @@
 // distinta) dirigido al mismo rival: es una invitación normal que debe
 // volver a aceptarse (confirmado con el usuario, sin atajos especiales).
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useI18n } from "@/context";
 import type { DuelState } from "@/lib/api";
@@ -16,6 +16,7 @@ import { duelPath, homePath } from "@/lib/routes";
 import { Panel } from "@/components/ui/Panel";
 import { Button } from "@/components/ui/Button";
 import { Trophy, Flag as FlagIcon } from "@/components/ui/Icon";
+import { playGameResultFeedback } from "@/lib/audio";
 
 export function DuelResultScreen({ duel, myUserId }: { duel: DuelState; myUserId: string }) {
   const { t, locale } = useI18n();
@@ -25,6 +26,19 @@ export function DuelResultScreen({ duel, myUserId }: { duel: DuelState; myUserId
 
   const mine = duel.myResult;
   const theirs = duel.opponentResult;
+
+  // Suena UNA vez, al aparecer esta pantalla (se monta solo cuando el duelo
+  // ya está 'finished'). En empate no se reproduce nada: no es ni victoria
+  // ni derrota, y forzar uno de los dos tonos sería engañoso. El hook debe ir
+  // ANTES del early-return de abajo (regla de hooks: siempre en el mismo orden).
+  useEffect(() => {
+    if (!mine || !theirs) return;
+    const tiedNow = mine.won === theirs.won && mine.points === theirs.points;
+    const iWonNow = mine.won !== theirs.won ? mine.won : mine.points > theirs.points;
+    if (!tiedNow) playGameResultFeedback(iWonNow);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (!mine || !theirs) return null; // no debería pasar: solo se renderiza con status='finished'.
 
   // Gana quien ganó su partida; si ambos ganaron o ambos perdieron, desempata

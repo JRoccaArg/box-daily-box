@@ -87,6 +87,7 @@ const ja: Translations = {
 
   "footer.line1": "Box Box Daily · ファンプロジェクト。F1との公式提携はありません。",
   "footer.line2": "毎日午前0時に新しいチャレンジ。",
+  "footer.info": "遊び方",
 
   "profile.title": "あなたのプロフィール",
   "profile.subtitle": "この名前と国でグローバルランキングに表示されます。",
