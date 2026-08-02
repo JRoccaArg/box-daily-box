@@ -94,6 +94,7 @@ const hi: Translations = {
     "Box Box Daily · प्रशंसक परियोजना, फ़ॉर्मूला 1 से कोई आधिकारिक संबंध नहीं।",
   "footer.line2": "हर रात 12 बजे एक नई चुनौती।",
   "footer.info": "कैसे खेलें",
+  "footer.contact": "संपर्क करें",
 
   "profile.title": "आपकी प्रोफ़ाइल",
   "profile.subtitle":
@@ -287,6 +288,11 @@ const hi: Translations = {
   "seo.home.title": "Box Daily Box — दैनिक फॉर्मूला 1 मिनी-गेम्स | 6 मुफ़्त पहेलियाँ",
   "seo.home.description":
     "छह दैनिक फॉर्मूला 1 मिनी-गेम्स: ड्राइवरों का अनुमान लगाएं, टॉप 10 पूरा करें, घुसपैठिए को खोजें और भी बहुत कुछ। मुफ़्त वैश्विक रैंकिंग, बिना पंजीकरण।",
+  "seo.contact.title": "संपर्क करें | Box Daily Box",
+  "seo.contact.description": "Box Daily Box में कोई तकनीकी समस्या या नया विचार है? हमसे संपर्क करें।",
+  "contact.title": "संपर्क करें",
+  "contact.intro":
+    "कोई समस्या मिली, नए गेम के लिए कोई विचार है, या कोई और सवाल है? हमें ईमेल करें:",
   "seo.game.pittexto.title": "PitTexto — गुप्त F1 ड्राइवर का अनुमान लगाएं | Box Daily Box",
   "seo.game.pittexto.description":
     "आज के गुप्त फॉर्मूला 1 ड्राइवर का अनुमान लगाएं। हर प्रयास बताता है कि आप कितने करीब हैं। हर 24 घंटे में नई चुनौती।",

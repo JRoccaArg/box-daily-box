@@ -7,7 +7,7 @@
 import { translate } from "@/i18n";
 import type { Locale } from "@/i18n";
 import { SUPPORTED_LOCALES } from "@/i18n/types";
-import { homePath, gamePath, termsPath, privacyPath, infoPath } from "@/lib/routes";
+import { homePath, gamePath, termsPath, privacyPath, infoPath, contactPath } from "@/lib/routes";
 import { getInfoContent } from "@/content/info";
 
 export const SITE_URL = "https://www.boxdailybox.com";
@@ -52,7 +52,8 @@ export type SeoRoute =
   | { kind: "home" }
   | { kind: "game"; gameId: string }
   | { kind: "legal"; page: "terms" | "privacy" }
-  | { kind: "info" };
+  | { kind: "info" }
+  | { kind: "contact" };
 
 export type SeoAlternate = { locale: Locale; href: string };
 
@@ -78,6 +79,8 @@ function pathFor(locale: Locale, route: SeoRoute): string {
       return route.page === "terms" ? termsPath(locale) : privacyPath(locale);
     case "info":
       return infoPath(locale);
+    case "contact":
+      return contactPath(locale);
   }
 }
 
@@ -107,6 +110,10 @@ export function buildSeo(locale: Locale, route: SeoRoute): SeoData {
       description = info.subtitle;
       break;
     }
+    case "contact":
+      title = translate(locale, "seo.contact.title");
+      description = translate(locale, "seo.contact.description");
+      break;
   }
 
   const path = pathFor(locale, route);

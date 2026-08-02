@@ -1,23 +1,25 @@
 # 🏁 Box Daily Box
 
-**Daily F1 minigames. One puzzle per day. No signup.**
+**Daily F1 minigames. One puzzle per day. No signup required.**
 
-Box Daily Box es una suite de minijuegos de Fórmula 1 con un reto nuevo cada día: Pit Texto, Pole Wordle, El Intruso, Parrilla Bingo. Datos reales de 756 pilotos desde 1950. Sin registro: tu progreso se guarda localmente.
+Box Daily Box es una plataforma gratuita de minijuegos diarios de Fórmula 1, en producción: 6 juegos con un reto nuevo cada día, ranking global, sistema de duelos 1v1 entre amigos, rachas y medallas mensuales. Sin registro obligatorio: podés jugar de forma anónima o iniciar sesión con Google para aparecer en el ranking.
 
-[![Deploy Status](https://img.shields.io/badge/Deploy-Vercel-blue)](https://box-daily-box.vercel.app)
+[![Frontend](https://img.shields.io/badge/Frontend-Vercel-black)](https://vercel.com/)
+[![Backend](https://img.shields.io/badge/Backend-Railway-0B0D0E)](https://railway.app/)
 [![Database](https://img.shields.io/badge/DB-PostgreSQL-336791)](https://www.postgresql.org/)
-[![Backend](https://img.shields.io/badge/Backend-Node.js-339933)](https://nodejs.org/)
-[![Frontend](https://img.shields.io/badge/Frontend-React%2018-61dafb)](https://react.dev/)
+[![Frontend%20stack](https://img.shields.io/badge/Stack-React%2018%20%2B%20TypeScript-61dafb)](https://react.dev/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 ## 🎮 Juegos
 
-- **Pit Texto** — Adivina el piloto por pistas: nacionalidad, escudería, campeonatos.
-- **Pole Wordle** — Wordle clásico con apellidos de pilotos F1.
+- **Pit Texto** — Adiviná al piloto por pistas: nacionalidad, escudería, campeonatos.
+- **Pole Wordle** — Wordle clásico con apellidos de pilotos de F1.
 - **El Intruso** — 9 de 10 pilotos comparten algo. ¿Cuál no pertenece?
-- **Parrilla Bingo** — Grilla 3×3 estilo *immaculate grid*: cruza escuderías con condiciones (nacionalidad, logros, campeón del mundo).
+- **Parrilla Bingo** — Grilla 3×3 estilo *immaculate grid*: cruzá escuderías con condiciones (nacionalidad, logros, campeón del mundo).
+- **GP Resultado** — Completá el top 10 de un Gran Premio histórico antes de que se acabe el tiempo.
+- **Top 10 Standings** — Adiviná el top 10 acumulado de puntos de un período de 1 a 4 años.
 
-Todos los juegos son **deterministas por fecha**: mismo reto para todos, cada día a medianoche.
+Todos los juegos son **deterministas por fecha**: mismo reto para todos, cada día a medianoche. Ranking **server-authoritative**: el servidor genera el puzzle, mide el tiempo y verifica la solución — el cliente nunca es la fuente de verdad.
 
 ## 📊 Dataset
 
@@ -32,23 +34,27 @@ Todos los juegos son **deterministas por fecha**: mismo reto para todos, cada d�
 ## ✨ Features
 
 ✅ **Puzzle determinista**: todos ven el mismo reto cada día
-✅ **Bingo siempre resoluble**: 9 pilotos distintos, 0 anacronismos
-✅ **4 dificultades**: Fácil (2019+), Medio (2006+), Difícil (1990+), Leyenda (1950+)
-✅ **Ranking personal**: puntaje local con histórico mensual
-✅ **Motor de puntaje puro**: función determinista, portable a backend
-✅ **Anti-reinicio**: no puedes rejugar un reto hoy aunque reinicies progreso
+✅ **6 juegos**, 4 dificultades cada uno: Fácil (2019+), Medio (2006+), Difícil (1990+), Leyenda (1950+)
+✅ **Ranking global inclusivo**: diario y mensual, con medallas de podio (oro/plata/bronce) al cierre de cada mes
+✅ **Racha diaria**: se calcula server-side a partir del historial real de cada usuario
+✅ **Duelos 1v1**: reto directo entre amigos, con resultado a ciegas y desempate justo si alguno abandona
+✅ **Auth con Google (opcional)** o modo anónimo, con migración de progreso local↔servidor
+✅ **14 idiomas** soportados, con SEO propio por idioma (prerender SSG)
+✅ **Anti-cheat server-side**: verificación de soluciones, HMAC en tokens de sesión/identidad, bloqueo por IP
+✅ **Sonido y vibración** opcionales (Web Audio API + Vibration API)
 ✅ **TypeScript estricto**: `noUncheckedIndexedAccess = true`
-✅ **Smoke tests**: 90 días × 4 dificultades, validación automática
+✅ **Tests exhaustivos**: ~20 suites (identidad, migración, ranking, duelos, scoring, anti-cheat, smoke de 90 días × 4 dificultades)
 
 ## 🛠️ Stack
 
 | Capa | Tech |
 |------|------|
 | **Frontend** | Vite 5 + React 18 + TypeScript + Tailwind v3 |
-| **Backend** | Node.js + Fastify (próximo: Railway) |
-| **Database** | PostgreSQL (próximo: Railway) |
-| **Hosting** | Vercel (frontend) + Railway (backend) |
-| **Auth** | Firebase Auth (próximo) |
+| **Backend** | Node.js + Fastify |
+| **Database** | PostgreSQL |
+| **Hosting** | Vercel (frontend) + Railway (backend + DB) |
+| **Auth** | Google OAuth directo (server-side, HMAC) |
+| **Prerender** | vite-react-ssg (14 idiomas × 7 rutas) |
 
 ## 🚀 Quickstart
 
@@ -58,7 +64,8 @@ Todos los juegos son **deterministas por fecha**: mismo reto para todos, cada d�
 git clone https://github.com/JRoccaArg/box-daily-box.git
 cd box-daily-box
 npm install
-npm run dev
+npm run dev        # frontend (Vite, puerto 5173)
+npm run dev:api    # backend (Fastify con watch)
 ```
 
 Abre http://localhost:5173
@@ -66,160 +73,35 @@ Abre http://localhost:5173
 ### Testing
 
 ```bash
-npm run build    # TypeScript + Vite (strict mode)
-npm run lint     # ESLint (0 warnings)
-npm run smoke    # 90 días × 4 dificultades
+npm run typecheck  # tsc -b --noEmit
+npm run lint       # ESLint estricto (0 warnings)
+npm test           # ~20 suites: identidad, migración, ranking, duelos, scoring, anti-cheat, smoke
+npm run build      # tsc + sitemap + build SSG (~100 páginas)
 ```
 
 ### Deploy
 
-**Frontend (Vercel):**
-```bash
-npm run build
-vercel deploy --prod
-```
+Ambos servicios auto-deployan al pushear a `main`:
 
-**Backend (Railway):**
-```bash
-git push origin main
-# Railway auto-deploys desde GitHub
-```
+- **Frontend**: Vercel toma el build de `npm run build`.
+- **Backend**: Railway redeploya el servicio de Fastify + corre las migraciones idempotentes al arrancar.
 
-## 📈 Roadmap
+## 🏗️ Arquitectura (resumen)
 
-### ✅ Fase 1: Beta (Actual)
-- [x] 4 juegos core
-- [x] Dataset real 756 pilotos
-- [x] Bingo inmaculado + siempre resoluble
-- [x] Ranking personal local
-- [x] Motor de puntaje determinista
-- [x] Anti-reinicio con lock durable
-- [x] Smoke tests exhaustivos
-
-### 🔄 Fase 2: Producción (Próximo)
-- [ ] Backend server-authoritative (Railway)
-- [ ] Validación de soluciones en servidor
-- [ ] Medición de tiempo en servidor
-- [ ] Ranking multiusuario seguro
-- [ ] Firebase Auth
-- [ ] Google AdSense
-
-### 📊 Fase 3: Monetización
-- [ ] Ranking competitivo global
-- [ ] Sistema de premium features
-- [ ] Estadísticas avanzadas
-- [ ] Compartir retos con amigos
-
-## 🏗️ Arquitectura
-
-### Frontend (Vercel)
 ```
 src/
-├── components/games/     # Minijuegos
-│   ├── PitTexto/
-│   ├── PoleWordle/
-│   ├── ElIntruso/
-│   └── ParrillaBingo/
-├── lib/                  # Lógica pura
-│   ├── seed.ts          # RNG determinista por fecha
-│   ├── scoring.ts       # Motor de puntaje
-│   ├── stats.ts         # Ranking local + agregados
-│   └── filters.ts       # Filtros por dificultad
-├── data/                # Dataset (756 pilotos)
-├── context/             # React Context (stats global)
-└── pages/               # Home + GamePage
+├── components/games/     # Los 6 minijuegos (lógica + UI)
+├── components/layout/     # Ranking, duelos, header, footer, modales
+├── lib/                    # Lógica pura: scoring, identidad, stats, seed determinista
+├── content/                # Contenido legal / info, estructurado y tipado por idioma
+├── i18n/                   # Traducciones (14 idiomas)
+├── data/                   # Dataset (756 pilotos)
+├── context/                # React Context (stats, i18n)
+├── pages/                  # Rutas: Home, GamePage, DuelPage, Info, Contact, legales
+└── api/                    # Backend Fastify: rutas, auth, verificación, badges, duelos
 ```
 
-### Backend (Railway)
-```
-src/api/
-├── index.ts             # Fastify server
-├── routes/
-│   ├── challenges.ts    # POST /start, /finish
-│   └── ranking.ts       # GET /monthly
-├── db/
-│   ├── schema.sql       # PostgreSQL schema
-│   └── migrate.ts       # Migraciones
-└── lib/
-    ├── validate.ts      # Verificar soluciones
-    └── scoring.ts       # (importa desde @box-box/core)
-```
-
-### Base de datos (PostgreSQL)
-```sql
--- Usuarios
-CREATE TABLE users (
-  id TEXT PRIMARY KEY,
-  display_name TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Intentos (ranking)
-CREATE TABLE attempts (
-  id BIGSERIAL PRIMARY KEY,
-  user_id TEXT REFERENCES users(id),
-  game_id TEXT,
-  date_key DATE,
-  difficulty TEXT,
-  won BOOLEAN,
-  time_seconds INTEGER,
-  points INTEGER,
-  flagged BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(user_id, game_id, date_key)
-);
-```
-
-## 💰 Monetización
-
-### Modelo (fase 3+)
-
-| Canal | Ingresos estimados |
-|-------|-------------------|
-| Google AdSense | $50–100/mes (100 usuarios) |
-| Premium features | $200–500/mes |
-| **Total** | $250–600/mes |
-
-**Break-even:** mes 1 (AdSense cubre costos ~$16/mes)
-
-## 🔐 Seguridad (Backend)
-
-El diseño del backend es **server-authoritative**:
-
-✓ Servidor genera el puzzle (no el cliente)
-✓ Servidor mide el tiempo (no el cliente)
-✓ Servidor verifica la solución
-✓ Servidor recalcula puntos
-✓ Rate-limit + App Check (próximo)
-
-Ver `/docs/backend-ranking.md` para detalles completos.
-
-## 📚 Documentación
-
-- [`/docs/backend-ranking.md`](./docs/backend-ranking.md) — Diseño del backend multiusuario
-- [`/docs/hosting-monetization-strategy.md`](./docs/hosting-monetization-strategy.md) — Hosting + AdSense
-- [`/docs/linkedin-github-strategy.md`](./docs/linkedin-github-strategy.md) — Marketing
-
-## 📖 Datos
-
-Dataset generado desde [f1db](https://github.com/f1db/f1db) (open source, CC-BY-NC-SA-4.0).
-
-**Regenerar dataset:**
-```bash
-cd scripts
-python3 gen-data.py
-# Requiere: clonar f1db en /tmp/f1src
-```
-
-## 🤝 Contribuciones
-
-¿Fan de F1? ¿Ideas para juegos nuevos? ¡Pull requests bienvenidas!
-
-1. Fork el repo
-2. Crea rama: `git checkout -b feature/tu-idea`
-3. Commit: `git commit -m "feat: descripción"`
-4. Push: `git push origin feature/tu-idea`
-5. Abre PR
+Detalle completo de arquitectura por sistema en los comentarios de cada archivo (ver especialmente `src/api/routes.ts`, `src/lib/auth.ts`, `src/api/verify.ts`).
 
 ## 📄 License
 
@@ -228,12 +110,12 @@ python3 gen-data.py
 
 ## 🎯 Contacto
 
+- Mail del proyecto: [boxdailybox@gmail.com](mailto:boxdailybox@gmail.com) — reportá bugs o proponé ideas nuevas
+- LinkedIn: [linkedin.com/in/juanrocca](https://www.linkedin.com/in/juanrocca)
 - GitHub: [@JRoccaArg](https://github.com/JRoccaArg)
-- Twitter/X: [@juanroccatic](https://twitter.com/juanroccatic)
-- Email: juanroccatic@gmail.com
 
 ---
 
-**Box Daily Box** — Minijuegos de F1 diarios. Un reto. Sin registro. Siempre justo.
+**Box Daily Box** — Minijuegos de F1 diarios. Un reto. Ranking justo. Siempre gratis.
 
 Made with ❤️ in Buenos Aires 🇦🇷

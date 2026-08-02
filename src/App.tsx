@@ -9,6 +9,7 @@ import { GamePage } from "@/pages/GamePage";
 import { DuelPage } from "@/pages/DuelPage";
 import { TermsPage, PrivacyPage } from "@/pages/LegalPage";
 import { InfoPage } from "@/pages/InfoPage";
+import { ContactPage } from "@/pages/ContactPage";
 import { AuthCallback } from "@/pages/AuthCallback";
 import { RootRedirect } from "@/pages/RootRedirect";
 import { GAMES } from "@/components/games/registry";
@@ -94,6 +95,8 @@ export const routes: RouteRecord[] = [
       // Página de info / cómo jugar (Roadmap #7). A diferencia de las legales,
       // SÍ se indexa y entra al sitemap (contenido propio en los 14 idiomas).
       { path: "info", Component: InfoPage },
+      // Página de contacto (mail para reportes/ideas). Se indexa igual que info.
+      { path: "contact", Component: ContactPage },
     ],
   },
   // "/" (x-default): redirige al idioma preferido. Se prerenderiza con

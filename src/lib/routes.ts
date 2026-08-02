@@ -34,3 +34,8 @@ export function privacyPath(locale: Locale): string {
 export function infoPath(locale: Locale): string {
   return `/${locale}/info`;
 }
+
+/** Página de contacto, ej: contactPath("en") -> "/en/contact" */
+export function contactPath(locale: Locale): string {
+  return `/${locale}/contact`;
+}
