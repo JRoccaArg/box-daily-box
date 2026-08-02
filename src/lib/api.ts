@@ -496,6 +496,14 @@ export type DuelResult = {
    * "ganaste por abandono" en vez de un puntaje.
    */
   walkover?: boolean;
+  /** true si este lado abandonó explícitamente (botón de salir / cerrar pestaña). */
+  forfeit?: boolean;
+  /**
+   * true si este lado nunca envió resultado y lo resolvió el vencimiento del
+   * plazo (se quedó AFK o nunca abrió el duelo). Derrota de 0 puntos: si el
+   * rival tampoco completó el reto, el duelo termina en empate.
+   */
+  timedOut?: boolean;
 };
 export type DuelStatus = "pending" | "active" | "finished" | "expired" | "cancelled";
 

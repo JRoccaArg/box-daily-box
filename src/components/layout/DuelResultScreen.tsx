@@ -48,6 +48,22 @@ export function DuelResultScreen({ duel, myUserId }: { duel: DuelState; myUserId
   const outcomeLabel = tied ? t("duel.tied") : iWon ? t("duel.you_won") : t("duel.you_lost");
   const outcomeColor = tied ? "text-sector-yellow" : iWon ? "text-sector-green" : "text-racing-400";
 
+  // Por qué salió así. Sin esto, un duelo donde nadie completó el reto muestra
+  // un "Empate" seco con 0 puntos y parece un error de la app, no el resultado
+  // correcto. El orden importa: primero los desenlaces por abandono explícito
+  // (los más específicos) y después los de "no completó a tiempo".
+  const reasonKey = mine.walkover
+    ? "duel.reason_opponent_forfeit"
+    : mine.forfeit
+      ? "duel.reason_you_forfeit"
+      : mine.timedOut && theirs.timedOut
+        ? "duel.reason_nobody_played"
+        : theirs.timedOut
+          ? "duel.reason_opponent_absent"
+          : mine.timedOut
+            ? "duel.reason_you_absent"
+            : null;
+
   const opponentUserId = myUserId === duel.creatorId ? duel.opponentId : duel.creatorId;
 
   async function rematch() {
@@ -76,6 +92,7 @@ export function DuelResultScreen({ duel, myUserId }: { duel: DuelState; myUserId
         </div>
         <h1 className={["font-display text-2xl font-bold", outcomeColor].join(" ")}>{outcomeLabel}</h1>
         <p className="mt-1 text-ink-muted">{t(`game.${duel.gameId}.name`)}</p>
+        {reasonKey && <p className="mt-1.5 text-sm text-ink-faint">{t(reasonKey)}</p>}
 
         <div className="mt-5 space-y-2 text-left">
           <div className="flex items-center justify-between rounded-lg border border-white/10 bg-asphalt-700 px-4 py-2.5">

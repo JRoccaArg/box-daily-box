@@ -176,21 +176,11 @@ export function getStats(today: Date = getEffectiveNow()): StatsSummary {
   return { won, lost, currentStreak, bestStreak, lastPlayed };
 }
 
-/** Borra todo el progreso (boton "reiniciar progreso"). */
 /**
- * Borra el progreso (boton "reiniciar progreso"): estadísticas y puntos.
- * NO borra el lock `played`, así que los retos ya jugados hoy siguen
- * bloqueados (reiniciar no permite rejugarlos conociendo las respuestas).
- */
-export function resetAllProgress(): void {
-  storage.remove(RESULTS_KEY);
-}
-
-/**
- * Reset COMPLETO para cambio de cuenta (login/logout).
- * A diferencia de resetAllProgress, borra TAMBIÉN el lock `played`, porque
- * al cambiar de identidad el estado de "qué jugué hoy" cambia por completo
- * y debe reconstruirse desde el servidor (fuente de verdad).
+ * Reset COMPLETO para cambio de cuenta (login/logout). Borra estadísticas,
+ * puntos, Y el lock `played` (a diferencia de un simple borrado de progreso):
+ * al cambiar de identidad el estado de "qué jugué hoy" cambia por completo y
+ * debe reconstruirse desde el servidor (fuente de verdad).
  */
 export function resetForAccountSwitch(): void {
   storage.remove(RESULTS_KEY);

@@ -135,11 +135,6 @@ const it: Translations = {
   "stats.days": "giorni",
   "stats.no_persistent":
     "L'archiviazione persistente non è disponibile in questo browser. I tuoi progressi verranno salvati solo durante questa sessione.",
-  "stats.reset_confirm":
-    "Questo cancellerà le tue statistiche e i tuoi punti. Le sfide giocate oggi resteranno bloccate fino a domani. Questa azione non può essere annullata.",
-  "stats.reset_yes": "Sì, cancella tutto",
-  "stats.reset_cancel": "Annulla",
-  "stats.reset": "Reimposta progressi",
 
   "ranking.title": "Classifica Globale",
   "ranking.tab_today": "Oggi",

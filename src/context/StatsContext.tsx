@@ -5,7 +5,6 @@ import {
   getResult,
   getPlayedStatus,
   recordResult as persistResult,
-  resetAllProgress,
   syncFromServer,
   monthStartKey,
 } from "@/lib/stats";
@@ -35,7 +34,6 @@ type StatsContextValue = {
   ) => void;
   /** Fuerza re-lectura de stats desde storage (útil tras sync con server). */
   refreshStats: () => void;
-  resetProgress: () => void;
 };
 
 const StatsContext = createContext<StatsContextValue | null>(null);
@@ -83,11 +81,6 @@ export function StatsProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [version, mounted],
   );
-
-  const resetProgress = useCallback(() => {
-    resetAllProgress();
-    setVersion((v) => v + 1);
-  }, []);
 
   const refreshStats = useCallback(() => {
     setVersion((v) => v + 1);
@@ -141,9 +134,8 @@ export function StatsProvider({ children }: { children: ReactNode }) {
       playedStatus,
       record,
       refreshStats,
-      resetProgress,
     }),
-    [summary, resultFor, playedStatus, record, refreshStats, resetProgress],
+    [summary, resultFor, playedStatus, record, refreshStats],
   );
 
   return <StatsContext.Provider value={value}>{children}</StatsContext.Provider>;

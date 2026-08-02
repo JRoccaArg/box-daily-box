@@ -157,11 +157,6 @@ const en: Translations = {
   "stats.days": "days",
   "stats.no_persistent":
     "Persistent storage is not available in this browser. Your progress will only be saved during this session.",
-  "stats.reset_confirm":
-    "This will delete your statistics and points. Challenges you already played today will remain locked until tomorrow. This action cannot be undone.",
-  "stats.reset_yes": "Yes, delete everything",
-  "stats.reset_cancel": "Cancel",
-  "stats.reset": "Reset progress",
 
   // ─── Global Ranking ─────────────────────────────────────────────────
   "ranking.title": "Global Ranking",
@@ -462,6 +457,13 @@ const en: Translations = {
   "duel.waiting_opponent": "Waiting for them to accept…",
   "duel.waiting_finish": "Waiting for your opponent to finish…",
   "duel.cancel": "Cancel",
+  // Leaving a duel in progress (button + confirmation dialog).
+  "duel.leave_button": "Leave",
+  "duel.leave_title": "Leave the duel?",
+  "duel.leave_msg":
+    "If you leave now, you forfeit the duel and your opponent wins. This can't be undone.",
+  "duel.leave_confirm": "Yes, leave and lose",
+  "duel.leave_cancel": "Keep playing",
   "duel.cancelled_by_you": "You cancelled the duel.",
   "duel.expired": "The duel expired.",
   "duel.cancelled": "The duel was cancelled.",
@@ -469,6 +471,12 @@ const en: Translations = {
   "duel.you_won": "You won!",
   "duel.you_lost": "You lost",
   "duel.tied": "Tied",
+  // Reason for the outcome (shown under the result when it applies).
+  "duel.reason_nobody_played": "Neither player completed the challenge in time.",
+  "duel.reason_opponent_absent": "Your opponent never played.",
+  "duel.reason_you_absent": "You never played.",
+  "duel.reason_opponent_forfeit": "Your opponent left the duel.",
+  "duel.reason_you_forfeit": "You left the duel.",
   "duel.rematch": "Rematch",
   "duel.rematch_sent": "Rematch invitation sent",
   "duel.your_score": "You: {{points}} pts in {{seconds}}s",

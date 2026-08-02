@@ -164,11 +164,6 @@ const es: Translations = {
   "stats.days": "dias",
   "stats.no_persistent":
     "El almacenamiento persistente no esta disponible en este navegador. Tu progreso se guardara solo durante esta sesion.",
-  "stats.reset_confirm":
-    "Esto borra tus estadísticas y puntos. Los retos que ya jugaste hoy seguirán bloqueados hasta mañana. Esta acción no se puede deshacer.",
-  "stats.reset_yes": "Si, borrar todo",
-  "stats.reset_cancel": "Cancelar",
-  "stats.reset": "Reiniciar progreso",
 
   // ─── Ranking Global ─────────────────────────────────────────────────
   "ranking.title": "Ranking Global",
@@ -476,6 +471,13 @@ const es: Translations = {
   "duel.waiting_opponent": "Esperando que acepte…",
   "duel.waiting_finish": "Esperando que tu rival termine…",
   "duel.cancel": "Cancelar",
+  // Salir de un duelo en curso (botón + cartel de confirmación).
+  "duel.leave_button": "Abandonar",
+  "duel.leave_title": "¿Abandonar el duelo?",
+  "duel.leave_msg":
+    "Si salís ahora, abandonás el duelo y tu rival gana. No hay vuelta atrás.",
+  "duel.leave_confirm": "Sí, abandonar y perder",
+  "duel.leave_cancel": "Seguir jugando",
   "duel.cancelled_by_you": "Cancelaste el duelo.",
   "duel.expired": "El duelo expiró.",
   "duel.cancelled": "El duelo fue cancelado.",
@@ -483,6 +485,12 @@ const es: Translations = {
   "duel.you_won": "¡Ganaste!",
   "duel.you_lost": "Perdiste",
   "duel.tied": "Empate",
+  // Motivo del desenlace (se muestra debajo del resultado cuando aplica).
+  "duel.reason_nobody_played": "Ninguno completó el reto a tiempo.",
+  "duel.reason_opponent_absent": "Tu rival no llegó a jugar.",
+  "duel.reason_you_absent": "No llegaste a jugar.",
+  "duel.reason_opponent_forfeit": "Tu rival abandonó el duelo.",
+  "duel.reason_you_forfeit": "Abandonaste el duelo.",
   "duel.rematch": "Revancha",
   "duel.rematch_sent": "Invitación de revancha enviada",
   "duel.your_score": "Vos: {{points}} pts en {{seconds}}s",

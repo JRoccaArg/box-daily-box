@@ -141,11 +141,6 @@ const tr: Translations = {
   "stats.days": "gün",
   "stats.no_persistent":
     "Bu tarayıcıda kalıcı depolama mevcut değil. İlerlemeniz yalnızca bu oturum süresince kaydedilecektir.",
-  "stats.reset_confirm":
-    "Bu işlem istatistiklerini ve puanlarını siler. Bugün zaten oynadığın meydan okumalar yarına kadar kilitli kalır. Bu işlem geri alınamaz.",
-  "stats.reset_yes": "Evet, her şeyi sil",
-  "stats.reset_cancel": "İptal",
-  "stats.reset": "İlerlemeyi sıfırla",
 
   // ─── Global Ranking ─────────────────────────────────────────────────
   "ranking.title": "Genel Sıralama",

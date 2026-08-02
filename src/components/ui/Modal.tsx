@@ -10,6 +10,13 @@ type ModalProps = {
   children: ReactNode;
   /** Oculta el boton de cierre (p.ej. modales obligatorios). */
   hideClose?: boolean;
+  /**
+   * "md" (default, 448px) o "lg" (672px, solo desde el breakpoint `sm:` hacia
+   * arriba). En mobile ambos tamaños se ven igual (`w-full`, sin max-width
+   * efectivo por debajo de `sm:`) — "lg" es para paneles con tablas de datos
+   * que necesitan más aire en PC (ej. StatsModal).
+   */
+  size?: "md" | "lg";
 };
 
 /**
@@ -21,7 +28,7 @@ type ModalProps = {
  * blur), el `position: fixed` quedaria anclado a ese ancestro y no a la
  * ventana. El portal garantiza que siempre se posicione respecto al viewport.
  */
-export function Modal({ open, onClose, title, children, hideClose = false }: ModalProps) {
+export function Modal({ open, onClose, title, children, hideClose = false, size = "md" }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -54,7 +61,10 @@ export function Modal({ open, onClose, title, children, hideClose = false }: Mod
       />
       <div
         ref={panelRef}
-        className="panel relative z-10 m-3 max-h-[calc(100vh-1.5rem)] w-full max-w-md animate-rise overflow-y-auto p-5 sm:m-0"
+        className={[
+          "panel relative z-10 m-3 max-h-[calc(100vh-1.5rem)] w-full animate-rise overflow-y-auto p-5 sm:m-0",
+          size === "lg" ? "max-w-md sm:max-w-2xl" : "max-w-md",
+        ].join(" ")}
       >
         {(title || !hideClose) && (
           <div className="mb-4 flex items-start justify-between gap-4">

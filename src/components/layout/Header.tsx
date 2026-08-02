@@ -8,6 +8,7 @@ import { LanguageSelector } from "./LanguageSelector";
 import { SoundSettings } from "./SoundSettings";
 import { Stat as StatIcon, Flame } from "@/components/ui/Icon";
 import { on, Events } from "@/lib/events";
+import { runNavGuard } from "@/lib/navGuard";
 import { homePath } from "@/lib/routes";
 import { useMounted } from "@/lib/useMounted";
 import { getEffectiveNow } from "@/lib/debugDate";
@@ -25,7 +26,17 @@ function readableDate(d: Date, locale: string): string {
 /** Logo: chevron de velocidad + wordmark. */
 function Wordmark({ label, locale }: { label: string; locale: Locale }) {
   return (
-    <Link to={homePath(locale)} className="group inline-flex items-center gap-2.5" aria-label={label}>
+    <Link
+      to={homePath(locale)}
+      // Si una pantalla registró un guard (hoy: un duelo en curso), tocar el
+      // logo abre su cartel de confirmación en vez de navegar y abandonar en
+      // silencio. Sin guard activo, navega normal.
+      onClick={(e) => {
+        if (runNavGuard()) e.preventDefault();
+      }}
+      className="group inline-flex items-center gap-2.5"
+      aria-label={label}
+    >
       <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" className="shrink-0">
         <path d="M3 4l7 8-7 8h5l7-8-7-8z" className="fill-racing" />
         <path d="M11 4l7 8-7 8h3l7-8-7-8z" className="fill-white/85" />

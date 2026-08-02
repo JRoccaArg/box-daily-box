@@ -123,10 +123,6 @@ const ja: Translations = {
   "stats.best_streak": "最高連続",
   "stats.days": "日",
   "stats.no_persistent": "このブラウザでは永続ストレージが利用できません。進捗はこのセッション中のみ保存されます。",
-  "stats.reset_confirm": "統計とポイントが削除されます。今日プレイしたチャレンジは明日までロックされたままです。この操作は取り消せません。",
-  "stats.reset_yes": "はい、すべて削除",
-  "stats.reset_cancel": "キャンセル",
-  "stats.reset": "進捗をリセット",
 
   "ranking.title": "グローバルランキング",
   "ranking.tab_today": "今日",

@@ -141,11 +141,6 @@ const sl: Translations = {
   "stats.days": "dni",
   "stats.no_persistent":
     "Trajna shramba v tem brskalniku ni na voljo. Tvoj napredek bo shranjen samo med to sejo.",
-  "stats.reset_confirm":
-    "To bo izbrisalo tvojo statistiko in točke. Izzivi, ki si jih danes že odigral, bodo ostali zaklenjeni do jutri. Tega dejanja ni mogoče razveljaviti.",
-  "stats.reset_yes": "Da, izbriši vse",
-  "stats.reset_cancel": "Prekliči",
-  "stats.reset": "Ponastavi napredek",
 
   // ─── Global Ranking ─────────────────────────────────────────────────
   "ranking.title": "Globalna lestvica",

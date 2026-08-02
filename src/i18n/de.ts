@@ -97,8 +97,6 @@ const de: Translations = {
   "stats.won": "Gewonnen", "stats.lost": "Verloren", "stats.win_rate": "Siegquote %", "stats.streak": "Serie",
   "stats.best_streak": "Beste Serie", "stats.days": "Tage",
   "stats.no_persistent": "Dauerhafter Speicher ist in diesem Browser nicht verfügbar. Dein Fortschritt wird nur während dieser Sitzung gespeichert.",
-  "stats.reset_confirm": "Dies löscht deine Statistiken und Punkte. Heute gespielte Herausforderungen bleiben bis morgen gesperrt. Diese Aktion kann nicht rückgängig gemacht werden.",
-  "stats.reset_yes": "Ja, alles löschen", "stats.reset_cancel": "Abbrechen", "stats.reset": "Fortschritt zurücksetzen",
 
   "ranking.title": "Globale Rangliste", "ranking.tab_today": "Heute",
   "ranking.all_countries": "Alle Länder", "ranking.loading": "Rangliste wird geladen...",

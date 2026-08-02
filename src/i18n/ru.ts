@@ -97,8 +97,6 @@ const ru: Translations = {
   "stats.won": "Побед", "stats.lost": "Поражений", "stats.win_rate": "% побед", "stats.streak": "Серия",
   "stats.best_streak": "Лучшая серия", "stats.days": "дней",
   "stats.no_persistent": "Постоянное хранилище недоступно в этом браузере. Прогресс сохранится только на время сессии.",
-  "stats.reset_confirm": "Это удалит статистику и очки. Сыгранные сегодня испытания останутся заблокированы до завтра. Действие нельзя отменить.",
-  "stats.reset_yes": "Да, удалить всё", "stats.reset_cancel": "Отмена", "stats.reset": "Сбросить прогресс",
 
   "ranking.title": "Глобальный рейтинг", "ranking.tab_today": "Сегодня",
   "ranking.all_countries": "Все страны", "ranking.loading": "Загрузка рейтинга...",

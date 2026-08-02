@@ -1579,20 +1579,19 @@ const DUEL_ID_LEN = 8;
 /** TTL de un duelo pendiente (esperando aceptación): 60s, "en vivo". */
 const DUEL_PENDING_TTL_MS = 60 * 1000;
 /**
- * TTL de un duelo activo (jugándose). Es la RED DE SEGURIDAD para duelos que
- * quedaron colgados sin que ningún cliente pudiera avisar (crash del browser,
- * kill del proceso, pérdida de red) — el camino normal de abandono es
- * `POST /duels/:id/forfeit` o `finishChallenge` con solution nula, ambos
- * inmediatos.
+ * Margen que se suma a la DURACIÓN DE LA PARTIDA para fijar el plazo de un
+ * duelo activo: `expires_at = accept + time_limit + este margen`. Cubre la
+ * carga del juego, la latencia y el envío del resultado.
  *
- * INVARIANTE: debe superar cómodamente al timer más largo de cualquier juego
- * (`TIME_LIMITS`, hoy 180s), porque `getDuel` marca 'expired' de forma lazy y
- * si el TTL venciera mientras alguien todavía juega, la UI lo sacaría de su
- * partida a mitad de camino. 5 min = 180s de juego + 120s de margen (carga
- * del juego, latencia, aceptación tardía). Si algún juego nuevo supera los
- * 180s de timer, HAY que subir este valor.
+ * Antes era un TTL fijo de 5 min, con dos problemas: hacía esperar minutos de
+ * más a un rival que nunca apareció, y traía un invariante frágil ("el TTL debe
+ * superar al timer más largo de cualquier juego", documentado pero no validado
+ * por código: un juego nuevo de >5 min habría expirado duelos en plena
+ * partida). Derivar el plazo del propio `time_limit` hace ese invariante
+ * automático. Además `startDuelChallenge` lo EXTIENDE (nunca lo acorta) al
+ * arrancar, para que quien cargue tarde no pierda su partida por el reloj.
  */
-const DUEL_ACTIVE_TTL_MS = 5 * 60 * 1000;
+const DUEL_ACTIVE_GRACE_S = 30;
 
 /** Genera un código aleatorio criptográficamente uniforme del alfabeto seguro. */
 function randomCode(len: number): string {
@@ -1662,25 +1661,91 @@ function requireOwnership(
   return true;
 }
 
+/** Ejecutor de queries mínimo para `settleExpiredDuels` (pool `pg` o PGlite). */
+type SettleExec = (
+  sql: string,
+  params?: any[],
+) => Promise<{ rowCount?: number | null; affectedRows?: number }>;
+
 /**
- * Marca como 'expired' los duelos vencidos de un usuario (o de todos si no se
- * pasa userId). Lazy sweep: el cron corre cada hora, pero con TTL de 60s los
- * handlers deben limpiar los vencidos al vuelo para que la regla "1 duelo
- * activo" y "código de un solo uso" no queden bloqueadas por un duelo muerto.
+ * Cierra los duelos cuyo plazo venció. Es el reemplazo del viejo "marcar todo
+ * como 'expired'", que dejaba desenlaces perdidos:
+ *
+ *  - 'pending' vencido → 'expired'. Nadie llegó a aceptar: no hubo duelo y no
+ *    hay resultado que registrar.
+ *  - 'active' vencido  → 'finished', completando con un resultado de 0 puntos
+ *    (`timedOut`) los lados que nunca enviaron el suyo.
+ *
+ * Así un duelo aceptado SIEMPRE termina en un desenlace explicable: si nadie
+ * completó el reto queda 0-0 (empate) y si uno sí lo completó, ese gana. Antes
+ * quedaba en 'expired', un estado que `serializeDuel` nunca revela — o sea que
+ * el jugador que había jugado y GANADO no llegaba a ver su resultado nunca.
+ *
+ * Caso borde: un 'active' con `opponent_id NULL` (el rival borró su cuenta,
+ * por el `ON DELETE SET NULL`) no tiene dos lados que comparar, así que se
+ * expira en vez de cerrarse con un resultado inventado.
+ *
+ * Se llama de forma lazy desde los handlers (el plazo es corto) y desde el cron
+ * de `index.ts` para los duelos que nadie vuelve a consultar.
+ */
+export async function settleExpiredDuels(
+  scope: { userId?: string; duelId?: string },
+  /** Ejecutor inyectable (mismo patrón que `badges.ts`): permite correr el SQL
+   *  REAL contra PGlite en los tests sin duplicarlo. Por defecto, el pool pg. */
+  exec: SettleExec = query,
+): Promise<number> {
+  const scopeParams: string[] = [];
+  let scopeSql = "";
+  if (scope.duelId) {
+    scopeParams.push(scope.duelId);
+    scopeSql += ` AND id = $${scopeParams.length}`;
+  }
+  if (scope.userId) {
+    scopeParams.push(scope.userId);
+    scopeSql += ` AND (creator_id = $${scopeParams.length} OR opponent_id = $${scopeParams.length})`;
+  }
+
+  const expiredRes = await exec(
+    `UPDATE duels SET status = 'expired'
+     WHERE expires_at < now()
+       AND (status = 'pending' OR (status = 'active' AND opponent_id IS NULL))
+       ${scopeSql}`,
+    scopeParams,
+  );
+
+  // El `COALESCE` es lo que respeta el resultado de quien SÍ jugó: solo se
+  // rellena el lado que está vacío. Si una finalización real está en vuelo, su
+  // `FOR UPDATE` serializa contra este UPDATE, así que o bien esto ve el
+  // resultado ya escrito (y no lo pisa), o bien la finalización encuentra su
+  // lado resuelto y responde 409 — nunca se mezclan.
+  const timedOutJson = JSON.stringify(timedOutResult(Date.now()));
+  const settledRes = await exec(
+    `UPDATE duels
+     SET creator_result  = COALESCE(creator_result,  $${scopeParams.length + 1}::jsonb),
+         opponent_result = COALESCE(opponent_result, $${scopeParams.length + 1}::jsonb),
+         status = 'finished',
+         finished_at = now()
+     WHERE status = 'active' AND expires_at < now() AND opponent_id IS NOT NULL
+       ${scopeSql}`,
+    [...scopeParams, timedOutJson],
+  );
+
+  return rowsAffected(expiredRes) + rowsAffected(settledRes);
+}
+
+/** Filas afectadas por un UPDATE. `pg` lo expone como `rowCount`; PGlite (tests)
+ *  como `affectedRows`. */
+function rowsAffected(res: { rowCount?: number | null; affectedRows?: number }): number {
+  return res.rowCount ?? res.affectedRows ?? 0;
+}
+
+/**
+ * Cierra los duelos vencidos de un usuario (o de todos si no se pasa userId).
+ * Los handlers lo llaman al vuelo para que la regla "1 duelo activo" no quede
+ * bloqueada por un duelo muerto; el cron de `index.ts` barre el resto.
  */
 export async function sweepExpiredDuels(userId?: string): Promise<number> {
-  const res = userId
-    ? await query(
-        `UPDATE duels SET status = 'expired'
-         WHERE status IN ('pending', 'active') AND expires_at < now()
-           AND (creator_id = $1 OR opponent_id = $1)`,
-        [userId],
-      )
-    : await query(
-        `UPDATE duels SET status = 'expired'
-         WHERE status IN ('pending', 'active') AND expires_at < now()`,
-      );
-  return res.rowCount ?? 0;
+  return settleExpiredDuels({ userId });
 }
 
 /** ¿El usuario ya tiene un duelo pending/active (vivo)? Excluye `exceptId`. */
@@ -1767,7 +1832,9 @@ async function startDuelChallenge(
     return;
   }
   if (new Date(duel.expires_at).getTime() < Date.now()) {
-    await query("UPDATE duels SET status = 'expired' WHERE id = $1 AND status = 'active'", [duelId]);
+    // Lo cierra con el desenlace que corresponda (0-0 si nadie completó el
+    // reto) en vez de dejarlo en 'expired', que el cliente nunca llega a ver.
+    await settleExpiredDuels({ duelId });
     reply.code(410).send({ error: "El duelo expiró" });
     return;
   }
@@ -1788,6 +1855,17 @@ async function startDuelChallenge(
   const timeLimit = validOptions.includes(duel.time_limit as number)
     ? (duel.time_limit as number)
     : (validOptions.length > 0 ? Math.max(...validOptions) : TIME_LIMITS[gameId] ?? 180);
+
+  // Estira el plazo del duelo para que quien arranca tarde (backend frío, red
+  // lenta, aceptación demorada) tenga igual su partida COMPLETA. `GREATEST`
+  // garantiza que nunca lo acorte: si el rival ya lo había extendido más, gana
+  // el plazo mayor.
+  await query(
+    `UPDATE duels
+     SET expires_at = GREATEST(expires_at, now() + ($2::int * INTERVAL '1 second'))
+     WHERE id = $1 AND status = 'active'`,
+    [duelId, timeLimit + DUEL_ACTIVE_GRACE_S],
+  );
 
   const today = resolveNow(req).toISOString().substring(0, 10);
   const startedAt = Date.now();
@@ -1827,6 +1905,10 @@ export type DuelSideResult = {
   finishedAt: string;
   /** true si ganó porque el rival abandonó (este lado nunca llegó a jugar). */
   walkover?: boolean;
+  /** true si este lado abandonó explícitamente (botón de salir / cerrar pestaña). */
+  forfeit?: boolean;
+  /** true si este lado nunca envió resultado y lo resolvió el vencimiento del plazo. */
+  timedOut?: boolean;
 };
 
 type DuelLockCheck =
@@ -1878,6 +1960,48 @@ export function walkoverResult(nowMs: number): DuelSideResult {
     timeSeconds: 0,
     walkover: true,
     finishedAt: new Date(nowMs).toISOString(),
+  };
+}
+
+/**
+ * Resultado sintético del lado que NUNCA envió el suyo y lo resolvió el
+ * vencimiento del plazo. Es una derrota lisa de 0 puntos, sin `walkover`: no
+ * le regala la victoria a nadie. Si el rival tampoco completó el reto, ambos
+ * quedan en 0 y el duelo es EMPATE.
+ */
+export function timedOutResult(nowMs: number): DuelSideResult {
+  return {
+    won: false,
+    points: 0,
+    timeSeconds: 0,
+    timedOut: true,
+    finishedAt: new Date(nowMs).toISOString(),
+  };
+}
+
+/**
+ * Decide cómo se cierra MI lado del duelo. Es LA regla de desenlace, aislada
+ * en una función pura para poder testearla sin base de datos.
+ *
+ * El walkover (regalarle la victoria al rival que todavía no jugó) corresponde
+ * SOLO cuando el cierre es un abandono EXPLÍCITO (`forfeit`). Terminar la
+ * partida —ganando, perdiendo dentro del juego, o sin completarla a tiempo—
+ * nunca se lo otorga: si el rival tampoco hace puntos, el duelo es empate.
+ *
+ * BUG QUE ESTO ARREGLA: antes la condición era `isAbandon && !otherHadResult`,
+ * y como el cliente manda `solution: null` tanto al abandonar como al agotarse
+ * el timer, quedarse sin tiempo le regalaba la victoria a un rival AUSENTE.
+ */
+export function duelClosurePlan(args: {
+  reason: "played" | "forfeit";
+  otherHadResult: boolean;
+}): { grantWalkover: boolean; finished: boolean } {
+  return {
+    grantWalkover: args.reason === "forfeit" && !args.otherHadResult,
+    // Cierra si ya hay resultado del otro lado, o si el abandono explícito lo
+    // resuelve en el acto. Si no, el duelo sigue abierto hasta que el rival
+    // termine o venza el plazo (`settleExpiredDuels`).
+    finished: args.reason === "forfeit" || args.otherHadResult,
   };
 }
 
@@ -1953,12 +2077,21 @@ async function finishDuelChallenge(
   // de `lockDuelForSettle` sobre por qué el FOR UPDATE es obligatorio acá.
   let outcome:
     | { ok: false; reason: "gone" | "not_participant" | "already_played" }
-    | { ok: true; duelFinished: boolean; walkoverGranted: boolean }
+    | { ok: false; reason: "not_active" }
+    | { ok: true; duelFinished: boolean }
     | { ok: false; reason: "duplicated" };
   try {
     outcome = await transaction(async (client) => {
       const lock = await lockDuelForSettle(client, duelId, uid);
       if (!lock.ok) return lock;
+
+      // Guard de estado: `writeDuelSideResult` no filtra por status, así que
+      // sin esto un finish tardío (el sessionToken vive 15 min) podía escribir
+      // sobre un duelo ya cerrado y hasta RESUCITARLO de 'expired' a
+      // 'finished'. Solo un duelo en curso acepta resultados.
+      if (lock.status !== "active") {
+        return { ok: false as const, reason: "not_active" as const };
+      }
 
       await client.query("UPDATE sessions SET consumed = true WHERE id = $1", [session.sessionId]);
       await client.query(
@@ -1967,21 +2100,22 @@ async function finishDuelChallenge(
         [uid, session.gameId, session.today, session.difficulty, verifyResult.won, timeSeconds, points, clientIp, duelId],
       );
 
-      // WALKOVER: abandoné y el rival todavía no tenía resultado → gana en el
-      // acto y el duelo se cierra ya (regla de producto: "si uno abandona,
-      // termina el duelo y gana quien no abandonó").
-      const grantWalkover = isAbandon && !lock.otherHadResult;
-      const finished = lock.otherHadResult || grantWalkover;
+      // Llegar acá siempre significa "jugué, este es mi resultado": ganado,
+      // perdido dentro del juego, o no completado a tiempo (`isAbandon`, que es
+      // lo que manda el cliente al agotarse el timer). Por eso `reason:
+      // "played"` — nunca otorga walkover. El abandono explícito tiene su
+      // propio endpoint (`forfeitDuel`).
+      const plan = duelClosurePlan({ reason: "played", otherHadResult: lock.otherHadResult });
 
       await writeDuelSideResult(client, {
         duelId,
         side: lock.side,
         result: myResult,
-        walkoverForOther: grantWalkover ? walkoverResult(now) : null,
-        finished,
+        walkoverForOther: null,
+        finished: plan.finished,
       });
 
-      return { ok: true as const, duelFinished: finished, walkoverGranted: grantWalkover };
+      return { ok: true as const, duelFinished: plan.finished };
     });
   } catch (err: any) {
     // Defensa en profundidad: con el FOR UPDATE esto ya no debería alcanzarse
@@ -2007,6 +2141,10 @@ async function finishDuelChallenge(
       reply.code(409).send({ error: "Ya jugaste este duelo" });
       return;
     }
+    if (outcome.reason === "not_active") {
+      reply.code(409).send({ error: "El duelo ya terminó" });
+      return;
+    }
     // duplicated: el intento ya estaba registrado; se responde 200 con el flag.
     reply.code(200).send({
       won: verifyResult.won,
@@ -2026,7 +2164,6 @@ async function finishDuelChallenge(
     timeSeconds,
     duelId,
     duelFinished: outcome.duelFinished,
-    walkoverGranted: outcome.walkoverGranted,
     duplicated: false,
     ranked: false,
   });
@@ -2088,6 +2225,9 @@ export async function createDuel(req: FastifyRequest, reply: FastifyReply): Prom
     // Insertar con reintento de colisión de id.
     const expiresAt = new Date(Date.now() + DUEL_PENDING_TTL_MS).toISOString();
     let duelId = "";
+    // Solo se auto-repara UNA vez, para no quedar en un bucle si el duelo que
+    // bloquea está realmente vivo.
+    let healedStaleDuel = false;
     for (let attempt = 0; attempt < 8; attempt++) {
       const candidate = randomCode(DUEL_ID_LEN);
       try {
@@ -2103,6 +2243,19 @@ export async function createDuel(req: FastifyRequest, reply: FastifyReply): Prom
           // Colisión: puede ser id repetido (reintentar) o el índice de "1 activo".
           const msg = String(err.constraint || "");
           if (msg.includes("creator_active") || msg.includes("opponent_active")) {
+            // Los índices `idx_duels_*_active` solo miran `status`, mientras que
+            // `hasActiveDuel` exige ADEMÁS que el plazo no haya vencido. Una fila
+            // muerta que el barrido todavía no tocó (carrera, o barrido corrido
+            // en otra instancia) pasa el chequeo del handler pero hace fallar el
+            // INSERT: el usuario veía "ya tenés un duelo activo" sobre un duelo
+            // que en los hechos ya no existe — y que `cancelDuel` encima se niega
+            // a tocar, por no estar 'pending'. Se cierra a mano y se reintenta.
+            if (!healedStaleDuel) {
+              healedStaleDuel = true;
+              await settleExpiredDuels({ userId });
+              if (opponent) await settleExpiredDuels({ userId: opponent });
+              continue;
+            }
             reply.code(409).send({ error: "Ya tenés un duelo activo. Terminalo o cancelalo antes de crear otro." });
             return;
           }
@@ -2152,19 +2305,21 @@ export async function acceptDuel(req: FastifyRequest, reply: FastifyReply): Prom
       return;
     }
 
-    const newExpiry = new Date(Date.now() + DUEL_ACTIVE_TTL_MS).toISOString();
     // UPDATE atómico: gana el primero. La condición opponent_id IS NULL/=userId
     // permite tanto duelos abiertos (link) como dirigidos a este usuario.
+    // El nuevo plazo se calcula en SQL a partir del `time_limit` de la propia
+    // fila (duración de la partida + margen), en vez de un TTL fijo.
     let updated;
     try {
       updated = await query(
         `UPDATE duels
-         SET opponent_id = $1, status = 'active', expires_at = $2
+         SET opponent_id = $1, status = 'active',
+             expires_at = now() + ((COALESCE(time_limit, 180) + $2::int) * INTERVAL '1 second')
          WHERE id = $3 AND status = 'pending' AND expires_at > now()
            AND creator_id <> $1
            AND (opponent_id IS NULL OR opponent_id = $1)
          RETURNING *`,
-        [userId, newExpiry, id],
+        [userId, DUEL_ACTIVE_GRACE_S, id],
       );
     } catch (err: any) {
       if (err.code === "23505") {
@@ -2239,17 +2394,20 @@ export async function cancelDuel(req: FastifyRequest, reply: FastifyReply): Prom
 /**
  * POST /duels/:id/forfeit — "me voy de este duelo", SIN necesidad de sessionToken.
  *
- * Existe porque el camino normal de abandono (`finishChallenge` con solution
- * nula) exige un sessionToken que sólo se emite al ARRANCAR la partida: si el
- * usuario cierra la pestaña antes de que el juego cargue (mientras espera que
- * el rival acepte, o justo en la transición a la pantalla de juego) no tiene
- * forma de avisar, y el duelo quedaría colgado hasta el TTL bloqueando a los
- * DOS participantes. Con esto, el cliente puede rendirse en cualquier momento
- * usando solo su identityToken.
+ * Es el ÚNICO camino del abandono explícito, y por lo tanto el único que otorga
+ * walkover. Se separa de `finishChallenge` a propósito: aquel exige un
+ * sessionToken que sólo se emite al ARRANCAR la partida, y además no puede
+ * distinguir "me fui" de "se me acabó el tiempo" (el cliente manda
+ * `solution: null` en los dos casos). Acá la intención es inequívoca.
+ *
+ * Regla de producto: el que se va PIERDE siempre, aunque el rival tampoco haya
+ * hecho puntos. Quedarse sin tiempo, en cambio, no es abandonar: eso lo resuelve
+ * `finishChallenge` como una derrota de 0 puntos, y si el rival tampoco completó
+ * el reto el duelo termina en EMPATE.
  *
  * Según el estado del duelo:
- *  - 'active'  → registra mi abandono y, si el rival todavía no tenía
- *                resultado, le otorga el walkover; el duelo queda 'finished'.
+ *  - 'active'  → registra mi abandono (`forfeit: true`) y, si el rival todavía
+ *                no tenía resultado, le otorga el walkover; queda 'finished'.
  *  - 'pending' → equivale a cancelar/rechazar: pasa a 'cancelled' (nadie llegó
  *                a jugar, no hay resultado que registrar).
  *  - otro      → no-op idempotente (200): ya estaba cerrado.
@@ -2283,12 +2441,13 @@ export async function forfeitDuel(req: FastifyRequest, reply: FastifyReply): Pro
         return { ok: true as const, status: "noop" as const };
       }
 
+      const plan = duelClosurePlan({ reason: "forfeit", otherHadResult: lock.otherHadResult });
       await writeDuelSideResult(client, {
         duelId: id,
         side: lock.side,
-        result: { won: false, points: 0, timeSeconds: 0, finishedAt: new Date(now).toISOString() },
-        walkoverForOther: lock.otherHadResult ? null : walkoverResult(now),
-        finished: true,
+        result: { won: false, points: 0, timeSeconds: 0, forfeit: true, finishedAt: new Date(now).toISOString() },
+        walkoverForOther: plan.grantWalkover ? walkoverResult(now) : null,
+        finished: plan.finished,
       });
       return { ok: true as const, status: "forfeited" as const };
     });
@@ -2358,13 +2517,28 @@ export async function getDuel(req: FastifyRequest, reply: FastifyReply): Promise
       return;
     }
 
-    // Marcar expirado si venció sin terminar (lazy).
+    // Cierre lazy si venció sin terminar. Es el camino por el que el jugador
+    // que está esperando ve aparecer el desenlace: al pollear, este mismo
+    // request resuelve el duelo y ya devuelve el resultado.
     if (
       (duel.status === "pending" || duel.status === "active") &&
       new Date(duel.expires_at).getTime() < Date.now()
     ) {
-      await query("UPDATE duels SET status = 'expired' WHERE id = $1 AND status IN ('pending','active')", [id]);
-      duel.status = "expired";
+      await settleExpiredDuels({ duelId: id });
+      // Hay que RE-LEER: el cierre no solo cambia el estado, también completa
+      // los resultados que faltaban (0 puntos para quien no jugó). Serializar
+      // la fila vieja mostraría un duelo terminado sin resultados.
+      const after = await query(
+        `SELECT d.*, u.display_name AS creator_name, u.country_code AS creator_country
+         FROM duels d JOIN users u ON u.id = d.creator_id
+         WHERE d.id = $1`,
+        [id],
+      );
+      const fresh = after.rows[0] as DuelRow | undefined;
+      if (fresh) {
+        reply.code(200).send(serializeDuel(fresh, userId ?? ""));
+        return;
+      }
     }
     reply.code(200).send(serializeDuel(duel, userId ?? ""));
   } catch (err) {

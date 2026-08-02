@@ -83,8 +83,6 @@ const ar: Translations = {
   "stats.won": "فوز", "stats.lost": "خسارة", "stats.win_rate": "نسبة الفوز %", "stats.streak": "سلسلة",
   "stats.best_streak": "أفضل سلسلة", "stats.days": "أيام",
   "stats.no_persistent": "التخزين الدائم غير متوفر في هذا المتصفح. سيُحفظ تقدمك فقط خلال هذه الجلسة.",
-  "stats.reset_confirm": "سيؤدي هذا إلى حذف إحصائياتك ونقاطك. التحديات التي لعبتها اليوم ستبقى مقفلة حتى الغد. لا يمكن التراجع عن هذا الإجراء.",
-  "stats.reset_yes": "نعم، احذف الكل", "stats.reset_cancel": "إلغاء", "stats.reset": "إعادة تعيين التقدم",
 
   "ranking.title": "التصنيف العالمي", "ranking.tab_today": "اليوم",
   "ranking.all_countries": "جميع الدول", "ranking.loading": "جاري تحميل التصنيف...",
