@@ -94,6 +94,7 @@ const fr: Translations = {
     "Box Box Daily · Projet de fans, sans affiliation officielle avec la Formule 1.",
   "footer.line2": "Un nouveau défi chaque jour à minuit.",
   "footer.info": "Comment jouer",
+  "footer.contact": "Contact",
 
   "profile.title": "Votre profil",
   "profile.subtitle":
@@ -289,6 +290,11 @@ const fr: Translations = {
   "seo.home.title": "Box Daily Box — Minijeux quotidiens de Formule 1 | 6 puzzles gratuits",
   "seo.home.description":
     "Six minijeux quotidiens de Formule 1 : devinez des pilotes, complétez le top 10, trouvez l'intrus et plus encore. Classement mondial gratuit, sans inscription.",
+  "seo.contact.title": "Contact | Box Daily Box",
+  "seo.contact.description": "Un problème technique ou une idée pour Box Daily Box ? Contactez-nous.",
+  "contact.title": "Contact",
+  "contact.intro":
+    "Vous avez trouvé un problème, une idée pour un nouveau jeu, ou une autre question ? Écrivez-nous :",
   "seo.game.pittexto.title": "PitTexto — Devinez le pilote secret de F1 | Box Daily Box",
   "seo.game.pittexto.description":
     "Devinez le pilote de Formule 1 secret du jour. Chaque tentative vous indique à quel point vous êtes proche. Nouveau défi toutes les 24 heures.",

@@ -99,6 +99,7 @@ const tr: Translations = {
     "Box Box Daily · Taraftar projesi, Formula 1 ile resmi bağlantısı yoktur.",
   "footer.line2": "Her gün gece yarısı yeni bir meydan okuma.",
   "footer.info": "Nasıl oynanır",
+  "footer.contact": "İletişim",
 
   // ─── Profile (IdentityModal) ────────────────────────────────────────
   "profile.title": "Profilin",
@@ -303,6 +304,11 @@ const tr: Translations = {
   "seo.home.title": "Box Daily Box — Günlük Formula 1 Mini Oyunları | 6 Ücretsiz Bulmaca",
   "seo.home.description":
     "Altı günlük Formula 1 mini oyunu: pilotları tahmin edin, top 10'u tamamlayın, arayı bulan kişiyi bulun ve daha fazlası. Ücretsiz küresel sıralama, kayıt gerekmez.",
+  "seo.contact.title": "İletişim | Box Daily Box",
+  "seo.contact.description": "Box Daily Box ile ilgili teknik bir sorun ya da fikrin mi var? Bizimle iletişime geçin.",
+  "contact.title": "İletişim",
+  "contact.intro":
+    "Bir sorun mu buldun, yeni bir oyun fikrin mi var, ya da başka bir sorun mu var? Bize yazın:",
   "seo.game.pittexto.title": "PitTexto — Gizli F1 pilotunu tahmin edin | Box Daily Box",
   "seo.game.pittexto.description":
     "Günün gizli Formula 1 pilotunu tahmin edin. Her tahmin ne kadar yakın olduğunuzu gösterir. Her 24 saatte yeni bir meydan okuma.",

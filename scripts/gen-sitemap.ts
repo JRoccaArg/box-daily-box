@@ -10,7 +10,7 @@
  */
 import { writeFileSync } from "node:fs";
 import { INDEXABLE_LOCALES, SITE_URL } from "@/lib/seo";
-import { homePath, gamePath, infoPath } from "@/lib/routes";
+import { homePath, gamePath, infoPath, contactPath } from "@/lib/routes";
 
 // Lista de juegos por id. No se importa src/components/games/registry.ts
 // acá: ese archivo importa los componentes React de cada juego (y por
@@ -31,6 +31,7 @@ function buildEntries(): Entry[] {
     // Info/cómo jugar (Roadmap #7): sí se indexa (a diferencia de terms/privacy,
     // que NO entran al sitemap — ver src/lib/seo.ts buildSeo, noindex para "legal").
     { path: infoPath, priority: "0.6" },
+    { path: contactPath, priority: "0.4" },
   ];
 
   return routes.map(({ path, priority }) => ({

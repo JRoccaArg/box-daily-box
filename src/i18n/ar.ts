@@ -61,6 +61,7 @@ const ar: Translations = {
   "footer.line1": "Box Box Daily · مشروع معجبين، بدون ارتباط رسمي بالفورمولا 1.",
   "footer.line2": "تحدٍ جديد كل يوم عند منتصف الليل.",
   "footer.info": "كيفية اللعب",
+  "footer.contact": "اتصل بنا",
 
   "profile.title": "ملفك الشخصي",
   "profile.subtitle": "ستظهر في التصنيف العالمي بهذا الاسم والبلد.",
@@ -192,6 +193,10 @@ const ar: Translations = {
   "seo.home.title": "Box Daily Box — ألعاب فورمولا 1 المصغّرة اليومية | 6 ألغاز مجانية",
   "seo.home.description":
     "ست ألعاب فورمولا 1 مصغّرة يومية: خمّن السائقين، أكمل أفضل 10، اعثر على الدخيل والمزيد. تصنيف عالمي مجاني، دون تسجيل.",
+  "seo.contact.title": "اتصل بنا | Box Daily Box",
+  "seo.contact.description": "هل لديك مشكلة تقنية أو فكرة لـ Box Daily Box؟ تواصل معنا.",
+  "contact.title": "اتصل بنا",
+  "contact.intro": "هل وجدت مشكلة، أو لديك فكرة للعبة جديدة، أو أي استفسار آخر؟ راسلنا على:",
   "seo.game.pittexto.title": "PitTexto — خمّن سائق F1 السري | Box Daily Box",
   "seo.game.pittexto.description":
     "خمّن سائق فورمولا 1 السري لهذا اليوم. كل محاولة تخبرك بمدى قربك. تحدٍ جديد كل 24 ساعة.",

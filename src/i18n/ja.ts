@@ -88,6 +88,7 @@ const ja: Translations = {
   "footer.line1": "Box Box Daily · ファンプロジェクト。F1との公式提携はありません。",
   "footer.line2": "毎日午前0時に新しいチャレンジ。",
   "footer.info": "遊び方",
+  "footer.contact": "お問い合わせ",
 
   "profile.title": "あなたのプロフィール",
   "profile.subtitle": "この名前と国でグローバルランキングに表示されます。",
@@ -256,6 +257,11 @@ const ja: Translations = {
   "seo.home.title": "Box Daily Box — 毎日のF1ミニゲーム | 6つの無料パズル",
   "seo.home.description":
     "6つの毎日のF1ミニゲーム：ドライバーを当てる、トップ10を完成させる、部外者を見つけるなど。無料のグローバルランキング、登録不要。",
+  "seo.contact.title": "お問い合わせ | Box Daily Box",
+  "seo.contact.description": "Box Daily Boxの技術的な問題や新しいアイデアがありますか？お問い合わせください。",
+  "contact.title": "お問い合わせ",
+  "contact.intro":
+    "不具合を見つけた、新しいゲームのアイデアがある、その他ご質問がありましたら、こちらまでメールしてください：",
   "seo.game.pittexto.title": "PitTexto — 秘密のF1ドライバーを当てよう | Box Daily Box",
   "seo.game.pittexto.description":
     "今日の秘密のF1ドライバーを当てましょう。試すたびにどれだけ近いかがわかります。24時間ごとに新しいチャレンジ。",
