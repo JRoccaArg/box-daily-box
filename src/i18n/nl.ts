@@ -61,6 +61,7 @@ const nl: Translations = {
   "footer.line1": "Box Box Daily · Fanproject, geen officiële band met Formule 1.",
   "footer.line2": "Elke dag om middernacht een nieuwe uitdaging.",
   "footer.info": "Hoe te spelen",
+  "footer.contact": "Contact",
 
   "profile.title": "Jouw profiel",
   "profile.subtitle": "Je verschijnt in de wereldranglijst met deze naam en dit land.",
@@ -192,6 +193,11 @@ const nl: Translations = {
   "seo.home.title": "Box Daily Box — Dagelijkse Formule 1-minigames | 6 gratis puzzels",
   "seo.home.description":
     "Zes dagelijkse Formule 1-minigames: raad coureurs, vul de top 10 in, vind de indringer en meer. Gratis wereldwijde ranglijst, geen registratie nodig.",
+  "seo.contact.title": "Contact | Box Daily Box",
+  "seo.contact.description": "Technisch probleem of idee voor Box Daily Box? Neem contact op.",
+  "contact.title": "Contact",
+  "contact.intro":
+    "Heb je een probleem gevonden, een idee voor een nieuw spel, of een andere vraag? Mail ons:",
   "seo.game.pittexto.title": "PitTexto — Raad de geheime F1-coureur | Box Daily Box",
   "seo.game.pittexto.description":
     "Raad de geheime Formule 1-coureur van vandaag. Elke poging laat zien hoe dichtbij je zit. Elke 24 uur een nieuwe uitdaging.",

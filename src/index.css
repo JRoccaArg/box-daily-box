@@ -28,6 +28,11 @@
         transparent 2px,
         transparent 12px
       );
+    /* El gradiente radial rojo solo debe pintarse una vez, arriba del todo:
+       sin esto, el "repeat" default del background-image lo retila verticalmente
+       en paginas largas, mostrando una segunda franja roja mas abajo donde el
+       primer gradiente ya se habia desvanecido. */
+    background-repeat: no-repeat, repeat;
   }
 
   /* Honor users who prefer less motion */

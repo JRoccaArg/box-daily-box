@@ -88,6 +88,7 @@ const zh: Translations = {
   "footer.line1": "Box Box Daily · 粉丝项目，与一级方程式无官方关联。",
   "footer.line2": "每天午夜更新新挑战。",
   "footer.info": "游戏玩法",
+  "footer.contact": "联系我们",
 
   "profile.title": "你的资料",
   "profile.subtitle": "你将以此名字和国家出现在全球排名中。",
@@ -255,6 +256,10 @@ const zh: Translations = {
 
   "seo.home.title": "Box Daily Box — 每日F1迷你游戏 | 6个免费谜题",
   "seo.home.description": "六款每日F1迷你游戏：猜车手、完成前10名、找出内鬼等等。免费全球排名，无需注册。",
+  "seo.contact.title": "联系我们 | Box Daily Box",
+  "seo.contact.description": "Box Daily Box 有技术问题或新想法？联系我们。",
+  "contact.title": "联系我们",
+  "contact.intro": "发现了问题、有新游戏的想法，或者任何其他疑问？给我们发邮件：",
   "seo.game.pittexto.title": "PitTexto — 猜出神秘F1车手 | Box Daily Box",
   "seo.game.pittexto.description": "猜出今日的神秘F1车手。每次尝试都会告诉你有多接近。每24小时一个新挑战。",
   "seo.game.polewordle.title": "PoleWordle — F1版Wordle | Box Daily Box",

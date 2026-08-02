@@ -99,6 +99,7 @@ const sl: Translations = {
     "Box Box Daily · Navijački projekt, ni uradno povezan s Formulo 1.",
   "footer.line2": "Nov izziv vsak dan ob polnoči.",
   "footer.info": "Kako igrati",
+  "footer.contact": "Kontakt",
 
   // ─── Profile (IdentityModal) ────────────────────────────────────────
   "profile.title": "Tvoj profil",
@@ -303,6 +304,10 @@ const sl: Translations = {
   "seo.home.title": "Box Daily Box — Dnevne mini igre Formule 1 | 6 brezplačnih ugank",
   "seo.home.description":
     "Šest dnevnih mini iger Formule 1: ugibajte voznike, dopolnite najboljših 10, poiščite vsiljivca in več. Brezplačna svetovna lestvica, brez prijave.",
+  "seo.contact.title": "Kontakt | Box Daily Box",
+  "seo.contact.description": "Imate tehnično težavo ali idejo za Box Daily Box? Kontaktirajte nas.",
+  "contact.title": "Kontakt",
+  "contact.intro": "Ste našli težavo, imate idejo za novo igro ali kakšno drugo vprašanje? Pišite nam:",
   "seo.game.pittexto.title": "PitTexto — Uganite skrivnega voznika F1 | Box Daily Box",
   "seo.game.pittexto.description":
     "Uganite skrivnega voznika Formule 1 dneva. Vsak poskus vam pove, kako blizu ste. Nov izziv vsakih 24 ur.",

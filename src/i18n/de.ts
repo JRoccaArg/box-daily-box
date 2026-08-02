@@ -75,6 +75,7 @@ const de: Translations = {
   "footer.line1": "Box Box Daily · Fanprojekt, ohne offizielle Verbindung zur Formel 1.",
   "footer.line2": "Jeden Tag um Mitternacht eine neue Herausforderung.",
   "footer.info": "So wird gespielt",
+  "footer.contact": "Kontakt",
 
   "profile.title": "Dein Profil",
   "profile.subtitle": "Du erscheinst in der globalen Rangliste mit diesem Namen und Land.",
@@ -206,6 +207,11 @@ const de: Translations = {
   "seo.home.title": "Box Daily Box — Tägliche Formel-1-Minispiele | 6 kostenlose Rätsel",
   "seo.home.description":
     "Sechs tägliche Formel-1-Minispiele: Fahrer erraten, die Top 10 vervollständigen, den Eindringling finden und mehr. Kostenlose globale Rangliste, keine Anmeldung nötig.",
+  "seo.contact.title": "Kontakt | Box Daily Box",
+  "seo.contact.description": "Technisches Problem oder Idee für Box Daily Box? Kontaktiere uns.",
+  "contact.title": "Kontakt",
+  "contact.intro":
+    "Hast du ein Problem gefunden, eine Idee für ein neues Spiel oder eine andere Frage? Schreib uns:",
   "seo.game.pittexto.title": "PitTexto — Errate den geheimen F1-Fahrer | Box Daily Box",
   "seo.game.pittexto.description":
     "Errate den geheimen Formel-1-Fahrer des Tages. Jeder Versuch zeigt dir, wie nah du dran bist. Neue Herausforderung alle 24 Stunden.",

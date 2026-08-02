@@ -114,9 +114,15 @@ const es: Translations = {
   "footer.info": "Cómo jugar",
   "footer.terms": "Términos y Condiciones",
   "footer.privacy": "Política de Privacidad",
+  "footer.contact": "Contacto",
 
   // ─── Páginas legales ────────────────────────────────────────────────
   "legal.updated": "Última actualización: {{date}}",
+
+  // ─── Página de contacto ───────────────────────────────────────────────
+  "contact.title": "Contacto",
+  "contact.intro":
+    "¿Encontraste un problema, tenés una idea para un juego nuevo, o cualquier otra consulta? Escribinos:",
 
   // ─── Perfil (IdentityModal) ─────────────────────────────────────────
   "profile.title": "Tu perfil",
@@ -364,6 +370,8 @@ const es: Translations = {
   "seo.terms.description":
     "Términos y condiciones de uso de Box Daily Box, plataforma gratuita de minijuegos diarios de Fórmula 1.",
   "seo.privacy.title": "Política de Privacidad | Box Daily Box",
+  "seo.contact.title": "Contacto | Box Daily Box",
+  "seo.contact.description": "¿Tenés un problema técnico o una idea para Box Daily Box? Escribinos.",
   "seo.privacy.description":
     "Cómo Box Daily Box trata tus datos personales: qué recopila, para qué, y tus derechos.",
   "seo.home.title": "Box Daily Box — Minijuegos diarios de Fórmula 1 | 6 puzzles gratis",

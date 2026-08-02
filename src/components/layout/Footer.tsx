@@ -6,7 +6,7 @@
 
 import { Link } from "react-router-dom";
 import { useI18n } from "@/context";
-import { termsPath, privacyPath, infoPath } from "@/lib/routes";
+import { termsPath, privacyPath, infoPath, contactPath } from "@/lib/routes";
 
 export function Footer() {
   const { t, locale } = useI18n();
@@ -36,6 +36,12 @@ export function Footer() {
             className="text-ink-faint underline-offset-2 transition-colors hover:text-ink hover:underline"
           >
             {t("footer.privacy")}
+          </Link>
+          <Link
+            to={contactPath(locale)}
+            className="text-ink-faint underline-offset-2 transition-colors hover:text-ink hover:underline"
+          >
+            {t("footer.contact")}
           </Link>
         </nav>
       </div>
