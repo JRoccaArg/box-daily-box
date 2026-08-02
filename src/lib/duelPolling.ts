@@ -11,6 +11,9 @@ import { isGameplayActive, onGameplayChanged } from "./gameplayState";
 
 const POLL_MS = 3000;
 
+/** Estados en los que un duelo ya no puede cambiar: no tiene sentido seguir pollleando. */
+const TERMINAL_STATUSES = new Set<DuelState["status"]>(["finished", "expired", "cancelled"]);
+
 /** Estado en vivo de UN duelo (pantalla de espera, juego, resultado). */
 export function useDuelPolling(duelId: string | null): {
   duel: DuelState | null;
@@ -22,6 +25,8 @@ export function useDuelPolling(duelId: string | null): {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const stopRef = useRef(false);
+  // Guarda el id del interval para poder cortarlo desde dentro de fetchOnce.
+  const intervalRef = useRef<number | null>(null);
 
   const fetchOnce = async () => {
     if (!duelId) return;
@@ -32,6 +37,15 @@ export function useDuelPolling(duelId: string | null): {
     } else {
       setDuel(res);
       setNotFound(false);
+      // Corta el polling en un estado terminal. A diferencia de un intento
+      // anterior (que chequeaba la `duel` guardada en el closure del efecto,
+      // desactualizada porque ese closure solo se re-crea si cambia `duelId`),
+      // acá se lee `res.status` — el valor RECIÉN llegado del server — así que
+      // la condición sí se cumple de verdad.
+      if (TERMINAL_STATUSES.has(res.status) && intervalRef.current != null) {
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     }
     setLoading(false);
   };
@@ -44,17 +58,10 @@ export function useDuelPolling(duelId: string | null): {
     if (!duelId) return;
 
     fetchOnce();
-    // Nota: se intentó en su momento "dejar de pollear si el estado ya es
-    // terminal", pero ese chequeo leía `duel` de la closure de este efecto
-    // (que solo se re-crea si cambia `duelId`, no en cada estado nuevo) — la
-    // condición nunca se cumplía de verdad y el polling seguía igual. Se
-    // quitó: 3s extra de polling en un estado que ya no cambia es inofensivo,
-    // y no vale la complejidad de sincronizar el estado actual con una ref
-    // solo para ese ahorro marginal.
-    const id = window.setInterval(fetchOnce, POLL_MS);
+    intervalRef.current = window.setInterval(fetchOnce, POLL_MS);
     return () => {
       stopRef.current = true;
-      window.clearInterval(id);
+      if (intervalRef.current != null) window.clearInterval(intervalRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchOnce se recrea cada render a propósito (lee duelId por closure); re-suscribir en cada uno rompería el interval.
   }, [duelId]);

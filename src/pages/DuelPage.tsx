@@ -24,9 +24,12 @@ import { gameById } from "@/components/games/registry";
 import { useTimer } from "@/hooks/useTimer";
 import { Panel } from "@/components/ui/Panel";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import { TimerDisplay } from "@/components/ui/TimerDisplay";
-import { Swords } from "@/components/ui/Icon";
+import { Swords, ChevronLeft } from "@/components/ui/Icon";
 import { DuelResultScreen } from "@/components/layout/DuelResultScreen";
+import { setGameplayActive } from "@/lib/gameplayState";
+import { setNavGuard } from "@/lib/navGuard";
 import type { Difficulty, GameStatus } from "@/types";
 
 export function DuelPage() {
@@ -273,6 +276,7 @@ function DuelPlayScreen({
   const navigate = useNavigate();
   const [status, setStatus] = useState<GameStatus>("idle");
   const [phase, setPhase] = useState<"connecting" | "playing" | "done" | "error">("connecting");
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   const sessionTokenRef = useRef<string | null>(null);
   const finishedRef = useRef(false);
   const startedAtRef = useRef<number | null>(null);
@@ -280,6 +284,35 @@ function DuelPlayScreen({
   const handleExpire = () => finish("lost");
   const timer = useTimer({ seconds: duel.timeLimit, onExpire: handleExpire });
   const { start: startTimer } = timer;
+
+  // Mientras se está jugando de verdad:
+  //  1. `setGameplayActive(true)` silencia el banner de invitaciones (no debe
+  //     taparte un duelo en vivo) y pausa su polling — mismo flag que usa
+  //     GameShell para el reto diario.
+  //  2. `setNavGuard` hace que tocar el LOGO del header (que vive afuera de esta
+  //     página) abra el cartel de "¿salir?" en vez de navegar y abandonar en
+  //     silencio.
+  // Ambos se limpian al salir de la fase de juego (o al desmontar).
+  useEffect(() => {
+    if (phase !== "playing") return;
+    setGameplayActive(true);
+    setNavGuard(() => setLeaveConfirmOpen(true));
+    return () => {
+      setGameplayActive(false);
+      setNavGuard(null);
+    };
+  }, [phase]);
+
+  // Confirmó que se va: abandonar (el rival gana; "salir = derrota siempre") y
+  // volver al inicio. `finishedRef` corta el timer/onExpire para que no dispare
+  // un finish después de irse. `apiForfeitDuel` es idempotente, así que el
+  // forfeit que el efecto de unmount del padre también dispara es un no-op.
+  async function confirmLeave() {
+    setLeaveConfirmOpen(false);
+    finishedRef.current = true;
+    await apiForfeitDuel(duel.id).catch(() => {});
+    navigate(homePath(locale));
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -346,13 +379,35 @@ function DuelPlayScreen({
   }
 
   const GameComponent = game.component;
+  const playing = phase === "playing";
   return (
     <div className="space-y-4">
       <div className="panel flex items-center justify-between gap-3 px-4 py-2.5">
-        <span className="rounded-md border border-white/10 bg-asphalt-700 px-2 py-0.5 font-mono text-xs uppercase tracking-wider text-ink-muted">
-          {t(`diff.${duel.difficulty}`)}
-        </span>
-        {duel.timeLimit !== null && <TimerDisplay secondsLeft={timer.secondsLeft} total={duel.timeLimit} />}
+        <div className="flex items-center gap-3">
+          {/* Salir del duelo: mismo patrón que el ControlBar del reto diario
+              (flecha atrás + confirmación). Solo mientras se juega. */}
+          {playing && (
+            <button
+              type="button"
+              onClick={() => setLeaveConfirmOpen(true)}
+              aria-label={t("shell.back_label")}
+              className="rounded-lg p-1 text-ink-muted transition-colors hover:bg-white/5 hover:text-ink"
+            >
+              <ChevronLeft size={18} />
+            </button>
+          )}
+          <span className="rounded-md border border-white/10 bg-asphalt-700 px-2 py-0.5 font-mono text-xs uppercase tracking-wider text-ink-muted">
+            {t(`diff.${duel.difficulty}`)}
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          {duel.timeLimit !== null && <TimerDisplay secondsLeft={timer.secondsLeft} total={duel.timeLimit} />}
+          {playing && (
+            <Button variant="ghost" size="sm" onClick={() => setLeaveConfirmOpen(true)}>
+              {t("duel.leave_button")}
+            </Button>
+          )}
+        </div>
       </div>
 
       {phase === "done" ? (
@@ -369,6 +424,22 @@ function DuelPlayScreen({
           onLose={(solution) => finish("lost", solution)}
         />
       )}
+
+      <Modal
+        open={leaveConfirmOpen}
+        onClose={() => setLeaveConfirmOpen(false)}
+        title={t("duel.leave_title")}
+      >
+        <p className="text-sm text-ink-muted">{t("duel.leave_msg")}</p>
+        <div className="mt-5 flex flex-col gap-2">
+          <Button variant="danger" block onClick={confirmLeave}>
+            {t("duel.leave_confirm")}
+          </Button>
+          <Button variant="ghost" block onClick={() => setLeaveConfirmOpen(false)}>
+            {t("duel.leave_cancel")}
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

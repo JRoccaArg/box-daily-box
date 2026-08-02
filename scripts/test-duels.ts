@@ -610,6 +610,331 @@ async function partD() {
   }
 }
 
+/**
+ * PARTE E: desenlace justo de un duelo (fix del bug "gana el AFK").
+ *
+ * Ejercita el SQL REAL de `settleExpiredDuels` (exportado con ejecutor
+ * inyectable, mismo patrón que `badges.ts`) contra PGlite, más las funciones
+ * reales de cierre de la Parte D.
+ *
+ * Regla que se valida:
+ *  - quedarse sin tiempo / no jugar  → derrota de 0 puntos, NO regala la victoria;
+ *  - abandono explícito (forfeit)    → el que se va pierde, el rival gana;
+ *  - dos lados en 0                  → EMPATE.
+ */
+async function partE() {
+  console.log("\n═══ PARTE E: desenlace justo del duelo (SQL real de settleExpiredDuels) ═══");
+  const { settleExpiredDuels, lockDuelForSettle, writeDuelSideResult, walkoverResult, duelClosurePlan } =
+    await import("@/api/routes");
+
+  // ─── LA REGLA EN SÍ (función pura) ──────────────────────────────────
+  // Es el test que de verdad detecta el bug reportado: antes la condición era
+  // `isAbandon && !otherHadResult`, y como el cliente manda `solution: null`
+  // tanto al abandonar como al agotarse el timer, terminar sin tiempo le
+  // regalaba la victoria a un rival AUSENTE.
+  console.log("\n[Regla de desenlace: quién puede ganar por walkover]");
+  {
+    const timeout = duelClosurePlan({ reason: "played", otherHadResult: false });
+    assert(
+      timeout.grantWalkover === false,
+      "REGRESIÓN: terminar sin completar el reto NO le regala la victoria al rival ausente",
+    );
+    assert(
+      timeout.finished === false,
+      "y el duelo queda abierto: el rival todavía puede jugar antes de que venza el plazo",
+    );
+
+    const played = duelClosurePlan({ reason: "played", otherHadResult: true });
+    assert(played.grantWalkover === false, "jugar nunca otorga walkover");
+    assert(played.finished === true, "con ambos resultados el duelo se cierra");
+
+    const forfeit = duelClosurePlan({ reason: "forfeit", otherHadResult: false });
+    assert(
+      forfeit.grantWalkover === true,
+      "el abandono EXPLÍCITO sí le da la victoria al rival (irse siempre es derrota)",
+    );
+    assert(forfeit.finished === true, "y cierra el duelo en el acto");
+
+    const forfeitLate = duelClosurePlan({ reason: "forfeit", otherHadResult: true });
+    assert(
+      forfeitLate.grantWalkover === false,
+      "si el rival ya había jugado, se respeta su puntaje real en vez de pisarlo con un walkover",
+    );
+  }
+
+  await q("DELETE FROM duels");
+
+  const exec = ((sql: string, params?: any[]) => db.query(sql, params as any[])) as any;
+  const NOW = Date.parse("2026-08-10T12:00:00Z");
+  const played = (won: boolean, points: number) => ({
+    won,
+    points,
+    timeSeconds: 42,
+    finishedAt: new Date(NOW).toISOString(),
+  });
+  const readDuel = async (id: string) =>
+    (await q("SELECT * FROM duels WHERE id = $1", [id])).rows[0] as any;
+
+  /** Duelo activo cuyo plazo YA venció (nadie lo barrió todavía). */
+  async function expiredActiveDuel(id: string) {
+    await q("DELETE FROM duels WHERE id = $1", [id]);
+    await q(
+      `INSERT INTO duels (id, creator_id, opponent_id, game_id, difficulty, time_limit, seed, status, expires_at)
+       VALUES ($1, $2, $3, 'pittexto', 'medio', 120, $1, 'active', now() - interval '1 minute')`,
+      [id, CREATOR, OPPONENT],
+    );
+  }
+
+  /** Réplica de la regla de desenlace del cliente (DuelResultScreen.tsx). */
+  const isTie = (a: any, b: any) => a.won === b.won && a.points === b.points;
+  const winnerIsCreator = (c: any, o: any) => (c.won !== o.won ? c.won : c.points > o.points);
+
+  // ─── BUG REPORTADO (a): uno se queda sin tiempo, el otro nunca jugó ──
+  // Antes: el cliente manda `solution: null` al agotarse el timer, el backend
+  // lo leía como abandono y le daba el walkover al AUSENTE. Ahora es 0-0.
+  console.log("\n[Se acaba el tiempo de uno + rival ausente → EMPATE]");
+  await expiredActiveDuel("DUELTO01");
+  {
+    // El creador jugó y no llegó a completarlo: derrota de 0 puntos, sin walkover.
+    const lock = await lockDuelForSettle(db as any, "DUELTO01", CREATOR);
+    if (lock.ok) {
+      await writeDuelSideResult(db as any, {
+        duelId: "DUELTO01",
+        side: lock.side,
+        result: played(false, 0),
+        walkoverForOther: null,
+        finished: lock.otherHadResult,
+      });
+    }
+    const mid = await readDuel("DUELTO01");
+    assert(mid.status === "active", "tras terminar uno solo, el duelo sigue abierto");
+    assert(mid.opponent_result === null, "el rival ausente NO recibe un walkover regalado");
+
+    await settleExpiredDuels({ duelId: "DUELTO01" }, exec);
+    const d = await readDuel("DUELTO01");
+    assert(d.status === "finished", "al vencer el plazo el duelo se cierra (ya no queda en 'expired')");
+    assert(d.opponent_result?.timedOut === true, "al ausente se le asigna una derrota por no jugar");
+    assert(d.opponent_result?.won === false, "el ausente NO gana");
+    assert(d.opponent_result?.points === 0, "el ausente queda en 0 puntos");
+    assert(
+      isTie(d.creator_result, d.opponent_result),
+      "REGRESIÓN: ninguno completó el reto → EMPATE (antes ganaba el ausente)",
+    );
+  }
+
+  // ─── BUG REPORTADO (b): los dos se quedan AFK ───────────────────────
+  console.log("\n[Los dos AFK hasta agotar el plazo → EMPATE]");
+  await expiredActiveDuel("DUELTO02");
+  {
+    await settleExpiredDuels({ duelId: "DUELTO02" }, exec);
+    const d = await readDuel("DUELTO02");
+    assert(d.status === "finished", "un duelo que nadie jugó igual se cierra con desenlace");
+    assert(
+      d.creator_result?.timedOut === true && d.opponent_result?.timedOut === true,
+      "ambos lados quedan marcados como 'no jugó'",
+    );
+    assert(
+      isTie(d.creator_result, d.opponent_result),
+      "REGRESIÓN: nadie jugó → EMPATE (antes no se daba ningún desenlace)",
+    );
+  }
+
+  // ─── El que sí jugó y ganó no pierde su victoria ────────────────────
+  // Agujero viejo: el duelo quedaba 'active' → 'expired', y `serializeDuel`
+  // nunca revela resultados de un 'expired', así que el ganador no veía nada.
+  console.log("\n[Uno gana con puntos + rival ausente → gana el que jugó]");
+  await expiredActiveDuel("DUELTO03");
+  {
+    const lock = await lockDuelForSettle(db as any, "DUELTO03", CREATOR);
+    if (lock.ok) {
+      await writeDuelSideResult(db as any, {
+        duelId: "DUELTO03",
+        side: lock.side,
+        result: played(true, 480),
+        walkoverForOther: null,
+        finished: lock.otherHadResult,
+      });
+    }
+    await settleExpiredDuels({ duelId: "DUELTO03" }, exec);
+    const d = await readDuel("DUELTO03");
+    assert(d.status === "finished", "el duelo termina en 'finished', no en 'expired'");
+    assert(d.creator_result?.points === 480, "el puntaje real del que jugó se conserva intacto");
+    assert(!isTie(d.creator_result, d.opponent_result), "no es empate: uno hizo puntos");
+    assert(
+      winnerIsCreator(d.creator_result, d.opponent_result),
+      "gana el que completó el reto, aunque el rival nunca haya aparecido",
+    );
+  }
+
+  // ─── El abandono explícito SÍ sigue dando la victoria al rival ──────
+  console.log("\n[Abandono explícito con rival en 0 → gana el rival (walkover intacto)]");
+  await expiredActiveDuel("DUELTO04");
+  {
+    const lock = await lockDuelForSettle(db as any, "DUELTO04", CREATOR);
+    if (lock.ok) {
+      // Lo que hace forfeitDuel: mi derrota marcada + walkover al rival.
+      await writeDuelSideResult(db as any, {
+        duelId: "DUELTO04",
+        side: lock.side,
+        result: { won: false, points: 0, timeSeconds: 0, forfeit: true, finishedAt: new Date(NOW).toISOString() },
+        walkoverForOther: lock.otherHadResult ? null : walkoverResult(NOW),
+        finished: true,
+      });
+    }
+    const d = await readDuel("DUELTO04");
+    assert(d.creator_result?.forfeit === true, "queda registrado que abandonó explícitamente");
+    assert(d.opponent_result?.walkover === true, "el rival gana por abandono aunque no haya jugado");
+    assert(
+      !isTie(d.creator_result, d.opponent_result) && !winnerIsCreator(d.creator_result, d.opponent_result),
+      "irse a propósito SIEMPRE es derrota, aunque el rival tampoco haya hecho puntos",
+    );
+  }
+
+  // ─── Un finish tardío no puede resucitar un duelo ya cerrado ────────
+  console.log("\n[Finish tardío sobre un duelo ya cerrado → bloqueado]");
+  {
+    // DUELTO02 quedó 'finished' con ambos lados completados por el vencimiento.
+    const lateCreator = await lockDuelForSettle(db as any, "DUELTO02", CREATOR);
+    const lateOpponent = await lockDuelForSettle(db as any, "DUELTO02", OPPONENT);
+    assert(
+      !lateCreator.ok && lateCreator.reason === "already_played",
+      "el lado ya resuelto rechaza una finalización tardía",
+    );
+    assert(
+      !lateOpponent.ok && lateOpponent.reason === "already_played",
+      "y el otro lado también",
+    );
+
+    // Además, el guard de estado: un duelo cancelado reporta su status para que
+    // `finishDuelChallenge` lo rechace en vez de escribirle encima.
+    await q("DELETE FROM duels WHERE id = $1", ["DUELTO05"]);
+    await q(
+      `INSERT INTO duels (id, creator_id, opponent_id, game_id, difficulty, time_limit, seed, status, expires_at)
+       VALUES ($1, $2, $3, 'pittexto', 'medio', 120, $1, 'cancelled', now() + interval '5 minutes')`,
+      ["DUELTO05", CREATOR, OPPONENT],
+    );
+    const onCancelled = await lockDuelForSettle(db as any, "DUELTO05", CREATOR);
+    assert(
+      onCancelled.ok && onCancelled.status === "cancelled",
+      "sobre un duelo cancelado el lock reporta el estado (el handler responde 409 con eso)",
+    );
+  }
+
+  // ─── El cierre libera la regla "1 duelo activo" ─────────────────────
+  // Los índices `idx_duels_*_active` solo miran `status`, así que una fila
+  // muerta pero no barrida bloqueaba crear un duelo nuevo con un 409 engañoso.
+  console.log("\n[Duelo vencido no barrido → deja de bloquear la creación de otro]");
+  {
+    await q("DELETE FROM duels");
+    await expiredActiveDuel("DUELTO06");
+    let blocked = false;
+    try {
+      await q(
+        `INSERT INTO duels (id, creator_id, opponent_id, game_id, difficulty, time_limit, seed, status, expires_at)
+         VALUES ('DUELTO07', $1, NULL, 'pittexto', 'medio', 120, 'DUELTO07', 'pending', now() + interval '60 seconds')`,
+        [CREATOR],
+      );
+    } catch {
+      blocked = true;
+    }
+    assert(blocked, "sin barrer, la fila muerta bloquea el INSERT (origen del 409 falso)");
+
+    await settleExpiredDuels({ userId: CREATOR }, exec);
+    let blockedAfter = false;
+    try {
+      await q(
+        `INSERT INTO duels (id, creator_id, opponent_id, game_id, difficulty, time_limit, seed, status, expires_at)
+         VALUES ('DUELTO07', $1, NULL, 'pittexto', 'medio', 120, 'DUELTO07', 'pending', now() + interval '60 seconds')`,
+        [CREATOR],
+      );
+    } catch {
+      blockedAfter = true;
+    }
+    assert(!blockedAfter, "tras el cierre automático, crear un duelo nuevo funciona (fix del 409 falso)");
+  }
+
+  // ─── Plazo derivado de la duración de la partida ────────────────────
+  // Réplica fiel (estilo Parte B) del SQL de `acceptDuel` y de la extensión de
+  // `startDuelChallenge`: son statements nuevos con aritmética de intervalos, y
+  // sin esto un error de sintaxis recién aparecería en producción.
+  console.log("\n[Plazo = duración de la partida + margen]");
+  {
+    await q("DELETE FROM duels");
+    await q(
+      `INSERT INTO duels (id, creator_id, opponent_id, game_id, difficulty, time_limit, seed, status, expires_at)
+       VALUES ('DUELTTL1', $1, NULL, 'pittexto', 'medio', 120, 'DUELTTL1', 'pending', now() + interval '60 seconds')`,
+      [CREATOR],
+    );
+
+    // SQL de acceptDuel: expires_at = now + (time_limit + margen) segundos.
+    const accepted = await q(
+      `UPDATE duels
+       SET opponent_id = $1, status = 'active',
+           expires_at = now() + ((COALESCE(time_limit, 180) + $2::int) * INTERVAL '1 second')
+       WHERE id = $3 AND status = 'pending' AND expires_at > now()
+         AND creator_id <> $1
+         AND (opponent_id IS NULL OR opponent_id = $1)
+       RETURNING EXTRACT(EPOCH FROM (expires_at - now()))::int AS secs`,
+      [OPPONENT, 30, "DUELTTL1"],
+    );
+    const secs = Number((accepted.rows[0] as any)?.secs ?? 0);
+    assert(
+      secs >= 145 && secs <= 151,
+      `al aceptar, el plazo queda en 120s de partida + 30s de margen (obtenido: ${secs}s)`,
+    );
+
+    // Quien arranca tarde estira el plazo para no perder su partida entera.
+    await q("UPDATE duels SET expires_at = now() + interval '10 seconds' WHERE id = 'DUELTTL1'");
+    await q(
+      `UPDATE duels
+       SET expires_at = GREATEST(expires_at, now() + ($2::int * INTERVAL '1 second'))
+       WHERE id = $1 AND status = 'active'`,
+      ["DUELTTL1", 150],
+    );
+    const after = await q(
+      "SELECT EXTRACT(EPOCH FROM (expires_at - now()))::int AS secs FROM duels WHERE id = 'DUELTTL1'",
+    );
+    assert(
+      Number((after.rows[0] as any).secs) >= 145,
+      "arrancar tarde EXTIENDE el plazo (nadie pierde su partida por una carga lenta)",
+    );
+
+    // Pero nunca lo acorta: si el rival ya lo había estirado más, se respeta.
+    await q("UPDATE duels SET expires_at = now() + interval '600 seconds' WHERE id = 'DUELTTL1'");
+    await q(
+      `UPDATE duels
+       SET expires_at = GREATEST(expires_at, now() + ($2::int * INTERVAL '1 second'))
+       WHERE id = $1 AND status = 'active'`,
+      ["DUELTTL1", 150],
+    );
+    const kept = await q(
+      "SELECT EXTRACT(EPOCH FROM (expires_at - now()))::int AS secs FROM duels WHERE id = 'DUELTTL1'",
+    );
+    assert(
+      Number((kept.rows[0] as any).secs) > 500,
+      "GREATEST nunca ACORTA un plazo mayor ya fijado",
+    );
+  }
+
+  // ─── Un 'pending' vencido NO inventa un empate ──────────────────────
+  console.log("\n[Invitación vencida sin aceptar → 'expired', no un empate inventado]");
+  {
+    await q("DELETE FROM duels");
+    await q(
+      `INSERT INTO duels (id, creator_id, opponent_id, game_id, difficulty, time_limit, seed, status, expires_at)
+       VALUES ('DUELTO08', $1, $2, 'pittexto', 'medio', 120, 'DUELTO08', 'pending', now() - interval '1 minute')`,
+      [CREATOR, OPPONENT],
+    );
+    await settleExpiredDuels({ duelId: "DUELTO08" }, exec);
+    const d = await readDuel("DUELTO08");
+    assert(d.status === "expired", "una invitación que nadie aceptó expira (no hubo duelo)");
+    assert(
+      d.creator_result === null && d.opponent_result === null,
+      "y no se le inventan resultados a nadie",
+    );
+  }
+}
+
 /** Determinismo del motor de seed para duelos (Roadmap §4, decisión #1). */
 async function partC() {
   console.log("\n═══ PARTE C: motor determinista con seed de duelo (src/lib/daily.ts) ═══");
@@ -634,6 +959,7 @@ async function partC() {
   await partA();
   await partB();
   await partD();
+  await partE();
   await partC();
   console.log(`\n${failed === 0 ? "✅" : "❌"} ${passed} OK, ${failed} fallidos`);
   await db.close();

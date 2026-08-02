@@ -83,8 +83,6 @@ const nl: Translations = {
   "stats.won": "Gewonnen", "stats.lost": "Verloren", "stats.win_rate": "Win %", "stats.streak": "Reeks",
   "stats.best_streak": "Beste reeks", "stats.days": "dagen",
   "stats.no_persistent": "Permanente opslag is niet beschikbaar in deze browser. Je voortgang wordt alleen tijdens deze sessie opgeslagen.",
-  "stats.reset_confirm": "Dit verwijdert je statistieken en punten. Vandaag gespeelde uitdagingen blijven vergrendeld tot morgen. Deze actie kan niet ongedaan worden gemaakt.",
-  "stats.reset_yes": "Ja, alles verwijderen", "stats.reset_cancel": "Annuleren", "stats.reset": "Voortgang resetten",
 
   "ranking.title": "Wereldranglijst", "ranking.tab_today": "Vandaag",
   "ranking.all_countries": "Alle landen", "ranking.loading": "Ranglijst laden...",

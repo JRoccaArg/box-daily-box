@@ -135,11 +135,6 @@ const hi: Translations = {
   "stats.days": "दिन",
   "stats.no_persistent":
     "इस ब्राउज़र में स्थायी स्टोरेज उपलब्ध नहीं है। आपकी प्रगति केवल इस सत्र तक सेव रहेगी।",
-  "stats.reset_confirm":
-    "यह आपके आँकड़े और अंक मिटा देगा। आज खेली गई चुनौतियाँ कल तक लॉक रहेंगी। यह क्रिया पूर्ववत नहीं की जा सकती।",
-  "stats.reset_yes": "हाँ, सब मिटाएँ",
-  "stats.reset_cancel": "रद्द करें",
-  "stats.reset": "प्रगति रीसेट करें",
 
   "ranking.title": "ग्लोबल रैंकिंग",
   "ranking.tab_today": "आज",

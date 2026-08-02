@@ -3,7 +3,6 @@ import { useStats } from "@/context/StatsContext";
 import { useI18n } from "@/context";
 import { Modal } from "@/components/ui/Modal";
 import { StatPill } from "@/components/ui/StatPill";
-import { Button } from "@/components/ui/Button";
 import { MonthlyRanking } from "./MonthlyRanking";
 import { GlobalRanking } from "./GlobalRanking";
 import { IdentityModal } from "./IdentityModal";
@@ -21,9 +20,8 @@ type View = "personal" | "global" | "friends";
 
 /** Panel de estadisticas + ranking global + perfil. */
 export function StatsModal({ open, onClose }: StatsModalProps) {
-  const { summary, persistent, resetProgress } = useStats();
+  const { summary, persistent } = useStats();
   const { t } = useI18n();
-  const [confirming, setConfirming] = useState(false);
   const [view, setView] = useState<View>("global");
   const [identityOpen, setIdentityOpen] = useState(false);
 
@@ -33,18 +31,9 @@ export function StatsModal({ open, onClose }: StatsModalProps) {
   const identity = getIdentity();
   const natData = identity.countryCode ? NATIONALITIES[identity.countryCode] : null;
 
-  const handleReset = () => {
-    if (!confirming) {
-      setConfirming(true);
-      return;
-    }
-    resetProgress();
-    setConfirming(false);
-  };
-
   return (
     <>
-      <Modal open={open} onClose={onClose} title={t("stats.title")}>
+      <Modal open={open} onClose={onClose} title={t("stats.title")} size="lg">
         {/* Perfil */}
         <div className="mb-4 flex items-center justify-between rounded-lg border border-white/10 bg-asphalt-700 px-3 py-2.5">
           <div className="flex items-center gap-2">
@@ -113,28 +102,6 @@ export function StatsModal({ open, onClose }: StatsModalProps) {
                 {t("stats.no_persistent")}
               </p>
             )}
-
-            <div className="mt-5 border-t border-white/5 pt-4">
-              {confirming ? (
-                <div className="space-y-2">
-                  <p className="text-sm text-ink-muted">
-                    {t("stats.reset_confirm")}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button variant="danger" size="sm" onClick={handleReset}>
-                      {t("stats.reset_yes")}
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>
-                      {t("stats.reset_cancel")}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button variant="ghost" size="sm" onClick={handleReset} className="text-ink-muted">
-                  {t("stats.reset")}
-                </Button>
-              )}
-            </div>
           </>
         )}
       </Modal>

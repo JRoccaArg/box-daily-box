@@ -123,10 +123,6 @@ const zh: Translations = {
   "stats.best_streak": "最佳连胜",
   "stats.days": "天",
   "stats.no_persistent": "此浏览器不支持持久存储。进度仅在本次会话中保存。",
-  "stats.reset_confirm": "这将删除你的统计数据和积分。今天已玩的挑战将保持锁定至明天。此操作不可撤销。",
-  "stats.reset_yes": "是的，全部删除",
-  "stats.reset_cancel": "取消",
-  "stats.reset": "重置进度",
 
   "ranking.title": "全球排名",
   "ranking.tab_today": "今日",
