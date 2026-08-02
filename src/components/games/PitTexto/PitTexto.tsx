@@ -11,9 +11,9 @@ import { Check, Close } from "@/components/ui/Icon";
 
 const MAX_GUESSES = 8;
 
-export function PitTexto({ difficulty, date, status, onWin, onLose }: GameProps) {
+export function PitTexto({ difficulty, date, seed, status, onWin, onLose }: GameProps) {
   const { t } = useI18n();
-  const target = useMemo(() => buildTarget(difficulty, date), [difficulty, date]);
+  const target = useMemo(() => buildTarget(difficulty, date, seed), [difficulty, date, seed]);
   const pool = useMemo(() => getDriverPoolAtLeast(difficulty, 15), [difficulty]);
 
   const [guesses, setGuesses] = useState<Driver[]>([]);

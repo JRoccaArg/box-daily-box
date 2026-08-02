@@ -11,9 +11,9 @@ import { Button } from "@/components/ui/Button";
  * El Intruso: 9 pilotos comparten una caracteristica oculta y 1 no.
  * El usuario debe identificar al intruso. La regla se revela al terminar.
  */
-export function ElIntruso({ difficulty, date, status, onWin, onLose }: GameProps) {
+export function ElIntruso({ difficulty, date, seed, status, onWin, onLose }: GameProps) {
   const { t } = useI18n();
-  const puzzle = useMemo(() => buildIntruso(difficulty, date), [difficulty, date]);
+  const puzzle = useMemo(() => buildIntruso(difficulty, date, seed), [difficulty, date, seed]);
 
   const [selected, setSelected] = useState<string | null>(null);
   const [submittedId, setSubmittedId] = useState<string | null>(null);

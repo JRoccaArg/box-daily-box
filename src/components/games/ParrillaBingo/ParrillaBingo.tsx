@@ -13,9 +13,9 @@ import { Check, Trophy, Flag, Timer, Stat, Grid as GridIcon } from "@/components
  * Parrilla Bingo: grilla 3x3 donde cada celda es la interseccion de una
  * restriccion de fila (escuderia) y una de columna (nacionalidad o campeon).
  */
-export function ParrillaBingo({ difficulty, date, status, onWin }: GameProps) {
+export function ParrillaBingo({ difficulty, date, seed, status, onWin }: GameProps) {
   const { t } = useI18n();
-  const puzzle = useMemo(() => buildBingo(difficulty, date), [difficulty, date]);
+  const puzzle = useMemo(() => buildBingo(difficulty, date, seed), [difficulty, date, seed]);
   const { rows, cols, pool } = puzzle;
 
   const [cells, setCells] = useState<(string | null)[]>(() =>

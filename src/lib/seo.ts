@@ -7,7 +7,8 @@
 import { translate } from "@/i18n";
 import type { Locale } from "@/i18n";
 import { SUPPORTED_LOCALES } from "@/i18n/types";
-import { homePath, gamePath } from "@/lib/routes";
+import { homePath, gamePath, termsPath, privacyPath, infoPath } from "@/lib/routes";
+import { getInfoContent } from "@/content/info";
 
 export const SITE_URL = "https://www.boxdailybox.com";
 
@@ -49,7 +50,9 @@ export function ogLocaleFor(locale: Locale): string {
 
 export type SeoRoute =
   | { kind: "home" }
-  | { kind: "game"; gameId: string };
+  | { kind: "game"; gameId: string }
+  | { kind: "legal"; page: "terms" | "privacy" }
+  | { kind: "info" };
 
 export type SeoAlternate = { locale: Locale; href: string };
 
@@ -66,21 +69,54 @@ export type SeoData = {
 };
 
 function pathFor(locale: Locale, route: SeoRoute): string {
-  return route.kind === "home" ? homePath(locale) : gamePath(locale, route.gameId);
+  switch (route.kind) {
+    case "home":
+      return homePath(locale);
+    case "game":
+      return gamePath(locale, route.gameId);
+    case "legal":
+      return route.page === "terms" ? termsPath(locale) : privacyPath(locale);
+    case "info":
+      return infoPath(locale);
+  }
 }
 
 /** Arma title/description/canonical/hreflang para una página en un idioma. */
 export function buildSeo(locale: Locale, route: SeoRoute): SeoData {
-  const title =
-    route.kind === "home"
-      ? translate(locale, "seo.home.title")
-      : translate(locale, `seo.game.${route.gameId}.title`);
-  const description =
-    route.kind === "home"
-      ? translate(locale, "seo.home.description")
-      : translate(locale, `seo.game.${route.gameId}.description`);
+  let title: string;
+  let description: string;
+  switch (route.kind) {
+    case "home":
+      title = translate(locale, "seo.home.title");
+      description = translate(locale, "seo.home.description");
+      break;
+    case "game":
+      title = translate(locale, `seo.game.${route.gameId}.title`);
+      description = translate(locale, `seo.game.${route.gameId}.description`);
+      break;
+    case "legal":
+      title = translate(locale, `seo.${route.page}.title`);
+      description = translate(locale, `seo.${route.page}.description`);
+      break;
+    case "info": {
+      // Reutiliza el propio contenido de la página (título + subtítulo) en vez
+      // de duplicar 14 claves i18n en paralelo: única fuente de verdad, sin
+      // riesgo de que el <title>/meta description diverjan del contenido real.
+      const info = getInfoContent(locale);
+      title = `${info.title} | Box Daily Box`;
+      description = info.subtitle;
+      break;
+    }
+  }
 
   const path = pathFor(locale, route);
+
+  // Las páginas legales NO se indexan (contenido legal, sin valor de búsqueda y
+  // aún no traducido a los 14 idiomas → evita "contenido delgado/duplicado").
+  // Al ir con noindex, no emitimos hreflang (Google los ignora para noindex) y
+  // el canonical apunta a sí misma. Siguen siendo 100% públicas y válidas para
+  // Google OAuth.
+  const isLegal = route.kind === "legal";
 
   return {
     title,
@@ -88,7 +124,9 @@ export function buildSeo(locale: Locale, route: SeoRoute): SeoData {
     path,
     canonical: `${SITE_URL}${path}`,
     ogImage: `${SITE_URL}/og-image.png`,
-    alternates: INDEXABLE_LOCALES.map((l) => ({ locale: l, href: `${SITE_URL}${pathFor(l, route)}` })),
-    noindex: !isIndexableLocale(locale),
+    alternates: isLegal
+      ? []
+      : INDEXABLE_LOCALES.map((l) => ({ locale: l, href: `${SITE_URL}${pathFor(l, route)}` })),
+    noindex: isLegal || !isIndexableLocale(locale),
   };
 }

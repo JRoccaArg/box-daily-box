@@ -100,10 +100,23 @@ const es: Translations = {
   "header.stats_label": "Ver estadisticas",
   "header.stats": "Stats",
 
+  // ─── Configuración de sonido/vibración ───────────────────────────────
+  "settings.trigger_label": "Sonido y vibración",
+  "settings.sound": "Sonido",
+  "settings.haptics": "Vibración",
+  "settings.on": "Activado",
+  "settings.off": "Desactivado",
+
   // ─── Footer ─────────────────────────────────────────────────────────
   "footer.line1":
     "Box Box Daily · Proyecto de fans, sin afiliacion oficial con la Formula 1.",
   "footer.line2": "Un reto nuevo cada dia a la medianoche.",
+  "footer.info": "Cómo jugar",
+  "footer.terms": "Términos y Condiciones",
+  "footer.privacy": "Política de Privacidad",
+
+  // ─── Páginas legales ────────────────────────────────────────────────
+  "legal.updated": "Última actualización: {{date}}",
 
   // ─── Perfil (IdentityModal) ─────────────────────────────────────────
   "profile.title": "Tu perfil",
@@ -151,11 +164,6 @@ const es: Translations = {
   "stats.days": "dias",
   "stats.no_persistent":
     "El almacenamiento persistente no esta disponible en este navegador. Tu progreso se guardara solo durante esta sesion.",
-  "stats.reset_confirm":
-    "Esto borra tus estadísticas y puntos. Los retos que ya jugaste hoy seguirán bloqueados hasta mañana. Esta acción no se puede deshacer.",
-  "stats.reset_yes": "Si, borrar todo",
-  "stats.reset_cancel": "Cancelar",
-  "stats.reset": "Reiniciar progreso",
 
   // ─── Ranking Global ─────────────────────────────────────────────────
   "ranking.title": "Ranking Global",
@@ -172,9 +180,35 @@ const es: Translations = {
   "ranking.challenge_singular": "reto",
   "ranking.challenge_plural": "retos",
   "ranking.pts": "pts",
+  "ranking.streak_title": "Racha de {{count}} días seguidos ganando",
   "ranking.monthly_note":
     "El ranking mensual se reinicia el 1 de cada mes.",
   "ranking.daily_note": "El ranking diario muestra los resultados de hoy.",
+
+  // ─── Badges ─────────────────────────────────────────────────────────
+  "badge.monthly_gold": "Oro",
+  "badge.monthly_silver": "Plata",
+  "badge.monthly_bronze": "Bronce",
+  "badge.admin": "Admin",
+  "badge.superadmin": "Superadmin",
+  "badge.more": "+{{count}}",
+  "badge.gallery_title": "Mis Badges",
+  "badge.gallery_empty":
+    "Todavía no ganaste ningún badge. ¡Terminá entre los 3 primeros del ranking mensual!",
+  "badge.gallery_hint": "Tocá un badge para destacarlo en el ranking (hasta 3).",
+  "badge.featured_count": "{{count}}/3 destacados",
+  "badge.won_months": "Ganado en: {{months}}",
+  "badge.show_grouped": "Agrupado (×{{count}})",
+  "badge.show_individual": "Individual",
+  "badge.max_reached": "Ya elegiste el máximo de 3 badges destacados",
+  "badge.save": "Guardar selección",
+  "badge.saving": "Guardando...",
+  "badge.save_error": "No se pudo guardar. Intentá de nuevo.",
+  "badge.saved": "Selección guardada",
+  "badge.tooltip_admin": "Administrador del sitio",
+  "badge.tooltip_superadmin": "Super administrador",
+  "badge.tooltip_monthly_one": "Ganador de {{month}}",
+  "badge.tooltip_monthly_many": "Ganador de: {{months}}",
 
   // ─── Ranking Mensual (personal) ─────────────────────────────────────
   "monthly.title": "Ranking de {{month}}",
@@ -183,6 +217,11 @@ const es: Translations = {
   "monthly.no_wins":
     "Todavía no ganaste retos este mes. ¡Sumá tus primeros puntos!",
   "monthly.best_day": "Mejor día: {{day}} ({{points}} pts)",
+  "monthly.daily_title": "Por día",
+  "monthly.weekly_title": "Por semana",
+  "monthly.week_tooltip": "Semana {{n}}: {{points}} pts",
+  "monthly.by_difficulty": "Por dificultad",
+  "monthly.by_game": "Por juego",
   "monthly.scoring_title": "¿Cómo se puntúa?",
   "monthly.scoring_body":
     "Solo suman los retos ganados. Puntos base por dificultad: Fácil {{easy}}, Medio {{medium}}, Difícil {{hard}}, Leyenda {{legend}}. Cuanto menos tardes, más bonus de rapidez (hasta +120). Abandonar un reto cuenta como derrota (0 puntos).",
@@ -316,6 +355,13 @@ const es: Translations = {
   "lang.label": "Idioma",
 
   // ─── SEO (title/description por página) ──────────────────────────────
+  // Páginas legales (noindex, pero se usa el title para la pestaña del navegador).
+  "seo.terms.title": "Términos y Condiciones | Box Daily Box",
+  "seo.terms.description":
+    "Términos y condiciones de uso de Box Daily Box, plataforma gratuita de minijuegos diarios de Fórmula 1.",
+  "seo.privacy.title": "Política de Privacidad | Box Daily Box",
+  "seo.privacy.description":
+    "Cómo Box Daily Box trata tus datos personales: qué recopila, para qué, y tus derechos.",
   "seo.home.title": "Box Daily Box — Minijuegos diarios de Fórmula 1 | 6 puzzles gratis",
   "seo.home.description":
     "Seis minijuegos diarios de Fórmula 1: adiviná pilotos, completá el top 10, encontrá al intruso y más. Ranking global gratis, sin registro.",
@@ -384,6 +430,74 @@ const es: Translations = {
   "country.VEN": "Venezuela",
   "country.ZAF": "Sudáfrica",
   "country.ZWE": "Zimbabue",
+
+  // ─── Amigos y Duelos (Roadmap §4) ───────────────────────────────────
+  "friends.tab_title": "Amigos",
+  "friends.add_by_code": "Agregar",
+  "friends.code_placeholder": "CÓDIGO",
+  "friends.invalid_code": "El código debe tener 6 caracteres",
+  "friends.your_code": "Tu código: {{code}}",
+  "friends.copy_code": "Copiar",
+  "friends.code_copied": "Código copiado",
+  "friends.pending_requests": "Solicitudes pendientes ({{count}})",
+  "friends.sent_requests": "Enviadas, esperando respuesta",
+  "friends.accept": "Aceptar",
+  "friends.reject": "Rechazar",
+  "friends.no_friends": "Todavía no agregaste amigos. Compartí tu código para que te agreguen.",
+  "friends.anon_warning": "Sos anónimo: si borrás el navegador o cambiás de dispositivo, perdés esta lista. Iniciá sesión con Google para no perderla.",
+  "friends.need_to_play": "Jugá un reto primero para desbloquear Amigos.",
+  "friends.request_sent": "Solicitud enviada",
+  "friends.request_accepted": "¡Ahora son amigos!",
+  "friends.remove": "Eliminar amigo",
+  "friends.remove_confirm": "¿Eliminar a este amigo?",
+  "friends.list_empty_short": "Sin amigos todavía",
+
+  "duel.invitation_label": "Desafío de duelo",
+  "duel.invitation_from": "{{name}} te desafió a {{game}}",
+  "duel.someone": "Alguien",
+  "duel.expires_in": "Expira en {{seconds}}s",
+  "duel.more_pending": "+{{count}} más",
+  "duel.accept_or_reject_accept": "Aceptar",
+  "duel.accept_or_reject_reject": "Rechazar",
+  "duel.challenge_button": "Desafiar",
+  "duel.pick_game": "Elegí juego, dificultad y tiempo",
+  "duel.game_label": "Juego",
+  "duel.challenging_friend": "Vas a desafiar a {{name}}",
+  "duel.open_link": "Generar link abierto (para cualquiera)",
+  "duel.error_generic": "No se pudo crear el duelo. Probá de nuevo.",
+  "duel.loading": "Cargando duelo…",
+  "duel.not_found": "Este duelo no existe o ya no está disponible.",
+  "duel.error_start": "No se pudo cargar el duelo. Volvé a intentarlo desde el inicio.",
+  "duel.waiting_opponent": "Esperando que acepte…",
+  "duel.waiting_finish": "Esperando que tu rival termine…",
+  "duel.cancel": "Cancelar",
+  // Salir de un duelo en curso (botón + cartel de confirmación).
+  "duel.leave_button": "Abandonar",
+  "duel.leave_title": "¿Abandonar el duelo?",
+  "duel.leave_msg":
+    "Si salís ahora, abandonás el duelo y tu rival gana. No hay vuelta atrás.",
+  "duel.leave_confirm": "Sí, abandonar y perder",
+  "duel.leave_cancel": "Seguir jugando",
+  "duel.cancelled_by_you": "Cancelaste el duelo.",
+  "duel.expired": "El duelo expiró.",
+  "duel.cancelled": "El duelo fue cancelado.",
+  "duel.condition": "{{game}} · {{difficulty}} · {{time}}s",
+  "duel.you_won": "¡Ganaste!",
+  "duel.you_lost": "Perdiste",
+  "duel.tied": "Empate",
+  // Motivo del desenlace (se muestra debajo del resultado cuando aplica).
+  "duel.reason_nobody_played": "Ninguno completó el reto a tiempo.",
+  "duel.reason_opponent_absent": "Tu rival no llegó a jugar.",
+  "duel.reason_you_absent": "No llegaste a jugar.",
+  "duel.reason_opponent_forfeit": "Tu rival abandonó el duelo.",
+  "duel.reason_you_forfeit": "Abandonaste el duelo.",
+  "duel.rematch": "Revancha",
+  "duel.rematch_sent": "Invitación de revancha enviada",
+  "duel.your_score": "Vos: {{points}} pts en {{seconds}}s",
+  "duel.opponent_score": "Rival: {{points}} pts en {{seconds}}s",
+  "duel.go_home": "Volver al inicio",
+  "duel.share_link": "Compartir link",
+  "duel.link_copied": "Link copiado al portapapeles",
 };
 
 export default es;

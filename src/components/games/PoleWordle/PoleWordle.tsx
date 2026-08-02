@@ -51,14 +51,14 @@ const KEY_CLASS: Record<Cell, string> = {
   empty: "bg-asphalt-600 text-ink hover:bg-asphalt-500",
 };
 
-export function PoleWordle({ difficulty, date, status, onWin, onLose }: GameProps) {
+export function PoleWordle({ difficulty, date, seed, status, onWin, onLose }: GameProps) {
   const { t } = useI18n();
   const target = useMemo(() => {
     const base = getDriverPoolAtLeast(difficulty, 10);
     const sane = base.filter((d) => d.wordleKey.length >= 4 && d.wordleKey.length <= 11);
     const pool = sane.length >= 8 ? sane : base;
-    return dailyPick(pool, date, `polewordle::${difficulty}`);
-  }, [difficulty, date]);
+    return dailyPick(pool, date, `polewordle::${difficulty}`, seed);
+  }, [difficulty, date, seed]);
 
   const answer = target.wordleKey;
   const len = answer.length;

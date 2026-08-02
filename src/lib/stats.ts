@@ -13,6 +13,7 @@ import { storage } from "./storage";
 import { dateKey } from "./seed";
 import { computeScore } from "./scoring";
 import { emit, Events } from "./events";
+import { getEffectiveNow } from "./debugDate";
 import type { DailyGameResult, GameStatus, StatsSummary, Difficulty } from "@/types";
 
 type ResultsMap = Record<string, Record<string, DailyGameResult>>;
@@ -32,13 +33,13 @@ function loadPlayed(): PlayedLock {
 }
 
 /** Resultado guardado de un juego para una fecha, o null si no se jugo. */
-export function getResult(gameId: string, date: Date = new Date()): DailyGameResult | null {
+export function getResult(gameId: string, date: Date = getEffectiveNow()): DailyGameResult | null {
   const day = loadResults()[dateKey(date)];
   return day?.[gameId] ?? null;
 }
 
 /** Todos los resultados de un dia, indexados por gameId. */
-export function getDayResults(date: Date = new Date()): Record<string, DailyGameResult> {
+export function getDayResults(date: Date = getEffectiveNow()): Record<string, DailyGameResult> {
   return loadResults()[dateKey(date)] ?? {};
 }
 
@@ -56,7 +57,7 @@ export function recordResult(
   gameId: string,
   status: Extract<GameStatus, "won" | "lost">,
   meta?: DailyGameResult["meta"],
-  date: Date = new Date(),
+  date: Date = getEffectiveNow(),
 ): DailyGameResult {
   const key = dateKey(date);
   const played = loadPlayed();
@@ -95,7 +96,7 @@ export function recordResult(
  */
 export function getPlayedStatus(
   gameId: string,
-  date: Date = new Date(),
+  date: Date = getEffectiveNow(),
 ): "won" | "lost" | null {
   const day = loadPlayed()[dateKey(date)];
   return day?.[gameId]?.status ?? null;
@@ -132,7 +133,7 @@ function streakEndingAt(endKey: string, days: Set<string>): number {
 }
 
 /** Calcula el resumen global a partir del almacenamiento. */
-export function getStats(today: Date = new Date()): StatsSummary {
+export function getStats(today: Date = getEffectiveNow()): StatsSummary {
   const results = loadResults();
 
   let won = 0;
@@ -175,21 +176,11 @@ export function getStats(today: Date = new Date()): StatsSummary {
   return { won, lost, currentStreak, bestStreak, lastPlayed };
 }
 
-/** Borra todo el progreso (boton "reiniciar progreso"). */
 /**
- * Borra el progreso (boton "reiniciar progreso"): estadísticas y puntos.
- * NO borra el lock `played`, así que los retos ya jugados hoy siguen
- * bloqueados (reiniciar no permite rejugarlos conociendo las respuestas).
- */
-export function resetAllProgress(): void {
-  storage.remove(RESULTS_KEY);
-}
-
-/**
- * Reset COMPLETO para cambio de cuenta (login/logout).
- * A diferencia de resetAllProgress, borra TAMBIÉN el lock `played`, porque
- * al cambiar de identidad el estado de "qué jugué hoy" cambia por completo
- * y debe reconstruirse desde el servidor (fuente de verdad).
+ * Reset COMPLETO para cambio de cuenta (login/logout). Borra estadísticas,
+ * puntos, Y el lock `played` (a diferencia de un simple borrado de progreso):
+ * al cambiar de identidad el estado de "qué jugué hoy" cambia por completo y
+ * debe reconstruirse desde el servidor (fuente de verdad).
  */
 export function resetForAccountSwitch(): void {
   storage.remove(RESULTS_KEY);
@@ -296,7 +287,7 @@ export function scoreOfResult(r: DailyGameResult): number {
 export function updateServerPoints(
   gameId: string,
   serverPoints: number,
-  date: Date = new Date(),
+  date: Date = getEffectiveNow(),
 ): void {
   const key = dateKey(date);
   const results = loadResults();
@@ -325,13 +316,13 @@ export type MonthlyScore = {
 };
 
 /** Clave "YYYY-MM" de una fecha. */
-export function monthKey(date: Date = new Date()): string {
+export function monthKey(date: Date = getEffectiveNow()): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
 /** Clave "YYYY-MM-01" (primer día del mes de la fecha dada). Usado para
  *  pedirle al server el rango completo del mes tras login/reset. */
-export function monthStartKey(date: Date = new Date()): string {
+export function monthStartKey(date: Date = getEffectiveNow()): string {
   return `${monthKey(date)}-01`;
 }
 
@@ -340,7 +331,7 @@ export function monthStartKey(date: Date = new Date()): string {
  * ranking PERSONAL: se recalcula siempre desde los resultados, asi que no
  * puede quedar desincronizado.
  */
-export function getMonthlyScore(date: Date = new Date()): MonthlyScore {
+export function getMonthlyScore(date: Date = getEffectiveNow()): MonthlyScore {
   const month = monthKey(date);
   const results = loadResults();
   const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -404,7 +395,7 @@ type StoredSolution = {
 export function saveSolution(
   gameId: string,
   solution: Record<string, unknown> | null,
-  date: Date = new Date(),
+  date: Date = getEffectiveNow(),
 ): void {
   const key = dateKey(date);
   const all = storage.get<Record<string, Record<string, StoredSolution>>>(SOLUTIONS_KEY, {});
@@ -417,7 +408,7 @@ export function saveSolution(
 }
 
 /** Devuelve todas las solutions guardadas para una fecha. */
-export function getSolutionsForDate(date: Date = new Date()): StoredSolution[] {
+export function getSolutionsForDate(date: Date = getEffectiveNow()): StoredSolution[] {
   const key = dateKey(date);
   const all = storage.get<Record<string, Record<string, StoredSolution>>>(SOLUTIONS_KEY, {});
   const day = all[key] ?? {};

@@ -40,10 +40,10 @@ function teamColor(team: string): string {
   return TEAM_COLORS[team] ?? "#6B7280";
 }
 
-export function GPResultado({ difficulty, date, status, onWin }: GameProps) {
+export function GPResultado({ difficulty, date, seed, status, onWin }: GameProps) {
   const { t } = useI18n();
 
-  const gp = useMemo(() => buildGPChallenge(difficulty, date), [difficulty, date]);
+  const gp = useMemo(() => buildGPChallenge(difficulty, date, seed), [difficulty, date, seed]);
   const driverPool = useMemo(() => allDriverNames(), []);
 
   // Set de pilotos del top 10 de este GP (nombre → posición).

@@ -28,11 +28,14 @@ export function Seo({ locale, route, jsonLd }: SeoProps) {
       <meta name="robots" content={seo.noindex ? "noindex, follow" : "index, follow"} />
       <link rel="canonical" href={seo.canonical} />
 
-      {/* hreflang: solo idiomas con traducción completa (evita contenido delgado indexado) */}
+      {/* hreflang: solo idiomas con traducción completa (evita contenido delgado indexado).
+          Las páginas noindex (legales) no llevan alternates ni x-default. */}
       {seo.alternates.map((alt) => (
         <link key={alt.locale} rel="alternate" hrefLang={alt.locale} href={alt.href} />
       ))}
-      <link rel="alternate" hrefLang="x-default" href={`${SITE_URL}/`} />
+      {seo.alternates.length > 0 && (
+        <link rel="alternate" hrefLang="x-default" href={`${SITE_URL}/`} />
+      )}
 
       {/* Open Graph */}
       <meta property="og:type" content="website" />

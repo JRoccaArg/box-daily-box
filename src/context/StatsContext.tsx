@@ -5,7 +5,6 @@ import {
   getResult,
   getPlayedStatus,
   recordResult as persistResult,
-  resetAllProgress,
   syncFromServer,
   monthStartKey,
 } from "@/lib/stats";
@@ -35,7 +34,6 @@ type StatsContextValue = {
   ) => void;
   /** Fuerza re-lectura de stats desde storage (útil tras sync con server). */
   refreshStats: () => void;
-  resetProgress: () => void;
 };
 
 const StatsContext = createContext<StatsContextValue | null>(null);
@@ -84,11 +82,6 @@ export function StatsProvider({ children }: { children: ReactNode }) {
     [version, mounted],
   );
 
-  const resetProgress = useCallback(() => {
-    resetAllProgress();
-    setVersion((v) => v + 1);
-  }, []);
-
   const refreshStats = useCallback(() => {
     setVersion((v) => v + 1);
   }, []);
@@ -105,13 +98,13 @@ export function StatsProvider({ children }: { children: ReactNode }) {
     if (!userId) return;
 
     let cancelled = false;
-    const today = dateKey(new Date());
+    const today = dateKey();
 
     (async () => {
       // Mes completo (no solo hoy): si el usuario borró localStorage estando
       // logueado, esto reconstruye también el gráfico mensual, no solo el
       // lock de "ya jugado hoy".
-      const response = await apiGetUserAttempts(userId, { from: monthStartKey(new Date()), to: today });
+      const response = await apiGetUserAttempts(userId, { from: monthStartKey(), to: today });
       if (cancelled || !response) return;
       if (response.attempts.length === 0) return;
 
@@ -141,9 +134,8 @@ export function StatsProvider({ children }: { children: ReactNode }) {
       playedStatus,
       record,
       refreshStats,
-      resetProgress,
     }),
-    [summary, resultFor, playedStatus, record, refreshStats, resetProgress],
+    [summary, resultFor, playedStatus, record, refreshStats],
   );
 
   return <StatsContext.Provider value={value}>{children}</StatsContext.Provider>;

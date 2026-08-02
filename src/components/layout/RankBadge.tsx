@@ -23,7 +23,7 @@ export function RankBadge({ variant = "block" }: RankBadgeProps) {
       setLoading(false);
       return;
     }
-    const today = dateKey(new Date());
+    const today = dateKey();
     (async () => {
       const r = await apiGetUserRank(userId, today);
       if (r) {

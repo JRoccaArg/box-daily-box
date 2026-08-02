@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useStats } from "@/context/StatsContext";
 import { useI18n } from "@/context";
 import { StatsModal } from "./StatsModal";
 import { IdentityModal } from "./IdentityModal";
 import { LanguageSelector } from "./LanguageSelector";
+import { SoundSettings } from "./SoundSettings";
 import { Stat as StatIcon, Flame } from "@/components/ui/Icon";
 import { on, Events } from "@/lib/events";
+import { runNavGuard } from "@/lib/navGuard";
 import { homePath } from "@/lib/routes";
 import { useMounted } from "@/lib/useMounted";
+import { getEffectiveNow } from "@/lib/debugDate";
 import type { Locale } from "@/i18n";
 
 /** Fecha legible en el idioma actual. */
@@ -23,7 +26,17 @@ function readableDate(d: Date, locale: string): string {
 /** Logo: chevron de velocidad + wordmark. */
 function Wordmark({ label, locale }: { label: string; locale: Locale }) {
   return (
-    <Link to={homePath(locale)} className="group inline-flex items-center gap-2.5" aria-label={label}>
+    <Link
+      to={homePath(locale)}
+      // Si una pantalla registró un guard (hoy: un duelo en curso), tocar el
+      // logo abre su cartel de confirmación en vez de navegar y abandonar en
+      // silencio. Sin guard activo, navega normal.
+      onClick={(e) => {
+        if (runNavGuard()) e.preventDefault();
+      }}
+      className="group inline-flex items-center gap-2.5"
+      aria-label={label}
+    >
       <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" className="shrink-0">
         <path d="M3 4l7 8-7 8h5l7-8-7-8z" className="fill-racing" />
         <path d="M11 4l7 8-7 8h3l7-8-7-8z" className="fill-white/85" />
@@ -43,6 +56,7 @@ export function Header() {
   const { t, locale } = useI18n();
   const [statsOpen, setStatsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const { pathname } = useLocation();
 
   // La fecha de "hoy" difiere entre el momento del prerender (build) y la
   // visita real: se muestra solo tras montar para no generar mismatch de
@@ -55,14 +69,24 @@ export function Header() {
     return on(Events.OPEN_STATS, () => setStatsOpen(true));
   }, []);
 
+  // Cerrar los modales al navegar. Header vive dentro de Layout, que NO se
+  // desmonta al cambiar de ruta hija (home ↔ juego ↔ duelo) — sin esto, un
+  // modal abierto (ej. StatsModal desde el celu) quedaba encima de la
+  // pantalla nueva tras aceptar un duelo desde el banner, tapándola. Cubre
+  // cualquier navegación futura, no solo la de duelos.
+  useEffect(() => {
+    setStatsOpen(false);
+    setProfileOpen(false);
+  }, [pathname]);
+
   return (
     <header className="sticky top-0 z-30 border-b border-white/5 bg-asphalt-900/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4">
         <Wordmark label={t("header.home_label")} locale={locale} />
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           <span className="hidden text-sm capitalize text-ink-muted sm:inline">
-            {mounted ? readableDate(new Date(), locale) : ""}
+            {mounted ? readableDate(getEffectiveNow(), locale) : ""}
           </span>
 
           {summary.currentStreak > 0 && (
@@ -75,6 +99,7 @@ export function Header() {
             </span>
           )}
 
+          <SoundSettings />
           <LanguageSelector />
 
           <button

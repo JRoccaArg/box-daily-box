@@ -9,10 +9,10 @@ import { Panel } from "@/components/ui/Panel";
 import { Flag } from "@/components/ui/Flag";
 import { Check } from "@/components/ui/Icon";
 
-export function Top10Standings({ difficulty, date, status, onWin }: GameProps) {
+export function Top10Standings({ difficulty, date, seed, status, onWin }: GameProps) {
   const { t } = useI18n();
 
-  const challenge = useMemo(() => buildChallenge(difficulty, date), [difficulty, date]);
+  const challenge = useMemo(() => buildChallenge(difficulty, date, seed), [difficulty, date, seed]);
   const driverPool = useMemo(() => allStandingsDriverNames(), []);
 
   // Set del top 10 acumulado (nombre → posición).

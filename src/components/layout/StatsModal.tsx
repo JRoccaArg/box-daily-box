@@ -3,11 +3,11 @@ import { useStats } from "@/context/StatsContext";
 import { useI18n } from "@/context";
 import { Modal } from "@/components/ui/Modal";
 import { StatPill } from "@/components/ui/StatPill";
-import { Button } from "@/components/ui/Button";
-import { Flame } from "@/components/ui/Icon";
 import { MonthlyRanking } from "./MonthlyRanking";
 import { GlobalRanking } from "./GlobalRanking";
 import { IdentityModal } from "./IdentityModal";
+import { BadgeGallery } from "./BadgeGallery";
+import { FriendsTab } from "./FriendsTab";
 import { getIdentity } from "@/lib/identity";
 import { NATIONALITIES } from "@/data/nationalities";
 
@@ -16,13 +16,12 @@ type StatsModalProps = {
   onClose: () => void;
 };
 
-type View = "personal" | "global";
+type View = "personal" | "global" | "friends";
 
 /** Panel de estadisticas + ranking global + perfil. */
 export function StatsModal({ open, onClose }: StatsModalProps) {
-  const { summary, persistent, resetProgress } = useStats();
+  const { summary, persistent } = useStats();
   const { t } = useI18n();
-  const [confirming, setConfirming] = useState(false);
   const [view, setView] = useState<View>("global");
   const [identityOpen, setIdentityOpen] = useState(false);
 
@@ -32,18 +31,9 @@ export function StatsModal({ open, onClose }: StatsModalProps) {
   const identity = getIdentity();
   const natData = identity.countryCode ? NATIONALITIES[identity.countryCode] : null;
 
-  const handleReset = () => {
-    if (!confirming) {
-      setConfirming(true);
-      return;
-    }
-    resetProgress();
-    setConfirming(false);
-  };
-
   return (
     <>
-      <Modal open={open} onClose={onClose} title={t("stats.title")}>
+      <Modal open={open} onClose={onClose} title={t("stats.title")} size="lg">
         {/* Perfil */}
         <div className="mb-4 flex items-center justify-between rounded-lg border border-white/10 bg-asphalt-700 px-3 py-2.5">
           <div className="flex items-center gap-2">
@@ -64,7 +54,7 @@ export function StatsModal({ open, onClose }: StatsModalProps) {
           </button>
         </div>
 
-        {/* Tabs personal/global */}
+        {/* Tabs personal/global/amigos */}
         <div className="mb-4 flex gap-1 rounded-lg border border-white/10 bg-asphalt-800 p-1">
           <ViewTab active={view === "global"} onClick={() => setView("global")}>
             {t("stats.tab_global")}
@@ -72,30 +62,30 @@ export function StatsModal({ open, onClose }: StatsModalProps) {
           <ViewTab active={view === "personal"} onClick={() => setView("personal")}>
             {t("stats.tab_personal")}
           </ViewTab>
+          <ViewTab active={view === "friends"} onClick={() => setView("friends")}>
+            {t("friends.tab_title")}
+          </ViewTab>
         </div>
 
-        {view === "global" ? (
-          <GlobalRanking refreshKey={summary.won + summary.lost} />
-        ) : (
+        {view === "global" && <GlobalRanking refreshKey={summary.won + summary.lost} />}
+        {view === "friends" && <FriendsTab />}
+        {view === "personal" && (
           <>
+            <BadgeGallery userId={identity.userId} />
+
             <div className="mb-4">
-              <MonthlyRanking refreshKey={summary.won + summary.lost} />
+              <MonthlyRanking
+                refreshKey={summary.won + summary.lost}
+                currentStreak={summary.currentStreak}
+              />
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+            {/* Racha actual: se muestra prominente arriba, dentro de MonthlyRanking
+                (Roadmap #10) — se saca de acá para no mostrarla 2 veces. */}
+            <div className="grid grid-cols-3 gap-2.5">
               <StatPill label={t("stats.won")} value={summary.won} accent="green" />
               <StatPill label={t("stats.lost")} value={summary.lost} accent="red" />
               <StatPill label={t("stats.win_rate")} value={`${winRate}`} />
-              <StatPill
-                label={t("stats.streak")}
-                value={
-                  <span className="inline-flex items-center gap-1">
-                    {summary.currentStreak > 0 && <Flame size={20} />}
-                    {summary.currentStreak}
-                  </span>
-                }
-                accent="yellow"
-              />
             </div>
 
             <div className="mt-3 rounded-lg border border-white/5 bg-asphalt-700 px-4 py-3">
@@ -112,28 +102,6 @@ export function StatsModal({ open, onClose }: StatsModalProps) {
                 {t("stats.no_persistent")}
               </p>
             )}
-
-            <div className="mt-5 border-t border-white/5 pt-4">
-              {confirming ? (
-                <div className="space-y-2">
-                  <p className="text-sm text-ink-muted">
-                    {t("stats.reset_confirm")}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button variant="danger" size="sm" onClick={handleReset}>
-                      {t("stats.reset_yes")}
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>
-                      {t("stats.reset_cancel")}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button variant="ghost" size="sm" onClick={handleReset} className="text-ink-muted">
-                  {t("stats.reset")}
-                </Button>
-              )}
-            </div>
           </>
         )}
       </Modal>

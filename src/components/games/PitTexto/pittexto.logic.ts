@@ -26,10 +26,10 @@ export type Score = {
   factors: Factor[];
 };
 
-/** Objetivo del dia para la dificultad elegida. */
-export function buildTarget(difficulty: Difficulty, date: Date): Driver {
+/** Objetivo del dia para la dificultad elegida (o para un duelo si hay `seed`). */
+export function buildTarget(difficulty: Difficulty, date: Date, seed?: string): Driver {
   const pool = getDriverPoolAtLeast(difficulty, 15);
-  return dailyPick(pool, date, `pittexto::${difficulty}`);
+  return dailyPick(pool, date, `pittexto::${difficulty}`, seed);
 }
 
 function end(d: Driver): number {

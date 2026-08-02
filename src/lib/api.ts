@@ -8,6 +8,7 @@
 
 import { getIdentity, setIdentityToken, getIdentityToken } from "./identity";
 import { dateKey } from "./seed";
+import { getDebugDateOverride } from "./debugDate";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "";
 
@@ -30,6 +31,20 @@ type FinishResponse = {
   ranked?: boolean;
 };
 
+/** Tipos de badge. Los monthly_* se ganan; admin/superadmin derivan del rol. */
+export type BadgeType =
+  | "monthly_gold"
+  | "monthly_silver"
+  | "monthly_bronze"
+  | "admin"
+  | "superadmin";
+
+/**
+ * Badge listo para renderizar inline junto al nombre (count > 1 => contador).
+ * `months` ('YYYY-MM'[]) solo en tipos mensuales — alimenta el tooltip.
+ */
+export type DisplayBadge = { type: BadgeType; count: number; months?: string[] };
+
 export type RankingEntry = {
   rank: number;
   userId: string;
@@ -38,6 +53,11 @@ export type RankingEntry = {
   points: number;
   gamesWon: number;
   daysPlayed: number;
+  /** Racha diaria actual (días consecutivos ganando). Ya viene con "death-check"
+   *  aplicado server-side: 0 si la racha murió. El UI la muestra solo si >= 2. */
+  currentStreak: number;
+  /** Badges a mostrar inline (admin/superadmin primero + hasta 3 destacados). */
+  displayBadges: DisplayBadge[];
 };
 
 type RankingResponse = {
@@ -65,11 +85,19 @@ async function apiFetch<T>(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
+    // Solo tiene efecto real si el backend corre con STAGING_DEBUG=true
+    // (servicio de Railway aislado de producción); si no, el header se
+    // ignora en el server. `getDebugDateOverride` ya devuelve null fuera
+    // de un build de staging (VITE_STAGING=true), así que esto es un
+    // no-op inerte en producción.
+    const debugDate = getDebugDateOverride();
+
     const res = await fetch(`${API_URL}${path}`, {
       ...options,
       signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
+        ...(debugDate ? { "X-Debug-Date": debugDate } : {}),
         ...options.headers,
       },
     });
@@ -320,4 +348,382 @@ export async function apiGetUserRank(
   return apiFetch<UserRank>(
     `/user/${encodeURIComponent(userId)}/rank?${params.toString()}`,
   );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── Badges ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+/** Un slot de la selección de destacados (solo badges mensuales son elegibles). */
+export type FeaturedSlot = {
+  type: "monthly_gold" | "monthly_silver" | "monthly_bronze";
+  grouped?: boolean;
+};
+
+export type OwnedBadge = {
+  id: number;
+  type: BadgeType;
+  /** Mes al que corresponde (YYYY-MM), null para badges sin mes. */
+  referenceMonth: string | null;
+  awardedAt: string;
+};
+
+export type UserBadges = {
+  userId: string;
+  role: string;
+  owned: OwnedBadge[];
+  counts: Record<string, number>;
+  featured: FeaturedSlot[] | null;
+};
+
+/** GET /user/:userId/badges — colección pública de badges de un usuario. */
+export async function apiGetUserBadges(
+  userId: string,
+): Promise<UserBadges | null> {
+  return apiFetch<UserBadges>(`/user/${encodeURIComponent(userId)}/badges`);
+}
+
+/**
+ * POST /user/:userId/badges/featured — setea los badges destacados.
+ * Manda el identityToken guardado localmente (anti-IDOR server-side).
+ * Devuelve el body de errores 4xx (ej. selección inválida) para mostrarlos.
+ */
+export async function apiSetFeaturedBadges(
+  userId: string,
+  featured: FeaturedSlot[],
+  identityToken?: string | null,
+): Promise<{ userId: string; featured: FeaturedSlot[] } | { error: string } | null> {
+  const token = identityToken ?? getIdentityToken();
+  return apiFetch<{ userId: string; featured: FeaturedSlot[] } | { error: string }>(
+    `/user/${encodeURIComponent(userId)}/badges/featured`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        featured,
+        ...(token ? { identityToken: token } : {}),
+      }),
+    },
+    8000,
+    true, // preservar errores 4xx (selección inválida, no autorizado)
+  );
+}
+
+/**
+ * POST /admin/seed-badges — SOLO responde 200 si el backend tiene
+ * STAGING_DEBUG=true (si no, 404). Usado por el panel de debug de staging
+ * (roadmap #1) para poblar/limpiar los escenarios de prueba de badges.
+ */
+export async function apiSeedBadges(
+  reset = false,
+): Promise<{ ok: boolean; reset: boolean } | null> {
+  return apiFetch<{ ok: boolean; reset: boolean }>("/admin/seed-badges", {
+    method: "POST",
+    body: JSON.stringify({ reset }),
+  });
+}
+
+/**
+ * POST /admin/grant-badges — SOLO responde 200 si el backend tiene
+ * STAGING_DEBUG=true (si no, 404). Otorga 3 oros + 1 plata + 1 bronce a la
+ * cuenta indicada (pensado para la propia cuenta del que prueba en staging),
+ * para poder abrir "Mi Progreso" y probar la galería con badges reales.
+ */
+export async function apiGrantSelfBadges(
+  userId: string,
+): Promise<{ ok: boolean; userId: string; grantedCount: number } | null> {
+  return apiFetch<{ ok: boolean; userId: string; grantedCount: number }>(
+    "/admin/grant-badges",
+    {
+      method: "POST",
+      body: JSON.stringify({ userId }),
+    },
+  );
+}
+
+/**
+ * POST /admin/close-debug-month — SOLO responde 200 si el backend tiene
+ * STAGING_DEBUG=true (si no, 404). Cierra el mes ANTERIOR al que está
+ * simulando el date picker del panel de debug (lee X-Debug-Date, que
+ * apiFetch ya adjunta solo). El cron automático de producción nunca honra
+ * el override, así que sin esto un mes "simulado" nunca se cierra solo.
+ */
+export async function apiCloseDebugMonth(): Promise<{
+  month: string;
+  awardedCount: number;
+} | { error: string } | null> {
+  return apiFetch<{ month: string; awardedCount: number } | { error: string }>(
+    "/admin/close-debug-month",
+    // Body vacío EXPLÍCITO: mandar Content-Type: application/json (que pone
+    // apiFetch siempre) sin body hace que Fastify rechace la request con
+    // 400 "Bad Request" antes de llegar al handler.
+    { method: "POST", body: "{}" },
+    8000,
+    true, // preservar el 422 de "mes no cerrado" para mostrarlo
+  );
+}
+
+/**
+ * POST /admin/seed-duels — SOLO responde 200 si el backend tiene
+ * STAGING_DEBUG=true (si no, 404). Usado por el panel de debug de staging
+ * (roadmap §4, Etapa 2) para poblar amigos/duelos ficticios DIRIGIDOS a la
+ * propia cuenta del que prueba (banner de invitación, solicitudes, etc.).
+ */
+export async function apiSeedDuels(
+  userId: string,
+  reset = false,
+): Promise<{ ok: boolean; reset: boolean } | { error: string } | null> {
+  return apiFetch<{ ok: boolean; reset: boolean } | { error: string }>(
+    "/admin/seed-duels",
+    { method: "POST", body: JSON.stringify({ userId, reset }) },
+    8000,
+    true, // preservar el 422 (userId inválido) para mostrarlo
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── Amigos y Duelos (Roadmap §4) ──────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+export type DuelResult = {
+  won: boolean;
+  points: number;
+  timeSeconds: number;
+  finishedAt: string;
+  /**
+   * true cuando este lado ganó porque el RIVAL abandonó antes de que este
+   * jugador llegara a jugar (Roadmap §4). En ese caso `points`/`timeSeconds`
+   * son 0 y NO representan una partida real: la UI debe mostrar un mensaje de
+   * "ganaste por abandono" en vez de un puntaje.
+   */
+  walkover?: boolean;
+  /** true si este lado abandonó explícitamente (botón de salir / cerrar pestaña). */
+  forfeit?: boolean;
+  /**
+   * true si este lado nunca envió resultado y lo resolvió el vencimiento del
+   * plazo (se quedó AFK o nunca abrió el duelo). Derrota de 0 puntos: si el
+   * rival tampoco completó el reto, el duelo termina en empate.
+   */
+  timedOut?: boolean;
+};
+export type DuelStatus = "pending" | "active" | "finished" | "expired" | "cancelled";
+
+/** Estado de un duelo tal como lo ve un participante (modo a ciegas aplicado por el server). */
+export type DuelState = {
+  id: string;
+  gameId: string;
+  difficulty: string;
+  timeLimit: number | null;
+  status: DuelStatus;
+  creatorId: string;
+  opponentId: string | null;
+  creatorName: string | null;
+  creatorCountry: string | null;
+  youAre: "creator" | "opponent";
+  myResult: DuelResult | null;
+  /** Solo revelado cuando ambos terminaron (status='finished'). */
+  opponentResult: DuelResult | null;
+  opponentFinished: boolean;
+  expiresAt: string;
+  secondsLeft: number;
+};
+
+export type PendingDuel = {
+  id: string;
+  gameId: string;
+  difficulty: string;
+  timeLimit: number | null;
+  creatorName: string | null;
+  creatorCountry: string | null;
+  secondsLeft: number;
+  expiresAt: string;
+};
+
+export type Friend = { userId: string; displayName: string | null; countryCode: string | null };
+export type FriendRequest = {
+  requestId: number;
+  fromUserId: string;
+  displayName: string | null;
+  countryCode: string | null;
+};
+
+type ErrShape = { error: string };
+function isErr<T>(v: T | ErrShape | null): v is ErrShape {
+  return v != null && typeof (v as ErrShape).error === "string";
+}
+
+/** Inicia una partida de DUELO. El server toma juego/dificultad/tiempo/semilla
+ *  de la fila del duelo (no del cliente); acá solo mandamos duelId + identidad. */
+export async function apiStartDuelChallenge(
+  gameId: string,
+  duelId: string,
+): Promise<StartResult> {
+  if (!API_URL) return { ok: false };
+  const { userId } = getIdentity();
+  const data = await apiFetch<StartResponse>(`/challenges/${gameId}/start`, {
+    method: "POST",
+    body: JSON.stringify({ duelId, userId, identityToken: getIdentityToken() }),
+  });
+  if (!data) return { ok: false };
+  if (data.identityToken) setIdentityToken(data.identityToken);
+  return { ok: true, sessionToken: data.sessionToken, serverNow: data.serverNow };
+}
+
+/** Crea un duelo. `opponentUserId` opcional = desafío directo a un amigo. */
+export async function apiCreateDuel(
+  gameId: string,
+  difficulty: string,
+  timeLimit: number | null,
+  opponentUserId?: string,
+): Promise<{ duelId: string; expiresAt: string; secondsLeft: number } | ErrShape | null> {
+  const { userId } = getIdentity();
+  return apiFetch(
+    "/duels",
+    {
+      method: "POST",
+      body: JSON.stringify({ userId, gameId, difficulty, timeLimit, opponentUserId, identityToken: getIdentityToken() }),
+    },
+    8000,
+    true,
+  );
+}
+
+export async function apiAcceptDuel(duelId: string): Promise<DuelState | ErrShape | null> {
+  const { userId } = getIdentity();
+  return apiFetch(`/duels/${encodeURIComponent(duelId)}/accept`, {
+    method: "POST",
+    body: JSON.stringify({ userId, identityToken: getIdentityToken() }),
+  }, 8000, true);
+}
+
+export async function apiDeclineDuel(duelId: string): Promise<{ ok: boolean } | ErrShape | null> {
+  const { userId } = getIdentity();
+  return apiFetch(`/duels/${encodeURIComponent(duelId)}/decline`, {
+    method: "POST",
+    body: JSON.stringify({ userId, identityToken: getIdentityToken() }),
+  }, 8000, true);
+}
+
+export async function apiCancelDuel(duelId: string): Promise<{ ok: boolean } | ErrShape | null> {
+  const { userId } = getIdentity();
+  return apiFetch(`/duels/${encodeURIComponent(duelId)}/cancel`, {
+    method: "POST",
+    body: JSON.stringify({ userId, identityToken: getIdentityToken() }),
+  }, 8000, true);
+}
+
+/**
+ * Rendirse / salir de un duelo SIN necesidad de un sessionToken activo.
+ *
+ * Sirve para el caso en que el usuario se va antes de que el juego cargue
+ * (pantalla de espera, transición): ahí `apiFinishChallenge` no es opción
+ * porque todavía no hay sessionToken. Si el duelo estaba 'active', el rival
+ * gana por walkover; si estaba 'pending', el duelo se cancela.
+ *
+ * `keepalive` para que el navegador la despache aunque la pestaña se esté
+ * cerrando (mismo motivo que en `apiFinishChallenge`).
+ */
+export async function apiForfeitDuel(
+  duelId: string,
+): Promise<{ ok: boolean; status: string } | ErrShape | null> {
+  const { userId } = getIdentity();
+  return apiFetch(
+    `/duels/${encodeURIComponent(duelId)}/forfeit`,
+    {
+      method: "POST",
+      body: JSON.stringify({ userId, identityToken: getIdentityToken() }),
+      keepalive: true,
+    },
+    8000,
+    true,
+  );
+}
+
+export async function apiGetDuel(duelId: string): Promise<DuelState | null> {
+  const { userId } = getIdentity();
+  const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
+  return apiFetch<DuelState>(`/duels/${encodeURIComponent(duelId)}?${params.toString()}`);
+}
+
+export async function apiGetPendingDuels(): Promise<PendingDuel[]> {
+  const { userId } = getIdentity();
+  if (!userId) return [];
+  const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
+  const res = await apiFetch<{ duels: PendingDuel[] }>(`/duels/pending?${params.toString()}`);
+  return res?.duels ?? [];
+}
+
+export async function apiGetMyFriendCode(): Promise<string | null> {
+  const { userId } = getIdentity();
+  if (!userId) return null;
+  const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
+  const res = await apiFetch<{ code: string }>(`/me/friend-code?${params.toString()}`);
+  return res?.code ?? null;
+}
+
+export async function apiResolveFriendByCode(
+  code: string,
+): Promise<Friend | ErrShape | null> {
+  return apiFetch<Friend | ErrShape>(`/friends/by-code/${encodeURIComponent(code)}`, {}, 8000, true);
+}
+
+/** Envía solicitud de amistad por código o por userId. */
+export async function apiSendFriendRequest(
+  target: { targetCode?: string; targetUserId?: string },
+): Promise<{ ok: boolean; status: string; requestId?: number } | ErrShape | null> {
+  const { userId } = getIdentity();
+  return apiFetch("/friends/request", {
+    method: "POST",
+    body: JSON.stringify({ userId, ...target, identityToken: getIdentityToken() }),
+  }, 8000, true);
+}
+
+export async function apiRespondFriendRequest(
+  requestId: number,
+  accept: boolean,
+): Promise<{ ok: boolean; status: string } | ErrShape | null> {
+  const { userId } = getIdentity();
+  return apiFetch("/friends/respond", {
+    method: "POST",
+    body: JSON.stringify({ userId, requestId, accept, identityToken: getIdentityToken() }),
+  }, 8000, true);
+}
+
+export async function apiRemoveFriend(friendUserId: string): Promise<{ ok: boolean } | ErrShape | null> {
+  const { userId } = getIdentity();
+  return apiFetch("/friends/remove", {
+    method: "POST",
+    body: JSON.stringify({ userId, friendUserId, identityToken: getIdentityToken() }),
+  }, 8000, true);
+}
+
+export async function apiListFriends(): Promise<Friend[]> {
+  const { userId } = getIdentity();
+  if (!userId) return [];
+  const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
+  const res = await apiFetch<{ friends: Friend[] }>(`/friends?${params.toString()}`);
+  return res?.friends ?? [];
+}
+
+export async function apiListFriendRequests(): Promise<FriendRequest[]> {
+  const { userId } = getIdentity();
+  if (!userId) return [];
+  const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
+  const res = await apiFetch<{ requests: FriendRequest[] }>(`/friends/requests?${params.toString()}`);
+  return res?.requests ?? [];
+}
+
+// Reexport util para que la UI distinga respuestas de error de las de éxito.
+export { isErr as isApiError };
+
+/**
+ * Traduce mensajes de error crudos del server (literales en español, ver
+ * `requireOwnership` en `src/api/routes.ts`) a una clave i18n. El server no
+ * devuelve códigos de error, solo el string — este mapeo es la traducción
+ * del lado del cliente para no tener que tocar el backend (ver Etapa C del
+ * plan de bugfixes de Amigos y Duelos). Si no reconoce el string, cae a
+ * `duel.error_generic` en vez de mostrar el literal en español.
+ */
+export function friendlyApiError(error: string, t: (key: string) => string): string {
+  if (error === "No autorizado") return t("friends.need_to_play");
+  return t("duel.error_generic");
 }

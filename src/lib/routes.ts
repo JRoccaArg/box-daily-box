@@ -14,3 +14,23 @@ export function homePath(locale: Locale): string {
 export function gamePath(locale: Locale, gameId: string): string {
   return `/${locale}/juego/${gameId}`;
 }
+
+/** Página de un duelo (invitación/juego en vivo, Roadmap §4), ej: duelPath("en", "ABCDEFGH") -> "/en/duelo/ABCDEFGH" */
+export function duelPath(locale: Locale, duelId: string): string {
+  return `/${locale}/duelo/${duelId}`;
+}
+
+/** Términos y Condiciones, ej: termsPath("en") -> "/en/terms" */
+export function termsPath(locale: Locale): string {
+  return `/${locale}/terms`;
+}
+
+/** Política de Privacidad, ej: privacyPath("en") -> "/en/privacy" */
+export function privacyPath(locale: Locale): string {
+  return `/${locale}/privacy`;
+}
+
+/** Página de info / cómo jugar, ej: infoPath("en") -> "/en/info" */
+export function infoPath(locale: Locale): string {
+  return `/${locale}/info`;
+}

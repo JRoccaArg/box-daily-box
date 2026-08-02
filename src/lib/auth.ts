@@ -76,14 +76,14 @@ export function loginWithGoogle(): void {
 export async function handleGoogleCallback(code: string): Promise<AuthResult | null> {
   const redirectUri = `${window.location.origin}/auth/callback`;
   const { userId: currentUserId } = getIdentity();
-  const today = dateKey(new Date());
+  const today = dateKey();
 
   // Recolectar los intentos locales del día ANTES del reset. El server los
   // re-verificará e importará los que la cuenta no tenga (regla de
   // inmutabilidad: si la cuenta ya jugó ese juego, el local se descarta).
-  const solutions = getSolutionsForDate(new Date());
+  const solutions = getSolutionsForDate();
   const localAttempts = solutions.map((s) => {
-    const result = getResult(s.gameId, new Date());
+    const result = getResult(s.gameId);
     const difficulty =
       result?.meta && typeof result.meta.difficulty === "string"
         ? result.meta.difficulty
@@ -141,7 +141,7 @@ export async function handleGoogleCallback(code: string): Promise<AuthResult | n
   // al storage local para que aparezcan como "ya jugados" en la home Y para
   // que el gráfico mensual (getMonthlyScore) no pierda los días previos.
   const attemptsResponse = await apiGetUserAttempts(result.userId, {
-    from: monthStartKey(new Date()),
+    from: monthStartKey(),
     to: today,
   });
   if (attemptsResponse && attemptsResponse.attempts.length > 0) {

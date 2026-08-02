@@ -131,3 +131,53 @@ export const Steering = (p: IconProps) => (
     <path d="M12 15v6M9.5 13.5 4.5 18M14.5 13.5 19.5 18M5 9.5h14" />
   </svg>
 );
+
+export const Users = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
+
+export const Swords = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="m14.5 17.5 3 3L21 17l-3-3" />
+    <path d="M3 3l6.5 6.5M6.5 3 21 17.5 17.5 21 3 6.5" />
+    <path d="m9.5 6.5-3 3L3 6l3-3" />
+  </svg>
+);
+
+export const Volume = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M4 9h4l5-4v14l-5-4H4z" />
+    <path d="M16 8.5a5 5 0 0 1 0 7" />
+    <path d="M18.5 6a8.5 8.5 0 0 1 0 12" />
+  </svg>
+);
+
+export const VolumeOff = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M4 9h4l5-4v14l-5-4H4z" />
+    <path d="m17 9 4 6" />
+    <path d="m21 9-4 6" />
+  </svg>
+);
+
+export const Vibrate = (p: IconProps) => (
+  <svg {...base(p)}>
+    <rect x="8" y="4" width="8" height="16" rx="1.5" />
+    <path d="M4 9v6" />
+    <path d="M2 11v2" />
+    <path d="M20 9v6" />
+    <path d="M22 11v2" />
+  </svg>
+);
+
+export const VibrateOff = (p: IconProps) => (
+  <svg {...base(p)}>
+    <rect x="8" y="4" width="8" height="16" rx="1.5" />
+    <path d="m3 3 18 18" />
+  </svg>
+);

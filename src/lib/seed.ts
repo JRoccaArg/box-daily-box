@@ -8,6 +8,7 @@
  * Son algoritmos pequenos, rapidos y de buena distribucion para este uso
  * (NO aptos para criptografia).
  */
+import { getEffectiveNow } from "./debugDate";
 
 /** Hashea un string a una semilla uint32 estable. */
 export function xmur3(str: string): number {
@@ -89,12 +90,16 @@ export class Rng {
  * Clave de dia en formato YYYY-MM-DD usando la fecha LOCAL del usuario.
  * El reto cambia a la medianoche local (igual que Wordle). Si en el futuro
  * se quiere un reto global identico por reloj UTC, cambiar a getUTC*.
+ *
+ * Sin argumento, usa `getEffectiveNow()`: la fecha real, salvo que haya un
+ * override de debug activo (solo posible en builds de staging).
  */
-export function dateKey(date: Date = new Date()): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+export function dateKey(date?: Date): string {
+  const d = date ?? getEffectiveNow();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 /**

@@ -11,7 +11,8 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
-import { initializeDatabase, cleanupExpiredSessions } from "./db";
+import { initializeDatabase, cleanupExpiredSessions, transaction } from "./db";
+import { awardMonthlyPodium, previousMonthKey } from "./badges";
 import {
   startChallenge,
   finishChallenge,
@@ -23,6 +24,28 @@ import {
   getUserAttempts,
   getUserRank,
   checkUsernameAvailable,
+  adminCloseMonth,
+  getUserBadges,
+  setFeaturedBadges,
+  adminSeedBadges,
+  adminGrantBadges,
+  adminCloseDebugMonth,
+  adminSeedDuels,
+  createDuel,
+  acceptDuel,
+  declineDuel,
+  cancelDuel,
+  forfeitDuel,
+  getDuel,
+  getPendingDuels,
+  getMyFriendCode,
+  resolveFriendByCode,
+  sendFriendRequest,
+  respondFriendRequest,
+  getFriends,
+  getFriendRequests,
+  removeFriend,
+  sweepExpiredDuels,
 } from "./routes";
 import { googleAuthCallback, logout } from "./auth";
 
@@ -56,6 +79,27 @@ const requireDb = async (_req: any, reply: any) => {
     reply.code(503).send({ error: "DB no lista, reintenta en unos segundos" });
   }
 };
+
+/**
+ * Cierra automáticamente el mes anterior (oro/plata/bronce del podio) sin
+ * intervención manual. Mismo camino que `POST /admin/badges/close-month`
+ * (misma función, misma transacción), solo que lo dispara el propio server
+ * en vez de un curl manual. Nunca lanza: un error acá no debe tumbar el
+ * proceso (se loguea y se reintenta en el próximo tick, a la hora).
+ */
+async function closePreviousMonthBadges(): Promise<void> {
+  const month = previousMonthKey(new Date());
+  try {
+    const result = await transaction((client) =>
+      awardMonthlyPodium((sql, params) => client.query(sql, params), month),
+    );
+    if (result.awarded.length > 0) {
+      console.log(`🏆 Badges de ${result.month} otorgados: ${result.awarded.length}`);
+    }
+  } catch (err) {
+    console.error(`⚠️  Error cerrando badges de ${month}:`, err);
+  }
+}
 
 async function start(): Promise<void> {
   // ─── Helmet: headers de seguridad ─────────────────────────────────
@@ -206,6 +250,98 @@ async function start(): Promise<void> {
     checkUsernameAvailable as any,
   );
 
+  // ─── Badges ────────────────────────────────────────────────────────
+  // Cierre mensual del podio (admin, secreto en header). Rate limit bajo.
+  app.post(
+    "/admin/badges/close-month",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
+    },
+    adminCloseMonth as any,
+  );
+
+  // Colección de badges de un usuario (público, para la galería).
+  app.get(
+    "/user/:userId/badges",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 60, timeWindow: "1 minute" } },
+    },
+    getUserBadges as any,
+  );
+
+  // Setear badges destacados (requiere identityToken del propio usuario).
+  app.post(
+    "/user/:userId/badges/featured",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
+    },
+    setFeaturedBadges as any,
+  );
+
+  // Seed de datos de prueba (SOLO STAGING — 404 si STAGING_DEBUG no está en 'true').
+  app.post(
+    "/admin/seed-badges",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 5, timeWindow: "1 minute" } },
+    },
+    adminSeedBadges as any,
+  );
+
+  // Otorgar badges de prueba a la cuenta propia (SOLO STAGING).
+  app.post(
+    "/admin/grant-badges",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 5, timeWindow: "1 minute" } },
+    },
+    adminGrantBadges as any,
+  );
+
+  // Cerrar el mes anterior al simulado con el date picker (SOLO STAGING).
+  app.post(
+    "/admin/close-debug-month",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
+    },
+    adminCloseDebugMonth as any,
+  );
+
+  // Seed de amigos/duelos de prueba dirigidos a la propia cuenta (SOLO STAGING).
+  app.post(
+    "/admin/seed-duels",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 5, timeWindow: "1 minute" } },
+    },
+    adminSeedDuels as any,
+  );
+
+  // ─── Amigos y Duelos (Roadmap §4) ─────────────────────────────────
+  // Duelos: crear (10/min, sensible), aceptar/rechazar/cancelar (20/min),
+  // leer estado + pendientes (60/min, polling frecuente).
+  app.post("/duels", { preHandler: requireDb, config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, createDuel as any);
+  app.post("/duels/:id/accept", { preHandler: requireDb, config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, acceptDuel as any);
+  app.post("/duels/:id/decline", { preHandler: requireDb, config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, declineDuel as any);
+  app.post("/duels/:id/cancel", { preHandler: requireDb, config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, cancelDuel as any);
+  app.post("/duels/:id/forfeit", { preHandler: requireDb, config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, forfeitDuel as any);
+  app.get("/duels/pending", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getPendingDuels as any);
+  app.get("/duels/:id", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getDuel as any);
+
+  // Amigos: código propio (60/min), resolver código público (30/min),
+  // solicitudes/responder/remover (20/min), listas (60/min).
+  app.get("/me/friend-code", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getMyFriendCode as any);
+  app.get("/friends/by-code/:code", { preHandler: requireDb, config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, resolveFriendByCode as any);
+  app.post("/friends/request", { preHandler: requireDb, config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, sendFriendRequest as any);
+  app.post("/friends/respond", { preHandler: requireDb, config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, respondFriendRequest as any);
+  app.post("/friends/remove", { preHandler: requireDb, config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, removeFriend as any);
+  app.get("/friends", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getFriends as any);
+  app.get("/friends/requests", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getFriendRequests as any);
+
   // ─── Inicializar BD en background ─────────────────────────────────
   initializeDatabase()
     .then(() => {
@@ -220,6 +356,30 @@ async function start(): Promise<void> {
           })
           .catch(() => {});
       }, 60 * 60 * 1000); // cada hora
+
+      // Cierre automático del podio mensual (badges), sin intervención manual.
+      // Corre al arrancar + cada hora; SIEMPRE usa el reloj real del server
+      // (nunca el override de debug de staging, que solo aplica por request).
+      // Idempotente (ON CONFLICT DO NOTHING) y siempre pide el MES ANTERIOR
+      // al actual, que por definición ya está cerrado — así que no hace
+      // falta ningún cron externo ni disparo manual: apenas cruza la
+      // medianoche del día 1, el próximo tick (dentro de la hora) lo cierra
+      // solo.
+      closePreviousMonthBadges();
+      setInterval(closePreviousMonthBadges, 60 * 60 * 1000); // cada hora
+
+      // Barrido de duelos vencidos (Roadmap §4). La corrección real la dan los
+      // barridos "lazy" en los handlers (TTL de 60s), pero este cron periódico
+      // marca 'expired' los duelos que nadie vuelve a consultar, manteniendo la
+      // tabla y la regla "1 duelo activo" limpias. Cada 5 minutos.
+      sweepExpiredDuels().catch(() => {});
+      setInterval(() => {
+        sweepExpiredDuels()
+          .then((n) => {
+            if (n > 0) console.log(`🧹 ${n} duelos expirados marcados`);
+          })
+          .catch(() => {});
+      }, 5 * 60 * 1000);
     })
     .catch((err) => {
       console.error("⚠️  Database init error:", err);

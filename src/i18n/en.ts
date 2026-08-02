@@ -94,10 +94,23 @@ const en: Translations = {
   "header.stats_label": "View statistics",
   "header.stats": "Stats",
 
+  // ─── Sound/haptics settings ─────────────────────────────────────────
+  "settings.trigger_label": "Sound and vibration",
+  "settings.sound": "Sound",
+  "settings.haptics": "Vibration",
+  "settings.on": "On",
+  "settings.off": "Off",
+
   // ─── Footer ─────────────────────────────────────────────────────────
   "footer.line1":
     "Box Box Daily · Fan project, not officially affiliated with Formula 1.",
   "footer.line2": "A new challenge every day at midnight.",
+  "footer.info": "How to play",
+  "footer.terms": "Terms and Conditions",
+  "footer.privacy": "Privacy Policy",
+
+  // ─── Legal pages ────────────────────────────────────────────────────
+  "legal.updated": "Last updated: {{date}}",
 
   // ─── Profile (IdentityModal) ────────────────────────────────────────
   "profile.title": "Your profile",
@@ -144,11 +157,6 @@ const en: Translations = {
   "stats.days": "days",
   "stats.no_persistent":
     "Persistent storage is not available in this browser. Your progress will only be saved during this session.",
-  "stats.reset_confirm":
-    "This will delete your statistics and points. Challenges you already played today will remain locked until tomorrow. This action cannot be undone.",
-  "stats.reset_yes": "Yes, delete everything",
-  "stats.reset_cancel": "Cancel",
-  "stats.reset": "Reset progress",
 
   // ─── Global Ranking ─────────────────────────────────────────────────
   "ranking.title": "Global Ranking",
@@ -165,8 +173,34 @@ const en: Translations = {
   "ranking.challenge_singular": "challenge",
   "ranking.challenge_plural": "challenges",
   "ranking.pts": "pts",
+  "ranking.streak_title": "{{count}}-day winning streak",
   "ranking.monthly_note": "The monthly ranking resets on the 1st of each month.",
   "ranking.daily_note": "The daily ranking shows today's results.",
+
+  // ─── Badges ─────────────────────────────────────────────────────────
+  "badge.monthly_gold": "Gold",
+  "badge.monthly_silver": "Silver",
+  "badge.monthly_bronze": "Bronze",
+  "badge.admin": "Admin",
+  "badge.superadmin": "Superadmin",
+  "badge.more": "+{{count}}",
+  "badge.gallery_title": "My Badges",
+  "badge.gallery_empty":
+    "You haven't earned any badges yet. Finish in the top 3 of the monthly ranking!",
+  "badge.gallery_hint": "Tap a badge to feature it on the ranking (up to 3).",
+  "badge.featured_count": "{{count}}/3 featured",
+  "badge.won_months": "Earned in: {{months}}",
+  "badge.show_grouped": "Grouped (×{{count}})",
+  "badge.show_individual": "Individual",
+  "badge.max_reached": "You already picked the max of 3 featured badges",
+  "badge.save": "Save selection",
+  "badge.saving": "Saving...",
+  "badge.save_error": "Couldn't save. Try again.",
+  "badge.saved": "Selection saved",
+  "badge.tooltip_admin": "Site administrator",
+  "badge.tooltip_superadmin": "Super administrator",
+  "badge.tooltip_monthly_one": "Winner of {{month}}",
+  "badge.tooltip_monthly_many": "Winner of: {{months}}",
 
   // ─── Monthly Ranking (personal) ─────────────────────────────────────
   "monthly.title": "{{month}} ranking",
@@ -174,6 +208,11 @@ const en: Translations = {
   "monthly.points_month": "points this month",
   "monthly.no_wins": "You haven't won any challenges this month yet. Score your first points!",
   "monthly.best_day": "Best day: {{day}} ({{points}} pts)",
+  "monthly.daily_title": "By day",
+  "monthly.weekly_title": "By week",
+  "monthly.week_tooltip": "Week {{n}}: {{points}} pts",
+  "monthly.by_difficulty": "By difficulty",
+  "monthly.by_game": "By game",
   "monthly.scoring_title": "How is scoring calculated?",
   "monthly.scoring_body":
     "Only won challenges count. Base points by difficulty: Easy {{easy}}, Medium {{medium}}, Hard {{hard}}, Legend {{legend}}. The faster you finish, the more speed bonus you get (up to +120). Giving up counts as a loss (0 points).",
@@ -302,6 +341,13 @@ const en: Translations = {
   "lang.label": "Language",
 
   // ─── SEO (title/description per page) ─────────────────────────────────
+  // Legal pages (noindex, but the title is still used for the browser tab).
+  "seo.terms.title": "Terms and Conditions | Box Daily Box",
+  "seo.terms.description":
+    "Terms and conditions of use for Box Daily Box, a free platform of daily Formula 1 minigames.",
+  "seo.privacy.title": "Privacy Policy | Box Daily Box",
+  "seo.privacy.description":
+    "How Box Daily Box handles your personal data: what it collects, why, and your rights.",
   "seo.home.title": "Box Daily Box — Daily Formula 1 Minigames | 6 Free Puzzles",
   "seo.home.description":
     "Six daily Formula 1 minigames: guess drivers, complete the top 10, find the odd one out, and more. Free global ranking, no sign-up.",
@@ -370,6 +416,74 @@ const en: Translations = {
   "country.VEN": "Venezuela",
   "country.ZAF": "South Africa",
   "country.ZWE": "Zimbabwe",
+
+  // ─── Friends and Duels (Roadmap §4) ─────────────────────────────────
+  "friends.tab_title": "Friends",
+  "friends.add_by_code": "Add",
+  "friends.code_placeholder": "CODE",
+  "friends.invalid_code": "The code must be 6 characters",
+  "friends.your_code": "Your code: {{code}}",
+  "friends.copy_code": "Copy",
+  "friends.code_copied": "Code copied",
+  "friends.pending_requests": "Pending requests ({{count}})",
+  "friends.sent_requests": "Sent, waiting for reply",
+  "friends.accept": "Accept",
+  "friends.reject": "Reject",
+  "friends.no_friends": "You haven't added any friends yet. Share your code so they can add you.",
+  "friends.anon_warning": "You're anonymous: if you clear your browser or change device, you lose this list. Sign in with Google to keep it.",
+  "friends.need_to_play": "Play a challenge first to unlock Friends.",
+  "friends.request_sent": "Request sent",
+  "friends.request_accepted": "You're now friends!",
+  "friends.remove": "Remove friend",
+  "friends.remove_confirm": "Remove this friend?",
+  "friends.list_empty_short": "No friends yet",
+
+  "duel.invitation_label": "Duel challenge",
+  "duel.invitation_from": "{{name}} challenged you to {{game}}",
+  "duel.someone": "Someone",
+  "duel.expires_in": "Expires in {{seconds}}s",
+  "duel.more_pending": "+{{count}} more",
+  "duel.accept_or_reject_accept": "Accept",
+  "duel.accept_or_reject_reject": "Reject",
+  "duel.challenge_button": "Challenge",
+  "duel.pick_game": "Pick game, difficulty and time",
+  "duel.game_label": "Game",
+  "duel.challenging_friend": "You're about to challenge {{name}}",
+  "duel.open_link": "Generate open link (for anyone)",
+  "duel.error_generic": "Couldn't create the duel. Try again.",
+  "duel.loading": "Loading duel…",
+  "duel.not_found": "This duel doesn't exist or is no longer available.",
+  "duel.error_start": "Couldn't load the duel. Try again from the home page.",
+  "duel.waiting_opponent": "Waiting for them to accept…",
+  "duel.waiting_finish": "Waiting for your opponent to finish…",
+  "duel.cancel": "Cancel",
+  // Leaving a duel in progress (button + confirmation dialog).
+  "duel.leave_button": "Leave",
+  "duel.leave_title": "Leave the duel?",
+  "duel.leave_msg":
+    "If you leave now, you forfeit the duel and your opponent wins. This can't be undone.",
+  "duel.leave_confirm": "Yes, leave and lose",
+  "duel.leave_cancel": "Keep playing",
+  "duel.cancelled_by_you": "You cancelled the duel.",
+  "duel.expired": "The duel expired.",
+  "duel.cancelled": "The duel was cancelled.",
+  "duel.condition": "{{game}} · {{difficulty}} · {{time}}s",
+  "duel.you_won": "You won!",
+  "duel.you_lost": "You lost",
+  "duel.tied": "Tied",
+  // Reason for the outcome (shown under the result when it applies).
+  "duel.reason_nobody_played": "Neither player completed the challenge in time.",
+  "duel.reason_opponent_absent": "Your opponent never played.",
+  "duel.reason_you_absent": "You never played.",
+  "duel.reason_opponent_forfeit": "Your opponent left the duel.",
+  "duel.reason_you_forfeit": "You left the duel.",
+  "duel.rematch": "Rematch",
+  "duel.rematch_sent": "Rematch invitation sent",
+  "duel.your_score": "You: {{points}} pts in {{seconds}}s",
+  "duel.opponent_score": "Opponent: {{points}} pts in {{seconds}}s",
+  "duel.go_home": "Back to home",
+  "duel.share_link": "Share link",
+  "duel.link_copied": "Link copied to clipboard",
 };
 
 export default en;

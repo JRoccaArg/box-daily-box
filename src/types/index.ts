@@ -85,6 +85,10 @@ export type GameProps = {
   difficulty: Difficulty;
   /** Fecha del reto (define la seed diaria). */
   date: Date;
+  /** Si viene (Roadmap §4, duelos), reemplaza la seed derivada de `date` por
+   *  esta (el duel_id): el mismo motor determinista genera un puzzle propio
+   *  del duelo en vez del reto oficial del día. Ausente en el reto diario. */
+  seed?: string;
   /** Limite de tiempo en segundos, o null si el juego no usa cronometro. */
   timeLimit: number | null;
   /** Segundos restantes (lo administra el GameShell). null = sin tiempo. */
