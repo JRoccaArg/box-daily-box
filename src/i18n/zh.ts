@@ -335,8 +335,12 @@ const zh: Translations = {
   "badge.saved": "已保存选择",
   "badge.tooltip_admin": "网站管理员",
   "badge.tooltip_superadmin": "超级管理员",
-  "badge.tooltip_monthly_one": "{{month}}的获胜者",
-  "badge.tooltip_monthly_many": "获胜于: {{months}}",
+  "badge.tooltip_gold_one": "{{month}}的获胜者",
+  "badge.tooltip_gold_many": "获胜于: {{months}}",
+  "badge.tooltip_silver_one": "{{month}}的第二名",
+  "badge.tooltip_silver_many": "第二名: {{months}}",
+  "badge.tooltip_bronze_one": "{{month}}的第三名",
+  "badge.tooltip_bronze_many": "第三名: {{months}}",
 
   // ─── 朋友和对战 (Roadmap §4) ────────────────────────────────────────
   "friends.tab_title": "朋友",

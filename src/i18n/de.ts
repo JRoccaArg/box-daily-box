@@ -292,8 +292,12 @@ const de: Translations = {
   "badge.saved": "Auswahl gespeichert",
   "badge.tooltip_admin": "Website-Administrator",
   "badge.tooltip_superadmin": "Super-Administrator",
-  "badge.tooltip_monthly_one": "Gewinner von {{month}}",
-  "badge.tooltip_monthly_many": "Gewinner von: {{months}}",
+  "badge.tooltip_gold_one": "Gewinner von {{month}}",
+  "badge.tooltip_gold_many": "Gewinner von: {{months}}",
+  "badge.tooltip_silver_one": "2. Platz bei {{month}}",
+  "badge.tooltip_silver_many": "2. Platz bei: {{months}}",
+  "badge.tooltip_bronze_one": "3. Platz bei {{month}}",
+  "badge.tooltip_bronze_many": "3. Platz bei: {{months}}",
 
   // ─── Freunde und Duelle (Roadmap §4) ─────────────────────────────────
   "friends.tab_title": "Freunde",

@@ -16,9 +16,18 @@ export function formatBadgeMonth(monthStr: string, t: Translate): string {
   return `${capitalized} ${y}`;
 }
 
+/** Prefijo de clave i18n según la posición del podio (oro/plata/bronce). */
+const PODIUM_PREFIX: Record<"monthly_gold" | "monthly_silver" | "monthly_bronze", string> = {
+  monthly_gold: "gold",
+  monthly_silver: "silver",
+  monthly_bronze: "bronze",
+};
+
 /**
- * Descripción completa del badge para el tooltip: "Ganador de Junio 2026",
- * "Ganador de: Junio 2026, Mayo 2026, Abril 2026", "Administrador del sitio".
+ * Descripción completa del badge para el tooltip: "Ganador de Junio 2026"
+ * (oro), "Segundo puesto en Junio 2026" (plata), "Tercer puesto en Junio
+ * 2026" (bronce) — cada posición tiene su propio texto, no solo el oro.
+ * "Administrador del sitio" para admin/superadmin.
  */
 export function formatBadgeTooltip(
   type: BadgeType,
@@ -28,10 +37,11 @@ export function formatBadgeTooltip(
   if (type === "admin") return t("badge.tooltip_admin");
   if (type === "superadmin") return t("badge.tooltip_superadmin");
   if (!months || months.length === 0) return t(`badge.${type}`);
+  const prefix = PODIUM_PREFIX[type];
   if (months.length === 1) {
-    return t("badge.tooltip_monthly_one", { month: formatBadgeMonth(months[0] as string, t) });
+    return t(`badge.tooltip_${prefix}_one`, { month: formatBadgeMonth(months[0] as string, t) });
   }
-  return t("badge.tooltip_monthly_many", {
+  return t(`badge.tooltip_${prefix}_many`, {
     months: months.map((m) => formatBadgeMonth(m, t)).join(", "),
   });
 }
