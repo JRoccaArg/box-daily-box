@@ -374,8 +374,12 @@ const pt: Translations = {
   "badge.saved": "Seleção salva",
   "badge.tooltip_admin": "Administrador do site",
   "badge.tooltip_superadmin": "Super administrador",
-  "badge.tooltip_monthly_one": "Vencedor de {{month}}",
-  "badge.tooltip_monthly_many": "Vencedor de: {{months}}",
+  "badge.tooltip_gold_one": "Vencedor de {{month}}",
+  "badge.tooltip_gold_many": "Vencedor de: {{months}}",
+  "badge.tooltip_silver_one": "2º lugar em {{month}}",
+  "badge.tooltip_silver_many": "2º lugar em: {{months}}",
+  "badge.tooltip_bronze_one": "3º lugar em {{month}}",
+  "badge.tooltip_bronze_many": "3º lugar em: {{months}}",
 
   // ─── Amigos e Duelos (Roadmap §4) ────────────────────────────────────
   "friends.tab_title": "Amigos",

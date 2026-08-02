@@ -342,8 +342,12 @@ const ja: Translations = {
   "badge.saved": "選択を保存しました",
   "badge.tooltip_admin": "サイト管理者",
   "badge.tooltip_superadmin": "スーパー管理者",
-  "badge.tooltip_monthly_one": "{{month}}の優勝者",
-  "badge.tooltip_monthly_many": "優勝: {{months}}",
+  "badge.tooltip_gold_one": "{{month}}の優勝者",
+  "badge.tooltip_gold_many": "優勝: {{months}}",
+  "badge.tooltip_silver_one": "{{month}}の準優勝",
+  "badge.tooltip_silver_many": "準優勝: {{months}}",
+  "badge.tooltip_bronze_one": "{{month}}の3位",
+  "badge.tooltip_bronze_many": "3位: {{months}}",
 
   // ─── 友達とデュエル (Roadmap §4) ────────────────────────────────────
   "friends.tab_title": "友達",

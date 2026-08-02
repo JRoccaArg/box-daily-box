@@ -373,8 +373,12 @@ const hi: Translations = {
   "badge.saved": "चयन सहेजा गया",
   "badge.tooltip_admin": "साइट प्रशासक",
   "badge.tooltip_superadmin": "सुपर प्रशासक",
-  "badge.tooltip_monthly_one": "{{month}} का विजेता",
-  "badge.tooltip_monthly_many": "विजेता: {{months}}",
+  "badge.tooltip_gold_one": "{{month}} का विजेता",
+  "badge.tooltip_gold_many": "विजेता: {{months}}",
+  "badge.tooltip_silver_one": "{{month}} में दूसरा स्थान",
+  "badge.tooltip_silver_many": "दूसरा स्थान: {{months}}",
+  "badge.tooltip_bronze_one": "{{month}} में तीसरा स्थान",
+  "badge.tooltip_bronze_many": "तीसरा स्थान: {{months}}",
 
   // ─── Amigos e Duelos (Roadmap §4) ────────────────────────────────────
   "friends.tab_title": "दोस्त",

@@ -389,8 +389,12 @@ const sl: Translations = {
   "badge.saved": "Izbor je shranjen",
   "badge.tooltip_admin": "Skrbnik strani",
   "badge.tooltip_superadmin": "Super skrbnik",
-  "badge.tooltip_monthly_one": "Zmagovalec {{month}}",
-  "badge.tooltip_monthly_many": "Zmagovalec: {{months}}",
+  "badge.tooltip_gold_one": "Zmagovalec {{month}}",
+  "badge.tooltip_gold_many": "Zmagovalec: {{months}}",
+  "badge.tooltip_silver_one": "2. mesto {{month}}",
+  "badge.tooltip_silver_many": "2. mesto: {{months}}",
+  "badge.tooltip_bronze_one": "3. mesto {{month}}",
+  "badge.tooltip_bronze_many": "3. mesto: {{months}}",
 
   // ─── Prijatelji in Dvoboji (Roadmap §4) ──────────────────────────────
   "friends.tab_title": "Prijatelji",

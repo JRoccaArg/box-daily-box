@@ -278,8 +278,12 @@ const ar: Translations = {
   "badge.saved": "تم حفظ الاختيار",
   "badge.tooltip_admin": "مسؤول الموقع",
   "badge.tooltip_superadmin": "مسؤول سوبر",
-  "badge.tooltip_monthly_one": "الفائز في {{month}}",
-  "badge.tooltip_monthly_many": "الفائز في: {{months}}",
+  "badge.tooltip_gold_one": "الفائز في {{month}}",
+  "badge.tooltip_gold_many": "الفائز في: {{months}}",
+  "badge.tooltip_silver_one": "المركز الثاني في {{month}}",
+  "badge.tooltip_silver_many": "المركز الثاني في: {{months}}",
+  "badge.tooltip_bronze_one": "المركز الثالث في {{month}}",
+  "badge.tooltip_bronze_many": "المركز الثالث في: {{months}}",
 
   // ─── الأصدقاء والثنائيات (Roadmap §4) ────────────────────────────────
   "friends.tab_title": "الأصدقاء",

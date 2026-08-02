@@ -278,8 +278,12 @@ const nl: Translations = {
   "badge.saved": "Selectie opgeslagen",
   "badge.tooltip_admin": "Sitebeheerder",
   "badge.tooltip_superadmin": "Superbeheerder",
-  "badge.tooltip_monthly_one": "Winnaar van {{month}}",
-  "badge.tooltip_monthly_many": "Winnaar van: {{months}}",
+  "badge.tooltip_gold_one": "Winnaar van {{month}}",
+  "badge.tooltip_gold_many": "Winnaar van: {{months}}",
+  "badge.tooltip_silver_one": "2e plaats in {{month}}",
+  "badge.tooltip_silver_many": "2e plaats in: {{months}}",
+  "badge.tooltip_bronze_one": "3e plaats in {{month}}",
+  "badge.tooltip_bronze_many": "3e plaats in: {{months}}",
 
   // ─── Vrienden en Duels (Roadmap §4) ─────────────────────────────────
   "friends.tab_title": "Vrienden",
