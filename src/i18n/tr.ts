@@ -389,8 +389,12 @@ const tr: Translations = {
   "badge.saved": "Seçim kaydedildi",
   "badge.tooltip_admin": "Site yöneticisi",
   "badge.tooltip_superadmin": "Süper yönetici",
-  "badge.tooltip_monthly_one": "{{month}} kazananı",
-  "badge.tooltip_monthly_many": "Kazanan: {{months}}",
+  "badge.tooltip_gold_one": "{{month}} kazananı",
+  "badge.tooltip_gold_many": "Kazanan: {{months}}",
+  "badge.tooltip_silver_one": "{{month}} ikincisi",
+  "badge.tooltip_silver_many": "İkincilik: {{months}}",
+  "badge.tooltip_bronze_one": "{{month}} üçüncüsü",
+  "badge.tooltip_bronze_many": "Üçüncülük: {{months}}",
 
   // ─── Arkadaşlar ve Düellolar (Roadmap §4) ────────────────────────────
   "friends.tab_title": "Arkadaşlar",

@@ -207,8 +207,12 @@ const es: Translations = {
   "badge.saved": "Selección guardada",
   "badge.tooltip_admin": "Administrador del sitio",
   "badge.tooltip_superadmin": "Super administrador",
-  "badge.tooltip_monthly_one": "Ganador de {{month}}",
-  "badge.tooltip_monthly_many": "Ganador de: {{months}}",
+  "badge.tooltip_gold_one": "Ganador de {{month}}",
+  "badge.tooltip_gold_many": "Ganador de: {{months}}",
+  "badge.tooltip_silver_one": "Segundo puesto en {{month}}",
+  "badge.tooltip_silver_many": "Segundo puesto en: {{months}}",
+  "badge.tooltip_bronze_one": "Tercer puesto en {{month}}",
+  "badge.tooltip_bronze_many": "Tercer puesto en: {{months}}",
 
   // ─── Ranking Mensual (personal) ─────────────────────────────────────
   "monthly.title": "Ranking de {{month}}",

@@ -292,8 +292,12 @@ const ru: Translations = {
   "badge.saved": "Выбор сохранен",
   "badge.tooltip_admin": "Администратор сайта",
   "badge.tooltip_superadmin": "Супер-администратор",
-  "badge.tooltip_monthly_one": "Победитель {{month}}",
-  "badge.tooltip_monthly_many": "Победитель: {{months}}",
+  "badge.tooltip_gold_one": "Победитель {{month}}",
+  "badge.tooltip_gold_many": "Победитель: {{months}}",
+  "badge.tooltip_silver_one": "2-е место {{month}}",
+  "badge.tooltip_silver_many": "2-е место: {{months}}",
+  "badge.tooltip_bronze_one": "3-е место {{month}}",
+  "badge.tooltip_bronze_many": "3-е место: {{months}}",
 
   // ─── Друзья и Дуэли (Roadmap §4) ────────────────────────────────────
   "friends.tab_title": "Друзья",
