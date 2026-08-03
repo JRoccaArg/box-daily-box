@@ -28,6 +28,8 @@ import {
   ROOKIE_AGE,
   ROOKIE_ATTR_MAX,
   ROOKIE_ATTR_MIN,
+  REQUIRED_REP_BASE,
+  REQUIRED_REP_PER_RANK,
   SEAT_AVAILABILITY_LOW,
   SEAT_AVAILABILITY_MID,
   SEAT_AVAILABILITY_TOP,
@@ -518,8 +520,7 @@ function buildOffers(state: CareerState, rng: Rng): SeatOffer[] {
 
   const willing = CAREER_TEAM_IDS.filter((teamId) => {
     const rank = ranking[teamId] ?? 10;
-    // rank 1 (mejor coche) exige ~88 de reputacion; rank 10, ~20.
-    const required = 20 + (10 - rank) * 7.5;
+    const required = REQUIRED_REP_BASE + (10 - rank) * REQUIRED_REP_PER_RANK;
     const luck = rng.int(-8, 8);
     if (rep + luck < required) return false;
     // Aunque te sobre reputacion, la butaca tiene que estar LIBRE: los

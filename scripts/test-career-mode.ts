@@ -288,7 +288,13 @@ console.log("\n=== Parte E: curva de edad suave (pedido explicito) ===");
 
 console.log("\n=== Parte F: balance ===");
 {
-  const N = 40;
+  // N=80: mas que antes (40) a proposito. Un Monte Carlo real de 200
+  // partidas (hecho a mano en la Etapa 5) mostro que N=40 podia dar falsos
+  // positivos por ruido de muestra chica — con N=40 llego a medir 38-40%
+  // en una corrida y 49% en otra con los mismos parametros. 80 no elimina
+  // el ruido del todo, pero corre en <1s y reduce el riesgo de que el test
+  // pase "de casualidad" con un balance realmente roto.
+  const N = 80;
   let conTitulo = 0;
   let sinTitulo = 0;
   let totalWins = 0;
@@ -301,7 +307,8 @@ console.log("\n=== Parte F: balance ===");
   const pct = Math.round((conTitulo / N) * 100);
   console.log(`     (${pct}% de las carreras lograron al menos un titulo)`);
   // Margen amplio a proposito: el test protege contra que el balance se
-  // rompa del todo, no contra variaciones finas de tuneo.
+  // rompa del todo, no contra variaciones finas de tuneo. El valor medido
+  // en Monte Carlo de N=200 (dos corridas independientes) fue 32-34%.
   assert(pct >= 12 && pct <= 45, `el titulo es dificil pero alcanzable (${pct}%, esperado 12-45%)`);
   assert(sinTitulo > 0, "hay carreras que terminan sin ningun titulo");
   assert(conTitulo > 0, "hay carreras que terminan con al menos un titulo");

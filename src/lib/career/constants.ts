@@ -102,10 +102,26 @@ export const GROWTH_RATE_PRIME = 0.07;
  * Los equipos grandes casi nunca la tienen disponible (sus pilotos estan
  * bajo contrato), asi que llegar a uno es dificil aunque te sobre
  * reputacion. Indexado por puesto del coche (1 = mejor).
+ *
+ * Ajustado con datos: con el mejor auto y buenos atributos, el titulo se
+ * gana ~93% de las temporadas (medido con Monte Carlo). Como la carrera
+ * dura ~23 temporadas en promedio, quien llega arriba tiende a acumular
+ * muchos titulos seguidos — eso fue lo que empujo el balance de "dificil
+ * pero alcanzable" a "casi la mitad de las carreras salen campeonas"
+ * (49% con N=200). El ajuste real no es tocar el % de victoria en el auto
+ * top (seria antirealista), sino hacer mas dificil LLEGAR y quedarse ahi.
  */
-export const SEAT_AVAILABILITY_TOP = 0.18; // puestos 1-2
-export const SEAT_AVAILABILITY_MID = 0.44; // puestos 3-5
+export const SEAT_AVAILABILITY_TOP = 0.09; // puestos 1-2
+export const SEAT_AVAILABILITY_MID = 0.26; // puestos 3-5
 export const SEAT_AVAILABILITY_LOW = 0.88; // puestos 6-10
+
+/**
+ * Reputacion minima para que un equipo del puesto `rank` te tantee (1 =
+ * mejor auto). REQUIRED_REP_BASE es el piso para el peor auto; el termino
+ * `(10-rank) * REQUIRED_REP_PER_RANK` lo va subiendo hacia los mejores.
+ */
+export const REQUIRED_REP_BASE = 20;
+export const REQUIRED_REP_PER_RANK = 9.6;
 
 /**
  * Cuanto se olvida el paddock por temporada: la reputacion tira hacia la
