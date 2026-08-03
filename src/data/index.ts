@@ -44,6 +44,29 @@ export function getCareerChain(d: Driver): string[] {
   return chain;
 }
 
+/**
+ * Ids de escuderias con logo disponible en public/team-logos/<id>.png (para
+ * el juego Career Path). Se completa a mano a medida que se consiguen mas
+ * logos (ver scripts/rescale-team-logos.mjs) — por eso es una lista fija acá
+ * y no un glob en runtime: import.meta.glob no aplica a public/, y esto
+ * evita depender de un fetch/HEAD por escuderia en cada carga del juego.
+ */
+export const TEAM_IDS_WITH_LOGO: ReadonlySet<string> = new Set([
+  "alfa-romeo", "alphatauri", "alpine", "arrows", "aston-martin", "bar",
+  "benetton", "bmw-sauber", "brawn", "caterham", "ferrari", "force-india",
+  "forti", "haas", "honda", "hrt", "jaguar", "jordan", "kick-sauber", "lola",
+  "lotus", "lotus-racing", "manor", "marussia", "mclaren", "mercedes",
+  "midland", "minardi", "prost", "racing-bulls", "racing-point", "rb",
+  "red-bull", "renault", "sauber", "spyker", "stewart", "super-aguri",
+  "toro-rosso", "toyota", "virgin", "williams",
+]);
+
+/** ¿Tiene el piloto logo disponible para CADA escuderia de su cadena? */
+export function hasFullLogoChain(d: Driver): boolean {
+  const chain = getCareerChain(d);
+  return chain.length >= 2 && chain.every((id) => TEAM_IDS_WITH_LOGO.has(id));
+}
+
 /** ¿Compartio escuderia con otro piloto en algun anio solapado? */
 export function wereTeammates(a: Driver, b: Driver): boolean {
   for (const ta of a.teams) {
