@@ -43,6 +43,7 @@ import {
   growTowardPotential,
 } from "./grid";
 import { simulateSeason } from "./season";
+import { getEvent, pickEvents, rollOutcome, type EventEffect } from "./events";
 
 /** Rng propio de cada fase, para que una fase no "corra" el azar de otra. */
 function phaseRng(state: Pick<CareerState, "seed">, tag: string): Rng {
@@ -128,6 +129,9 @@ export function startCareer(params: StartCareerParams): CareerState {
     totals: { ...EMPTY_TOTALS },
     offers: [],
     retirementReason: null,
+    flags: {},
+    pendingEvents: [],
+    phaseAfterEvents: null,
   };
 
   state.offers = buildRookieOffers(state, rng);
@@ -259,7 +263,104 @@ export function advanceSeasons(state: CareerState): {
     current = { ...current, phase: "retired", retirementReason: "max-seasons" };
   }
 
+  // Eventos de la tanda (1 a 5). Se resuelven DESPUES de ver los resultados,
+  // asi que se guarda a que fase volver cuando se vacie la cola.
+  if (current.phase !== "retired" && simulated.length > 0) {
+    const eventRng = phaseRng(state, `events::${state.season}`);
+    const picked = pickEvents(current, eventRng);
+    if (picked.length > 0) {
+      current = {
+        ...current,
+        pendingEvents: picked,
+        phaseAfterEvents: current.phase,
+        phase: "events",
+      };
+    }
+  }
+
   return { state: current, seasons: simulated };
+}
+
+/**
+ * Resuelve el primer evento pendiente con la opcion elegida por el jugador.
+ * Sortea el desenlace (los pesos NUNCA se le muestran), aplica los efectos y
+ * avanza la cola. Cuando no quedan eventos, vuelve a la fase que estaba
+ * pendiente (seguir corriendo, elegir oferta o quedarse sin butaca).
+ *
+ * Devuelve tambien `outcomeId` para que la UI narre lo que paso.
+ */
+export function resolveEvent(
+  state: CareerState,
+  optionId: string,
+): { state: CareerState; eventId: string | null; outcomeId: string | null } {
+  const eventId = state.pendingEvents[0];
+  if (state.phase !== "events" || !eventId) {
+    return { state, eventId: null, outcomeId: null };
+  }
+  const event = getEvent(eventId);
+  const option = event?.options.find((o) => o.id === optionId);
+  if (!event || !option) return { state, eventId: null, outcomeId: null };
+
+  // El sorteo depende de la temporada Y del evento: dos eventos de la misma
+  // tanda no comparten resultado.
+  const rng = phaseRng(state, `outcome::${state.season}::${eventId}::${optionId}`);
+  const outcome = rollOutcome(option, rng);
+
+  const next = applyEffect(state, outcome.effect);
+  const remaining = state.pendingEvents.slice(1);
+
+  const flags: Record<string, number> = { ...next.flags, [`seen::${eventId}`]: state.season };
+  for (const f of outcome.effect.setFlags ?? []) flags[f] = state.season;
+  for (const f of outcome.effect.clearFlags ?? []) delete flags[f];
+
+  const done = remaining.length === 0;
+  return {
+    state: {
+      ...next,
+      flags,
+      pendingEvents: remaining,
+      phase: done ? (next.phaseAfterEvents ?? "ready") : "events",
+      phaseAfterEvents: done ? null : next.phaseAfterEvents,
+    },
+    eventId,
+    outcomeId: outcome.id,
+  };
+}
+
+/**
+ * Aplica los efectos de un desenlace. Los atributos SI pueden superar el
+ * techo de talento por esta via (es el premio de una buena decision); el
+ * crecimiento natural nunca los baja despues (ver growTowardPotential).
+ */
+function applyEffect(state: CareerState, effect: EventEffect): CareerState {
+  const p = state.player;
+  const player: PlayerDriver = {
+    ...p,
+    attributes: {
+      pace: clamp01to100(p.attributes.pace + (effect.pace ?? 0)),
+      consistency: clamp01to100(p.attributes.consistency + (effect.consistency ?? 0)),
+      racecraft: clamp01to100(p.attributes.racecraft + (effect.racecraft ?? 0)),
+    },
+    potential: clamp01to100(p.potential + (effect.potential ?? 0)),
+    morale: clamp01to100(p.morale + (effect.morale ?? 0)),
+    reputation: clamp01to100(p.reputation + (effect.reputation ?? 0)),
+  };
+
+  // El efecto sobre el coche toca al equipo actual del jugador.
+  const teams =
+    effect.car && state.teamId
+      ? state.teams.map((t) =>
+          t.teamId === state.teamId
+            ? { ...t, carPerformance: Math.max(20, Math.min(99, t.carPerformance + (effect.car ?? 0))) }
+            : t,
+        )
+      : state.teams;
+
+  const contractYears = effect.contractYears
+    ? Math.max(0, state.contractYears + effect.contractYears)
+    : state.contractYears;
+
+  return { ...state, player, teams, contractYears };
 }
 
 /** Simula exactamente una temporada y actualiza todo el estado derivado. */

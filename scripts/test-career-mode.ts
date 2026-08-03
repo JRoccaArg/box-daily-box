@@ -23,6 +23,7 @@ import {
   advanceSeasons,
   currentCarRanking,
   declineOffers,
+  resolveEvent,
   retire,
   seekSeat,
   startCareer,
@@ -30,6 +31,16 @@ import {
 import { ageEffect } from "../src/lib/career/season";
 import { flattenGrid, CAREER_TEAM_IDS } from "../src/lib/career/grid";
 import { GRID_SIZE, MAX_SEASONS, RACES_PER_SEASON, RACE_NOISE } from "../src/lib/career/constants";
+import {
+  CAREER_EVENTS,
+  MAX_EVENTS_PER_CHUNK,
+  getEvent,
+  meetsCondition,
+  pickEvents,
+} from "../src/lib/career/events";
+import { Rng } from "../src/lib/seed";
+import esContent from "../src/content/career/es";
+import enContent from "../src/content/career/en";
 import type { CareerState } from "../src/lib/career/types";
 
 let passed = 0;
@@ -77,6 +88,16 @@ function playFullCareer(seed: string, step: 1 | 2 | 3 = 3) {
         if (o.expectedCarRank < (s.offers[best]?.expectedCarRank ?? 99)) best = i;
       });
       s = acceptOffer(s, best);
+    } else if (s.phase === "events") {
+      // Politica fija: siempre la primera opcion (determinista, comparable).
+      const ev = getEvent(s.pendingEvents[0] ?? "");
+      const optionId = ev?.options[0]?.id ?? "";
+      const before = s.pendingEvents.length;
+      s = resolveEvent(s, optionId).state;
+      if (s.pendingEvents.length >= before && s.phase === "events") {
+        problems.push("la cola de eventos no avanza");
+        break;
+      }
     } else if (s.phase === "no-seat") {
       const before = s.season;
       s = advanceSeasons(s).state;
@@ -105,9 +126,18 @@ function checkIntegrity(s: CareerState, problems: string[]) {
   if (s.player.reputation < 0 || s.player.reputation > 100) problems.push(`reputacion ${s.player.reputation}`);
   if (s.player.morale < 0 || s.player.morale > 100) problems.push(`moral ${s.player.morale}`);
 
+  // Los atributos SI pueden superar el techo por premio de un evento (es
+  // deliberado), pero nunca salirse de 1..100.
   for (const a of [s.player.attributes.pace, s.player.attributes.consistency, s.player.attributes.racecraft]) {
     if (a < 1 || a > 100) problems.push(`atributo fuera de rango: ${a}`);
-    if (a > s.player.potential + 1) problems.push(`atributo ${a} supera el techo ${s.player.potential}`);
+  }
+  if (s.player.potential < 1 || s.player.potential > 100) problems.push(`techo ${s.player.potential}`);
+
+  // Coherencia de la cola de eventos.
+  if (s.phase === "events" && s.pendingEvents.length === 0) problems.push("fase 'events' con cola vacia");
+  if (s.phase !== "events" && s.pendingEvents.length > 0) problems.push("cola de eventos fuera de la fase 'events'");
+  for (const id of s.pendingEvents) {
+    if (!getEvent(id)) problems.push(`evento en cola inexistente: ${id}`);
   }
 
   for (const h of s.history) {
@@ -272,6 +302,206 @@ console.log("\n=== Parte F: balance ===");
   assert(sinTitulo > 0, "hay carreras que terminan sin ningun titulo");
   assert(conTitulo > 0, "hay carreras que terminan con al menos un titulo");
   assert(totalWins > 0, "se ganan carreras a lo largo de las partidas");
+}
+
+// ─── Parte G: catalogo de eventos ───────────────────────────────────
+
+console.log("\n=== Parte G: catalogo de eventos ===");
+{
+  const ids = CAREER_EVENTS.map((e) => e.id);
+  assert(ids.length === new Set(ids).size, `no hay ids de evento duplicados (${ids.length} eventos)`);
+  assert(CAREER_EVENTS.length >= 60, `hay al menos 60 eventos (${CAREER_EVENTS.length})`);
+
+  const cats = new Set(CAREER_EVENTS.map((e) => e.category));
+  assert(cats.size === 12, `estan las 12 categorias acordadas (${cats.size})`);
+
+  let structureOk = true;
+  const structureIssues: string[] = [];
+  for (const e of CAREER_EVENTS) {
+    if (e.options.length < 2) { structureOk = false; structureIssues.push(`${e.id}: menos de 2 opciones`); }
+    if (e.weight <= 0) { structureOk = false; structureIssues.push(`${e.id}: peso <= 0`); }
+    const optIds = e.options.map((o) => o.id);
+    if (optIds.length !== new Set(optIds).size) { structureOk = false; structureIssues.push(`${e.id}: opciones duplicadas`); }
+    // Los ids de desenlace tienen que ser unicos DENTRO del evento: la UI
+    // los busca en un unico diccionario plano por evento.
+    const outIds = e.options.flatMap((o) => o.outcomes.map((x) => x.id));
+    if (outIds.length !== new Set(outIds).size) { structureOk = false; structureIssues.push(`${e.id}: ids de desenlace repetidos`); }
+    for (const o of e.options) {
+      if (o.outcomes.length < 1) { structureOk = false; structureIssues.push(`${e.id}/${o.id}: sin desenlaces`); }
+      if (o.outcomes.reduce((s, x) => s + x.weight, 0) <= 0) {
+        structureOk = false;
+        structureIssues.push(`${e.id}/${o.id}: los pesos suman 0`);
+      }
+    }
+  }
+  assert(structureOk, `todos los eventos estan bien formados (${structureIssues.slice(0, 3).join("; ")})`);
+
+  // Ningun arco puede quedar colgado: si un evento EXIGE una marca, tiene
+  // que existir otro evento capaz de activarla, o seria contenido muerto.
+  const settable = new Set<string>();
+  for (const e of CAREER_EVENTS) {
+    for (const o of e.options) for (const oc of o.outcomes) {
+      for (const f of oc.effect.setFlags ?? []) settable.add(f);
+    }
+  }
+  const unreachable: string[] = [];
+  for (const e of CAREER_EVENTS) {
+    for (const f of e.condition?.requiresFlags ?? []) {
+      if (!settable.has(f)) unreachable.push(`${e.id} exige "${f}"`);
+    }
+  }
+  assert(unreachable.length === 0, `no hay eventos inalcanzables por marcas huerfanas (${unreachable.join("; ")})`);
+
+  const arcs = [...settable].filter((f) => f.startsWith("arc:"));
+  assert(arcs.length >= 4, `hay al menos 4 historias en varias partes (${arcs.length}: ${arcs.join(", ")})`);
+}
+
+// ─── Parte H: textos en los dos idiomas ─────────────────────────────
+
+console.log("\n=== Parte H: contenido narrativo (es + en) ===");
+{
+  for (const [lang, content] of [["es", esContent], ["en", enContent]] as const) {
+    const missing: string[] = [];
+    for (const e of CAREER_EVENTS) {
+      const t = content.events[e.id];
+      if (!t) { missing.push(`evento ${e.id}`); continue; }
+      if (!t.title?.trim()) missing.push(`${e.id}.title`);
+      if (!t.story?.trim()) missing.push(`${e.id}.story`);
+      for (const o of e.options) {
+        if (!t.options[o.id]?.trim()) missing.push(`${e.id}.options.${o.id}`);
+        for (const oc of o.outcomes) {
+          if (!t.outcomes[oc.id]?.trim()) missing.push(`${e.id}.outcomes.${oc.id}`);
+        }
+      }
+    }
+    assert(missing.length === 0, `[${lang}] no falta ningun texto (${missing.slice(0, 3).join(", ")})`);
+
+    const orphans: string[] = [];
+    const validIds = new Set(CAREER_EVENTS.map((e) => e.id));
+    for (const k of Object.keys(content.events)) if (!validIds.has(k)) orphans.push(k);
+    for (const e of CAREER_EVENTS) {
+      const t = content.events[e.id];
+      if (!t) continue;
+      const okOpts = new Set(e.options.map((o) => o.id));
+      for (const k of Object.keys(t.options)) if (!okOpts.has(k)) orphans.push(`${e.id}.options.${k}`);
+      const okOuts = new Set(e.options.flatMap((o) => o.outcomes.map((x) => x.id)));
+      for (const k of Object.keys(t.outcomes)) if (!okOuts.has(k)) orphans.push(`${e.id}.outcomes.${k}`);
+    }
+    assert(orphans.length === 0, `[${lang}] no sobra ningun texto huerfano (${orphans.slice(0, 3).join(", ")})`);
+  }
+
+  // Los dos idiomas tienen que cubrir exactamente el mismo set de eventos.
+  const esKeys = Object.keys(esContent.events).sort();
+  const enKeys = Object.keys(enContent.events).sort();
+  assert(JSON.stringify(esKeys) === JSON.stringify(enKeys), "es y en cubren exactamente los mismos eventos");
+}
+
+// ─── Parte I: seleccion y resolucion de eventos ─────────────────────
+
+console.log("\n=== Parte I: motor de eventos ===");
+{
+  let s = newCareer("eventos", 3);
+  s = acceptOffer(s, 0);
+
+  // Condiciones: un evento que exige butaca no puede salir sin butaca.
+  const seatOnly = CAREER_EVENTS.find((e) => e.condition?.requiresSeat === true);
+  if (seatOnly) {
+    assert(meetsCondition(s, seatOnly.condition), "con butaca, un evento que la exige es elegible");
+    const noSeat = { ...s, teamId: null };
+    assert(!meetsCondition(noSeat, seatOnly.condition), "sin butaca, ese mismo evento deja de ser elegible");
+  }
+
+  // Un evento de arco no aparece hasta que la marca existe Y pasaron
+  // suficientes temporadas.
+  const arcStep2 = CAREER_EVENTS.find(
+    (e) => (e.condition?.requiresFlags?.length ?? 0) > 0 && (e.condition?.minSeasonsSinceFlag ?? 0) > 0,
+  );
+  if (arcStep2) {
+    const cond = arcStep2.condition!;
+    const need = cond.minSeasonsSinceFlag as number;
+    const FLAG_SEASON = 8;
+
+    /**
+     * Construye un estado que cumple TODAS las condiciones del evento salvo
+     * el paso del tiempo, que es lo que queremos aislar. Generico a
+     * proposito: si maniana un evento de arco suma otra condicion, el test
+     * la contempla sola en vez de fallar por un motivo equivocado.
+     */
+    const satisfying = (season: number): CareerState => ({
+      ...s,
+      season,
+      teamId: cond.requiresSeat === false ? null : s.teamId,
+      flags: Object.fromEntries((cond.requiresFlags ?? []).map((f) => [f, FLAG_SEASON])),
+      player: {
+        ...s.player,
+        age: Math.min(cond.maxAge ?? 99, Math.max(cond.minAge ?? s.player.age, s.player.age)),
+        reputation: Math.min(cond.maxReputation ?? 100, Math.max(cond.minReputation ?? 60, 60)),
+        morale: Math.min(cond.maxMorale ?? 100, Math.max(cond.minMorale ?? 60, 60)),
+      },
+    });
+
+    assert(!meetsCondition(s, cond), `"${arcStep2.id}" no aparece sin su marca`);
+    assert(
+      !meetsCondition(satisfying(FLAG_SEASON), cond),
+      "tampoco aparece el mismo anio en que se activo la marca",
+    );
+    assert(
+      meetsCondition(satisfying(FLAG_SEASON + need), cond),
+      `aparece recien ${need} temporada(s) despues (${arcStep2.id})`,
+    );
+  }
+
+  // pickEvents: cantidad dentro del rango y sin repetidos en la misma tanda.
+  const rng = new Rng("pick");
+  for (let i = 0; i < 30; i++) {
+    const picked = pickEvents(s, rng);
+    if (picked.length < 1 || picked.length > MAX_EVENTS_PER_CHUNK) {
+      assert(false, `pickEvents devolvio ${picked.length} eventos`);
+      break;
+    }
+    if (picked.length !== new Set(picked).size) {
+      assert(false, "pickEvents repitio un evento en la misma tanda");
+      break;
+    }
+  }
+  assert(true, `pickEvents siempre devuelve entre 1 y ${MAX_EVENTS_PER_CHUNK} eventos, sin repetir en la tanda`);
+
+  // Resolver un evento aplica efectos, marca el evento como visto y avanza.
+  let withEvents = newCareer("resolver", 1);
+  withEvents = acceptOffer(withEvents, 0);
+  let guard = 0;
+  while (withEvents.phase !== "events" && withEvents.phase !== "retired" && guard++ < 40) {
+    if (withEvents.phase === "ready") withEvents = advanceSeasons(withEvents).state;
+    else if (withEvents.phase === "offers") withEvents = acceptOffer(withEvents, 0);
+    else break;
+  }
+  assert(withEvents.phase === "events", "tras simular aparecen eventos para resolver");
+
+  if (withEvents.phase === "events") {
+    const eventId = withEvents.pendingEvents[0] as string;
+    const ev = getEvent(eventId)!;
+    const before = withEvents.pendingEvents.length;
+    const res = resolveEvent(withEvents, ev.options[0]!.id);
+    assert(res.eventId === eventId, "resolveEvent informa que evento se resolvio");
+    assert(res.outcomeId !== null, "resolveEvent informa el desenlace sorteado");
+    assert(res.state.pendingEvents.length === before - 1, "la cola de eventos avanza de a uno");
+    assert(`seen::${eventId}` in res.state.flags, "el evento queda marcado como visto");
+
+    // Una opcion inexistente no debe romper ni consumir la cola.
+    const bogus = resolveEvent(withEvents, "opcion-que-no-existe");
+    assert(
+      bogus.state.pendingEvents.length === before && bogus.eventId === null,
+      "una opcion invalida no altera el estado",
+    );
+  }
+
+  // Determinismo con eventos: dos partidas iguales siguen siendo iguales.
+  const a = playFullCareer("determinismo-con-eventos");
+  const b = playFullCareer("determinismo-con-eventos");
+  assert(
+    JSON.stringify(a.state) === JSON.stringify(b.state),
+    "con eventos incluidos, la partida sigue siendo reproducible",
+  );
 }
 
 // ─── Resultado ───────────────────────────────────────────────────────

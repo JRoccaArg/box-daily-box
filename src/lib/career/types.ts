@@ -215,4 +215,19 @@ export type CareerState = {
   /** Ofertas pendientes cuando la fase es "rookie-offers" u "offers". */
   offers: SeatOffer[];
   retirementReason: RetirementReason | null;
+  /**
+   * Marcas narrativas activas: nombre de la marca -> temporada en la que se
+   * activo. Es lo que permite las historias en varias partes: un evento
+   * deja una marca ("ocultaste el fallo del coche") y otro evento, dos
+   * temporadas despues, la exige como condicion para aparecer.
+   */
+  flags: Record<string, number>;
+  /** Cola de eventos por resolver (ids). La UI los muestra de a uno. */
+  pendingEvents: string[];
+  /**
+   * A que fase volver cuando se vacie la cola de eventos. Se guarda porque
+   * los eventos se resuelven DESPUES de simular, pero la fase siguiente
+   * (seguir corriendo / elegir oferta / sin butaca) ya quedo decidida.
+   */
+  phaseAfterEvents: CareerPhase | null;
 };

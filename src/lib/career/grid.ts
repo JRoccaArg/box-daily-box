@@ -283,9 +283,13 @@ export function growTowardPotential(
 ): DriverAttributes {
   const rate = age < 25 ? youngRate : age < 31 ? primeRate : 0;
   const step = (v: number) => {
+    // Si ya llego (o lo empujaron por encima con un evento), no se toca: el
+    // crecimiento natural nunca EMPUJA HACIA ABAJO a alguien que supero su
+    // techo, para que un premio de un evento no se evapore al anio siguiente.
+    if (v >= potential) return clampAttr(v);
     const grown = v + (potential - v) * rate;
     // Pequenio ruido: dos temporadas iguales no rinden exactamente igual.
-    return clampAttr(Math.min(potential, grown) + (rng.float() * 2 - 1) * 0.8);
+    return clampAttr(Math.min(potential, grown + (rng.float() * 2 - 1) * 0.8));
   };
   return {
     pace: step(attr.pace),
