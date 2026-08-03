@@ -465,6 +465,14 @@ const de: Translations = {
   "career.setup.nationality_required": "Wähle eine Nationalität",
   "career.setup.start_button": "Fahrer erstellen",
   "career.setup.title": "Erstelle deinen Fahrer",
+
+  // ─── Modo Carrera: card destacada + SEO ─────────────────────────
+  "home.career_mode.eyebrow": "Karrieresimulator",
+  "home.career_mode.title": "Karrieremodus",
+  "home.career_mode.subtitle": "Erstelle deinen Fahrer und erlebe bis zu 24 Saisons voller Entscheidungen und Ergebnisse.",
+  "home.career_mode.badge": "JETZT AUSPROBIEREN",
+  "seo.career.title": "Karrieremodus — Simuliere die Karriere deines F1-Fahrers | Box Daily Box",
+  "seo.career.description": "Erstelle einen Formel-1-Fahrer und erlebe seine Karriere: bis zu 24 Saisons voller Entscheidungen, Ereignisse und Ergebnisse. Kostenlos, ohne Anmeldung.",
 };
 
 export default de;

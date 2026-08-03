@@ -562,6 +562,14 @@ const tr: Translations = {
   "career.setup.nationality_required": "Bir uyruk seçin",
   "career.setup.start_button": "Pilot oluştur",
   "career.setup.title": "Pilotunuzu oluşturun",
+
+  // ─── Modo Carrera: card destacada + SEO ─────────────────────────
+  "home.career_mode.eyebrow": "Kariyer simülatörü",
+  "home.career_mode.title": "Kariyer Modu",
+  "home.career_mode.subtitle": "Pilotunuzu yaratın ve 24 sezona kadar kararlar ve sonuçlarla dolu bir kariyer yaşayın.",
+  "home.career_mode.badge": "HEMEN DENE",
+  "seo.career.title": "Kariyer Modu — F1 pilotunuzun kariyerini simüle edin | Box Daily Box",
+  "seo.career.description": "Bir Formula 1 pilotu yaratın ve kariyerini yaşayın: 24 sezona kadar kararlar, olaylar ve sonuçlar. Ücretsiz, kayıt gerekmez.",
 };
 
 export default tr;

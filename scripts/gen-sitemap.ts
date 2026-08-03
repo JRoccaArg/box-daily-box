@@ -10,7 +10,7 @@
  */
 import { writeFileSync } from "node:fs";
 import { INDEXABLE_LOCALES, SITE_URL } from "@/lib/seo";
-import { homePath, gamePath, infoPath, contactPath } from "@/lib/routes";
+import { homePath, gamePath, infoPath, contactPath, careerModePath } from "@/lib/routes";
 
 // Lista de juegos por id. No se importa src/components/games/registry.ts
 // acá: ese archivo importa los componentes React de cada juego (y por
@@ -32,6 +32,10 @@ function buildEntries(): Entry[] {
     // que NO entran al sitemap — ver src/lib/seo.ts buildSeo, noindex para "legal").
     { path: infoPath, priority: "0.6" },
     { path: contactPath, priority: "0.4" },
+    // Modo Carrera (simulador standalone, Etapa 4): contenido real y
+    // completo en los 14 idiomas, se indexa igual que info (decision del
+    // usuario). No es un juego diario (no entra en GAME_IDS).
+    { path: careerModePath, priority: "0.7" },
   ];
 
   return routes.map(({ path, priority }) => ({
@@ -79,4 +83,4 @@ function render(): string {
 
 const xml = render();
 writeFileSync("public/sitemap.xml", xml, "utf-8");
-console.log(`✅ sitemap.xml generado: ${INDEXABLE_LOCALES.length} idiomas × ${1 + GAME_IDS.length} páginas`);
+console.log(`✅ sitemap.xml generado: ${INDEXABLE_LOCALES.length} idiomas × ${1 + GAME_IDS.length + 3} páginas`);

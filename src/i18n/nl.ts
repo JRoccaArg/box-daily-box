@@ -451,6 +451,14 @@ const nl: Translations = {
   "career.setup.nationality_required": "Kies een nationaliteit",
   "career.setup.start_button": "Coureur aanmaken",
   "career.setup.title": "Maak je coureur",
+
+  // ─── Modo Carrera: card destacada + SEO ─────────────────────────
+  "home.career_mode.eyebrow": "Carrièresimulator",
+  "home.career_mode.title": "Carrièremodus",
+  "home.career_mode.subtitle": "Maak je coureur en beleef tot 24 seizoenen vol beslissingen en resultaten.",
+  "home.career_mode.badge": "PROBEER NU",
+  "seo.career.title": "Carrièremodus — Simuleer de carrière van je F1-coureur | Box Daily Box",
+  "seo.career.description": "Maak een Formule 1-coureur en beleef zijn carrière: tot 24 seizoenen vol beslissingen, gebeurtenissen en resultaten. Gratis, zonder registratie.",
 };
 
 export default nl;

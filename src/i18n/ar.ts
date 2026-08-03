@@ -450,6 +450,14 @@ const ar: Translations = {
   "career.setup.nationality_required": "اختر جنسية",
   "career.setup.start_button": "إنشاء سائق",
   "career.setup.title": "أنشئ سائقك",
+
+  // ─── Modo Carrera: card destacada + SEO ─────────────────────────
+  "home.career_mode.eyebrow": "محاكي المسيرة",
+  "home.career_mode.title": "وضع المسيرة",
+  "home.career_mode.subtitle": "أنشئ سائقك وعِش حتى 24 موسمًا من القرارات والنتائج.",
+  "home.career_mode.badge": "جرّب الآن",
+  "seo.career.title": "وضع المسيرة — حاكِ مسيرة سائق الفورمولا 1 الخاص بك | Box Daily Box",
+  "seo.career.description": "أنشئ سائق فورمولا 1 وعِش مسيرته: حتى 24 موسمًا من القرارات والأحداث والنتائج. مجانًا، دون تسجيل.",
 };
 
 export default ar;

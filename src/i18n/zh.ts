@@ -506,6 +506,14 @@ const zh: Translations = {
   "career.setup.nationality_required": "请选择国籍",
   "career.setup.start_button": "创建车手",
   "career.setup.title": "创建你的车手",
+
+  // ─── Modo Carrera: card destacada + SEO ─────────────────────────
+  "home.career_mode.eyebrow": "职业生涯模拟器",
+  "home.career_mode.title": "职业生涯模式",
+  "home.career_mode.subtitle": "创建你的车手，体验多达24个赛季的决策与结果。",
+  "home.career_mode.badge": "立即体验",
+  "seo.career.title": "职业生涯模式 — 模拟你的F1车手职业生涯 | Box Daily Box",
+  "seo.career.description": "创建一名F1车手，体验他的职业生涯：多达24个赛季的决策、事件和结果。免费，无需注册。",
 };
 
 export default zh;

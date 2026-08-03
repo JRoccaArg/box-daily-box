@@ -546,6 +546,14 @@ const hi: Translations = {
   "career.setup.nationality_required": "एक राष्ट्रीयता चुनें",
   "career.setup.start_button": "ड्राइवर बनाएं",
   "career.setup.title": "अपना ड्राइवर बनाएं",
+
+  // ─── Modo Carrera: card destacada + SEO ─────────────────────────
+  "home.career_mode.eyebrow": "करियर सिम्युलेटर",
+  "home.career_mode.title": "करियर मोड",
+  "home.career_mode.subtitle": "अपना ड्राइवर बनाएं और 24 सीज़न तक के फैसलों और नतीजों का अनुभव करें।",
+  "home.career_mode.badge": "अभी आज़माएं",
+  "seo.career.title": "करियर मोड — अपने F1 ड्राइवर के करियर का अनुकरण करें | Box Daily Box",
+  "seo.career.description": "एक फॉर्मूला 1 ड्राइवर बनाएं और उसका करियर जिएं: 24 सीज़न तक के फैसले, घटनाएं और नतीजे। मुफ़्त, बिना पंजीकरण के।",
 };
 
 export default hi;

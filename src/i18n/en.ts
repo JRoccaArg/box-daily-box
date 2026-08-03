@@ -603,6 +603,14 @@ const en: Translations = {
   "career.setup.nationality_required": "Choose a nationality",
   "career.setup.start_button": "Create driver",
   "career.setup.title": "Create your driver",
+
+  // ─── Modo Carrera: card destacada + SEO ─────────────────────────
+  "home.career_mode.eyebrow": "Race simulator",
+  "home.career_mode.title": "Career Mode",
+  "home.career_mode.subtitle": "Create your driver and live up to 24 seasons of decisions and results.",
+  "home.career_mode.badge": "TRY IT NOW",
+  "seo.career.title": "Career Mode — Simulate your F1 driver's career | Box Daily Box",
+  "seo.career.description": "Create a Formula 1 driver and live their career: up to 24 seasons of decisions, events and results. Free, no signup.",
 };
 
 export default en;

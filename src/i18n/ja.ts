@@ -515,6 +515,14 @@ const ja: Translations = {
   "career.setup.nationality_required": "国籍を選択してください",
   "career.setup.start_button": "ドライバーを作成",
   "career.setup.title": "ドライバーを作成しましょう",
+
+  // ─── Modo Carrera: card destacada + SEO ─────────────────────────
+  "home.career_mode.eyebrow": "キャリアシミュレーター",
+  "home.career_mode.title": "キャリアモード",
+  "home.career_mode.subtitle": "ドライバーを作成し、最大24シーズンにわたる決断と結果を体験しよう。",
+  "home.career_mode.badge": "今すぐプレイ",
+  "seo.career.title": "キャリアモード — あなたのF1ドライバーのキャリアをシミュレート | Box Daily Box",
+  "seo.career.description": "F1ドライバーを作成し、そのキャリアを体験しよう：最大24シーズンにわたる決断、イベント、結果。無料、登録不要。",
 };
 
 export default ja;

@@ -618,6 +618,14 @@ const es: Translations = {
   "career.setup.nationality_required": "Elegí una nacionalidad",
   "career.setup.start_button": "Crear piloto",
   "career.setup.title": "Creá tu piloto",
+
+  // ─── Modo Carrera: card destacada + SEO ─────────────────────────
+  "home.career_mode.eyebrow": "Simulador de carrera",
+  "home.career_mode.title": "Modo Carrera",
+  "home.career_mode.subtitle": "Creá tu piloto y viví hasta 24 temporadas de decisiones y resultados.",
+  "home.career_mode.badge": "PRUEBA AHORA",
+  "seo.career.title": "Modo Carrera — Simulá la carrera de tu piloto de F1 | Box Daily Box",
+  "seo.career.description": "Creá un piloto de Fórmula 1 y viví su carrera: hasta 24 temporadas de decisiones, eventos y resultados. Gratis, sin registro.",
 };
 
 export default es;

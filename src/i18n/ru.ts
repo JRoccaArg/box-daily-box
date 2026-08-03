@@ -464,6 +464,14 @@ const ru: Translations = {
   "career.setup.nationality_required": "Выберите национальность",
   "career.setup.start_button": "Создать пилота",
   "career.setup.title": "Создайте своего пилота",
+
+  // ─── Modo Carrera: card destacada + SEO ─────────────────────────
+  "home.career_mode.eyebrow": "Симулятор карьеры",
+  "home.career_mode.title": "Режим карьеры",
+  "home.career_mode.subtitle": "Создайте пилота и проживите до 24 сезонов решений и результатов.",
+  "home.career_mode.badge": "ПОПРОБОВАТЬ",
+  "seo.career.title": "Режим карьеры — Симулятор карьеры пилота Ф1 | Box Daily Box",
+  "seo.career.description": "Создайте пилота Формулы 1 и проживите его карьеру: до 24 сезонов решений, событий и результатов. Бесплатно, без регистрации.",
 };
 
 export default ru;

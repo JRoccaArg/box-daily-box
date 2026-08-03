@@ -561,6 +561,14 @@ const sl: Translations = {
   "career.setup.nationality_required": "Izberite državljanstvo",
   "career.setup.start_button": "Ustvari dirkača",
   "career.setup.title": "Ustvarite svojega dirkača",
+
+  // ─── Modo Carrera: card destacada + SEO ─────────────────────────
+  "home.career_mode.eyebrow": "Simulator kariere",
+  "home.career_mode.title": "Način kariere",
+  "home.career_mode.subtitle": "Ustvarite dirkača in doživite do 24 sezon odločitev in rezultatov.",
+  "home.career_mode.badge": "PRESKUSI ZDAJ",
+  "seo.career.title": "Način kariere — Simulirajte kariero svojega dirkača F1 | Box Daily Box",
+  "seo.career.description": "Ustvarite dirkača Formule 1 in doživite njegovo kariero: do 24 sezon odločitev, dogodkov in rezultatov. Brezplačno, brez prijave.",
 };
 
 export default sl;

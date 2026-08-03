@@ -26,6 +26,7 @@ import { useI18n } from "@/context";
 import { ChevronLeft } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { Seo } from "@/components/layout/Seo";
 import { homePath } from "@/lib/routes";
 import {
   acceptOffer,
@@ -242,6 +243,8 @@ export function CareerModePage() {
 
   return (
     <div className="space-y-5">
+      <Seo locale={locale} route={{ kind: "career" }} />
+
       <div className="flex items-center justify-between">
         <Link
           to={homePath(locale)}
