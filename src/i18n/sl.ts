@@ -301,11 +301,23 @@ const sl: Translations = {
   "top10standings.points_label": "{{points}} t.",
   "top10standings.time_up": "Čas je potekel. Manjkajoči položaji so prikazani zgoraj.",
 
+  "game.career-path.name": "Career Path",
+  "game.career-path.tagline": "Poglej zaporedje ekip nekega dirkača in ugani, kdo je.",
+  "careerpath.eyebrow": "Karierna pot",
+  "careerpath.hint": "To so ekipe, za katere je dirkač dirkal po vrsti. Ugani, kdo je.",
+  "careerpath.attempt": "Poskus {{current}} od {{max}}",
+  "careerpath.placeholder": "Vnesi dirkača…",
+  "careerpath.found": "Našel si:",
+  "careerpath.answer_was": "Dirkač je bil:",
+
   "seo.home.title": "Box Daily Box — Dnevne mini igre Formule 1 | 6 brezplačnih ugank",
   "seo.home.description":
     "Šest dnevnih mini iger Formule 1: ugibajte voznike, dopolnite najboljših 10, poiščite vsiljivca in več. Brezplačna svetovna lestvica, brez prijave.",
   "seo.contact.title": "Kontakt | Box Daily Box",
   "seo.contact.description": "Imate tehnično težavo ali idejo za Box Daily Box? Kontaktirajte nas.",
+  "seo.game.career-path.title": "Career Path — Ugani dirkača po njegovi karieri | Box Daily Box",
+  "seo.game.career-path.description":
+    "Poglej verigo ekip dirkača Formule 1 in ugani, kdo je. Brezplačna dnevna uganka.",
   "contact.title": "Kontakt",
   "contact.intro": "Ste našli težavo, imate idejo za novo igro ali kakšno drugo vprašanje? Pišite nam:",
   "seo.game.pittexto.title": "PitTexto — Uganite skrivnega voznika F1 | Box Daily Box",

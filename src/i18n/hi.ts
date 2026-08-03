@@ -285,11 +285,23 @@ const hi: Translations = {
   "top10standings.points_label": "{{points}} अंक",
   "top10standings.time_up": "समय समाप्त। छूटी हुई स्थितियाँ ऊपर दिखाई गई हैं।",
 
+  "game.career-path.name": "Career Path",
+  "game.career-path.tagline": "एक ड्राइवर की टीमों का क्रम देखें और अनुमान लगाएं कि वह कौन है।",
+  "careerpath.eyebrow": "करियर पथ",
+  "careerpath.hint": "ये वे टीमें हैं जिनके लिए ड्राइवर ने क्रम में रेस की। अनुमान लगाएं कि यह कौन है।",
+  "careerpath.attempt": "प्रयास {{current}} / {{max}}",
+  "careerpath.placeholder": "एक ड्राइवर टाइप करें…",
+  "careerpath.found": "आपने पाया:",
+  "careerpath.answer_was": "ड्राइवर था:",
+
   "seo.home.title": "Box Daily Box — दैनिक फॉर्मूला 1 मिनी-गेम्स | 6 मुफ़्त पहेलियाँ",
   "seo.home.description":
     "छह दैनिक फॉर्मूला 1 मिनी-गेम्स: ड्राइवरों का अनुमान लगाएं, टॉप 10 पूरा करें, घुसपैठिए को खोजें और भी बहुत कुछ। मुफ़्त वैश्विक रैंकिंग, बिना पंजीकरण।",
   "seo.contact.title": "संपर्क करें | Box Daily Box",
   "seo.contact.description": "Box Daily Box में कोई तकनीकी समस्या या नया विचार है? हमसे संपर्क करें।",
+  "seo.game.career-path.title": "Career Path — टीम इतिहास से ड्राइवर का अनुमान लगाएं | Box Daily Box",
+  "seo.game.career-path.description":
+    "एक F1 ड्राइवर की टीमों की श्रृंखला देखें और अनुमान लगाएं कि वह कौन है। मुफ़्त दैनिक पहेली।",
   "contact.title": "संपर्क करें",
   "contact.intro":
     "कोई समस्या मिली, नए गेम के लिए कोई विचार है, या कोई और सवाल है? हमें ईमेल करें:",
