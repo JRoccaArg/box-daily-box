@@ -254,11 +254,23 @@ const ja: Translations = {
   "top10standings.points_label": "{{points}} pt",
   "top10standings.time_up": "タイムアップ。未発見の順位が上に表示されています。",
 
+  "game.career-path.name": "Career Path",
+  "game.career-path.tagline": "ドライバーが所属したチームの順番を見て、誰か当てよう。",
+  "careerpath.eyebrow": "キャリアパス",
+  "careerpath.hint": "これはドライバーが順番に所属したチームです。誰か当ててください。",
+  "careerpath.attempt": "{{current}}/{{max}}回目",
+  "careerpath.placeholder": "ドライバー名を入力…",
+  "careerpath.found": "見つけました：",
+  "careerpath.answer_was": "ドライバーは：",
+
   "seo.home.title": "Box Daily Box — 毎日のF1ミニゲーム | 6つの無料パズル",
   "seo.home.description":
     "6つの毎日のF1ミニゲーム：ドライバーを当てる、トップ10を完成させる、部外者を見つけるなど。無料のグローバルランキング、登録不要。",
   "seo.contact.title": "お問い合わせ | Box Daily Box",
   "seo.contact.description": "Box Daily Boxの技術的な問題や新しいアイデアがありますか？お問い合わせください。",
+  "seo.game.career-path.title": "Career Path — チーム履歴からドライバーを当てよう | Box Daily Box",
+  "seo.game.career-path.description":
+    "F1ドライバーが所属したチームの連なりを見て、誰か当てよう。無料の毎日パズル。",
   "contact.title": "お問い合わせ",
   "contact.intro":
     "不具合を見つけた、新しいゲームのアイデアがある、その他ご質問がありましたら、こちらまでメールしてください：",

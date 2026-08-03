@@ -45,6 +45,7 @@ const GAME_TIME_OPTIONS: Record<string, number[]> = {
   "parrilla-bingo": [150],
   "gp-resultado": [90, 120, 150, 180],
   "top10-standings": [90, 120, 150, 180],
+  "career-path": [60, 90],
 };
 
 // Tiempo máximo por juego (para fallback de sesiones antiguas sin timeLimit guardado).
@@ -55,9 +56,10 @@ const TIME_LIMITS: Record<string, number> = {
   "parrilla-bingo": 150,
   "gp-resultado": 180,
   "top10-standings": 180,
+  "career-path": 90,
 };
 
-const VALID_GAMES = ["pittexto", "polewordle", "el-intruso", "parrilla-bingo", "gp-resultado", "top10-standings"];
+const VALID_GAMES = ["pittexto", "polewordle", "el-intruso", "parrilla-bingo", "gp-resultado", "top10-standings", "career-path"];
 const VALID_DIFFS = ["facil", "medio", "dificil", "leyenda"];
 
 // ─── Token firmado (HMAC-SHA256) ────────────────────────────────────

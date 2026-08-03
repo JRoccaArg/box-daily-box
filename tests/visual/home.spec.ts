@@ -3,7 +3,7 @@ import { test, expect } from "./fixtures";
 test.describe("home", () => {
   test("renders the daily challenges list", async ({ page }) => {
     await page.goto("/es/");
-    await expect(page.getByRole("heading", { name: "Seis desafios. Un dia." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Siete desafios. Un dia." })).toBeVisible();
     await expect(page).toHaveScreenshot("home.png", { fullPage: true });
   });
 

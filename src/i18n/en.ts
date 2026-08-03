@@ -347,6 +347,15 @@ const en: Translations = {
   "top10standings.points_label": "{{points}} pts",
   "top10standings.time_up": "Time is up. Missing positions are shown above.",
 
+  "game.career-path.name": "Career Path",
+  "game.career-path.tagline": "Look at a driver's team history and guess who it is.",
+  "careerpath.eyebrow": "Career Path",
+  "careerpath.hint": "These are the teams the driver raced for, in order. Guess who it is.",
+  "careerpath.attempt": "Attempt {{current}} of {{max}}",
+  "careerpath.placeholder": "Type a driver…",
+  "careerpath.found": "You found them:",
+  "careerpath.answer_was": "The driver was:",
+
   "lang.label": "Language",
 
   // ─── SEO (title/description per page) ─────────────────────────────────
@@ -380,6 +389,9 @@ const en: Translations = {
   "seo.game.top10-standings.title": "Top 10 Standings — F1 Championship Puzzle | Box Daily Box",
   "seo.game.top10-standings.description":
     "Guess the top 10 accumulated points in the F1 drivers' championship over a 1-4 year span.",
+  "seo.game.career-path.title": "Career Path — Guess the F1 driver by their team history | Box Daily Box",
+  "seo.game.career-path.description":
+    "Look at the chain of F1 teams a driver raced for and guess who it is. Free daily puzzle.",
 
   // ─── GamePage (not found) ──────────────────────────────────────────────
   "gamepage.not_found_title": "Game not found",

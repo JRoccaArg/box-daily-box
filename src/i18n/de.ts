@@ -204,11 +204,23 @@ const de: Translations = {
   "top10standings.points_label": "{{points}} Pkt.",
   "top10standings.time_up": "Zeit abgelaufen. Fehlende Positionen werden oben angezeigt.",
 
+  "game.career-path.name": "Career Path",
+  "game.career-path.tagline": "Sieh dir die Team-Reihenfolge eines Fahrers an und errate, wer es ist.",
+  "careerpath.eyebrow": "Karriereweg",
+  "careerpath.hint": "Das sind die Teams, für die der Fahrer der Reihe nach gefahren ist. Errate, wer es ist.",
+  "careerpath.attempt": "Versuch {{current}} von {{max}}",
+  "careerpath.placeholder": "Fahrer eingeben…",
+  "careerpath.found": "Gefunden:",
+  "careerpath.answer_was": "Der Fahrer war:",
+
   "seo.home.title": "Box Daily Box — Tägliche Formel-1-Minispiele | 6 kostenlose Rätsel",
   "seo.home.description":
     "Sechs tägliche Formel-1-Minispiele: Fahrer erraten, die Top 10 vervollständigen, den Eindringling finden und mehr. Kostenlose globale Rangliste, keine Anmeldung nötig.",
   "seo.contact.title": "Kontakt | Box Daily Box",
   "seo.contact.description": "Technisches Problem oder Idee für Box Daily Box? Kontaktiere uns.",
+  "seo.game.career-path.title": "Career Path — Errate den Fahrer anhand seiner Karriere | Box Daily Box",
+  "seo.game.career-path.description":
+    "Sieh dir die Team-Kette eines F1-Fahrers an und errate, wer es ist. Kostenloses tägliches Rätsel.",
   "contact.title": "Kontakt",
   "contact.intro":
     "Hast du ein Problem gefunden, eine Idee für ein neues Spiel oder eine andere Frage? Schreib uns:",

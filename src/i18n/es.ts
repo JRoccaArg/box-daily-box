@@ -362,6 +362,15 @@ const es: Translations = {
   "top10standings.points_label": "{{points}} pts",
   "top10standings.time_up": "Tiempo agotado. Las posiciones faltantes se muestran arriba.",
 
+  "game.career-path.name": "Career Path",
+  "game.career-path.tagline": "Mira la cadena de escuderias de un piloto y adivina quien es.",
+  "careerpath.eyebrow": "Trayectoria",
+  "careerpath.hint": "Estas son las escuderias por las que paso el piloto, en orden. Adivina quien es.",
+  "careerpath.attempt": "Intento {{current}} de {{max}}",
+  "careerpath.placeholder": "Escribi un piloto…",
+  "careerpath.found": "Lo encontraste:",
+  "careerpath.answer_was": "El piloto era:",
+
   "lang.label": "Idioma",
 
   // ─── SEO (title/description por página) ──────────────────────────────
@@ -395,6 +404,9 @@ const es: Translations = {
   "seo.game.top10-standings.title": "Top 10 Standings — Campeonato acumulado de F1 | Box Daily Box",
   "seo.game.top10-standings.description":
     "Adiviná el top 10 acumulado de puntos del campeonato de pilotos de F1 en un período de 1 a 4 años.",
+  "seo.game.career-path.title": "Career Path — Adiviná al piloto por su trayectoria | Box Daily Box",
+  "seo.game.career-path.description":
+    "Mirá la cadena de escuderías por las que pasó un piloto de F1 y adiviná quién es. Puzzle diario gratis.",
 
   // ─── GamePage (no encontrado) ─────────────────────────────────────────
   "gamepage.not_found_title": "Juego no encontrado",

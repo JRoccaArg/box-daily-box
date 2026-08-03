@@ -301,11 +301,23 @@ const tr: Translations = {
   "top10standings.points_label": "{{points}} puan",
   "top10standings.time_up": "Süre doldu. Eksik pozisyonlar yukarıda gösteriliyor.",
 
+  "game.career-path.name": "Career Path",
+  "game.career-path.tagline": "Bir pilotun takım sırasına bak ve kim olduğunu tahmin et.",
+  "careerpath.eyebrow": "Kariyer Yolu",
+  "careerpath.hint": "Bunlar pilotun sırayla yarıştığı takımlar. Kim olduğunu tahmin et.",
+  "careerpath.attempt": "Deneme {{current}} / {{max}}",
+  "careerpath.placeholder": "Bir pilot yaz…",
+  "careerpath.found": "Buldun:",
+  "careerpath.answer_was": "Pilot şuydu:",
+
   "seo.home.title": "Box Daily Box — Günlük Formula 1 Mini Oyunları | 6 Ücretsiz Bulmaca",
   "seo.home.description":
     "Altı günlük Formula 1 mini oyunu: pilotları tahmin edin, top 10'u tamamlayın, arayı bulan kişiyi bulun ve daha fazlası. Ücretsiz küresel sıralama, kayıt gerekmez.",
   "seo.contact.title": "İletişim | Box Daily Box",
   "seo.contact.description": "Box Daily Box ile ilgili teknik bir sorun ya da fikrin mi var? Bizimle iletişime geçin.",
+  "seo.game.career-path.title": "Career Path — Kariyerinden pilotu tahmin et | Box Daily Box",
+  "seo.game.career-path.description":
+    "Bir F1 pilotunun takım zincirine bak ve kim olduğunu tahmin et. Ücretsiz günlük bulmaca.",
   "contact.title": "İletişim",
   "contact.intro":
     "Bir sorun mu buldun, yeni bir oyun fikrin mi var, ya da başka bir sorun mu var? Bize yazın:",

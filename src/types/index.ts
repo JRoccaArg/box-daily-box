@@ -35,8 +35,21 @@ export type Driver = {
   /** Apellido normalizado para PoleWordle (sin espacios ni signos, MAYUS). */
   wordleKey: string;
   nationalityCode: string;
-  /** Escuderias en orden cronologico. */
+  /**
+   * Escuderias, colapsadas a un solo rango min-max de anios POR teamId unico
+   * (si el piloto volvio a un equipo en un periodo no consecutivo, ese
+   * regreso NO se distingue aca - ver `teamsChronology` para eso).
+   */
   teams: TeamStint[];
+  /**
+   * Cronologia real por temporada: una entrada por anio en que corrio o
+   * clasifico, con el PRIMER equipo de esa temporada (no colapsada). A
+   * diferencia de `teams`, preserva retornos a un equipo (ej. Fisichella:
+   * jordan 1997-2001, benetton 1998... -> jordan otra vez en 2002-2003).
+   * Opcional por compatibilidad hacia atras con datasets generados antes de
+   * este campo.
+   */
+  teamsChronology?: { season: number; teamId: string }[];
   /** Periodo activo en F1 (carrera completa). */
   active: YearRange;
   /** Cantidad de campeonatos de pilotos ganados. */
