@@ -117,6 +117,10 @@ export type SeasonStats = {
   teammatePoints: number;
   /** Nombre del companiero (string crudo, nombre propio). */
   teammateName: string;
+  /** true si el equipo del jugador (sus 2 butacas sumadas) gano el campeonato de constructores. */
+  constructorsChampion: boolean;
+  /** Puesto del equipo del jugador en el campeonato de constructores (1-10). */
+  constructorPosition: number;
   /**
    * Puesto del COCHE en la parrilla por rendimiento (1 = mejor coche del
    * anio, 10 = peor). Permite comparar resultado vs material: terminar 8vo

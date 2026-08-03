@@ -258,6 +258,14 @@ export function simulateSeason(input: SeasonSimInput): SeasonSimOutput {
   // o por debajo del material que tenias.
   const expectedPosition = carRank * 2 - 0.5;
 
+  // Campeonato de constructores: suma de los 2 pilotos de cada equipo.
+  // Independiente del de pilotos: el equipo puede salir campeon aunque el
+  // jugador individualmente no lo sea.
+  const teamPoints = new Map<string, number>();
+  for (const row of standings) teamPoints.set(row.teamId, (teamPoints.get(row.teamId) ?? 0) + row.points);
+  const teamStandings = [...teamPoints.entries()].sort((a, b) => b[1] - a[1]);
+  const constructorPosition = teamStandings.findIndex(([teamId]) => teamId === playerEntry.teamId) + 1;
+
   const playerStats: SeasonStats = {
     points: playerPoints,
     pointsPerRace: Math.round((playerPoints / RACES_PER_SEASON) * 10) / 10,
@@ -273,6 +281,8 @@ export function simulateSeason(input: SeasonSimInput): SeasonSimOutput {
     teammateName: teammate?.name ?? "",
     carRank,
     performanceDelta: Math.round(expectedPosition - championshipPosition),
+    constructorsChampion: constructorPosition === 1,
+    constructorPosition,
   };
 
   return { playerStats, standings };

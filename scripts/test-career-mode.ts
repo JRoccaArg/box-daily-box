@@ -147,6 +147,10 @@ function checkIntegrity(s: CareerState, problems: string[]) {
     if (st.championshipPosition < 1 || st.championshipPosition > GRID_SIZE)
       problems.push(`posicion de campeonato ${st.championshipPosition}`);
     if (st.carRank < 1 || st.carRank > CAREER_TEAM_IDS.length) problems.push(`carRank ${st.carRank}`);
+    if (st.constructorPosition < 1 || st.constructorPosition > CAREER_TEAM_IDS.length)
+      problems.push(`constructorPosition ${st.constructorPosition}`);
+    if (st.constructorsChampion !== (st.constructorPosition === 1))
+      problems.push(`constructorsChampion inconsistente con constructorPosition`);
     if (st.wins > st.podiums) problems.push(`mas victorias (${st.wins}) que podios (${st.podiums})`);
     if (st.wins + st.podiums > RACES_PER_SEASON * 2) problems.push(`podios imposibles`);
     if (st.mechanicalDnfs + st.accidents > RACES_PER_SEASON) problems.push(`mas abandonos que carreras`);
