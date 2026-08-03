@@ -190,11 +190,23 @@ const nl: Translations = {
   "top10standings.points_label": "{{points}} pt",
   "top10standings.time_up": "Tijd is op. Ontbrekende posities worden hierboven getoond.",
 
+  "game.career-path.name": "Career Path",
+  "game.career-path.tagline": "Bekijk de volgorde van teams van een coureur en raad wie het is.",
+  "careerpath.eyebrow": "Carrièrepad",
+  "careerpath.hint": "Dit zijn de teams waarvoor de coureur na elkaar reed. Raad wie het is.",
+  "careerpath.attempt": "Poging {{current}} van {{max}}",
+  "careerpath.placeholder": "Typ een coureur…",
+  "careerpath.found": "Gevonden:",
+  "careerpath.answer_was": "De coureur was:",
+
   "seo.home.title": "Box Daily Box — Dagelijkse Formule 1-minigames | 6 gratis puzzels",
   "seo.home.description":
     "Zes dagelijkse Formule 1-minigames: raad coureurs, vul de top 10 in, vind de indringer en meer. Gratis wereldwijde ranglijst, geen registratie nodig.",
   "seo.contact.title": "Contact | Box Daily Box",
   "seo.contact.description": "Technisch probleem of idee voor Box Daily Box? Neem contact op.",
+  "seo.game.career-path.title": "Career Path — Raad de coureur aan zijn carrière | Box Daily Box",
+  "seo.game.career-path.description":
+    "Bekijk de keten van teams van een F1-coureur en raad wie het is. Gratis dagelijkse puzzel.",
   "contact.title": "Contact",
   "contact.intro":
     "Heb je een probleem gevonden, een idee voor een nieuw spel, of een andere vraag? Mail ons:",

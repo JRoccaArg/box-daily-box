@@ -286,11 +286,23 @@ const it: Translations = {
   "top10standings.points_label": "{{points}} pt",
   "top10standings.time_up": "Tempo scaduto. Le posizioni mancanti sono mostrate sopra.",
 
+  "game.career-path.name": "Career Path",
+  "game.career-path.tagline": "Guarda la sequenza di scuderie di un pilota e indovina chi è.",
+  "careerpath.eyebrow": "Percorso di carriera",
+  "careerpath.hint": "Queste sono le scuderie per cui ha corso il pilota, in ordine. Indovina chi è.",
+  "careerpath.attempt": "Tentativo {{current}} di {{max}}",
+  "careerpath.placeholder": "Scrivi un pilota…",
+  "careerpath.found": "Lo hai trovato:",
+  "careerpath.answer_was": "Il pilota era:",
+
   "seo.home.title": "Box Daily Box — Minigiochi giornalieri di Formula 1 | 6 puzzle gratis",
   "seo.home.description":
     "Sei minigiochi giornalieri di Formula 1: indovina i piloti, completa la top 10, trova l'intruso e altro ancora. Classifica globale gratuita, senza registrazione.",
   "seo.contact.title": "Contatti | Box Daily Box",
   "seo.contact.description": "Hai un problema tecnico o un'idea per Box Daily Box? Scrivici.",
+  "seo.game.career-path.title": "Career Path — Indovina il pilota dalla sua carriera | Box Daily Box",
+  "seo.game.career-path.description":
+    "Guarda la catena di scuderie con cui ha corso un pilota di F1 e indovina chi è. Puzzle giornaliero gratis.",
   "contact.title": "Contatti",
   "contact.intro":
     "Hai trovato un problema, hai un'idea per un nuovo gioco o qualsiasi altra domanda? Scrivici:",

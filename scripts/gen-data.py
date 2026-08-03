@@ -27,6 +27,9 @@ raced = set()                 # driverIds que largaron carrera/sprint
 qualified = set()             # driverIds que clasificaron
 driver_years = {}             # driverId -> set(year)
 driver_team_years = {}        # driverId -> {cid: [minY,maxY]}
+driver_team_chronology = {}   # driverId -> [(year, cid), ...] un punto por CADA cambio de equipo real
+                               # (incluye cambios a mitad de temporada, ej. Fisichella
+                               # Force India -> Ferrari en 2009: dos entradas, mismo anio)
 cons_years = {}               # cid -> [minY,maxY]
 champion_years = {}           # driverId -> [years]
 wins = {}; podiums = {}; poles = {}  # driverId -> int
@@ -43,6 +46,14 @@ def register(did, cid, y):
         cy[0] = min(cy[0], y); cy[1] = max(cy[1], y)
 
 for y in years:
+    # NO ordenado (glob() tal cual, igual que siempre): esto alimenta
+    # driver_team_years/wins/podiums/poles, que YA usan PitTexto y Bingo.
+    # El orden de recorrido de carreras dentro de una temporada nunca importo
+    # para esos calculos (son min/max o contadores), asi que cambiarlo ahora
+    # solo introduciria diffs de orden sin motivo. La cronologia NUEVA
+    # (con orden real de ronda, para preservar retornos a un equipo) se
+    # calcula aparte, en un segundo recorrido mas abajo — así el dataset
+    # existente queda bit a bit igual salvo por el campo agregado.
     for race_dir in glob.glob(f"{ROOT}/seasons/{y}/races/*"):
         rp = os.path.join(race_dir, "race.yml")
         if os.path.exists(rp):
@@ -75,6 +86,29 @@ for y in years:
 
 # Inclusion: largo carrera/sprint O clasifico al menos una vez.
 included = sorted(raced | qualified)
+
+# ---------- cronologia real de equipos (segundo recorrido, aislado) ----------
+# Recorrido independiente del de arriba: mismo ROOT, pero con carreras
+# ORDENADAS por ronda dentro de cada temporada (los nombres de carpeta son
+# "01-australia", "02-malaysia", ... asi que el orden alfabetico coincide con
+# el orden cronologico real). Solo alimenta driver_team_chronology — no toca
+# ninguna estructura usada por el resto del script.
+for y in years:
+    for race_dir in sorted(glob.glob(f"{ROOT}/seasons/{y}/races/*")):
+        rp = os.path.join(race_dir, "race.yml")
+        if os.path.exists(rp):
+            rinfo = load(rp) or {}
+            if rinfo.get("circuitId") == "indianapolis" and y <= 1960:
+                continue
+        for fname in RESULT_FILES:
+            p = os.path.join(race_dir, fname)
+            if not os.path.exists(p): continue
+            for r in (load(p) or []):
+                did = r.get("driverId"); cid = r.get("constructorId")
+                if not did or not cid: continue
+                chron = driver_team_chronology.setdefault(did, [])
+                if not chron or chron[-1][1] != cid:
+                    chron.append((y, cid))
 
 # ---------- helpers de salida ----------
 def strip_accents(s):
@@ -172,9 +206,12 @@ for did in included:
     w = wins.get(did, 0); po = podiums.get(did, 0); pl = poles.get(did, 0)
     extra = (f", wins: {w}" if w else "") + (f", podiums: {po}" if po else "") + (f", poles: {pl}" if pl else "")
     wk = wordle_key(last) or strip_accents(last).upper()
+    chron_list = driver_team_chronology.get(did, [])
+    chron_parts = [f'{{ season: {yy}, teamId: "{tid}" }}' for yy, tid in chron_list]
+    chron = f', teamsChronology: [{", ".join(chron_parts)}]' if chron_parts else ""
     drv_lines.append(f'  {{ id: "{did}", firstName: "{esc(first)}", lastName: "{esc(last)}", '
         f'wordleKey: "{wk}", nationalityCode: "{code}", teams: [{", ".join(parts)}], '
-        f'active: {{ start: {a0}, end: {a1v} }}, championships: {nch}{cy}{extra} }},')
+        f'active: {{ start: {a0}, end: {a1v} }}, championships: {nch}{cy}{extra}{chron} }},')
 
 drivers_ts = ('import type { Driver } from "@/types";\n\n'
  "/**\n * Dataset de pilotos de F1. GENERADO desde f1db (github.com/f1db/f1db,\n"

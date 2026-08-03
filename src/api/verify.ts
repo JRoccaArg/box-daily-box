@@ -14,6 +14,7 @@ import { buildIntruso } from "../components/games/ElIntruso/intruso.logic";
 import { buildBingo } from "../components/games/ParrillaBingo/bingo.logic";
 import { buildGPChallenge } from "../components/games/GPResultado/gpresultado.logic";
 import { buildChallenge as buildTop10StandingsChallenge } from "../components/games/Top10Standings/top10standings.logic";
+import { buildCareerPathTarget } from "../components/games/CareerPath/careerpath.logic";
 
 // ─── Tipos de solución por juego ────────────────────────────────────
 
@@ -57,13 +58,19 @@ interface Top10StandingsSolution {
   grid: (string | null)[];
 }
 
+interface CareerPathSolution {
+  /** Id del piloto que el usuario eligió como respuesta final. */
+  driverId: string;
+}
+
 type AnySolution =
   | PitTextoSolution
   | PoleWordleSolution
   | IntrusoSolution
   | BingoSolution
   | GPResultadoSolution
-  | Top10StandingsSolution;
+  | Top10StandingsSolution
+  | CareerPathSolution;
 
 export interface VerifyResult {
   won: boolean;
@@ -102,6 +109,8 @@ export function verifyChallenge(
       return verifyGPResultado(difficulty, date, solution as GPResultadoSolution, duelSeed);
     case "top10-standings":
       return verifyTop10Standings(difficulty, date, solution as Top10StandingsSolution, duelSeed);
+    case "career-path":
+      return verifyCareerPath(difficulty, date, solution as CareerPathSolution, duelSeed);
     default:
       return { won: false, detail: `Juego desconocido: ${gameId}` };
   }
@@ -355,5 +364,32 @@ function verifyTop10Standings(
     detail: won
       ? `Top 10 acumulado completo y correcto (${challenge.startYear}-${challenge.endYear})`
       : `Errores: ${errors.join("; ")}`,
+  };
+}
+
+// ─── Career Path ────────────────────────────────────────────────────
+//
+// Regla: HAY UN SOLO piloto correcto por día/dificultad (mismo patrón que
+// Pit Texto). El frontend usa buildCareerPathTarget(difficulty, date) para
+// generar el target.
+
+function verifyCareerPath(
+  difficulty: Difficulty,
+  date: Date,
+  solution: CareerPathSolution,
+  seed?: string,
+): VerifyResult {
+  if (!solution.driverId) {
+    return { won: false, detail: "Falta driverId en la solución" };
+  }
+
+  const target = buildCareerPathTarget(difficulty, date, seed);
+  const won = solution.driverId === target.id;
+
+  return {
+    won,
+    detail: won
+      ? `Correcto: ${target.id}`
+      : `Incorrecto. Esperado: ${target.id}, recibido: ${solution.driverId}`,
   };
 }

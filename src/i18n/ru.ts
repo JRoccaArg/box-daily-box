@@ -204,11 +204,23 @@ const ru: Translations = {
   "top10standings.points_label": "{{points}} очк.",
   "top10standings.time_up": "Время вышло. Недостающие позиции показаны выше.",
 
+  "game.career-path.name": "Career Path",
+  "game.career-path.tagline": "Посмотри на цепочку команд гонщика и угадай, кто это.",
+  "careerpath.eyebrow": "Карьерный путь",
+  "careerpath.hint": "Это команды, за которые гонщик выступал по порядку. Угадай, кто это.",
+  "careerpath.attempt": "Попытка {{current}} из {{max}}",
+  "careerpath.placeholder": "Введи гонщика…",
+  "careerpath.found": "Найден:",
+  "careerpath.answer_was": "Это был:",
+
   "seo.home.title": "Box Daily Box — Ежедневные мини-игры Формулы 1 | 6 бесплатных головоломок",
   "seo.home.description":
     "Шесть ежедневных мини-игр Формулы 1: угадывай пилотов, заполняй топ-10, находи лишнего и многое другое. Бесплатный мировой рейтинг, без регистрации.",
   "seo.contact.title": "Контакты | Box Daily Box",
   "seo.contact.description": "Есть техническая проблема или идея для Box Daily Box? Свяжитесь с нами.",
+  "seo.game.career-path.title": "Career Path — Угадай гонщика по его карьере | Box Daily Box",
+  "seo.game.career-path.description":
+    "Посмотри на цепочку команд гонщика Формулы 1 и угадай, кто это. Бесплатная ежедневная головоломка.",
   "contact.title": "Контакты",
   "contact.intro": "Нашли проблему, есть идея для новой игры или другой вопрос? Напишите нам:",
   "seo.game.pittexto.title": "PitTexto — Угадай секретного пилота F1 | Box Daily Box",
