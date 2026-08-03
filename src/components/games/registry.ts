@@ -5,6 +5,7 @@ import { ElIntruso } from "./ElIntruso/ElIntruso";
 import { ParrillaBingo } from "./ParrillaBingo/ParrillaBingo";
 import { GPResultado } from "./GPResultado/GPResultado";
 import { Top10Standings } from "./Top10Standings/Top10Standings";
+import { CareerPath } from "./CareerPath/CareerPath";
 
 /**
  * Registro central de juegos. Cada entrada es autodescriptiva: el resto de la
@@ -62,6 +63,13 @@ export const GAMES: GameDefinition[] = [
     difficulties: [...DIFFS],
     timer: { kind: "choice", options: [90, 120, 150, 180] },
     component: Top10Standings,
+  },
+  {
+    id: "career-path",
+    glyph: "CP",
+    difficulties: [...DIFFS],
+    timer: { kind: "choice", options: [60, 90] },
+    component: CareerPath,
   },
 ];
 
