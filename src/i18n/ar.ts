@@ -190,11 +190,23 @@ const ar: Translations = {
   "top10standings.points_label": "{{points}} نقطة",
   "top10standings.time_up": "انتهى الوقت. المراكز المفقودة معروضة أعلاه.",
 
+  "game.career-path.name": "Career Path",
+  "game.career-path.tagline": "شاهد تسلسل الفرق التي مر بها السائق وخمّن من هو.",
+  "careerpath.eyebrow": "المسار المهني",
+  "careerpath.hint": "هذه هي الفرق التي سابق فيها السائق بالترتيب. خمّن من هو.",
+  "careerpath.attempt": "محاولة {{current}} من {{max}}",
+  "careerpath.placeholder": "اكتب اسم السائق…",
+  "careerpath.found": "وجدته:",
+  "careerpath.answer_was": "السائق كان:",
+
   "seo.home.title": "Box Daily Box — ألعاب فورمولا 1 المصغّرة اليومية | 6 ألغاز مجانية",
   "seo.home.description":
     "ست ألعاب فورمولا 1 مصغّرة يومية: خمّن السائقين، أكمل أفضل 10، اعثر على الدخيل والمزيد. تصنيف عالمي مجاني، دون تسجيل.",
   "seo.contact.title": "اتصل بنا | Box Daily Box",
   "seo.contact.description": "هل لديك مشكلة تقنية أو فكرة لـ Box Daily Box؟ تواصل معنا.",
+  "seo.game.career-path.title": "Career Path — خمّن السائق من مسيرته | Box Daily Box",
+  "seo.game.career-path.description":
+    "شاهد سلسلة الفرق التي سابق فيها سائق فورمولا 1 وخمّن من هو. لغز يومي مجاني.",
   "contact.title": "اتصل بنا",
   "contact.intro": "هل وجدت مشكلة، أو لديك فكرة للعبة جديدة، أو أي استفسار آخر؟ راسلنا على:",
   "seo.game.pittexto.title": "PitTexto — خمّن سائق F1 السري | Box Daily Box",

@@ -7,6 +7,7 @@ const GAMES = [
   "parrilla-bingo",
   "gp-resultado",
   "top10-standings",
+  "career-path",
 ] as const;
 
 for (const gameId of GAMES) {

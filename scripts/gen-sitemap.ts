@@ -17,7 +17,7 @@ import { homePath, gamePath, infoPath, contactPath } from "@/lib/routes";
 // transitividad src/lib/api.ts, que usa import.meta.env, inexistente al
 // correr este script standalone con tsx fuera de Vite). Mismo patrón que
 // VALID_GAME_IDS en src/api/auth.ts: una lista de ids duplicada a propósito.
-const GAME_IDS = ["pittexto", "polewordle", "el-intruso", "parrilla-bingo", "gp-resultado", "top10-standings"];
+const GAME_IDS = ["pittexto", "polewordle", "el-intruso", "parrilla-bingo", "gp-resultado", "top10-standings", "career-path"];
 
 type Entry = { priority: string; alternates: { locale: string; href: string }[] };
 

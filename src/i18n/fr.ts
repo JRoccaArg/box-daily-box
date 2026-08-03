@@ -287,11 +287,23 @@ const fr: Translations = {
   "top10standings.points_label": "{{points}} pts",
   "top10standings.time_up": "Temps écoulé. Les positions manquantes sont affichées ci-dessus.",
 
+  "game.career-path.name": "Career Path",
+  "game.career-path.tagline": "Regardez la succession d'écuries d'un pilote et devinez qui c'est.",
+  "careerpath.eyebrow": "Parcours",
+  "careerpath.hint": "Voici les écuries pour lesquelles le pilote a couru, dans l'ordre. Devinez qui c'est.",
+  "careerpath.attempt": "Essai {{current}} sur {{max}}",
+  "careerpath.placeholder": "Tapez un pilote…",
+  "careerpath.found": "Vous l'avez trouvé :",
+  "careerpath.answer_was": "Le pilote était :",
+
   "seo.home.title": "Box Daily Box — Minijeux quotidiens de Formule 1 | 6 puzzles gratuits",
   "seo.home.description":
     "Six minijeux quotidiens de Formule 1 : devinez des pilotes, complétez le top 10, trouvez l'intrus et plus encore. Classement mondial gratuit, sans inscription.",
   "seo.contact.title": "Contact | Box Daily Box",
   "seo.contact.description": "Un problème technique ou une idée pour Box Daily Box ? Contactez-nous.",
+  "seo.game.career-path.title": "Career Path — Devinez le pilote grâce à son parcours | Box Daily Box",
+  "seo.game.career-path.description":
+    "Regardez la chaîne d'écuries d'un pilote de F1 et devinez qui c'est. Puzzle quotidien gratuit.",
   "contact.title": "Contact",
   "contact.intro":
     "Vous avez trouvé un problème, une idée pour un nouveau jeu, ou une autre question ? Écrivez-nous :",

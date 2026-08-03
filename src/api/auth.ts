@@ -444,10 +444,11 @@ const IMPORT_TIME_LIMITS: Record<string, number> = {
   "parrilla-bingo": 600,
   "gp-resultado": 180,
   "top10-standings": 180,
+  "career-path": 90,
 };
 
 const VALID_GAME_IDS = new Set([
-  "pittexto", "polewordle", "el-intruso", "parrilla-bingo", "gp-resultado", "top10-standings",
+  "pittexto", "polewordle", "el-intruso", "parrilla-bingo", "gp-resultado", "top10-standings", "career-path",
 ]);
 const VALID_DIFFICULTIES = new Set(["facil", "medio", "dificil", "leyenda"]);
 
