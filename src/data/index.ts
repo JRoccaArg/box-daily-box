@@ -26,6 +26,24 @@ export function teamIdsOf(d: Driver): string[] {
   return [...new Set(d.teams.map((t) => t.teamId))];
 }
 
+/**
+ * Cadena de escuderias en el orden real en que ocurrieron, colapsando
+ * temporadas consecutivas del mismo equipo a una sola entrada (para mostrar
+ * en Career Path). A diferencia de `teamIdsOf`, SI distingue un regreso a un
+ * equipo despues de haber pasado por otro (ej. Fisichella:
+ * ["minardi","jordan","benetton","jordan","sauber","renault","force-india","ferrari"]).
+ * Si el piloto no tiene `teamsChronology` (dataset viejo, no deberia pasar
+ * tras la regeneracion), cae a `teamIdsOf` como aproximacion sin retornos.
+ */
+export function getCareerChain(d: Driver): string[] {
+  if (!d.teamsChronology || d.teamsChronology.length === 0) return teamIdsOf(d);
+  const chain: string[] = [];
+  for (const { teamId } of d.teamsChronology) {
+    if (chain[chain.length - 1] !== teamId) chain.push(teamId);
+  }
+  return chain;
+}
+
 /** ¿Compartio escuderia con otro piloto en algun anio solapado? */
 export function wereTeammates(a: Driver, b: Driver): boolean {
   for (const ta of a.teams) {
