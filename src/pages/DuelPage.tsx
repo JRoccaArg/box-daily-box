@@ -419,6 +419,7 @@ function DuelPlayScreen({
           seed={duel.id}
           timeLimit={duel.timeLimit}
           secondsLeft={timer.secondsLeft}
+          untimed={false}
           status={status}
           onWin={(solution) => finish("won", solution)}
           onLose={(solution) => finish("lost", solution)}

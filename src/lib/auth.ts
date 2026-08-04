@@ -88,10 +88,12 @@ export async function handleGoogleCallback(code: string): Promise<AuthResult | n
       result?.meta && typeof result.meta.difficulty === "string"
         ? result.meta.difficulty
         : "medio";
+    const untimed = result?.meta?.untimed === 1;
     return {
       gameId: s.gameId,
       difficulty,
       solution: s.solution,
+      untimed,
     };
   });
 

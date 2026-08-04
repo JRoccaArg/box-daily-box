@@ -273,6 +273,72 @@ function systematicSearch(
   return null;
 }
 
+/** Clave estable de una terna de filas (para comparar/excluir sin importar el orden). */
+function rowKey(rows: Constraint[]): string {
+  return rows.map((r) => r.ref).sort().join(",");
+}
+
+/**
+ * Cuantos dias hacia atras se evita repetir la misma terna de escuderias-fila.
+ * Elegido para que "el mismo bingo" no pueda salir dos veces en una semana.
+ */
+const NO_REPEAT_WINDOW_DAYS = 12;
+
+/**
+ * Igual que `search`, pero descarta ternas de filas que ya salieron en los
+ * ultimos `excluded` dias (ver `NO_REPEAT_WINDOW_DAYS`). Antes, `search` solo
+ * muestreaba al azar sin memoria entre dias, lo que en dificultades con pocas
+ * escuderias elegibles (ej. "facil", con ~10-16 elegibles) hacia que la misma
+ * terna de escuderias apareciera cada pocos dias (reporte de usuario: "el
+ * mismo bingo 3-4 veces en una semana").
+ *
+ * OJO: NO se usa una rotacion de ciclo completo (como `dailyPick`) porque
+ * enumerar TODAS las C(n,3) ternas posibles y verificar cual es resoluble es
+ * combinatoriamente caro para dificultades con muchas escuderias elegibles
+ * (ej. "leyenda", con 50+): se probo y tardaba minutos. La ventana de
+ * exclusion por dias recientes da la misma garantia practica (no repetir en
+ * la ultima semana y media) a un costo casi identico al `search` original.
+ */
+function searchAvoidingRecent(
+  rng: Rng,
+  teams: Constraint[],
+  cols: Constraint[],
+  excluded: Set<string>,
+  attempts = 20000,
+): { rows: Constraint[]; cols: Constraint[]; solution: string[] } | null {
+  for (let i = 0; i < attempts; i++) {
+    const r = rng.sample(teams, 3);
+    const c = rng.sample(cols, 3);
+    if (r.length < 3 || c.length < 3) return null;
+    if (excluded.has(rowKey(r))) continue;
+    if (!comboOk(r, c)) continue;
+    const solution = perfectMatching(r, c);
+    if (solution) return { rows: r, cols: c, solution };
+  }
+  return null;
+}
+
+/** Ternas de filas usadas en los `days` dias anteriores a `date` (segun el algoritmo SIN exclusion, para no recursar). */
+function recentRowKeys(
+  teams: Constraint[],
+  cols: Constraint[],
+  date: Date,
+  salt: string,
+  seed: string | undefined,
+  days: number,
+): Set<string> {
+  const keys = new Set<string>();
+  for (let k = 1; k <= days; k++) {
+    const past = new Date(date.getTime() - k * 86_400_000);
+    const rng = dailyRng(past, salt, seed);
+    // Presupuesto mas chico: esto solo arma el set de "recientes a evitar",
+    // no necesita ser exhaustivo (una aproximacion decente alcanza).
+    const found = search(rng, teams, cols, 3000) ?? systematicSearch(rng, teams, cols);
+    if (found) keys.add(rowKey(found.rows));
+  }
+  return keys;
+}
+
 /** Construye la parrilla del dia de forma determinista. */
 export function buildBingo(difficulty: Difficulty, date: Date, seed?: string): BingoPuzzle {
   const ceil = DATA_AS_OF_SEASON;
@@ -299,9 +365,13 @@ export function buildBingo(difficulty: Difficulty, date: Date, seed?: string): B
     const teams = buildTeamConstraints(pool, floor, ceil);
     const cols = buildColConstraints(pool, teams);
 
-    const rng = dailyRng(date, `bingo::${difficulty}::w${idx}`, seed);
+    const salt = `bingo::${difficulty}::w${idx}`;
+    const excluded = recentRowKeys(teams, cols, date, salt, seed, NO_REPEAT_WINDOW_DAYS);
+    const rng = dailyRng(date, salt, seed);
     const found =
-      search(rng, teams, cols, 1200) ?? systematicSearch(rng, teams, cols);
+      searchAvoidingRecent(rng, teams, cols, excluded, 20000) ??
+      search(rng, teams, cols, 20000) ??
+      systematicSearch(rng, teams, cols);
     if (found) return { rows: found.rows, cols: found.cols, pool, solution: found.solution };
   }
 
@@ -310,7 +380,8 @@ export function buildBingo(difficulty: Difficulty, date: Date, seed?: string): B
   const pool = DRIVERS.slice();
   const teams = buildTeamConstraints(pool, 1950, ceil);
   const cols = buildColConstraints(pool, teams);
-  const rng = dailyRng(date, `bingo::${difficulty}::last`, seed);
+  const salt = `bingo::${difficulty}::last`;
+  const rng = dailyRng(date, salt, seed);
   const found = systematicSearch(rng, teams, cols);
   if (found) return { rows: found.rows, cols: found.cols, pool, solution: found.solution };
   return { rows: teams.slice(0, 3), cols: cols.slice(0, 3), pool, solution: new Array(9).fill("") };
