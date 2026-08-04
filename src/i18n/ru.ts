@@ -113,6 +113,8 @@ const ru: Translations = {
   "ranking.pts": "очк.",
   "ranking.monthly_note": "Месячный рейтинг обнуляется 1-го числа каждого месяца.",
   "ranking.daily_note": "Дневной рейтинг показывает результаты сегодня.",
+  "ranking.add_friend": "Добавить в друзья",
+  "ranking.add_friend_label": "Добавить {{name}} в друзья",
 
   "monthly.title": "Рейтинг за {{month}}", "monthly.challenges_won": "{{count}} испытаний выиграно",
   "monthly.points_month": "очков за месяц",

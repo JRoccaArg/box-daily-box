@@ -100,6 +100,8 @@ const nl: Translations = {
   "ranking.pts": "ptn",
   "ranking.monthly_note": "De maandelijkse ranglijst wordt op de 1e van elke maand gereset.",
   "ranking.daily_note": "De dagelijkse ranglijst toont de resultaten van vandaag.",
+  "ranking.add_friend": "Vriend toevoegen",
+  "ranking.add_friend_label": "{{name}} toevoegen als vriend",
 
   "monthly.title": "Ranglijst {{month}}", "monthly.challenges_won": "{{count}} uitdagingen gewonnen",
   "monthly.points_month": "punten deze maand",

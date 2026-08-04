@@ -141,6 +141,15 @@ export const Users = (p: IconProps) => (
   </svg>
 );
 
+export const UserPlus = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M13 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="7" cy="7" r="4" />
+    <path d="M19 8v6" />
+    <path d="M22 11h-6" />
+  </svg>
+);
+
 export const Swords = (p: IconProps) => (
   <svg {...base(p)}>
     <path d="m14.5 17.5 3 3L21 17l-3-3" />

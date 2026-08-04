@@ -193,6 +193,8 @@ const es: Translations = {
   "ranking.monthly_note":
     "El ranking mensual se reinicia el 1 de cada mes.",
   "ranking.daily_note": "El ranking diario muestra los resultados de hoy.",
+  "ranking.add_friend": "Agregar amigo",
+  "ranking.add_friend_label": "Agregar a {{name}} como amigo",
 
   // ─── Badges ─────────────────────────────────────────────────────────
   "badge.monthly_gold": "Oro",

@@ -144,6 +144,8 @@ const ja: Translations = {
   "ranking.pts": "pt",
   "ranking.monthly_note": "月間ランキングは毎月1日にリセットされます。",
   "ranking.daily_note": "デイリーランキングは今日の結果を表示します。",
+  "ranking.add_friend": "友達を追加",
+  "ranking.add_friend_label": "{{name}}を友達に追加",
 
   "monthly.title": "{{month}}のランキング",
   "monthly.challenges_won": "{{count}}チャレンジ勝利",
