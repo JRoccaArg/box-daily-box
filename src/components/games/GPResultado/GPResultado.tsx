@@ -40,8 +40,12 @@ function teamColor(team: string): string {
   return TEAM_COLORS[team] ?? "#6B7280";
 }
 
-export function GPResultado({ difficulty, date, seed, status, onWin }: GameProps) {
+/** Fallos permitidos en modo "Sin Tiempo" antes de perder (no hay otro limite de intentos). */
+const MAX_FAILS = 3;
+
+export function GPResultado({ difficulty, date, seed, status, untimed, onWin, onLose }: GameProps) {
   const { t } = useI18n();
+  const [fails, setFails] = useState(0);
 
   const gp = useMemo(() => buildGPChallenge(difficulty, date, seed), [difficulty, date, seed]);
   const driverPool = useMemo(() => allDriverNames(), []);
@@ -89,6 +93,13 @@ export function GPResultado({ difficulty, date, seed, status, onWin }: GameProps
       // No está en el top 10.
       setError(t("gpresultado.not_in_top", { name }));
       inputRef.current?.focus();
+      if (untimed) {
+        setFails((f) => {
+          const next = f + 1;
+          if (next >= MAX_FAILS) onLose();
+          return next;
+        });
+      }
       return;
     }
 
@@ -133,6 +144,19 @@ export function GPResultado({ difficulty, date, seed, status, onWin }: GameProps
       <p className="mt-1 font-mono text-xs text-ink-faint">
         {t("gpresultado.found_count", { found: revealedCount, total: 10 })}
       </p>
+
+      {untimed && !finished && (
+        <p
+          className={[
+            "mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold",
+            fails >= MAX_FAILS - 1
+              ? "border-racing/40 bg-racing/10 text-racing-400"
+              : "border-white/10 bg-asphalt-700 text-ink-muted",
+          ].join(" ")}
+        >
+          {t("shell.fails_left", { count: MAX_FAILS - fails, total: MAX_FAILS })}
+        </p>
+      )}
 
       {/* Buscador */}
       {!finished && (

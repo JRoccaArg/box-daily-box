@@ -71,8 +71,13 @@ type SessionPayload = {
   difficulty: Difficulty;
   today: string;
   startedAt: number;
-  /** Tiempo elegido por el jugador (segundos). Firmado para que no se pueda inflar. */
-  timeLimit: number;
+  /**
+   * Tiempo elegido por el jugador (segundos). Firmado para que no se pueda
+   * inflar. `null` = modo "Sin Tiempo" (puntaje fijo, ver UNTIMED_SCORE en
+   * scoring.ts). `undefined` solo puede darse en tokens viejos (pre-deploy)
+   * que no tenian este campo — se trata como "con tiempo, usar fallback".
+   */
+  timeLimit: number | null;
   /** Si el attempt entrará al ranking global (false si otra cuenta de la IP
    *  ya jugó este juego hoy). Firmado en el token: no se puede falsificar. */
   ranked: boolean;
@@ -121,7 +126,8 @@ export async function startChallenge(
       displayName?: string;
       countryCode?: string;
       clientDateKey?: string;
-      timeLimit?: number;
+      /** number = tiempo elegido; null = modo "Sin Tiempo"; undefined = juego sin cronometro. */
+      timeLimit?: number | null;
       duelId?: string;
       identityToken?: string;
     };
@@ -243,11 +249,15 @@ export async function startChallenge(
       }
     }
 
-    // Validar timeLimit: debe ser una opción reconocida para el juego.
+    // Validar timeLimit: debe ser una opción reconocida para el juego, o
+    // `null` explícito (modo "Sin Tiempo", válido para cualquier juego).
     const validOptions = GAME_TIME_OPTIONS[gameId] ?? [];
-    const timeLimit = validOptions.includes(rawTimeLimit as number)
-      ? (rawTimeLimit as number)
-      : (validOptions.length > 0 ? Math.max(...validOptions) : TIME_LIMITS[gameId] ?? 180);
+    const timeLimit: number | null =
+      rawTimeLimit === null
+        ? null
+        : validOptions.includes(rawTimeLimit as number)
+          ? (rawTimeLimit as number)
+          : (validOptions.length > 0 ? Math.max(...validOptions) : TIME_LIMITS[gameId] ?? 180);
 
     // Crear sesión firmada (con IP)
     const startedAt = Date.now();
@@ -361,9 +371,14 @@ export async function finishChallenge(
     // Sin tiempo mínimo: si la verificación server dice que es correcto, es válido.
     const flagged = false;
 
-    // Usar el timeLimit firmado en la sesión; fallback al máximo del juego para
-    // sesiones antiguas (pre-deploy) que no tienen timeLimit en el token.
-    const sessionTimeLimit = session.timeLimit ?? TIME_LIMITS[gameId] ?? 180;
+    // `null` explícito = modo "Sin Tiempo" (puntaje fijo). `undefined` solo
+    // puede darse en tokens viejos (pre-deploy) sin este campo: se trata como
+    // "con tiempo", con fallback al máximo del juego.
+    const untimed = session.timeLimit === null;
+    const sessionTimeLimit =
+      session.timeLimit === undefined || session.timeLimit === null
+        ? TIME_LIMITS[gameId] ?? 180
+        : session.timeLimit;
     const gameOptions = GAME_TIME_OPTIONS[gameId] ?? [];
     const maxTimeOption = gameOptions.length > 0 ? Math.max(...gameOptions) : sessionTimeLimit;
     const points = computeScore({
@@ -372,6 +387,7 @@ export async function finishChallenge(
       timeSeconds,
       timeLimit: sessionTimeLimit,
       maxTimeOption,
+      untimed,
     });
 
     const uid = session.uid;

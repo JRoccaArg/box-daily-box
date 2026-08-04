@@ -31,6 +31,9 @@ import {
 
 type Phase = "config" | "playing" | "finished";
 
+/** Sentinel para la opcion "Sin Tiempo" dentro del SegmentedControl de tiempo (todas las opciones reales son segundos > 0). */
+const UNTIMED_TIME_VALUE = -1;
+
 type GameShellProps = {
   game: GameDefinition;
   /** Fecha del reto. Por defecto hoy. Inyectable para pruebas. */
@@ -63,6 +66,9 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
   }, [game.timer]);
 
   const [chosenTime, setChosenTime] = useState<number | null>(timeOptions[0] ?? null);
+  // Modalidad "Sin Tiempo": puntaje fijo bajo, sin cronometro. Se ofrece
+  // ademas de las opciones de tiempo normales (no en vez de la dificultad).
+  const [untimed, setUntimed] = useState(false);
 
   const [phase, setPhase] = useState<Phase>("config");
   const [status, setStatus] = useState<GameStatus>("idle");
@@ -85,19 +91,21 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
   // Ref al contenedor del tablero (para scroll al "Ver el tablero").
   const boardRef = useRef<HTMLDivElement | null>(null);
 
-  const timeLimit = game.timer.kind === "none" ? null : chosenTime;
+  const timeLimit = game.timer.kind === "none" || untimed ? null : chosenTime;
 
   // Datos para el puntaje (dificultad, limite y arranque). En un ref para que
   // los callbacks memoizados y los listeners de abandono lean siempre lo actual.
   const scoreRef = useRef<{
     difficulty: Difficulty;
     timeLimit: number | null;
+    untimed: boolean;
     startedAt: number | null;
-  }>({ difficulty, timeLimit, startedAt: null });
+  }>({ difficulty, timeLimit, untimed, startedAt: null });
   useEffect(() => {
     scoreRef.current.difficulty = difficulty;
     scoreRef.current.timeLimit = timeLimit;
-  }, [difficulty, timeLimit]);
+    scoreRef.current.untimed = untimed;
+  }, [difficulty, timeLimit, untimed]);
 
   /** Arma la meta del resultado (dificultad, tiempo usado y limite). */
   const buildMeta = useCallback((): Record<string, number | string> => {
@@ -107,6 +115,7 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
       meta.timeSeconds = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
     }
     if (lim != null) meta.timeLimit = lim;
+    if (scoreRef.current.untimed) meta.untimed = 1;
     return meta;
   }, []);
 
@@ -134,6 +143,7 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
           timeSeconds: typeof meta.timeSeconds === "number" ? meta.timeSeconds : null,
           timeLimit: scoreRef.current.timeLimit,
           maxTimeOption,
+          untimed: scoreRef.current.untimed,
         }),
       );
 
@@ -382,21 +392,36 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
               <label className="eyebrow mb-2 block">{t("shell.time")}</label>
               <SegmentedControl
                 aria-label={t("shell.time")}
-                value={chosenTime ?? timeOptions[0] ?? 0}
-                onChange={(v) => setChosenTime(v)}
-                options={timeOptions.map((s) => ({
-                  value: s,
-                  label: `${s}s`,
-                }))}
+                value={untimed ? UNTIMED_TIME_VALUE : (chosenTime ?? timeOptions[0] ?? 0)}
+                onChange={(v) => {
+                  if (v === UNTIMED_TIME_VALUE) {
+                    setUntimed(true);
+                  } else {
+                    setUntimed(false);
+                    setChosenTime(v);
+                  }
+                }}
+                options={[
+                  ...timeOptions.map((s) => ({ value: s, label: `${s}s` })),
+                  { value: UNTIMED_TIME_VALUE, label: t("shell.untimed"), hint: t("shell.untimed_hint") },
+                ]}
               />
             </section>
           )}
 
           {game.timer.kind === "fixed" && (
-            <p className="mt-5 inline-flex items-center gap-2 text-sm text-ink-muted">
-              <TimerIcon size={15} />
-              {t("shell.time_limit", { seconds: game.timer.seconds })}
-            </p>
+            <section className="mt-6">
+              <label className="eyebrow mb-2 block">{t("shell.time")}</label>
+              <SegmentedControl
+                aria-label={t("shell.time")}
+                value={untimed ? UNTIMED_TIME_VALUE : game.timer.seconds}
+                onChange={(v) => setUntimed(v === UNTIMED_TIME_VALUE)}
+                options={[
+                  { value: game.timer.seconds, label: t("shell.time_limit", { seconds: game.timer.seconds }) },
+                  { value: UNTIMED_TIME_VALUE, label: t("shell.untimed"), hint: t("shell.untimed_hint") },
+                ]}
+              />
+            </section>
           )}
           {game.timer.kind === "none" && (
             <p className="mt-5 inline-flex items-center gap-2 text-sm text-ink-muted">
@@ -452,6 +477,7 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
           date={date}
           timeLimit={timeLimit}
           secondsLeft={timer.secondsLeft}
+          untimed={untimed}
           status={status}
           onWin={onWin}
           onLose={onLose}
@@ -620,8 +646,12 @@ function ControlBar({
       </div>
 
       <div className="flex items-center gap-3">
-        {totalSeconds !== null && (
+        {totalSeconds !== null ? (
           <TimerDisplay secondsLeft={secondsLeft} total={totalSeconds} />
+        ) : (
+          <span className="rounded-md border border-white/10 bg-asphalt-700 px-2 py-0.5 font-mono text-xs uppercase tracking-wider text-ink-muted">
+            {t("shell.untimed")}
+          </span>
         )}
 
         {playing &&

@@ -9,8 +9,12 @@ import { Panel } from "@/components/ui/Panel";
 import { Flag } from "@/components/ui/Flag";
 import { Check } from "@/components/ui/Icon";
 
-export function Top10Standings({ difficulty, date, seed, status, onWin }: GameProps) {
+/** Fallos permitidos en modo "Sin Tiempo" antes de perder (no hay otro limite de intentos). */
+const MAX_FAILS = 3;
+
+export function Top10Standings({ difficulty, date, seed, status, untimed, onWin, onLose }: GameProps) {
   const { t } = useI18n();
+  const [fails, setFails] = useState(0);
 
   const challenge = useMemo(() => buildChallenge(difficulty, date, seed), [difficulty, date, seed]);
   const driverPool = useMemo(() => allStandingsDriverNames(), []);
@@ -58,6 +62,13 @@ export function Top10Standings({ difficulty, date, seed, status, onWin }: GamePr
       // No está en el top 10 acumulado.
       setError(t("top10standings.not_in_top", { name }));
       inputRef.current?.focus();
+      if (untimed) {
+        setFails((f) => {
+          const next = f + 1;
+          if (next >= MAX_FAILS) onLose();
+          return next;
+        });
+      }
       return;
     }
 
@@ -105,6 +116,19 @@ export function Top10Standings({ difficulty, date, seed, status, onWin }: GamePr
       <p className="mt-1 font-mono text-xs text-ink-faint">
         {t("top10standings.found_count", { found: revealedCount, total: 10 })}
       </p>
+
+      {untimed && !finished && (
+        <p
+          className={[
+            "mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold",
+            fails >= MAX_FAILS - 1
+              ? "border-racing/40 bg-racing/10 text-racing-400"
+              : "border-white/10 bg-asphalt-700 text-ink-muted",
+          ].join(" ")}
+        >
+          {t("shell.fails_left", { count: MAX_FAILS - fails, total: MAX_FAILS })}
+        </p>
+      )}
 
       {/* Buscador */}
       {!finished && (

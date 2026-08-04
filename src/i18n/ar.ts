@@ -26,7 +26,11 @@ const ar: Translations = {
 
   "shell.daily_challenge": "تحدي اليوم", "shell.difficulty": "الصعوبة",
   "shell.time": "الوقت", "shell.time_limit": "حد الوقت: {{seconds}} ثانية",
-  "shell.no_time_limit": "بدون حد زمني", "shell.start": "ابدأ",
+  "shell.no_time_limit": "بدون حد زمني",
+  "shell.untimed": "بدون وقت",
+  "shell.untimed_hint": "نقاط ثابتة قليلة، بدون ساعة",
+  "shell.fails_left": "تبقى {{count}} من {{total}} محاولات",
+  "shell.start": "ابدأ",
   "shell.surrender": "استسلم", "shell.no": "لا",
   "shell.back": "الرئيسية", "shell.back_label": "العودة للرئيسية",
 

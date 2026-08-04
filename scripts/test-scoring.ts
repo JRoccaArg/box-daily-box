@@ -13,7 +13,7 @@
  * Ejecuta: npx tsx --tsconfig tsconfig.app.json scripts/test-scoring.ts
  */
 import type { Difficulty } from "@/types";
-import { computeScore, BASE_POINTS, MAX_SPEED_BONUS } from "@/lib/scoring";
+import { computeScore, BASE_POINTS, MAX_SPEED_BONUS, UNTIMED_SCORE } from "@/lib/scoring";
 
 let passed = 0, failed = 0;
 function assert(cond: boolean, msg: string) {
@@ -106,7 +106,49 @@ function testDeterminism() {
   const a = computeScore(input);
   const b = computeScore({ ...input });
   assert(a === b, `computeScore es puro: ${a} === ${b}`);
-  assert(a <= BASE_POINTS.leyenda + MAX_SPEED_BONUS * 3, "el resultado nunca excede una cota razonable (base + bonus máx con riesgo 3x)");
+  assert(
+    a <= BASE_POINTS.leyenda + MAX_SPEED_BONUS.leyenda * 3,
+    "el resultado nunca excede una cota razonable (base + bonus máx con riesgo 3x)",
+  );
+}
+
+function testDifficultyGapNeverCompensated() {
+  console.log("\n▶ Ninguna dificultad, resuelta al instante con el máximo riesgo posible, alcanza la base de la siguiente");
+  const ORDER: Difficulty[] = ["facil", "medio", "dificil", "leyenda"];
+  for (let i = 0; i < ORDER.length - 1; i++) {
+    const lower = ORDER[i]!;
+    const higher = ORDER[i + 1]!;
+    // Mejor caso posible en `lower`: resuelto al instante (timeSeconds=0) con
+    // el máximo multiplicador de riesgo real del juego (2x, GP Resultado/Top10).
+    const bestCaseLower = computeScore({
+      won: true,
+      difficulty: lower,
+      timeSeconds: 0,
+      timeLimit: 90,
+      maxTimeOption: 180,
+    });
+    // Peor caso posible en `higher` que igual gana: agota casi todo el tiempo, sin bonus.
+    const worstCaseHigher = BASE_POINTS[higher];
+    assert(
+      bestCaseLower < worstCaseHigher,
+      `[${lower}] mejor caso (${bestCaseLower}) < [${higher}] peor caso ganando (${worstCaseHigher})`,
+    );
+  }
+}
+
+function testUntimedMode() {
+  console.log("\n▶ Modo Sin Tiempo: puntaje fijo, bajo, sin importar tiempo ni dificultad");
+  for (const difficulty of DIFFS) {
+    const fast = computeScore({ won: true, difficulty, untimed: true, timeSeconds: 1, timeLimit: 300 });
+    const slow = computeScore({ won: true, difficulty, untimed: true, timeSeconds: 299, timeLimit: 300 });
+    assert(fast === UNTIMED_SCORE, `[${difficulty}] sin tiempo rápido = ${UNTIMED_SCORE}: ${fast}`);
+    assert(slow === UNTIMED_SCORE, `[${difficulty}] sin tiempo lento = mismo puntaje fijo: ${slow}`);
+  }
+  assert(UNTIMED_SCORE < BASE_POINTS.facil, `sin tiempo (${UNTIMED_SCORE}) siempre por debajo del piso de Fácil (${BASE_POINTS.facil})`);
+  assert(
+    computeScore({ won: false, difficulty: "facil", untimed: true }) === 0,
+    "perder en modo sin tiempo también da 0",
+  );
 }
 
 (async () => {
@@ -117,6 +159,8 @@ function testDeterminism() {
   testRiskMultiplier();
   testMissingTimeData();
   testDeterminism();
+  testDifficultyGapNeverCompensated();
+  testUntimedMode();
   console.log(`\n═══ RESULTADO: ${passed} passed, ${failed} failed ═══`);
   process.exit(failed > 0 ? 1 : 0);
 })();
