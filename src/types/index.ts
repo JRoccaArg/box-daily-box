@@ -106,6 +106,13 @@ export type GameProps = {
   timeLimit: number | null;
   /** Segundos restantes (lo administra el GameShell). null = sin tiempo. */
   secondsLeft: number | null;
+  /**
+   * true si el jugador eligio la modalidad "Sin Tiempo" (puntaje fijo bajo,
+   * sin cronometro). Los juegos sin otro limite de intentos (Bingo, GP
+   * Resultado, Top10 Standings) usan esto para activar su propio contador de
+   * fallos permitidos y llamar a `onLose` al agotarlos.
+   */
+  untimed: boolean;
   /** Estado actual de la partida administrado por el GameShell. */
   status: GameStatus;
   /** Llamar cuando el usuario gana. Pasar solution para verificacion server. */

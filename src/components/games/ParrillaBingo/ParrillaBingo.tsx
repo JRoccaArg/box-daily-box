@@ -9,11 +9,14 @@ import { Panel } from "@/components/ui/Panel";
 import { Modal } from "@/components/ui/Modal";
 import { Check, Trophy, Flag, Timer, Stat, Grid as GridIcon } from "@/components/ui/Icon";
 
+/** Fallos permitidos en modo "Sin Tiempo" antes de perder (Bingo no tiene otro limite de intentos). */
+const MAX_FAILS = 5;
+
 /**
  * Parrilla Bingo: grilla 3x3 donde cada celda es la interseccion de una
  * restriccion de fila (escuderia) y una de columna (nacionalidad o campeon).
  */
-export function ParrillaBingo({ difficulty, date, seed, status, onWin }: GameProps) {
+export function ParrillaBingo({ difficulty, date, seed, status, untimed, onWin, onLose }: GameProps) {
   const { t } = useI18n();
   const puzzle = useMemo(() => buildBingo(difficulty, date, seed), [difficulty, date, seed]);
   const { rows, cols, pool } = puzzle;
@@ -22,8 +25,18 @@ export function ParrillaBingo({ difficulty, date, seed, status, onWin }: GamePro
     new Array<string | null>(9).fill(null),
   );
   const [active, setActive] = useState<number | null>(null);
+  const [fails, setFails] = useState(0);
 
   const finished = status !== "playing";
+
+  const registerFail = () => {
+    if (!untimed || finished) return;
+    setFails((f) => {
+      const next = f + 1;
+      if (next >= MAX_FAILS) onLose();
+      return next;
+    });
+  };
 
   const driverById = useMemo(() => {
     const m = new Map<string, Driver>();
@@ -88,6 +101,19 @@ export function ParrillaBingo({ difficulty, date, seed, status, onWin }: GamePro
         {t("bingo.cells_count", { filled: filledCount })}
       </p>
 
+      {untimed && !finished && (
+        <p
+          className={[
+            "mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold",
+            fails >= MAX_FAILS - 1
+              ? "border-racing/40 bg-racing/10 text-racing-400"
+              : "border-white/10 bg-asphalt-700 text-ink-muted",
+          ].join(" ")}
+        >
+          {t("shell.fails_left", { count: MAX_FAILS - fails, total: MAX_FAILS })}
+        </p>
+      )}
+
       {/* Grilla 3x3 con cabeceras */}
       <div
         className="mt-4 grid gap-1.5"
@@ -151,6 +177,7 @@ export function ParrillaBingo({ difficulty, date, seed, status, onWin }: GamePro
             current={activeData.currentId ? driverById.get(activeData.currentId) ?? null : null}
             onPick={(d) => active !== null && assign(active, d)}
             onClear={() => active !== null && clearCell(active)}
+            onWrongGuess={registerFail}
             describe={describe}
           />
         )}
@@ -307,6 +334,7 @@ function CellPicker({
   current,
   onPick,
   onClear,
+  onWrongGuess,
   describe,
 }: {
   row: Constraint;
@@ -316,6 +344,7 @@ function CellPicker({
   current: Driver | null;
   onPick: (d: Driver) => void;
   onClear: () => void;
+  onWrongGuess: () => void;
   describe: (c: Constraint) => string;
 }) {
   const { t } = useI18n();
@@ -339,6 +368,7 @@ function CellPicker({
     if (!okRow || !okCol) {
       const falla = !okRow ? describe(row) : describe(col);
       setError(t("bingo.does_not_match", { name: d.lastName, rule: falla }));
+      onWrongGuess();
       return;
     }
     onPick(d);

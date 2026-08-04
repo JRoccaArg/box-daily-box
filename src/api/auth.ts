@@ -146,6 +146,7 @@ export async function googleAuthCallback(
         gameId?: string;
         difficulty?: string;
         solution?: Record<string, unknown> | null;
+        untimed?: boolean;
       }>;
       clientDateKey?: string;
     };
@@ -474,6 +475,7 @@ async function importLocalAttempts(
     gameId?: string;
     difficulty?: string;
     solution?: Record<string, unknown> | null;
+    untimed?: boolean;
   }>,
   clientIp: string,
 ): Promise<number> {
@@ -516,12 +518,16 @@ async function importLocalAttempts(
     // Calcular puntos server-side. Sin tiempo real disponible al importar,
     // usamos el tiempo límite completo (peor caso de bonus de velocidad):
     // el usuario no pierde el resultado, pero tampoco gana bonus inflado.
+    // Si el intento local fue en modo "Sin Tiempo", se respeta ese modo
+    // (puntaje fijo) en vez de recalcular como si hubiera tenido cronometro.
+    const untimed = att.untimed === true;
     const timeLimit = IMPORT_TIME_LIMITS[gameId] ?? 300;
     const points = computeScore({
       won,
       difficulty: difficulty as Difficulty,
       timeSeconds: timeLimit, // sin bonus de velocidad al importar
       timeLimit,
+      untimed,
     });
 
     // Calcular si este attempt importado es rankeable: lo es si ninguna otra
