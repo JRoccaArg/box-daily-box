@@ -158,6 +158,8 @@ const fr: Translations = {
     "Le classement mensuel est réinitialisé le 1er de chaque mois.",
   "ranking.daily_note":
     "Le classement quotidien affiche les résultats d'aujourd'hui.",
+  "ranking.add_friend": "Ajouter en ami",
+  "ranking.add_friend_label": "Ajouter {{name}} comme ami",
 
   "monthly.title": "Classement de {{month}}",
   "monthly.challenges_won": "{{count}} défis gagnés",
