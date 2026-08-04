@@ -157,6 +157,8 @@ const it: Translations = {
   "ranking.monthly_note":
     "La classifica mensile si azzera il 1° di ogni mese.",
   "ranking.daily_note": "La classifica giornaliera mostra i risultati di oggi.",
+  "ranking.add_friend": "Aggiungi amico",
+  "ranking.add_friend_label": "Aggiungi {{name}} come amico",
 
   "monthly.title": "Classifica di {{month}}",
   "monthly.challenges_won": "{{count}} sfide vinte",

@@ -163,6 +163,8 @@ const sl: Translations = {
   "ranking.pts": "točk",
   "ranking.monthly_note": "Mesečna lestvica se ponastavi 1. v mesecu.",
   "ranking.daily_note": "Dnevna lestvica prikazuje današnje rezultate.",
+  "ranking.add_friend": "Dodaj prijatelja",
+  "ranking.add_friend_label": "Dodaj {{name}} kot prijatelja",
 
   // ─── Monthly Ranking (personal) ─────────────────────────────────────
   "monthly.title": "Lestvica za {{month}}",

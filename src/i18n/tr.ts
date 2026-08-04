@@ -163,6 +163,8 @@ const tr: Translations = {
   "ranking.pts": "puan",
   "ranking.monthly_note": "Aylık sıralama her ayın 1'inde sıfırlanır.",
   "ranking.daily_note": "Günlük sıralama bugünün sonuçlarını gösterir.",
+  "ranking.add_friend": "Arkadaş ekle",
+  "ranking.add_friend_label": "{{name}} kişisini arkadaş olarak ekle",
 
   // ─── Monthly Ranking (personal) ─────────────────────────────────────
   "monthly.title": "{{month}} sıralaması",

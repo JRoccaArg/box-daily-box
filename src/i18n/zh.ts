@@ -144,6 +144,8 @@ const zh: Translations = {
   "ranking.pts": "分",
   "ranking.monthly_note": "月度排名在每月1日重置。",
   "ranking.daily_note": "每日排名显示今天的结果。",
+  "ranking.add_friend": "添加好友",
+  "ranking.add_friend_label": "将 {{name}} 添加为好友",
 
   "monthly.title": "{{month}}排名",
   "monthly.challenges_won": "{{count}}个挑战获胜",

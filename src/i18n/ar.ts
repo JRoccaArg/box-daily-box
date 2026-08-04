@@ -100,6 +100,8 @@ const ar: Translations = {
   "ranking.pts": "نقاط",
   "ranking.monthly_note": "يُعاد تعيين التصنيف الشهري في الأول من كل شهر.",
   "ranking.daily_note": "التصنيف اليومي يعرض نتائج اليوم.",
+  "ranking.add_friend": "إضافة صديق",
+  "ranking.add_friend_label": "إضافة {{name}} كصديق",
 
   "monthly.title": "تصنيف {{month}}", "monthly.challenges_won": "{{count}} تحديات فوز",
   "monthly.points_month": "نقاط هذا الشهر",

@@ -157,6 +157,8 @@ const hi: Translations = {
   "ranking.monthly_note":
     "मासिक रैंकिंग हर महीने की 1 तारीख को रीसेट होती है।",
   "ranking.daily_note": "दैनिक रैंकिंग आज के परिणाम दिखाती है।",
+  "ranking.add_friend": "मित्र जोड़ें",
+  "ranking.add_friend_label": "{{name}} को मित्र के रूप में जोड़ें",
 
   "monthly.title": "{{month}} की रैंकिंग",
   "monthly.challenges_won": "{{count}} चुनौतियाँ जीतीं",

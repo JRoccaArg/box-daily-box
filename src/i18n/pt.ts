@@ -157,6 +157,8 @@ const pt: Translations = {
   "ranking.monthly_note":
     "O ranking mensal é reiniciado no dia 1 de cada mês.",
   "ranking.daily_note": "O ranking diário mostra os resultados de hoje.",
+  "ranking.add_friend": "Adicionar amigo",
+  "ranking.add_friend_label": "Adicionar {{name}} como amigo",
 
   "monthly.title": "Ranking de {{month}}",
   "monthly.challenges_won": "{{count}} desafios ganhos",

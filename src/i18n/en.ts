@@ -184,6 +184,8 @@ const en: Translations = {
   "ranking.streak_title": "{{count}}-day winning streak",
   "ranking.monthly_note": "The monthly ranking resets on the 1st of each month.",
   "ranking.daily_note": "The daily ranking shows today's results.",
+  "ranking.add_friend": "Add friend",
+  "ranking.add_friend_label": "Add {{name}} as a friend",
 
   // ─── Badges ─────────────────────────────────────────────────────────
   "badge.monthly_gold": "Gold",

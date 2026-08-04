@@ -2,13 +2,17 @@ import { useEffect, useState } from "react";
 import {
   apiGetMonthlyRanking,
   apiGetDailyRanking,
+  apiListFriends,
+  apiSendFriendRequest,
+  isApiError,
+  friendlyApiError,
   type RankingEntry,
 } from "@/lib/api";
 import { useI18n } from "@/context";
-import { getIdentity } from "@/lib/identity";
+import { getIdentity, getIdentityToken } from "@/lib/identity";
 import { NATIONALITIES } from "@/data/nationalities";
 import { CountrySelect } from "@/components/ui/CountrySelect";
-import { Trophy, Flame } from "@/components/ui/Icon";
+import { Trophy, Flame, UserPlus } from "@/components/ui/Icon";
 import { BadgeIcon } from "@/components/ui/BadgeIcon";
 import { getEffectiveNow } from "@/lib/debugDate";
 import { formatBadgeTooltip } from "@/lib/badgeFormat";
@@ -28,9 +32,43 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
   const [error, setError] = useState(false);
   const [retryTick, setRetryTick] = useState(0);
 
+  // Agregar amigo directo desde la fila del ranking (ver Icon.tsx: UserPlus).
+  // `friendIds` = con quienes ya soy amigo (oculta el botón); `sentIds` = a
+  // quienes ya les mandé solicitud EN ESTA SESIÓN (oculta el botón sin
+  // esperar a que el back confirme que ya son amigos, evita doble click).
+  const [friendIds, setFriendIds] = useState<Set<string> | null>(null);
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  const [addingId, setAddingId] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
   const { userId } = getIdentity();
   const now = getEffectiveNow();
   const monthName = t(`month.${now.getMonth()}`);
+
+  // Sin identityToken (nunca jugó un reto), /friends/* siempre devuelve 403:
+  // ni siquiera pedimos la lista, y el botón de agregar no se muestra.
+  const canAddFriends = getIdentityToken() !== null;
+
+  useEffect(() => {
+    if (!canAddFriends) return;
+    apiListFriends().then((fs) => setFriendIds(new Set(fs.map((f) => f.userId))));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al montar, igual que FriendsTab.
+  }, []);
+
+  async function addFriend(targetUserId: string) {
+    setAddingId(targetUserId);
+    setMessage(null);
+    const res = await apiSendFriendRequest({ targetUserId });
+    setAddingId(null);
+    if (!res || isApiError(res)) {
+      setMessage(res && "error" in res ? friendlyApiError(res.error, t) : t("duel.error_generic"));
+      return;
+    }
+    setSentIds((prev) => new Set(prev).add(targetUserId));
+    setMessage(
+      res.status === "auto_accepted" ? t("friends.request_accepted") : t("friends.request_sent"),
+    );
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -89,6 +127,12 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
           allowClear
         />
       </div>
+
+      {message && (
+        <p className="mt-3 rounded-lg border border-white/10 bg-asphalt-700 px-3 py-2 text-center text-xs text-ink-muted">
+          {message}
+        </p>
+      )}
 
       {/* Contenido */}
       <div className="mt-3">
@@ -195,6 +239,24 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
                           </span>
                         </span>
                       )}
+                      {!isMe &&
+                        canAddFriends &&
+                        friendIds !== null &&
+                        !friendIds.has(entry.userId) &&
+                        !sentIds.has(entry.userId) && (
+                          <button
+                            type="button"
+                            onClick={() => addFriend(entry.userId)}
+                            disabled={addingId === entry.userId}
+                            title={t("ranking.add_friend")}
+                            aria-label={t("ranking.add_friend_label", {
+                              name: entry.displayName || t("ranking.anonymous"),
+                            })}
+                            className="shrink-0 rounded-md p-0.5 text-ink-faint transition-colors hover:text-racing-400 disabled:opacity-50"
+                          >
+                            <UserPlus size={14} />
+                          </button>
+                        )}
                     </div>
                     <span className="text-xs text-ink-faint">
                       {t("ranking.challenges_won", {

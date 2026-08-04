@@ -113,6 +113,8 @@ const de: Translations = {
   "ranking.pts": "Pkt",
   "ranking.monthly_note": "Die monatliche Rangliste wird am 1. jedes Monats zurückgesetzt.",
   "ranking.daily_note": "Die tägliche Rangliste zeigt die heutigen Ergebnisse.",
+  "ranking.add_friend": "Freund hinzufügen",
+  "ranking.add_friend_label": "{{name}} als Freund hinzufügen",
 
   "monthly.title": "Rangliste {{month}}", "monthly.challenges_won": "{{count}} Herausforderungen gewonnen",
   "monthly.points_month": "Punkte diesen Monat",
