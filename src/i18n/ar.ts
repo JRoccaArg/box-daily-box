@@ -61,6 +61,7 @@ const ar: Translations = {
 
   "header.home_label": "Box Daily Box - الرئيسية", "header.streak_title": "سلسلة {{count}} أيام",
   "header.profile_label": "تعديل الملف الشخصي", "header.stats_label": "عرض الإحصائيات", "header.stats": "إحصائيات",
+  "header.pending_requests": "{{count}} طلبات صداقة معلقة",
 
   "footer.line1": "Box Box Daily · مشروع معجبين، بدون ارتباط رسمي بالفورمولا 1.",
   "footer.line2": "تحدٍ جديد كل يوم عند منتصف الليل.",
@@ -102,6 +103,8 @@ const ar: Translations = {
   "ranking.daily_note": "التصنيف اليومي يعرض نتائج اليوم.",
   "ranking.add_friend": "إضافة صديق",
   "ranking.add_friend_label": "إضافة {{name}} كصديق",
+  "ranking.already_friends": "أصدقاء بالفعل",
+  "ranking.request_pending": "تم إرسال الطلب، بانتظار الرد",
 
   "monthly.title": "تصنيف {{month}}", "monthly.challenges_won": "{{count}} تحديات فوز",
   "monthly.points_month": "نقاط هذا الشهر",

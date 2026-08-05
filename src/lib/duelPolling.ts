@@ -7,7 +7,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { apiGetDuel, apiGetPendingDuels, type DuelState, type PendingDuel } from "./api";
-import { isGameplayActive, onGameplayChanged } from "./gameplayState";
 
 const POLL_MS = 3000;
 
@@ -71,8 +70,10 @@ export function useDuelPolling(duelId: string | null): {
 
 /**
  * Invitaciones de duelo pendientes dirigidas a mí (para el DuelBanner).
- * Se pausa mientras `isGameplayActive()` (jugando el reto diario) — el
- * usuario confirmó que el banner no debe interrumpir una partida en curso.
+ * Polling continuo (cada 3s), TAMBIÉN mientras se está jugando: el usuario
+ * pidió que la invitación aparezca "estés donde estés". Es solo lectura y
+ * NUNCA interrumpe la partida por sí mismo — el único que saca del juego es
+ * la acción explícita de "Aceptar" (que además avisa antes, ver DuelBanner).
  */
 export function usePendingDuelsPolling(): PendingDuel[] {
   const [duels, setDuels] = useState<PendingDuel[]>([]);
@@ -81,22 +82,16 @@ export function usePendingDuelsPolling(): PendingDuel[] {
     let stopped = false;
 
     const fetchOnce = async () => {
-      if (isGameplayActive()) return;
       const res = await apiGetPendingDuels();
       if (!stopped) setDuels(res);
     };
 
     fetchOnce();
     const id = window.setInterval(fetchOnce, POLL_MS);
-    const unsubscribe = onGameplayChanged(() => {
-      // Al volver de jugar, refresca enseguida (no esperar hasta 3s).
-      if (!isGameplayActive()) fetchOnce();
-    });
 
     return () => {
       stopped = true;
       window.clearInterval(id);
-      unsubscribe();
     };
   }, []);
 

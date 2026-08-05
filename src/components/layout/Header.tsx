@@ -12,7 +12,9 @@ import { runNavGuard } from "@/lib/navGuard";
 import { homePath } from "@/lib/routes";
 import { useMounted } from "@/lib/useMounted";
 import { getEffectiveNow } from "@/lib/debugDate";
+import { usePendingFriendRequestsCount } from "@/lib/friendsPolling";
 import type { Locale } from "@/i18n";
+import type { StatsView } from "./StatsModal";
 
 /** Fecha legible en el idioma actual. */
 function readableDate(d: Date, locale: string): string {
@@ -55,8 +57,10 @@ export function Header() {
   const { summary } = useStats();
   const { t, locale } = useI18n();
   const [statsOpen, setStatsOpen] = useState(false);
+  const [statsInitialView, setStatsInitialView] = useState<StatsView | undefined>(undefined);
   const [profileOpen, setProfileOpen] = useState(false);
   const { pathname } = useLocation();
+  const pendingRequests = usePendingFriendRequestsCount();
 
   // La fecha de "hoy" difiere entre el momento del prerender (build) y la
   // visita real: se muestra solo tras montar para no generar mismatch de
@@ -65,8 +69,14 @@ export function Header() {
 
   // Escuchar el evento global para abrir el modal de stats desde cualquier
   // lugar de la app (ej: botón "Ver ranking del día" del modal de resultado).
+  // Este camino siempre abre en la pestaña por defecto (Ranking Global): el
+  // salto directo a "Amigos" es solo para cuando se toca el botón CON el
+  // globito de notificaciones visible (ver el botón mas abajo).
   useEffect(() => {
-    return on(Events.OPEN_STATS, () => setStatsOpen(true));
+    return on(Events.OPEN_STATS, () => {
+      setStatsInitialView(undefined);
+      setStatsOpen(true);
+    });
   }, []);
 
   // Cerrar los modales al navegar. Header vive dentro de Layout, que NO se
@@ -111,17 +121,30 @@ export function Header() {
           </button>
 
           <button
-            onClick={() => setStatsOpen(true)}
+            onClick={() => {
+              // Si hay solicitudes de amistad sin responder, saltar directo
+              // a esa pestaña (es lo que el globito esta avisando).
+              setStatsInitialView(pendingRequests > 0 ? "friends" : undefined);
+              setStatsOpen(true);
+            }}
             aria-label={t("header.stats_label")}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/10 px-3 text-sm text-ink transition-colors hover:border-white/25 hover:bg-white/5"
+            className="relative inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/10 px-3 text-sm text-ink transition-colors hover:border-white/25 hover:bg-white/5"
           >
             <StatIcon size={16} />
             <span className="hidden sm:inline">{t("header.stats")}</span>
+            {pendingRequests > 0 && (
+              <span
+                className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-racing px-1 font-mono text-[10px] font-bold leading-none text-white"
+                aria-label={t("header.pending_requests", { count: pendingRequests })}
+              >
+                {pendingRequests}
+              </span>
+            )}
           </button>
         </div>
       </div>
 
-      <StatsModal open={statsOpen} onClose={() => setStatsOpen(false)} />
+      <StatsModal open={statsOpen} onClose={() => setStatsOpen(false)} initialView={statsInitialView} />
       <IdentityModal open={profileOpen} onClose={() => setProfileOpen(false)} />
     </header>
   );

@@ -140,8 +140,17 @@ export async function apiStartChallenge(
   if (!API_URL) return { ok: false };
 
   const { userId, displayName, countryCode } = getIdentity();
-  const now = new Date();
-  const clientDateKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  // OJO: usar `dateKey()` (no `new Date()` a mano) es lo que hace que esto
+  // respete el override de fecha de debug SOLO STAGING (`debugDate.ts`) —
+  // igual que el resto de la app (GameShell, generación del reto vía
+  // `getEffectiveNow()`, y el propio ranking vía `apiGetDailyRanking`). Antes
+  // esta función calculaba la fecha a mano con el reloj real: en staging,
+  // con un override activo, jugabas el reto de UN día pero el intento se
+  // guardaba bajo la fecha REAL — y como el ranking sí respeta el override,
+  // el intento "desaparecía" (quedaba bajo otra fecha) o el día no reflejaba
+  // partidas nuevas nunca. En producción esto no cambia nada: sin override
+  // activo, `dateKey()` da exactamente lo mismo que el reloj real.
+  const clientDateKey = dateKey();
 
   const data = await apiFetch<StartResponse>(
     `/challenges/${gameId}/start`,
@@ -545,6 +554,13 @@ export type FriendRequest = {
   displayName: string | null;
   countryCode: string | null;
 };
+/** Solicitud de amistad que YO mande y todavia no fue respondida. */
+export type OutgoingFriendRequest = {
+  requestId: number;
+  toUserId: string;
+  displayName: string | null;
+  countryCode: string | null;
+};
 
 type ErrShape = { error: string };
 function isErr<T>(v: T | ErrShape | null): v is ErrShape {
@@ -709,6 +725,15 @@ export async function apiListFriendRequests(): Promise<FriendRequest[]> {
   if (!userId) return [];
   const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
   const res = await apiFetch<{ requests: FriendRequest[] }>(`/friends/requests?${params.toString()}`);
+  return res?.requests ?? [];
+}
+
+/** Solicitudes de amistad que YO mande y siguen pendientes de respuesta. */
+export async function apiListOutgoingFriendRequests(): Promise<OutgoingFriendRequest[]> {
+  const { userId } = getIdentity();
+  if (!userId) return [];
+  const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
+  const res = await apiFetch<{ requests: OutgoingFriendRequest[] }>(`/friends/requests/outgoing?${params.toString()}`);
   return res?.requests ?? [];
 }
 

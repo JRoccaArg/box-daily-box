@@ -7,6 +7,10 @@
 //  - CORS estricto: solo orígenes conocidos
 //  - trustProxy: IP real detrás del proxy de Railway
 
+// Carga .env en desarrollo local (si existe). En Railway (produccion) esto
+// no hace nada: las variables ya estan puestas por la plataforma, y
+// dotenv/config nunca pisa una env var que ya exista.
+import "dotenv/config";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
@@ -44,6 +48,7 @@ import {
   respondFriendRequest,
   getFriends,
   getFriendRequests,
+  getOutgoingFriendRequests,
   removeFriend,
   sweepExpiredDuels,
 } from "./routes";
@@ -341,6 +346,7 @@ async function start(): Promise<void> {
   app.post("/friends/remove", { preHandler: requireDb, config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, removeFriend as any);
   app.get("/friends", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getFriends as any);
   app.get("/friends/requests", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getFriendRequests as any);
+  app.get("/friends/requests/outgoing", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getOutgoingFriendRequests as any);
 
   // ─── Inicializar BD en background ─────────────────────────────────
   initializeDatabase()

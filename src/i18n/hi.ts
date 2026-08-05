@@ -92,6 +92,7 @@ const hi: Translations = {
   "header.profile_label": "प्रोफ़ाइल संपादित करें",
   "header.stats_label": "आँकड़े देखें",
   "header.stats": "Stats",
+  "header.pending_requests": "{{count}} लंबित मित्र अनुरोध",
 
   "footer.line1":
     "Box Box Daily · प्रशंसक परियोजना, फ़ॉर्मूला 1 से कोई आधिकारिक संबंध नहीं।",
@@ -159,6 +160,8 @@ const hi: Translations = {
   "ranking.daily_note": "दैनिक रैंकिंग आज के परिणाम दिखाती है।",
   "ranking.add_friend": "मित्र जोड़ें",
   "ranking.add_friend_label": "{{name}} को मित्र के रूप में जोड़ें",
+  "ranking.already_friends": "पहले से मित्र हैं",
+  "ranking.request_pending": "अनुरोध भेजा गया, प्रतिक्रिया की प्रतीक्षा",
 
   "monthly.title": "{{month}} की रैंकिंग",
   "monthly.challenges_won": "{{count}} चुनौतियाँ जीतीं",

@@ -64,6 +64,10 @@ export default {
           "0%": { backgroundPosition: "200% 0" },
           "100%": { backgroundPosition: "-200% 0" },
         },
+        "toast-out": {
+          "0%": { transform: "translateY(0)", opacity: "1" },
+          "100%": { transform: "translateY(4px)", opacity: "0" },
+        },
       },
       animation: {
         "flip-in": "flip-in 0.45s ease forwards",
@@ -71,6 +75,7 @@ export default {
         shake: "shake 0.5s cubic-bezier(.36,.07,.19,.97) both",
         rise: "rise 0.35s ease forwards",
         sweep: "sweep 1.4s linear infinite",
+        "toast-out": "toast-out 0.25s ease-in forwards",
       },
     },
   },

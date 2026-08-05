@@ -74,6 +74,7 @@ const de: Translations = {
 
   "header.home_label": "Box Daily Box - Start", "header.streak_title": "{{count}}-Tage-Serie",
   "header.profile_label": "Profil bearbeiten", "header.stats_label": "Statistiken ansehen", "header.stats": "Stats",
+  "header.pending_requests": "{{count}} ausstehende Freundschaftsanfragen",
 
   "footer.line1": "Box Box Daily · Fanprojekt, ohne offizielle Verbindung zur Formel 1.",
   "footer.line2": "Jeden Tag um Mitternacht eine neue Herausforderung.",
@@ -115,6 +116,8 @@ const de: Translations = {
   "ranking.daily_note": "Die tägliche Rangliste zeigt die heutigen Ergebnisse.",
   "ranking.add_friend": "Freund hinzufügen",
   "ranking.add_friend_label": "{{name}} als Freund hinzufügen",
+  "ranking.already_friends": "Bereits befreundet",
+  "ranking.request_pending": "Anfrage gesendet, wartet auf Antwort",
 
   "monthly.title": "Rangliste {{month}}", "monthly.challenges_won": "{{count}} Herausforderungen gewonnen",
   "monthly.points_month": "Punkte diesen Monat",

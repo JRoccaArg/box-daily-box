@@ -87,6 +87,7 @@ const zh: Translations = {
   "header.profile_label": "编辑资料",
   "header.stats_label": "查看统计",
   "header.stats": "统计",
+  "header.pending_requests": "{{count}} 个待处理的好友请求",
 
   "footer.line1": "Box Box Daily · 粉丝项目，与一级方程式无官方关联。",
   "footer.line2": "每天午夜更新新挑战。",
@@ -146,6 +147,8 @@ const zh: Translations = {
   "ranking.daily_note": "每日排名显示今天的结果。",
   "ranking.add_friend": "添加好友",
   "ranking.add_friend_label": "将 {{name}} 添加为好友",
+  "ranking.already_friends": "已是好友",
+  "ranking.request_pending": "请求已发送，等待回复",
 
   "monthly.title": "{{month}}排名",
   "monthly.challenges_won": "{{count}}个挑战获胜",
