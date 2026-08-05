@@ -64,8 +64,8 @@ export function DriverCard({ driver, onClick, state = "idle", disabled, full = f
       ].join(" ")}
     >
       <Helmet color={driverColor(driver)} />
-      <div className="leading-tight">
-        <div className="font-display text-sm font-bold tracking-tight text-white">
+      <div className="w-full leading-tight">
+        <div className="w-full break-words font-display text-sm font-bold tracking-tight text-white">
           {full ? `${driver.firstName} ` : ""}
           {driver.lastName}
         </div>

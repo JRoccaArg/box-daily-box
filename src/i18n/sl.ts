@@ -96,6 +96,7 @@ const sl: Translations = {
   "header.profile_label": "Uredi profil",
   "header.stats_label": "Poglej statistiko",
   "header.stats": "Statistika",
+  "header.pending_requests": "{{count}} čakajočih prijateljskih zahtev",
 
   // ─── Footer ─────────────────────────────────────────────────────────
   "footer.line1":
@@ -165,6 +166,8 @@ const sl: Translations = {
   "ranking.daily_note": "Dnevna lestvica prikazuje današnje rezultate.",
   "ranking.add_friend": "Dodaj prijatelja",
   "ranking.add_friend_label": "Dodaj {{name}} kot prijatelja",
+  "ranking.already_friends": "Že prijatelja",
+  "ranking.request_pending": "Zahteva poslana, čakanje na odgovor",
 
   // ─── Monthly Ranking (personal) ─────────────────────────────────────
   "monthly.title": "Lestvica za {{month}}",

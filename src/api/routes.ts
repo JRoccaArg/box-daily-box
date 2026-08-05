@@ -2822,6 +2822,32 @@ export async function getFriendRequests(req: FastifyRequest, reply: FastifyReply
   }
 }
 
+/** GET /friends/requests/outgoing — solicitudes pendientes ENVIADAS por mi (aun sin responder). */
+export async function getOutgoingFriendRequests(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { userId, identityToken } = req.query as { userId?: string; identityToken?: string };
+    if (!requireOwnership(reply, identityToken, userId)) return;
+    const res = await query(
+      `SELECT r.id, r.to_user, u.display_name, u.country_code, r.created_at
+       FROM friend_requests r
+       JOIN users u ON u.id = r.to_user
+       WHERE r.from_user = $1 AND r.status = 'pending'
+       ORDER BY r.created_at DESC`,
+      [userId],
+    );
+    const requests = res.rows.map((r: any) => ({
+      requestId: Number(r.id),
+      toUserId: r.to_user,
+      displayName: r.display_name,
+      countryCode: r.country_code,
+    }));
+    reply.code(200).send({ requests });
+  } catch (err) {
+    console.error("getOutgoingFriendRequests error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
 /** POST /friends/remove — desamigar. */
 export async function removeFriend(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {

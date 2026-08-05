@@ -92,6 +92,7 @@ const it: Translations = {
   "header.profile_label": "Modifica profilo",
   "header.stats_label": "Vedi statistiche",
   "header.stats": "Stats",
+  "header.pending_requests": "{{count}} richieste di amicizia in sospeso",
 
   "footer.line1":
     "Box Box Daily · Progetto di fan, senza affiliazione ufficiale con la Formula 1.",
@@ -159,6 +160,8 @@ const it: Translations = {
   "ranking.daily_note": "La classifica giornaliera mostra i risultati di oggi.",
   "ranking.add_friend": "Aggiungi amico",
   "ranking.add_friend_label": "Aggiungi {{name}} come amico",
+  "ranking.already_friends": "Già amici",
+  "ranking.request_pending": "Richiesta inviata, in attesa di risposta",
 
   "monthly.title": "Classifica di {{month}}",
   "monthly.challenges_won": "{{count}} sfide vinte",

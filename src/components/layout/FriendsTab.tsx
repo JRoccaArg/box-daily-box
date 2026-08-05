@@ -23,7 +23,13 @@ import {
 import { NATIONALITIES } from "@/data/nationalities";
 import { Button } from "@/components/ui/Button";
 import { Users } from "@/components/ui/Icon";
+import { emit, Events } from "@/lib/events";
 import { DuelChallengeModal } from "./DuelChallengeModal";
+
+/** Mientras la pestaña esta abierta, cada cuanto se refresca sola (para que
+ *  una solicitud entrante, o que alguien responda la tuya, aparezca sin
+ *  tener que cerrar y volver a abrir el panel). */
+const POLL_MS = 3000;
 
 export function FriendsTab() {
   const { t } = useI18n();
@@ -47,17 +53,31 @@ export function FriendsTab() {
   const [challengeTarget, setChallengeTarget] = useState<Friend | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
 
-  const reload = () => {
-    // Sin identityToken, las 3 llamadas van a devolver 403 siempre
-    // (requireOwnership en el backend) — evita el roundtrip inútil.
+  // El código propio no cambia solo: se pide una vez al montar.
+  useEffect(() => {
     if (noToken) return;
     apiGetMyFriendCode().then(setCode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- noToken no cambia durante la vida del componente.
+  }, []);
+
+  const refreshLists = () => {
+    // Sin identityToken, las llamadas van a devolver 403 siempre
+    // (requireOwnership en el backend) — evita el roundtrip inútil.
+    if (noToken) return;
     apiListFriends().then(setFriends);
     apiListFriendRequests().then(setRequests);
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- solo debe correr una vez al montar; noToken no cambia durante la vida del componente (requiere recargar la página para pasar de anónimo a con token).
-  useEffect(reload, []);
+  // Mientras la pestaña está abierta, refresca sola: si te llega una
+  // solicitud nueva, o alguien responde la tuya (desde OTRO dispositivo/
+  // sesión), aparece sin que tengas que cerrar y reabrir el panel.
+  useEffect(() => {
+    if (noToken) return;
+    refreshLists();
+    const id = window.setInterval(refreshLists, POLL_MS);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- noToken no cambia durante la vida del componente.
+  }, []);
 
   async function addByCode() {
     setMessage(null);
@@ -73,19 +93,22 @@ export function FriendsTab() {
     }
     setMessage(res.status === "auto_accepted" ? t("friends.request_accepted") : t("friends.request_sent"));
     setCodeInput("");
-    reload();
+    refreshLists();
+    emit(Events.FRIENDS_CHANGED);
   }
 
   async function respond(requestId: number, accept: boolean) {
     await apiRespondFriendRequest(requestId, accept);
-    reload();
+    refreshLists();
+    emit(Events.FRIENDS_CHANGED);
   }
 
   async function remove(friendUserId: string) {
     setRemoving(friendUserId);
     await apiRemoveFriend(friendUserId);
     setRemoving(null);
-    reload();
+    refreshLists();
+    emit(Events.FRIENDS_CHANGED);
   }
 
   function copyCode() {
@@ -142,11 +165,11 @@ export function FriendsTab() {
                   key={r.requestId}
                   className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-asphalt-700 px-3 py-2.5"
                 >
-                  <span className="flex items-center gap-2 text-sm text-ink">
-                    {nat && <span className={`fi fi-${nat.alpha2}`} role="img" aria-label={nat.name} />}
-                    {r.displayName || t("stats.no_name")}
+                  <span className="flex min-w-0 flex-1 items-center gap-2 text-sm text-ink">
+                    {nat && <span className={`fi fi-${nat.alpha2} shrink-0`} role="img" aria-label={nat.name} />}
+                    <span className="truncate">{r.displayName || t("stats.no_name")}</span>
                   </span>
-                  <div className="flex gap-1.5">
+                  <div className="flex shrink-0 gap-1.5">
                     <Button size="sm" onClick={() => respond(r.requestId, true)}>{t("friends.accept")}</Button>
                     <Button size="sm" variant="ghost" onClick={() => respond(r.requestId, false)}>{t("friends.reject")}</Button>
                   </div>
@@ -176,11 +199,11 @@ export function FriendsTab() {
                   key={f.userId}
                   className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-asphalt-700 px-3 py-2.5"
                 >
-                  <span className="flex items-center gap-2 text-sm text-ink">
-                    {nat && <span className={`fi fi-${nat.alpha2}`} role="img" aria-label={nat.name} />}
-                    {f.displayName || t("stats.no_name")}
+                  <span className="flex min-w-0 flex-1 items-center gap-2 text-sm text-ink">
+                    {nat && <span className={`fi fi-${nat.alpha2} shrink-0`} role="img" aria-label={nat.name} />}
+                    <span className="truncate">{f.displayName || t("stats.no_name")}</span>
                   </span>
-                  <div className="flex gap-1.5">
+                  <div className="flex shrink-0 gap-1.5">
                     <Button size="sm" onClick={() => setChallengeTarget(f)}>
                       {t("duel.challenge_button")}
                     </Button>

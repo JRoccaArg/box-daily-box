@@ -37,4 +37,8 @@ export const Events = {
   STATS_CHANGED: "stats:changed",
   /** Solicita abrir el modal de stats/ranking desde cualquier lugar. */
   OPEN_STATS: "stats:open",
+  /** Cambio en amistades (enviar/aceptar/rechazar/eliminar): refresca el
+   *  globito de notificaciones y cualquier lista de amigos montada, sin
+   *  esperar al proximo poll. */
+  FRIENDS_CHANGED: "friends:changed",
 } as const;

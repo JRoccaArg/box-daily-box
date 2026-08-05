@@ -96,6 +96,7 @@ const en: Translations = {
   "header.profile_label": "Edit profile",
   "header.stats_label": "View statistics",
   "header.stats": "Stats",
+  "header.pending_requests": "{{count}} pending friend requests",
 
   // ─── Sound/haptics settings ─────────────────────────────────────────
   "settings.trigger_label": "Sound and vibration",
@@ -186,6 +187,8 @@ const en: Translations = {
   "ranking.daily_note": "The daily ranking shows today's results.",
   "ranking.add_friend": "Add friend",
   "ranking.add_friend_label": "Add {{name}} as a friend",
+  "ranking.already_friends": "Already friends",
+  "ranking.request_pending": "Request sent, awaiting response",
 
   // ─── Badges ─────────────────────────────────────────────────────────
   "badge.monthly_gold": "Gold",
@@ -492,6 +495,12 @@ const en: Translations = {
     "If you leave now, you forfeit the duel and your opponent wins. This can't be undone.",
   "duel.leave_confirm": "Yes, leave and lose",
   "duel.leave_cancel": "Keep playing",
+  // Accepting a duel while in a game (daily challenge or duel in progress).
+  "duel.accept_while_playing_title": "Accept the duel?",
+  "duel.accept_while_playing_msg":
+    "You're in the middle of a game. If you accept this duel, you lose your current game and its attempt. This can't be undone.",
+  "duel.accept_while_playing_confirm": "Yes, accept and lose my game",
+  "duel.accept_while_playing_cancel": "Keep playing",
   "duel.cancelled_by_you": "You cancelled the duel.",
   "duel.expired": "The duel expired.",
   "duel.cancelled": "The duel was cancelled.",
