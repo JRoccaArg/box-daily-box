@@ -545,6 +545,13 @@ export type FriendRequest = {
   displayName: string | null;
   countryCode: string | null;
 };
+/** Solicitud de amistad que YO mande y todavia no fue respondida. */
+export type OutgoingFriendRequest = {
+  requestId: number;
+  toUserId: string;
+  displayName: string | null;
+  countryCode: string | null;
+};
 
 type ErrShape = { error: string };
 function isErr<T>(v: T | ErrShape | null): v is ErrShape {
@@ -709,6 +716,15 @@ export async function apiListFriendRequests(): Promise<FriendRequest[]> {
   if (!userId) return [];
   const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
   const res = await apiFetch<{ requests: FriendRequest[] }>(`/friends/requests?${params.toString()}`);
+  return res?.requests ?? [];
+}
+
+/** Solicitudes de amistad que YO mande y siguen pendientes de respuesta. */
+export async function apiListOutgoingFriendRequests(): Promise<OutgoingFriendRequest[]> {
+  const { userId } = getIdentity();
+  if (!userId) return [];
+  const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
+  const res = await apiFetch<{ requests: OutgoingFriendRequest[] }>(`/friends/requests/outgoing?${params.toString()}`);
   return res?.requests ?? [];
 }
 

@@ -61,6 +61,7 @@ const nl: Translations = {
 
   "header.home_label": "Box Daily Box - home", "header.streak_title": "{{count}}-daagse reeks",
   "header.profile_label": "Profiel bewerken", "header.stats_label": "Statistieken bekijken", "header.stats": "Stats",
+  "header.pending_requests": "{{count}} openstaande vriendschapsverzoeken",
 
   "footer.line1": "Box Box Daily · Fanproject, geen officiële band met Formule 1.",
   "footer.line2": "Elke dag om middernacht een nieuwe uitdaging.",
@@ -102,6 +103,8 @@ const nl: Translations = {
   "ranking.daily_note": "De dagelijkse ranglijst toont de resultaten van vandaag.",
   "ranking.add_friend": "Vriend toevoegen",
   "ranking.add_friend_label": "{{name}} toevoegen als vriend",
+  "ranking.already_friends": "Al vrienden",
+  "ranking.request_pending": "Verzoek verzonden, wacht op antwoord",
 
   "monthly.title": "Ranglijst {{month}}", "monthly.challenges_won": "{{count}} uitdagingen gewonnen",
   "monthly.points_month": "punten deze maand",

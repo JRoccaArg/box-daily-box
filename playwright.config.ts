@@ -41,5 +41,14 @@ export default defineConfig({
       name: "mobile",
       use: { ...devices["Pixel 7"] },
     },
+    // Pantalla angosta (~375px, dimensiones de iPhone SE) ademas del Pixel 7
+    // (~412px): la mayoria de los desbordes reportados solo aparecen por
+    // debajo de 400px. Mismo motor que "mobile" (Chromium, via el device
+    // Pixel 7) para no depender de instalar WebKit en este entorno; lo unico
+    // que cambia es el viewport angosto.
+    {
+      name: "mobile-narrow",
+      use: { ...devices["Pixel 7"], viewport: { width: 375, height: 667 } },
+    },
   ],
 });

@@ -118,7 +118,7 @@ export function DuelChallengeModal({ open, onClose, mode }: Props) {
     <Modal open={open} onClose={onClose} title={title}>
       {mode.kind === "toFriend" && (
         <div className="space-y-5">
-          <p className="text-sm text-ink-muted">
+          <p className="break-words text-sm text-ink-muted">
             {t("duel.challenging_friend", { name: mode.opponentName || t("duel.someone") })}
           </p>
           <section>
@@ -171,11 +171,11 @@ export function DuelChallengeModal({ open, onClose, mode }: Props) {
                     key={f.userId}
                     className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-asphalt-700 px-3 py-2.5"
                   >
-                    <span className="flex items-center gap-2 text-sm text-ink">
-                      {nat && <span className={`fi fi-${nat.alpha2}`} role="img" aria-label={nat.name} />}
-                      {f.displayName || t("stats.no_name")}
+                    <span className="flex min-w-0 flex-1 items-center gap-2 text-sm text-ink">
+                      {nat && <span className={`fi fi-${nat.alpha2} shrink-0`} role="img" aria-label={nat.name} />}
+                      <span className="truncate">{f.displayName || t("stats.no_name")}</span>
                     </span>
-                    <Button size="sm" disabled={creating} onClick={() => createAndGo(f.userId)}>
+                    <Button size="sm" disabled={creating} onClick={() => createAndGo(f.userId)} className="shrink-0">
                       {t("duel.challenge_button")}
                     </Button>
                   </li>

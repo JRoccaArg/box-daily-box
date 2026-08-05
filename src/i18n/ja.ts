@@ -87,6 +87,7 @@ const ja: Translations = {
   "header.profile_label": "プロフィール編集",
   "header.stats_label": "統計を見る",
   "header.stats": "統計",
+  "header.pending_requests": "保留中のフレンドリクエスト {{count}} 件",
 
   "footer.line1": "Box Box Daily · ファンプロジェクト。F1との公式提携はありません。",
   "footer.line2": "毎日午前0時に新しいチャレンジ。",
@@ -146,6 +147,8 @@ const ja: Translations = {
   "ranking.daily_note": "デイリーランキングは今日の結果を表示します。",
   "ranking.add_friend": "友達を追加",
   "ranking.add_friend_label": "{{name}}を友達に追加",
+  "ranking.already_friends": "すでに友達です",
+  "ranking.request_pending": "リクエスト送信済み、返信待ち",
 
   "monthly.title": "{{month}}のランキング",
   "monthly.challenges_won": "{{count}}チャレンジ勝利",

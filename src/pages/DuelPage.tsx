@@ -191,7 +191,7 @@ function DuelBody({ duel, myUserId, busy, actionError, onAccept, onDecline, onCa
     return (
       <Panel className="text-center">
         <Swords size={26} className="mx-auto mb-3 text-racing-400" />
-        <h1 className="font-display text-xl font-bold text-white">
+        <h1 className="break-words font-display text-xl font-bold text-white">
           {t("duel.invitation_from", { name: duel.creatorName || t("duel.someone"), game: game ? t(`game.${game.id}.name`) : duel.gameId })}
         </h1>
         <p className="mt-1 text-sm text-ink-muted">

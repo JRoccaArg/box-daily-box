@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStats } from "@/context/StatsContext";
 import { useI18n } from "@/context";
 import { Modal } from "@/components/ui/Modal";
@@ -11,19 +11,34 @@ import { FriendsTab } from "./FriendsTab";
 import { getIdentity } from "@/lib/identity";
 import { NATIONALITIES } from "@/data/nationalities";
 
+export type StatsView = "personal" | "global" | "friends";
+
 type StatsModalProps = {
   open: boolean;
   onClose: () => void;
+  /** Pestaña a mostrar la próxima vez que se ABRE (ej: "friends" cuando se
+   *  tocó el botón de stats con el globito de solicitudes pendientes
+   *  visible). `undefined` = no forzar nada, dejar la última pestaña vista. */
+  initialView?: StatsView;
 };
 
-type View = "personal" | "global" | "friends";
-
 /** Panel de estadisticas + ranking global + perfil. */
-export function StatsModal({ open, onClose }: StatsModalProps) {
+export function StatsModal({ open, onClose, initialView }: StatsModalProps) {
   const { summary, persistent } = useStats();
   const { t } = useI18n();
-  const [view, setView] = useState<View>("global");
+  const [view, setView] = useState<StatsView>("global");
   const [identityOpen, setIdentityOpen] = useState(false);
+
+  // Solo al TRANSICIONAR de cerrado a abierto se fuerza `initialView` (si
+  // vino). Mientras el modal ya está abierto, el usuario puede cambiar de
+  // pestaña libremente sin que esto lo interrumpa.
+  const wasOpenRef = useRef(open);
+  useEffect(() => {
+    if (open && !wasOpenRef.current && initialView) {
+      setView(initialView);
+    }
+    wasOpenRef.current = open;
+  }, [open, initialView]);
 
   const total = summary.won + summary.lost;
   const winRate = total > 0 ? Math.round((summary.won / total) * 100) : 0;

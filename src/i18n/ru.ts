@@ -74,6 +74,7 @@ const ru: Translations = {
 
   "header.home_label": "Box Daily Box - главная", "header.streak_title": "Серия {{count}} дней",
   "header.profile_label": "Редактировать профиль", "header.stats_label": "Статистика", "header.stats": "Стат.",
+  "header.pending_requests": "{{count}} ожидающих запросов в друзья",
 
   "footer.line1": "Box Box Daily · Фан-проект, без официальной связи с Формулой 1.",
   "footer.line2": "Новое испытание каждый день в полночь.",
@@ -115,6 +116,8 @@ const ru: Translations = {
   "ranking.daily_note": "Дневной рейтинг показывает результаты сегодня.",
   "ranking.add_friend": "Добавить в друзья",
   "ranking.add_friend_label": "Добавить {{name}} в друзья",
+  "ranking.already_friends": "Уже друзья",
+  "ranking.request_pending": "Запрос отправлен, ожидание ответа",
 
   "monthly.title": "Рейтинг за {{month}}", "monthly.challenges_won": "{{count}} испытаний выиграно",
   "monthly.points_month": "очков за месяц",

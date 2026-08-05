@@ -102,6 +102,7 @@ const es: Translations = {
   "header.profile_label": "Editar perfil",
   "header.stats_label": "Ver estadisticas",
   "header.stats": "Stats",
+  "header.pending_requests": "{{count}} solicitudes de amistad pendientes",
 
   // ─── Configuración de sonido/vibración ───────────────────────────────
   "settings.trigger_label": "Sonido y vibración",
@@ -195,6 +196,8 @@ const es: Translations = {
   "ranking.daily_note": "El ranking diario muestra los resultados de hoy.",
   "ranking.add_friend": "Agregar amigo",
   "ranking.add_friend_label": "Agregar a {{name}} como amigo",
+  "ranking.already_friends": "Ya son amigos",
+  "ranking.request_pending": "Solicitud enviada, esperando respuesta",
 
   // ─── Badges ─────────────────────────────────────────────────────────
   "badge.monthly_gold": "Oro",
@@ -507,6 +510,12 @@ const es: Translations = {
     "Si salís ahora, abandonás el duelo y tu rival gana. No hay vuelta atrás.",
   "duel.leave_confirm": "Sí, abandonar y perder",
   "duel.leave_cancel": "Seguir jugando",
+  // Aceptar un duelo estando en una partida (reto diario o duelo en curso).
+  "duel.accept_while_playing_title": "¿Aceptar el duelo?",
+  "duel.accept_while_playing_msg":
+    "Estás en medio de una partida. Si aceptás este duelo, perdés tu partida actual y su intento. No hay vuelta atrás.",
+  "duel.accept_while_playing_confirm": "Sí, aceptar y perder mi partida",
+  "duel.accept_while_playing_cancel": "Seguir jugando",
   "duel.cancelled_by_you": "Cancelaste el duelo.",
   "duel.expired": "El duelo expiró.",
   "duel.cancelled": "El duelo fue cancelado.",

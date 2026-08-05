@@ -186,7 +186,7 @@ export function PoleWordle({ difficulty, date, seed, status, onWin, onLose }: Ga
       <button
         type="button"
         onClick={() => mobileInputRef.current?.focus()}
-        className="flex flex-col gap-1.5 focus:outline-none"
+        className="flex w-full max-w-xs flex-col gap-1.5 focus:outline-none"
         aria-label={t("polewordle.grid_label")}
       >
         {Array.from({ length: MAX_ATTEMPTS }).map((_, row) => {
@@ -196,7 +196,7 @@ export function PoleWordle({ difficulty, date, seed, status, onWin, onLose }: Ga
           return (
             <div
               key={row}
-              className={["flex gap-1.5", error && isCurrentRow ? "animate-shake" : ""].join(" ")}
+              className={["flex w-full gap-1 sm:gap-1.5", error && isCurrentRow ? "animate-shake" : ""].join(" ")}
             >
               {Array.from({ length: len }).map((__, col) => {
                 const letter = guess ? guess[col] : isCurrentRow ? current[col] : undefined;
@@ -206,9 +206,14 @@ export function PoleWordle({ difficulty, date, seed, status, onWin, onLose }: Ga
                   <div
                     key={col}
                     className={[
-                      "flex items-center justify-center rounded-md border-2 font-mono font-bold uppercase",
+                      // `flex-1 aspect-square`: la celda ocupa una fraccion
+                      // igual del ancho disponible (que depende de `len`,
+                      // hasta 11 letras, Y del ancho de pantalla), en vez de
+                      // un tamaño fijo en px que se salia del recuadro en
+                      // pantallas angostas con palabras largas.
+                      "flex aspect-square min-w-0 flex-1 items-center justify-center rounded-md border-2 font-mono font-bold uppercase",
                       "transition-colors",
-                      len > 8 ? "h-10 w-7 text-base sm:h-11 sm:w-9" : "h-11 w-10 text-xl sm:h-12 sm:w-11",
+                      len > 8 ? "text-sm sm:text-lg" : "text-lg sm:text-2xl",
                       CELL_CLASS[cell],
                       filled && cell === "empty" ? "border-white/40" : "",
                       guess ? "animate-flip-in" : "",
@@ -234,9 +239,9 @@ export function PoleWordle({ difficulty, date, seed, status, onWin, onLose }: Ga
         {!error && solved && <span className="text-sector-green">{t("polewordle.correct")}</span>}
       </div>
 
-      <div className="mt-2 flex w-full max-w-md flex-col gap-1.5">
+      <div className="mt-2 flex w-full max-w-md flex-col gap-1 sm:gap-1.5">
         {ROWS.map((rowKeys, i) => (
-          <div key={i} className="flex justify-center gap-1.5">
+          <div key={i} className="flex w-full justify-center gap-1 sm:gap-1.5">
             {i === 2 && <KeyButton wide label="ENTER" onPress={() => press("ENTER")} disabled={locked} />}
             {rowKeys.split("").map((k) => (
               <KeyButton
@@ -273,9 +278,13 @@ function KeyButton({
       onClick={onPress}
       disabled={disabled}
       className={[
-        "flex h-12 items-center justify-center rounded-md font-mono text-sm font-semibold uppercase",
+        "flex h-12 min-w-0 items-center justify-center rounded-md font-mono text-sm font-semibold uppercase",
         "transition-colors disabled:opacity-50",
-        wide ? "px-3 text-[11px]" : "w-8 sm:w-9",
+        // Teclas fluidas (`flex-1 min-w-0`) en vez de un ancho fijo en px:
+        // 10 teclas en una fila (QWERTYUIOP) con ancho fijo se salian del
+        // teclado en pantallas angostas. ENTER/DEL quedan con un poco mas
+        // de peso relativo (`flex-[1.6]`) para que el texto entre.
+        wide ? "flex-[1.6] px-1 text-[10px] sm:px-3 sm:text-[11px]" : "flex-1",
         KEY_CLASS[state],
       ].join(" ")}
     >

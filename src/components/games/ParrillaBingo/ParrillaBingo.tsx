@@ -209,7 +209,7 @@ function ConstraintLabel({ constraint }: { constraint: Constraint }) {
           style={{ backgroundColor: color }}
           aria-hidden="true"
         />
-        <span className="text-[11px] font-semibold leading-tight text-ink">
+        <span className="w-full break-words text-[11px] font-semibold leading-tight text-ink">
           {constraint.label}
         </span>
       </div>
@@ -234,7 +234,7 @@ function ConstraintLabel({ constraint }: { constraint: Constraint }) {
     return (
       <div className="flex flex-col items-center gap-1 text-center text-ink">
         <StatIcon size={16} />
-        <span className="text-[11px] font-semibold leading-tight">{t(constraint.labelKey ?? "")}</span>
+        <span className="w-full break-words text-[11px] font-semibold leading-tight">{t(constraint.labelKey ?? "")}</span>
       </div>
     );
   }
@@ -242,7 +242,7 @@ function ConstraintLabel({ constraint }: { constraint: Constraint }) {
   return (
     <div className="flex flex-col items-center gap-1 text-center text-sector-yellow">
       <Trophy size={16} />
-      <span className="text-[11px] font-semibold leading-tight">{t("bingo.champion_label")}</span>
+      <span className="w-full break-words text-[11px] font-semibold leading-tight">{t("bingo.champion_label")}</span>
     </div>
   );
 }

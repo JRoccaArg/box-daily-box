@@ -96,6 +96,7 @@ const tr: Translations = {
   "header.profile_label": "Profili düzenle",
   "header.stats_label": "İstatistikleri gör",
   "header.stats": "İstatistikler",
+  "header.pending_requests": "{{count}} bekleyen arkadaşlık isteği",
 
   // ─── Footer ─────────────────────────────────────────────────────────
   "footer.line1":
@@ -165,6 +166,8 @@ const tr: Translations = {
   "ranking.daily_note": "Günlük sıralama bugünün sonuçlarını gösterir.",
   "ranking.add_friend": "Arkadaş ekle",
   "ranking.add_friend_label": "{{name}} kişisini arkadaş olarak ekle",
+  "ranking.already_friends": "Zaten arkadaşsınız",
+  "ranking.request_pending": "İstek gönderildi, yanıt bekleniyor",
 
   // ─── Monthly Ranking (personal) ─────────────────────────────────────
   "monthly.title": "{{month}} sıralaması",
