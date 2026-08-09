@@ -191,7 +191,7 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
         )}
 
         {!loading && !error && entries.length > 0 && (
-          <div className="space-y-1.5">
+          <div className="max-h-[60vh] space-y-1.5 overflow-y-auto pr-1">
             {entries.map((entry) => {
               const isMe = entry.userId === userId;
               const natData = entry.countryCode ? NATIONALITIES[entry.countryCode] : null;
