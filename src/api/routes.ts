@@ -584,8 +584,7 @@ export async function getRankingMonthly(
        ${countryClause}
        GROUP BY u.id, u.display_name, u.country_code, u.role, u.featured_badges,
                 u.current_streak, u.last_win_date
-       ORDER BY points DESC, u.id ASC
-       LIMIT 50`,
+       ORDER BY points DESC, u.id ASC`,
       params,
     );
 
@@ -652,8 +651,7 @@ export async function getRankingDaily(
        ${countryFilter ? "AND u.country_code = $2" : ""}
        GROUP BY u.id, u.display_name, u.country_code, u.role, u.featured_badges,
                 u.current_streak, u.last_win_date
-       ORDER BY points DESC, u.id ASC
-       LIMIT 50`,
+       ORDER BY points DESC, u.id ASC`,
       countryFilter ? [target, countryFilter] : [target],
     );
 
