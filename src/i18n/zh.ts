@@ -304,7 +304,7 @@ const zh: Translations = {
   "seo.game.top10-standings.description": "猜出1至4年内F1车手积分榜累计的前10名。",
 
   "gamepage.not_found_title": "未找到游戏",
-  "gamepage.not_found_body": "您要找的挑战不存在或已更改地址。",
+  "gamepage.not_found_body": "你要找的挑战不存在或已更改地址。",
   "gamepage.see_all": "查看所有挑战",
 
   // ─── Country names (driver nationality flags) ─────────────────────────
@@ -357,13 +357,13 @@ const zh: Translations = {
   "badge.more": "+{{count}}",
   "badge.gallery_title": "我的徽章",
   "badge.gallery_empty":
-    "您还没有获得任何徽章。在月度排名中排名前3!",
+    "你还没有获得任何徽章。在月度排名中排名前3!",
   "badge.gallery_hint": "点击徽章以在排名中显示(最多3个)。",
   "badge.featured_count": "{{count}}/3 已显示",
   "badge.won_months": "获得于: {{months}}",
   "badge.show_grouped": "分组(×{{count}})",
   "badge.show_individual": "单个",
-  "badge.max_reached": "您已选择最多3个徽章显示",
+  "badge.max_reached": "你已选择最多3个徽章显示",
   "badge.save": "保存选择",
   "badge.saving": "保存中...",
   "badge.save_error": "无法保存。请重试。",

@@ -264,7 +264,7 @@ const ja: Translations = {
   "profile.name_available": "✓ 利用可能",
 
   "game.top10-standings.name": "Top 10 Standings",
-  "game.top10-standings.tagline": "1〜4年間のドライバーズチャンピオンシップの累計トップ10ポイントを当ててください。",
+  "game.top10-standings.tagline": "1〜4年間のドライバーズチャンピオンシップの累計トップ10ポイントを当ててみよう。",
   "top10standings.eyebrow": "ドライバーズチャンピオンシップ",
   "top10standings.subtitle": "期間の累計トップ10ポイント",
   "top10standings.search_placeholder": "ドライバー名を入力…",
@@ -310,7 +310,7 @@ const ja: Translations = {
     "時間切れになる前に歴史的なF1グランプリのトップ10を完成させましょう。新しい無料の毎日のパズル。",
   "seo.game.top10-standings.title": "Top 10 Standings — F1選手権パズル | Box Daily Box",
   "seo.game.top10-standings.description":
-    "1〜4年間のF1ドライバーズチャンピオンシップの累計トップ10ポイントを当ててください。",
+    "1〜4年間のF1ドライバーズチャンピオンシップの累計トップ10ポイントを当ててみよう。",
 
   "gamepage.not_found_title": "ゲームが見つかりません",
   "gamepage.not_found_body": "お探しのチャレンジは存在しないか、移動しました。",

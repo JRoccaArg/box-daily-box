@@ -92,6 +92,23 @@ Seguridad: HMAC-SHA256 (sessionToken + identityToken). Server-authoritative.
   patrón `I18nText`, y las 6 listas backend); este archivo solo resume los invariantes
   críticos. Detalle de historial de bugs en la sección 9 del mismo archivo.
 
+## Idioma y registro en textos de usuario
+
+- **El español de `src/i18n/es.ts` (toda la UI: botones, juegos, mensajes) usa
+  registro NEUTRO — "tú/tienes/puedes", nunca voseo argentino
+  ("vos/tenés/podés")**. Es el mismo criterio que usan Google, Duolingo o
+  Wordle en español: se entiende igual en España y en toda Latinoamérica, sin
+  atarse a un país. **Excepción**: `src/content/legal/es.ts` (Términos y
+  Privacidad) SÍ usa voseo argentino a propósito — el operador tiene domicilio
+  en Argentina y el documento se rige por ley argentina, así que ahí una voz
+  auténticamente argentina tiene sentido. Nunca copiar el registro de un
+  archivo legal a un string de UI, ni al revés.
+- El mismo criterio aplica a los otros 13 idiomas: registro internacional/
+  estándar de esa lengua, no un dialecto o giro regional específico de un
+  solo país.
+- Los textos que explican de qué trata un juego (hint, tagline, regla) tienen
+  que ser entendibles en una primera lectura, sin dar por sabido el concepto.
+
 ## Librerías preferidas para nuevas features de UI/motion
 
 No están instaladas todavía — sumarlas recién cuando surja el caso de uso real,
