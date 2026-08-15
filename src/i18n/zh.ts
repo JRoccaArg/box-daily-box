@@ -388,6 +388,8 @@ const zh: Translations = {
   "friends.request_sent": "请求已发送",
   "friends.request_accepted": "你们现在是朋友了！",
   "friends.remove": "删除朋友",
+  "friends.online": "在线",
+  "friends.offline": "离线",
   "friends.remove_confirm": "删除这位朋友？",
   "friends.list_empty_short": "还没有朋友",
 

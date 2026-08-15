@@ -397,6 +397,8 @@ const ja: Translations = {
   "friends.request_sent": "リクエスト送信済み",
   "friends.request_accepted": "友達になりました！",
   "friends.remove": "友達を削除",
+  "friends.online": "オンライン",
+  "friends.offline": "オフライン",
   "friends.remove_confirm": "この友達を削除しますか？",
   "friends.list_empty_short": "まだ友達なし",
 

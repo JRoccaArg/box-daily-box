@@ -346,6 +346,8 @@ const ru: Translations = {
   "friends.request_sent": "Запрос отправлен",
   "friends.request_accepted": "Вы теперь друзья!",
   "friends.remove": "Удалить друга",
+  "friends.online": "В сети",
+  "friends.offline": "Не в сети",
   "friends.remove_confirm": "Удалить этого друга?",
   "friends.list_empty_short": "Друзей еще нет",
 

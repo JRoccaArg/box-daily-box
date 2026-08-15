@@ -333,6 +333,8 @@ const ar: Translations = {
   "friends.request_sent": "تم إرسال الطلب",
   "friends.request_accepted": "أنتم أصدقاء الآن!",
   "friends.remove": "إزالة صديق",
+  "friends.online": "متصل",
+  "friends.offline": "غير متصل",
   "friends.remove_confirm": "إزالة هذا الصديق؟",
   "friends.list_empty_short": "لا يوجد أصدقاء حتى الآن",
 

@@ -444,6 +444,8 @@ const tr: Translations = {
   "friends.request_sent": "İstek gönderildi",
   "friends.request_accepted": "Artık arkadaşsınız!",
   "friends.remove": "Arkadaşı kaldır",
+  "friends.online": "Çevrimiçi",
+  "friends.offline": "Çevrimdışı",
   "friends.remove_confirm": "Bu arkadaşı kaldırmak ister misiniz?",
   "friends.list_empty_short": "Henüz arkadaş yok",
 

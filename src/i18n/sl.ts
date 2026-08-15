@@ -443,6 +443,8 @@ const sl: Translations = {
   "friends.request_sent": "Prošnja poslana",
   "friends.request_accepted": "Zdaj ste prijatelji!",
   "friends.remove": "Odstrani prijatelja",
+  "friends.online": "Na spletu",
+  "friends.offline": "Nepovezan",
   "friends.remove_confirm": "Želite odstraniti tega prijatelja?",
   "friends.list_empty_short": "Še brez prijateljev",
 

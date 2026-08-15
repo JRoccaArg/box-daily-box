@@ -429,6 +429,8 @@ const it: Translations = {
   "friends.request_sent": "Richiesta inviata",
   "friends.request_accepted": "Ora siete amici!",
   "friends.remove": "Rimuovi amico",
+  "friends.online": "Online",
+  "friends.offline": "Offline",
   "friends.remove_confirm": "Rimuovere questo amico?",
   "friends.list_empty_short": "Nessun amico ancora",
 

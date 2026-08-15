@@ -2563,11 +2563,42 @@ export async function getDuel(req: FastifyRequest, reply: FastifyReply): Promise
   }
 }
 
+/**
+ * Ventana durante la cual un usuario se considera "en línea" desde su último
+ * latido. 2 minutos = 2 ciclos del bump de 60s, así una pestaña de fondo
+ * (que el navegador ralentiza) o una red lenta no lo marcan como desconectado.
+ */
+const PRESENCE_WINDOW_SECONDS = 120;
+
+/**
+ * Marca al usuario como activo ("tiene la web abierta"). No agrega tráfico:
+ * se cuelga de getPendingDuels, el poll de 3s que DuelBanner ya corre en
+ * todas las páginas (Layout.tsx) con userId + identityToken autenticados.
+ *
+ * El UPDATE es CONDICIONAL a propósito: sin el WHERE, cada pestaña abierta
+ * escribiría 20 veces por minuto. Así escribe como mucho 1 vez por minuto
+ * por usuario, y el resto de los polls no tocan la tabla.
+ */
+async function touchLastSeen(userId: string): Promise<void> {
+  try {
+    await query(
+      `UPDATE users SET last_seen = now()
+       WHERE id = $1 AND (last_seen IS NULL OR last_seen < now() - interval '60 seconds')`,
+      [userId],
+    );
+  } catch (err) {
+    // La presencia es cosmética: si falla, el endpoint tiene que seguir
+    // devolviendo las invitaciones igual.
+    console.error("touchLastSeen error:", err);
+  }
+}
+
 /** GET /duels/pending — invitaciones pendientes dirigidas a mí (banner in-app). */
 export async function getPendingDuels(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     const { userId, identityToken } = req.query as { userId?: string; identityToken?: string };
     if (!requireOwnership(reply, identityToken, userId)) return;
+    await touchLastSeen(userId);
     await sweepExpiredDuels(userId);
     const res = await query(
       `SELECT d.id, d.game_id, d.difficulty, d.time_limit, d.expires_at,
@@ -2773,19 +2804,25 @@ export async function getFriends(req: FastifyRequest, reply: FastifyReply): Prom
   try {
     const { userId, identityToken } = req.query as { userId?: string; identityToken?: string };
     if (!requireOwnership(reply, identityToken, userId)) return;
+    // `online` se calcula en el SERVER y sale como booleano: el timestamp
+    // crudo de last_seen nunca se expone, así un amigo no puede deducir tus
+    // horarios de uso. Los conectados van primero porque un duelo caduca a
+    // los 60s: son los únicos a los que tiene sentido desafiar ahora.
     const res = await query(
       `SELECT (CASE WHEN f.user_a = $1 THEN f.user_b ELSE f.user_a END) AS friend_id,
-              u.display_name, u.country_code
+              u.display_name, u.country_code,
+              (u.last_seen IS NOT NULL AND u.last_seen > now() - ($2 * interval '1 second')) AS online
        FROM friendships f
        JOIN users u ON u.id = (CASE WHEN f.user_a = $1 THEN f.user_b ELSE f.user_a END)
        WHERE f.user_a = $1 OR f.user_b = $1
-       ORDER BY f.created_at DESC`,
-      [userId],
+       ORDER BY online DESC, f.created_at DESC`,
+      [userId, PRESENCE_WINDOW_SECONDS],
     );
     const friends = res.rows.map((r: any) => ({
       userId: r.friend_id,
       displayName: r.display_name,
       countryCode: r.country_code,
+      online: r.online === true,
     }));
     reply.code(200).send({ friends });
   } catch (err) {

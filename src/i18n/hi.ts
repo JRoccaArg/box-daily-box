@@ -428,6 +428,8 @@ const hi: Translations = {
   "friends.request_sent": "अनुरोध भेजा गया",
   "friends.request_accepted": "अब आप दोस्त हैं!",
   "friends.remove": "दोस्त हटाएँ",
+  "friends.online": "ऑनलाइन",
+  "friends.offline": "ऑफ़लाइन",
   "friends.remove_confirm": "इस दोस्त को हटाएँ?",
   "friends.list_empty_short": "अभी तक कोई दोस्त नहीं",
 

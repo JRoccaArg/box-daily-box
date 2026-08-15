@@ -334,6 +334,8 @@ const nl: Translations = {
   "friends.request_sent": "Verzoek verzonden",
   "friends.request_accepted": "Jullie zijn nu vrienden!",
   "friends.remove": "Vriend verwijderen",
+  "friends.online": "Online",
+  "friends.offline": "Offline",
   "friends.remove_confirm": "Deze vriend verwijderen?",
   "friends.list_empty_short": "Nog geen vrienden",
 

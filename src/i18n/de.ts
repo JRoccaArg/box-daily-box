@@ -347,6 +347,8 @@ const de: Translations = {
   "friends.request_sent": "Anfrage gesendet",
   "friends.request_accepted": "Ihr seid jetzt Freunde!",
   "friends.remove": "Freund entfernen",
+  "friends.online": "Online",
+  "friends.offline": "Offline",
   "friends.remove_confirm": "Diesen Freund entfernen?",
   "friends.list_empty_short": "Noch keine Freunde",
 
