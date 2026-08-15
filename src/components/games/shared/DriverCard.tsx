@@ -12,6 +12,8 @@ type DriverCardProps = {
   disabled?: boolean;
   /** Mostrar nombre completo en vez de solo apellido. */
   full?: boolean;
+  /** Color del casco a usar en vez del color de marca por defecto (`driverColor`). */
+  color?: string;
 };
 
 const RING: Record<Selectable, string> = {
@@ -47,7 +49,7 @@ function Helmet({ color }: { color: string }) {
  * piloto con un casco teñido del color de su escuderia + apellido + bandera,
  * evocando la F1 sin depender de imagenes externas.
  */
-export function DriverCard({ driver, onClick, state = "idle", disabled, full = false }: DriverCardProps) {
+export function DriverCard({ driver, onClick, state = "idle", disabled, full = false, color }: DriverCardProps) {
   const { t } = useI18n();
   const nat = nationality(driver.nationalityCode);
   const natName = countryName(driver.nationalityCode, t);
@@ -63,7 +65,7 @@ export function DriverCard({ driver, onClick, state = "idle", disabled, full = f
         RING[state],
       ].join(" ")}
     >
-      <Helmet color={driverColor(driver)} />
+      <Helmet color={color ?? driverColor(driver)} />
       <div className="w-full leading-tight">
         <div className="w-full break-words font-display text-sm font-bold tracking-tight text-white">
           {full ? `${driver.firstName} ` : ""}

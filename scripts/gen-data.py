@@ -162,27 +162,68 @@ nat_ts = ('import type { Nationality } from "@/types";\n\n'
  '  return NATIONALITIES[code] ?? { code, name: code, flag: "🏁" };\n}\n')
 open(f"{OUT}/nationalities.ts","w",encoding="utf-8").write(nat_ts)
 
+# Color de marca conocido con confianza (28 modernos + escuderias historicas
+# reconocibles). Minardi fue corregido: #1A1A1A era casi invisible sobre el
+# fondo de las tarjetas (#1A1A1D).
 CURATED = {"ferrari":"#E8002D","mercedes":"#27F4D2","red-bull":"#3671C6","mclaren":"#FF8000",
  "williams":"#64C4FF","alpine":"#0093CC","renault":"#FFD800","aston-martin":"#229971",
  "alphatauri":"#6692FF","toro-rosso":"#0000FF","haas":"#B6BABD","sauber":"#52E252",
  "force-india":"#FF80C7","benetton":"#00A0DE","brawn":"#B8FD6E","lotus":"#FFB800",
  "brabham":"#1E3A5F","tyrrell":"#003F87","jordan":"#FFD500","jaguar":"#005A2B",
  "racing-point":"#F596C8","rb":"#6692FF","ligier":"#0055A4","arrows":"#FF6600",
- "minardi":"#1A1A1A","toyota":"#EB0A1E","bar":"#E40046","stewart":"#D0D0D0"}
-PALETTE = ["#C2185B","#7B1FA2","#512DA8","#303F9F","#1976D2","#0288D1","#0097A7","#00796B",
- "#388E3C","#689F38","#AFB42B","#F57C00","#E64A19","#5D4037","#616161","#455A64"]
-def tcolor(cid): return CURATED.get(cid) or PALETTE[abs(hash(cid)) % len(PALETTE)]
+ "minardi":"#4A5568","toyota":"#EB0A1E","bar":"#E40046","stewart":"#D0D0D0",
+ "maserati":"#B71C1C","alfa-romeo":"#C41E3A","cooper":"#00693E","brm":"#145A32",
+ "vanwall":"#1B4332","matra":"#2962FF","leyton-house":"#6FA8DC","wolf":"#C1272D",
+ "hesketh":"#B22222","eagle":"#1B63C7","spyker":"#EE7203","caterham":"#006633",
+ "virgin":"#E4002B","marussia":"#B71234","bmw-sauber":"#0A5FBF","kick-sauber":"#00E676",
+ "lotus-f1":"#C9A227","lotus-racing":"#0A6E31","penske":"#FBC02D","prost":"#2979FF",
+ "super-aguri":"#F0F0F0"}
 
-team_lines = []
+# Colores nacionales de carreras (convencion FIA vigente hasta ~1968, cuando
+# los equipos sin marca dominante corrian con el color de su pais). Se aplica
+# solo a equipos que arrancaron antes de ese anio y no estan en CURATED.
+NATIONAL_COLOR = {"GBR":"#1B5E20","ITA":"#C62828","FRA":"#2962FF","DEU":"#B0BEC5",
+ "BEL":"#FDD835","NLD":"#FF6D00","USA":"#1565C0","JPN":"#ECEFF1"}
+NATIONAL_CUTOFF = 1968
+
+PALETTE = ["#C2185B","#D81B60","#8E24AA","#7B1FA2","#512DA8","#3949AB","#303F9F","#1976D2",
+ "#039BE5","#0288D1","#00ACC1","#0097A7","#00796B","#00897B","#388E3C","#43A047",
+ "#689F38","#7CB342","#AFB42B","#FDD835","#FB8C00","#F57C00","#E64A19","#F4511E"]
+
+def _fnv1a(s):
+    """Hash estable (a diferencia de hash() de Python, que esta saleado por
+    proceso via PYTHONHASHSEED): mismo id siempre da el mismo color."""
+    h = 0x811c9dc5
+    for ch in s.encode("utf-8"):
+        h ^= ch
+        h = (h * 0x01000193) & 0xFFFFFFFF
+    return h
+
+def tcolor(cid, country, start_year):
+    if cid in CURATED:
+        return CURATED[cid]
+    if start_year < NATIONAL_CUTOFF and country in NATIONAL_COLOR:
+        return NATIONAL_COLOR[country]
+    return PALETTE[_fnv1a(cid) % len(PALETTE)]
+
+def is_brand_team(cid, country, start_year):
+    return cid in CURATED or (start_year < NATIONAL_CUTOFF and country in NATIONAL_COLOR)
+
+team_lines = []; brand_ids = []
 for cid in sorted(cons_years):
     cm = cons_meta.get(cid, {}); name = cm.get("name", cid)
     cc = ccode(cm.get("countryId")) or "ITA"
     s,e = cons_years[cid]; ev = "null" if e >= CUTOFF else str(e)
-    team_lines.append(f'  "{cid}": {{ id: "{cid}", name: "{esc(name)}", countryCode: "{cc}", color: "{tcolor(cid)}", active: {{ start: {s}, end: {ev} }} }},')
+    if is_brand_team(cid, cc, s): brand_ids.append(cid)
+    team_lines.append(f'  "{cid}": {{ id: "{cid}", name: "{esc(name)}", countryCode: "{cc}", color: "{tcolor(cid, cc, s)}", active: {{ start: {s}, end: {ev} }} }},')
+brand_lines = "\n".join(f'  "{cid}",' for cid in sorted(brand_ids))
 teams_ts = ('import type { Team } from "@/types";\n\n'
  "/** Escuderías del dataset, generado desde f1db (años de participación reales). */\n"
  "export const TEAMS: Record<string, Team> = {\n" + "\n".join(team_lines) +
- "\n};\n\nexport function team(id: string): Team | undefined {\n  return TEAMS[id];\n}\n\n"
+ "\n};\n\n"
+ "/** Ids con color de marca real o de nacionalidad historica (no asignado al azar). */\n"
+ "export const BRAND_TEAM_IDS: string[] = [\n" + brand_lines + "\n];\n\n"
+ "export function team(id: string): Team | undefined {\n  return TEAMS[id];\n}\n\n"
  "export function teamName(id: string): string {\n  return TEAMS[id]?.name ?? id;\n}\n")
 open(f"{OUT}/teams.ts","w",encoding="utf-8").write(teams_ts)
 

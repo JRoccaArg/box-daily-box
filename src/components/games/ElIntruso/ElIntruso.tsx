@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { GameProps } from "@/types";
 import { buildIntruso } from "./intruso.logic";
 import { DriverCard } from "@/components/games/shared/DriverCard";
+import { assignPuzzleColors } from "@/components/games/shared/puzzleColors";
 import { countryName } from "@/data";
 import { useI18n } from "@/context";
 import { Panel } from "@/components/ui/Panel";
@@ -14,6 +15,10 @@ import { Button } from "@/components/ui/Button";
 export function ElIntruso({ difficulty, date, seed, status, onWin, onLose }: GameProps) {
   const { t } = useI18n();
   const puzzle = useMemo(() => buildIntruso(difficulty, date, seed), [difficulty, date, seed]);
+  const colors = useMemo(
+    () => assignPuzzleColors(puzzle.tiles, difficulty, date, seed),
+    [puzzle, difficulty, date, seed],
+  );
 
   const [selected, setSelected] = useState<string | null>(null);
   const [submittedId, setSubmittedId] = useState<string | null>(null);
@@ -62,6 +67,7 @@ export function ElIntruso({ difficulty, date, seed, status, onWin, onLose }: Gam
             <DriverCard
               key={d.id}
               driver={d}
+              color={colors.get(d.id)}
               state={state}
               disabled={revealed}
               onClick={() => !revealed && setSelected(d.id)}
