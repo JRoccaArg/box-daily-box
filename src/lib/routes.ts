@@ -39,8 +39,3 @@ export function infoPath(locale: Locale): string {
 export function contactPath(locale: Locale): string {
   return `/${locale}/contact`;
 }
-
-/** Modo Carrera (simulador standalone, sin ranking), ej: careerModePath("en") -> "/en/modo-carrera" */
-export function careerModePath(locale: Locale): string {
-  return `/${locale}/modo-carrera`;
-}

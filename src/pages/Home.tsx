@@ -7,7 +7,7 @@ import { Panel } from "@/components/ui/Panel";
 import { Check, Flag as FlagIcon, ChevronRight, Flame, Trophy } from "@/components/ui/Icon";
 import { RankBadge } from "@/components/layout/RankBadge";
 import { Seo } from "@/components/layout/Seo";
-import { gamePath, careerModePath } from "@/lib/routes";
+import { gamePath } from "@/lib/routes";
 import { SITE_URL } from "@/lib/seo";
 import { useMounted } from "@/lib/useMounted";
 
@@ -46,60 +46,11 @@ export function Home() {
       <RankBadge />
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <CareerModeCard />
         {results.map(({ game, result }) => (
           <GameCard key={game.id} game={game} result={result} />
         ))}
       </div>
     </div>
-  );
-}
-
-/**
- * Card destacada del Modo Carrera (Roadmap: simulador standalone). A
- * diferencia de GameCard, NO viene de `GAMES` (registry.ts): este modo no
- * es un juego diario, no tiene ranking ni cuenta para "X de N completados".
- * Ocupa el ancho de dos juegos (`sm:col-span-2`) y va primero en la grilla,
- * con estetica distinta (borde/fondo racing + shadow-glow) para que se
- * note que es otra cosa, como pidio el usuario.
- */
-function CareerModeCard() {
-  const { t, locale } = useI18n();
-  return (
-    <Link
-      to={careerModePath(locale)}
-      className="group relative block overflow-hidden rounded-2xl border border-racing/40 bg-racing/10 p-4 shadow-glow transition-colors hover:border-racing/60 hover:bg-racing/15 sm:col-span-2 sm:p-5"
-    >
-      <div className="speed-bar pl-1">
-        <p className="eyebrow flex items-center justify-between gap-2">
-          <span>{t("home.career_mode.eyebrow")}</span>
-          <span className="inline-flex items-center gap-1 rounded-md border border-sector-yellow/40 bg-sector-yellow/10 px-2 py-0.5 text-[11px] font-bold tracking-wide text-sector-yellow">
-            {t("home.career_mode.badge")}
-          </span>
-        </p>
-      </div>
-
-      <div className="mt-2 flex items-center gap-4">
-        <img
-          src="/drivers-championship-trophy.png"
-          alt=""
-          aria-hidden="true"
-          className="h-16 w-16 shrink-0 object-contain sm:h-20 sm:w-20"
-        />
-        <div className="min-w-0 flex-1">
-          <h2 className="font-display text-xl font-bold tracking-tight text-white sm:text-2xl">
-            {t("home.career_mode.title")}
-          </h2>
-          <p className="mt-1 text-sm leading-snug text-ink-muted sm:text-[15px]">
-            {t("home.career_mode.subtitle")}
-          </p>
-        </div>
-        <ChevronRight
-          size={20}
-          className="hidden shrink-0 text-ink-faint transition-colors group-hover:text-ink sm:block"
-        />
-      </div>
-    </Link>
   );
 }
 

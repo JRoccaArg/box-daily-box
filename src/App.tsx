@@ -10,7 +10,6 @@ import { DuelPage } from "@/pages/DuelPage";
 import { TermsPage, PrivacyPage } from "@/pages/LegalPage";
 import { InfoPage } from "@/pages/InfoPage";
 import { ContactPage } from "@/pages/ContactPage";
-import { CareerModePage } from "@/pages/CareerModePage";
 import { AuthCallback } from "@/pages/AuthCallback";
 import { RootRedirect } from "@/pages/RootRedirect";
 import { GAMES } from "@/components/games/registry";
@@ -98,9 +97,6 @@ export const routes: RouteRecord[] = [
       { path: "info", Component: InfoPage },
       // Página de contacto (mail para reportes/ideas). Se indexa igual que info.
       { path: "contact", Component: ContactPage },
-      // Modo Carrera: simulador standalone, SIN GameShell, SIN ranking, SIN
-      // registro en registry.ts. Estado 100% local (ver src/lib/career).
-      { path: "modo-carrera", Component: CareerModePage },
     ],
   },
   // "/" (x-default): redirige al idioma preferido. Se prerenderiza con
