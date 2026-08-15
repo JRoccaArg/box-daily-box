@@ -164,7 +164,12 @@ const de: Translations = {
   "intruso.rule.team": "Fuhren für {{team}}",
   "intruso.rule.champ": "Waren Weltmeister",
   "intruso.rule.non_champ": "Waren nie Weltmeister",
-  "intruso.rule.nationality": "Haben dieselbe Nationalität ({{nat}})",
+  "intruso.rule.winner": "Haben mindestens einen Grand Prix gewonnen",
+  "intruso.rule.non_winner": "Haben nie einen Grand Prix gewonnen",
+  "intruso.rule.poleman": "Holten mindestens eine Pole-Position",
+  "intruso.rule.non_poleman": "Holten nie eine Pole-Position",
+  "intruso.rule.podium": "Standen mindestens einmal auf dem Podium",
+  "intruso.rule.non_podium": "Standen nie auf dem Podium",
   "intruso.rule.none": "Keine Regel verfügbar",
 
   "bingo.pick_driver": "Fahrer wählen", "bingo.drove_for": "fuhr für {{team}}",

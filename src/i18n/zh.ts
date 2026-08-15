@@ -208,7 +208,12 @@ const zh: Translations = {
   "intruso.rule.team": "曾为{{team}}车队效力",
   "intruso.rule.champ": "曾是世界冠军",
   "intruso.rule.non_champ": "从未获得过世界冠军",
-  "intruso.rule.nationality": "国籍相同（{{nat}}）",
+  "intruso.rule.winner": "至少赢得过一场大奖赛",
+  "intruso.rule.non_winner": "从未赢得过大奖赛",
+  "intruso.rule.poleman": "至少获得过一次杆位",
+  "intruso.rule.non_poleman": "从未获得过杆位",
+  "intruso.rule.podium": "至少登上过一次领奖台",
+  "intruso.rule.non_podium": "从未登上过领奖台",
   "intruso.rule.none": "没有可用规则",
 
   "bingo.pick_driver": "选择车手",

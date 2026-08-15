@@ -259,7 +259,12 @@ const sl: Translations = {
   "intruso.rule.team": "Vozili so za {{team}}",
   "intruso.rule.champ": "Bili so svetovni prvaki",
   "intruso.rule.non_champ": "Nikoli niso bili svetovni prvaki",
-  "intruso.rule.nationality": "So iste narodnosti ({{nat}})",
+  "intruso.rule.winner": "Zmagali so vsaj na eni dirki za Veliko nagrado",
+  "intruso.rule.non_winner": "Nikoli niso zmagali na dirki za Veliko nagrado",
+  "intruso.rule.poleman": "Osvojili so vsaj en najboljši startni položaj",
+  "intruso.rule.non_poleman": "Nikoli niso osvojili najboljšega startnega položaja",
+  "intruso.rule.podium": "Vsaj enkrat so stali na stopničkah",
+  "intruso.rule.non_podium": "Nikoli niso stali na stopničkah",
   "intruso.rule.none": "Pravilo ni na voljo",
 
   // ─── ParrillaBingo extra ──────────────────────────────────────────────

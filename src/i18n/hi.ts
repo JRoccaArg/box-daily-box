@@ -246,7 +246,12 @@ const hi: Translations = {
   "intruso.rule.team": "{{team}} के लिए दौड़े",
   "intruso.rule.champ": "विश्व चैंपियन रहे",
   "intruso.rule.non_champ": "कभी विश्व चैंपियन नहीं रहे",
-  "intruso.rule.nationality": "एक ही राष्ट्रीयता के हैं ({{nat}})",
+  "intruso.rule.winner": "कम से कम एक ग्रांड प्रिक्स जीता",
+  "intruso.rule.non_winner": "कभी ग्रांड प्रिक्स नहीं जीता",
+  "intruso.rule.poleman": "कम से कम एक पोल पोजीशन हासिल की",
+  "intruso.rule.non_poleman": "कभी पोल पोजीशन हासिल नहीं की",
+  "intruso.rule.podium": "कम से कम एक बार पोडियम पर पहुंचे",
+  "intruso.rule.non_podium": "कभी पोडियम पर नहीं पहुंचे",
   "intruso.rule.none": "कोई नियम उपलब्ध नहीं",
 
   "bingo.eyebrow": "ग्रिड बिंगो",

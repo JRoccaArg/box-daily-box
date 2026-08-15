@@ -66,10 +66,50 @@ Seguridad: HMAC-SHA256 (sessionToken + identityToken). Server-authoritative.
   globalmente a `button` en `src/index.css`) — sin esto, un doble-tap rápido y cercano
   en mobile (ej. confirmar una acción) puede ser interpretado como gesto de
   doble-tap-zoom y el navegador descarta el segundo click.
+- **Una regla de El Intruso no puede basarse en un dato VISIBLE en la tarjeta.**
+  `DriverCard` muestra nombre, apellido y bandera/país, así que una regla como "los 9
+  comparten nacionalidad" convierte el puzzle en trivial: se resuelve mirando banderas,
+  sin saber nada de F1 (llegó a ser el 27% de los días en `leyenda`). Las reglas válidas
+  se apoyan en estadísticas no visibles: escudería, campeonatos, victorias, poles,
+  podios. Si algún día se agrega un dato nuevo a la tarjeta (años de carrera, número,
+  escudería en texto), hay que revisar que no exista una regla que lo delate.
+  `scripts/test-verify-solution.ts` lo valida: falla si vuelve a aparecer una regla de
+  nacionalidad, si dos cascos de la misma partida son indistinguibles, o si una sola
+  regla acapara más del 40% del calendario.
+- **El sorteo de la regla diaria de El Intruso es por FAMILIA, no por categoría suelta**
+  (`intruso.logic.ts`): las categorías de escudería son decenas y las de estadísticas 2
+  por familia, así que un sorteo plano hacía salir "condujeron para X" ~9 de cada 10
+  días. Se elige primero la familia (`team`/`champ`/`win`/`pole`/`podium`) y después la
+  regla concreta, dejando cada familia en ~20%.
+- **Los colores de casco de El Intruso se asignan por partida**
+  (`shared/puzzleColors.ts`), no solo por escudería: el dataset tiene 153 equipos y solo
+  ~93 con color real, así que sin esto una partida histórica mostraba varios cascos del
+  mismo tono. Usa una seed propia (`intruso-colors::`) distinta de la de `buildIntruso`
+  para no alterar el puzzle. Los colores NO entran en `verifyChallenge` (solo se compara
+  `driverId`), por eso pueden vivir en el cliente.
 - Para agregar un juego nuevo con i18n + SEO correctos, seguí el checklist completo de
   `Box_Daily_Box_Context.md` sección 7 — es la fuente autoritativa (incluye keys SEO,
   patrón `I18nText`, y las 6 listas backend); este archivo solo resume los invariantes
   críticos. Detalle de historial de bugs en la sección 9 del mismo archivo.
+
+## Librerías preferidas para nuevas features de UI/motion
+
+No están instaladas todavía — sumarlas recién cuando surja el caso de uso real,
+no antes (evitar dependencias sin usar).
+
+- **animate-ui** (animate-ui.com): preferirla para nueva UI animada (botones,
+  modales, transiciones, micro-interacciones) en vez de escribir keyframes/CSS
+  a mano o traer otra lib de animación. Es un registro estilo shadcn — los
+  componentes se copian al proyecto vía su CLI (`npx animate-ui add <componente>`),
+  no es una dependencia npm tradicional. Usa Motion (framer-motion) por debajo,
+  que sí se instala como dependencia normal la primera vez que se agrega un componente.
+- **three.js** (paquete npm `three`, opcionalmente con `@react-three/fiber` para
+  integrarlo a React): preferirlo si en algún momento se pide una escena o
+  visual 3D (ej. un juego o intro con render 3D). Hoy el proyecto es 100% UI 2D;
+  no forzar three.js en nada que no lo necesite.
+
+Regla: al planear un feature nuevo de UI o motion, evaluar primero si
+animate-ui ya tiene el componente antes de construirlo desde cero.
 
 ## Comandos
 ```

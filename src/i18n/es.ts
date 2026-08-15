@@ -329,7 +329,12 @@ const es: Translations = {
   "intruso.rule.team": "Condujeron para {{team}}",
   "intruso.rule.champ": "Fueron campeones del mundo",
   "intruso.rule.non_champ": "Nunca fueron campeones del mundo",
-  "intruso.rule.nationality": "Son de la misma nacionalidad ({{nat}})",
+  "intruso.rule.winner": "Ganaron al menos un Gran Premio",
+  "intruso.rule.non_winner": "Nunca ganaron un Gran Premio",
+  "intruso.rule.poleman": "Lograron al menos una pole position",
+  "intruso.rule.non_poleman": "Nunca lograron una pole position",
+  "intruso.rule.podium": "Subieron al podio al menos una vez",
+  "intruso.rule.non_podium": "Nunca subieron al podio",
   "intruso.rule.none": "Sin regla disponible",
 
   // ─── ParrillaBingo extra ──────────────────────────────────────────────

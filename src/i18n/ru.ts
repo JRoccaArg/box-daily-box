@@ -164,7 +164,12 @@ const ru: Translations = {
   "intruso.rule.team": "Выступали за {{team}}",
   "intruso.rule.champ": "Были чемпионами мира",
   "intruso.rule.non_champ": "Никогда не были чемпионами мира",
-  "intruso.rule.nationality": "Одной национальности ({{nat}})",
+  "intruso.rule.winner": "Выиграли хотя бы один Гран-при",
+  "intruso.rule.non_winner": "Никогда не выигрывали Гран-при",
+  "intruso.rule.poleman": "Завоевали хотя бы один поул",
+  "intruso.rule.non_poleman": "Никогда не завоёвывали поул",
+  "intruso.rule.podium": "Хотя бы раз поднимались на подиум",
+  "intruso.rule.non_podium": "Никогда не поднимались на подиум",
   "intruso.rule.none": "Правило недоступно",
 
   "bingo.pick_driver": "Выбрать гонщика", "bingo.drove_for": "выступал за {{team}}",

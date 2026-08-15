@@ -259,7 +259,12 @@ const tr: Translations = {
   "intruso.rule.team": "{{team}} için yarıştılar",
   "intruso.rule.champ": "Dünya şampiyonu oldular",
   "intruso.rule.non_champ": "Hiç dünya şampiyonu olmadılar",
-  "intruso.rule.nationality": "Aynı uyruğa sahipler ({{nat}})",
+  "intruso.rule.winner": "En az bir Grand Prix kazandılar",
+  "intruso.rule.non_winner": "Hiç Grand Prix kazanmadılar",
+  "intruso.rule.poleman": "En az bir pole pozisyonu aldılar",
+  "intruso.rule.non_poleman": "Hiç pole pozisyonu almadılar",
+  "intruso.rule.podium": "En az bir kez podyuma çıktılar",
+  "intruso.rule.non_podium": "Hiç podyuma çıkmadılar",
   "intruso.rule.none": "Kural yok",
 
   // ─── ParrillaBingo extra ──────────────────────────────────────────────

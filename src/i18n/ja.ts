@@ -208,7 +208,12 @@ const ja: Translations = {
   "intruso.rule.team": "{{team}}でドライブした",
   "intruso.rule.champ": "世界チャンピオンだった",
   "intruso.rule.non_champ": "世界チャンピオンになったことがない",
-  "intruso.rule.nationality": "同じ国籍（{{nat}}）",
+  "intruso.rule.winner": "グランプリで1勝以上している",
+  "intruso.rule.non_winner": "グランプリで勝ったことがない",
+  "intruso.rule.poleman": "ポールポジションを1回以上獲得している",
+  "intruso.rule.non_poleman": "ポールポジションを獲得したことがない",
+  "intruso.rule.podium": "表彰台に1回以上上がっている",
+  "intruso.rule.non_podium": "表彰台に上がったことがない",
   "intruso.rule.none": "ルールがありません",
 
   "bingo.pick_driver": "ドライバーを選択",

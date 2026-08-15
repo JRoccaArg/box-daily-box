@@ -20,6 +20,7 @@ import { dateKey } from "@/lib/seed";
 import { verifyChallenge } from "@/api/verify";
 import { buildTarget } from "@/components/games/PitTexto/pittexto.logic";
 import { buildIntruso } from "@/components/games/ElIntruso/intruso.logic";
+import { assignPuzzleColors } from "@/components/games/shared/puzzleColors";
 import { buildBingo } from "@/components/games/ParrillaBingo/bingo.logic";
 import { buildGPChallenge } from "@/components/games/GPResultado/gpresultado.logic";
 import { buildChallenge as buildTop10Challenge } from "@/components/games/Top10Standings/top10standings.logic";
@@ -110,6 +111,69 @@ function elIntruso() {
   }
 }
 
+/**
+ * Invariantes de diseño de El Intruso (ver CLAUDE.md):
+ *  - Ninguna regla puede basarse en un dato VISIBLE en la tarjeta. La regla de
+ *    nacionalidad se eliminó justamente por eso: la tarjeta muestra bandera y
+ *    código de país, así que ese día el puzzle se resolvía sin saber F1.
+ *  - Los 10 cascos de una misma partida tienen que verse distintos entre sí.
+ *  - Ninguna familia de reglas puede acaparar el calendario.
+ */
+function elIntrusoReglas() {
+  console.log("\n▶ El Intruso — invariantes de reglas y colores");
+  const DAYS = 180;
+  const MIN_COLOR_DISTANCE = 55;
+
+  const hexToRgb = (hex: string): [number, number, number] => {
+    const n = parseInt(hex.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const colorDistance = (a: string, b: string) => {
+    const [r1, g1, b1] = hexToRgb(a);
+    const [r2, g2, b2] = hexToRgb(b);
+    return Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
+  };
+
+  for (const diff of DIFFS) {
+    const seen: Record<string, number> = {};
+    let colorClashes = 0;
+    let dupIds = 0;
+
+    for (let i = 0; i < DAYS; i++) {
+      const date = new Date(2026, 0, 1 + i);
+      const puzzle = buildIntruso(diff, date);
+      seen[puzzle.rule.key] = (seen[puzzle.rule.key] ?? 0) + 1;
+
+      if (new Set(puzzle.tiles.map((t) => t.id)).size !== puzzle.tiles.length) dupIds++;
+
+      const colors = assignPuzzleColors(puzzle.tiles, diff, date);
+      const list = puzzle.tiles.map((t) => colors.get(t.id) as string);
+      for (let a = 0; a < list.length; a++) {
+        for (let b = a + 1; b < list.length; b++) {
+          if (colorDistance(list[a] as string, list[b] as string) < MIN_COLOR_DISTANCE) colorClashes++;
+        }
+      }
+    }
+
+    assert(
+      seen["intruso.rule.nationality"] === undefined,
+      `[${diff}] la regla de nacionalidad NO puede volver (es visible en la tarjeta)`,
+    );
+    assert(dupIds === 0, `[${diff}] ningún puzzle repite el mismo piloto dos veces`);
+    assert(colorClashes === 0, `[${diff}] los 10 cascos de cada partida son distinguibles entre sí`);
+
+    // Ninguna regla concreta debe acaparar: con el sorteo por familia, la
+    // familia "team" reparte su cuota entre decenas de escuderías, así que
+    // una sola regla nunca debería pasar de ~40% de los días.
+    const top = Math.max(...Object.values(seen));
+    assert(
+      top <= DAYS * 0.4,
+      `[${diff}] ninguna regla sola domina el calendario (máx ${top}/${DAYS} = ${((top / DAYS) * 100).toFixed(0)}%)`,
+    );
+    console.log(`  ${diff}: ${Object.keys(seen).length} reglas distintas en ${DAYS} días`);
+  }
+}
+
 function parrillaBingo() {
   console.log("\n▶ Parrilla Bingo");
   for (const diff of DIFFS) {
@@ -196,6 +260,7 @@ function unknownGame() {
   pitTexto();
   poleWordle();
   elIntruso();
+  elIntrusoReglas();
   parrillaBingo();
   gpResultado();
   top10Standings();

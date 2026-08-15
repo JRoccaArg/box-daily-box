@@ -151,7 +151,12 @@ const ar: Translations = {
   "intruso.rule.team": "قادوا لصالح {{team}}",
   "intruso.rule.champ": "كانوا أبطال العالم",
   "intruso.rule.non_champ": "لم يكونوا أبطال العالم أبداً",
-  "intruso.rule.nationality": "من نفس الجنسية ({{nat}})",
+  "intruso.rule.winner": "فازوا بسباق جائزة كبرى واحد على الأقل",
+  "intruso.rule.non_winner": "لم يفوزوا بسباق جائزة كبرى أبداً",
+  "intruso.rule.poleman": "حصلوا على مركز انطلاق أول واحد على الأقل",
+  "intruso.rule.non_poleman": "لم يحصلوا على مركز انطلاق أول أبداً",
+  "intruso.rule.podium": "اعتلوا منصة التتويج مرة واحدة على الأقل",
+  "intruso.rule.non_podium": "لم يعتلوا منصة التتويج أبداً",
   "intruso.rule.none": "لا توجد قاعدة متاحة",
 
   "bingo.pick_driver": "اختر سائقاً", "bingo.drove_for": "سابق في {{team}}",

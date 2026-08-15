@@ -247,7 +247,12 @@ const pt: Translations = {
   "intruso.rule.team": "Correram pela {{team}}",
   "intruso.rule.champ": "Foram campeões mundiais",
   "intruso.rule.non_champ": "Nunca foram campeões mundiais",
-  "intruso.rule.nationality": "São da mesma nacionalidade ({{nat}})",
+  "intruso.rule.winner": "Venceram pelo menos um Grande Prêmio",
+  "intruso.rule.non_winner": "Nunca venceram um Grande Prêmio",
+  "intruso.rule.poleman": "Conquistaram pelo menos uma pole position",
+  "intruso.rule.non_poleman": "Nunca conquistaram uma pole position",
+  "intruso.rule.podium": "Subiram ao pódio pelo menos uma vez",
+  "intruso.rule.non_podium": "Nunca subiram ao pódio",
   "intruso.rule.none": "Nenhuma regra disponível",
 
   "bingo.eyebrow": "Bingo de Grid",

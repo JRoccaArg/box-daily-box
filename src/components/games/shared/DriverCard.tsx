@@ -10,8 +10,6 @@ type DriverCardProps = {
   onClick?: () => void;
   state?: Selectable;
   disabled?: boolean;
-  /** Mostrar nombre completo en vez de solo apellido. */
-  full?: boolean;
   /** Color del casco a usar en vez del color de marca por defecto (`driverColor`). */
   color?: string;
 };
@@ -46,10 +44,10 @@ function Helmet({ color }: { color: string }) {
 
 /**
  * Tarjeta de piloto reutilizable (El Intruso, Parrilla Bingo). Representa al
- * piloto con un casco teñido del color de su escuderia + apellido + bandera,
- * evocando la F1 sin depender de imagenes externas.
+ * piloto con un casco teñido del color de su escuderia + nombre y apellido +
+ * bandera, evocando la F1 sin depender de imagenes externas.
  */
-export function DriverCard({ driver, onClick, state = "idle", disabled, full = false, color }: DriverCardProps) {
+export function DriverCard({ driver, onClick, state = "idle", disabled, color }: DriverCardProps) {
   const { t } = useI18n();
   const nat = nationality(driver.nationalityCode);
   const natName = countryName(driver.nationalityCode, t);
@@ -67,8 +65,17 @@ export function DriverCard({ driver, onClick, state = "idle", disabled, full = f
     >
       <Helmet color={color ?? driverColor(driver)} />
       <div className="w-full leading-tight">
+        {/*
+          El nombre de pila va SIEMPRE, en chico y atenuado sobre el apellido:
+          el dataset tiene 37 apellidos repetidos (3 Schumacher, 3 Hill,
+          4 Fittipaldi, 2 Verstappen...) y con solo el apellido no habia forma
+          de distinguirlos. En dos lineas en vez de concatenado para no romper
+          la grilla de 2 columnas en mobile.
+        */}
+        <div className="w-full break-words text-[11px] font-medium leading-tight text-ink-muted">
+          {driver.firstName}
+        </div>
         <div className="w-full break-words font-display text-sm font-bold tracking-tight text-white">
-          {full ? `${driver.firstName} ` : ""}
           {driver.lastName}
         </div>
         <div className="mt-0.5 inline-flex items-center gap-1 text-xs text-ink-muted">

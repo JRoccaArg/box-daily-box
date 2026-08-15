@@ -151,7 +151,12 @@ const nl: Translations = {
   "intruso.rule.team": "Reden voor {{team}}",
   "intruso.rule.champ": "Waren wereldkampioen",
   "intruso.rule.non_champ": "Waren nooit wereldkampioen",
-  "intruso.rule.nationality": "Hebben dezelfde nationaliteit ({{nat}})",
+  "intruso.rule.winner": "Wonnen minstens één Grand Prix",
+  "intruso.rule.non_winner": "Wonnen nooit een Grand Prix",
+  "intruso.rule.poleman": "Pakten minstens één pole position",
+  "intruso.rule.non_poleman": "Pakten nooit een pole position",
+  "intruso.rule.podium": "Stonden minstens één keer op het podium",
+  "intruso.rule.non_podium": "Stonden nooit op het podium",
   "intruso.rule.none": "Geen regel beschikbaar",
 
   "bingo.pick_driver": "Coureur kiezen", "bingo.drove_for": "reed voor {{team}}",

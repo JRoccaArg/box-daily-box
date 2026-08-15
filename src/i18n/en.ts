@@ -314,7 +314,12 @@ const en: Translations = {
   "intruso.rule.team": "Drove for {{team}}",
   "intruso.rule.champ": "Were world champions",
   "intruso.rule.non_champ": "Were never world champions",
-  "intruso.rule.nationality": "Are the same nationality ({{nat}})",
+  "intruso.rule.winner": "Won at least one Grand Prix",
+  "intruso.rule.non_winner": "Never won a Grand Prix",
+  "intruso.rule.poleman": "Took at least one pole position",
+  "intruso.rule.non_poleman": "Never took a pole position",
+  "intruso.rule.podium": "Finished on the podium at least once",
+  "intruso.rule.non_podium": "Never finished on the podium",
   "intruso.rule.none": "No rule available",
 
   // ─── ParrillaBingo extra ──────────────────────────────────────────────
