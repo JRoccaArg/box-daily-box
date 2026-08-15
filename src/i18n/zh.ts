@@ -93,6 +93,12 @@ const zh: Translations = {
   "footer.line2": "每天午夜更新新挑战。",
   "footer.info": "游戏玩法",
   "footer.contact": "联系我们",
+  "footer.support": "支持本项目",
+  "support.title": "支持本项目",
+  "support.body": "Box Daily Box 现在免费，以后也将一直免费。如果你喜欢，可以自愿捐助——这不会给你在游戏中带来任何优势，只是支持项目的一种方式。",
+  "support.disclaimer": "不提供专属内容、额外尝试次数或优先排名。",
+  "support.cafecito": "Cafecito（阿根廷）",
+  "support.kofi": "Ko-fi（国际）",
 
   "profile.title": "你的资料",
   "profile.subtitle": "你将以此名字和国家出现在全球排名中。",

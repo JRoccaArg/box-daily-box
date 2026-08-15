@@ -113,6 +113,12 @@ const en: Translations = {
   "footer.terms": "Terms and Conditions",
   "footer.privacy": "Privacy Policy",
   "footer.contact": "Contact",
+  "footer.support": "Support the project",
+  "support.title": "Support the project",
+  "support.body": "Box Daily Box is and will remain free. If you enjoy it, you can leave a voluntary contribution — it doesn't give any advantage inside the game, it's just a way to help fund the project.",
+  "support.disclaimer": "It does not grant access to exclusive content, extra attempts, or preferential ranking.",
+  "support.cafecito": "Cafecito (Argentina)",
+  "support.kofi": "Ko-fi (international)",
 
   // ─── Legal pages ────────────────────────────────────────────────────
   "legal.updated": "Last updated: {{date}}",

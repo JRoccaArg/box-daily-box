@@ -99,6 +99,12 @@ const pt: Translations = {
   "footer.line2": "Um novo desafio todos os dias à meia-noite.",
   "footer.info": "Como jogar",
   "footer.contact": "Contato",
+  "footer.support": "Apoiar o projeto",
+  "support.title": "Apoiar o projeto",
+  "support.body": "Box Daily Box é e continuará sendo gratuito. Se você gosta, pode deixar uma contribuição voluntária — ela não dá nenhuma vantagem dentro do jogo, é só uma forma de apoiar o projeto.",
+  "support.disclaimer": "Não dá acesso a conteúdo exclusivo, tentativas extras nem ranking preferencial.",
+  "support.cafecito": "Cafecito (Argentina)",
+  "support.kofi": "Ko-fi (internacional)",
 
   "profile.title": "Seu perfil",
   "profile.subtitle":

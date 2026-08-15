@@ -119,6 +119,12 @@ const es: Translations = {
   "footer.terms": "Términos y Condiciones",
   "footer.privacy": "Política de Privacidad",
   "footer.contact": "Contacto",
+  "footer.support": "Apoyar el proyecto",
+  "support.title": "Apoyar el proyecto",
+  "support.body": "Box Daily Box es y va a seguir siendo gratis. Si te gusta, podés dejar una contribución voluntaria — no da ninguna ventaja dentro del juego, es solo una forma de bancar el proyecto.",
+  "support.disclaimer": "No otorga acceso a contenido exclusivo, intentos extra ni ranking preferencial.",
+  "support.cafecito": "Cafecito (Argentina)",
+  "support.kofi": "Ko-fi (internacional)",
 
   // ─── Páginas legales ────────────────────────────────────────────────
   "legal.updated": "Última actualización: {{date}}",

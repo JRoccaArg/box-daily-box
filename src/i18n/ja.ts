@@ -93,6 +93,12 @@ const ja: Translations = {
   "footer.line2": "毎日午前0時に新しいチャレンジ。",
   "footer.info": "遊び方",
   "footer.contact": "お問い合わせ",
+  "footer.support": "プロジェクトを支援する",
+  "support.title": "プロジェクトを支援する",
+  "support.body": "Box Daily Boxは今も、これからも無料です。気に入ったら、自由意志で寄付をすることができます——ゲーム内で有利になることはなく、プロジェクトを支える一つの方法です。",
+  "support.disclaimer": "限定コンテンツ、追加のチャレンジ回数、優先ランキングは付与されません。",
+  "support.cafecito": "Cafecito（アルゼンチン）",
+  "support.kofi": "Ko-fi（国際）",
 
   "profile.title": "あなたのプロフィール",
   "profile.subtitle": "この名前と国でグローバルランキングに表示されます。",

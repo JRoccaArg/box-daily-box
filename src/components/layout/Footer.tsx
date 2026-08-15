@@ -6,7 +6,7 @@
 
 import { Link } from "react-router-dom";
 import { useI18n } from "@/context";
-import { termsPath, privacyPath, infoPath, contactPath } from "@/lib/routes";
+import { termsPath, privacyPath, infoPath, contactPath, homePath } from "@/lib/routes";
 
 export function Footer() {
   const { t, locale } = useI18n();
@@ -42,6 +42,14 @@ export function Footer() {
             className="text-ink-faint underline-offset-2 transition-colors hover:text-ink hover:underline"
           >
             {t("footer.contact")}
+          </Link>
+          {/* Apunta al home (no a un ancla): la tarjeta de apoyo esta cerca
+              del final de una pagina corta, no hace falta scroll-to-hash. */}
+          <Link
+            to={homePath(locale)}
+            className="text-ink-faint underline-offset-2 transition-colors hover:text-ink hover:underline"
+          >
+            {t("footer.support")}
           </Link>
         </nav>
       </div>

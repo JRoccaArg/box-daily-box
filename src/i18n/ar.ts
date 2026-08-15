@@ -67,6 +67,12 @@ const ar: Translations = {
   "footer.line2": "تحدٍ جديد كل يوم عند منتصف الليل.",
   "footer.info": "كيفية اللعب",
   "footer.contact": "اتصل بنا",
+  "footer.support": "ادعم المشروع",
+  "support.title": "ادعم المشروع",
+  "support.body": "Box Daily Box مجاني وسيبقى مجانياً. إذا أعجبك الموقع، يمكنك ترك مساهمة طوعية — لا تمنحك أي ميزة داخل اللعبة، إنها فقط طريقة لدعم المشروع.",
+  "support.disclaimer": "لا تمنح الوصول إلى محتوى حصري أو محاولات إضافية أو ترتيب تفضيلي.",
+  "support.cafecito": "Cafecito (الأرجنتين)",
+  "support.kofi": "Ko-fi (دولي)",
 
   "profile.title": "ملفك الشخصي",
   "profile.subtitle": "ستظهر في التصنيف العالمي بهذا الاسم والبلد.",

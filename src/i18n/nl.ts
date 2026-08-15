@@ -67,6 +67,12 @@ const nl: Translations = {
   "footer.line2": "Elke dag om middernacht een nieuwe uitdaging.",
   "footer.info": "Hoe te spelen",
   "footer.contact": "Contact",
+  "footer.support": "Project steunen",
+  "support.title": "Project steunen",
+  "support.body": "Box Daily Box is en blijft gratis. Als je het leuk vindt, kun je een vrijwillige bijdrage achterlaten — dat geeft geen enkel voordeel in het spel, het is gewoon een manier om het project te steunen.",
+  "support.disclaimer": "Het geeft geen toegang tot exclusieve content, extra pogingen of voorkeursranking.",
+  "support.cafecito": "Cafecito (Argentinië)",
+  "support.kofi": "Ko-fi (internationaal)",
 
   "profile.title": "Jouw profiel",
   "profile.subtitle": "Je verschijnt in de wereldranglijst met deze naam en dit land.",

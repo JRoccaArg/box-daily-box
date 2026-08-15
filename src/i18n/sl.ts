@@ -104,6 +104,12 @@ const sl: Translations = {
   "footer.line2": "Nov izziv vsak dan ob polnoči.",
   "footer.info": "Kako igrati",
   "footer.contact": "Kontakt",
+  "footer.support": "Podpri projekt",
+  "support.title": "Podpri projekt",
+  "support.body": "Box Daily Box je in bo ostal brezplačen. Če ti je všeč, lahko pustiš prostovoljni prispevek — ta ne prinaša nobene prednosti v igri, je le način za podporo projektu.",
+  "support.disclaimer": "Ne daje dostopa do ekskluzivne vsebine, dodatnih poskusov ali prednostne uvrstitve.",
+  "support.cafecito": "Cafecito (Argentina)",
+  "support.kofi": "Ko-fi (mednarodno)",
 
   // ─── Profile (IdentityModal) ────────────────────────────────────────
   "profile.title": "Tvoj profil",
