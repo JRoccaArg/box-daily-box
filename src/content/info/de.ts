@@ -5,6 +5,7 @@ const content: InfoContent = {
   title: "So wird gespielt",
   subtitle:
     "Box Daily Box bietet sechs tägliche Formel-1-Minispiele. Jedes wird einmal pro Tag gespielt, mit einer neuen Herausforderung um Mitternacht. Hier erklären wir die Regeln jedes Spiels, wie die Punktzahl berechnet wird, wie die Rangliste funktioniert und die weiteren Funktionen der Plattform.",
+  dataAsOfNote: "Die in den Spielen verwendeten Fahrer-, Team- und Ergebnisdaten reichen bis zur Saison 2025.",
 
   gamesHeading: "Die 6 Spiele",
   gamesIntro:

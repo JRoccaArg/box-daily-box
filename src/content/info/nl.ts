@@ -5,6 +5,7 @@ const content: InfoContent = {
   title: "Hoe te spelen",
   subtitle:
     "Box Daily Box heeft zes dagelijkse Formule 1-minigames. Elk spel wordt één keer per dag gespeeld, met een nieuwe uitdaging om middernacht. Hier leggen we de regels van elk spel uit, hoe de score wordt berekend, hoe de ranglijst werkt en de andere functies van het platform.",
+  dataAsOfNote: "De coureurs-, team- en uitslaggegevens die in de spellen worden gebruikt, lopen tot en met het seizoen 2025.",
 
   gamesHeading: "De 6 spellen",
   gamesIntro:

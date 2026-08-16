@@ -5,6 +5,7 @@ const content: InfoContent = {
   title: "How to play",
   subtitle:
     "Box Daily Box has six daily Formula 1 minigames. Each one is played once per day, with a new challenge at midnight. Here's how the rules of each game work, how scoring is calculated, how the ranking works, and the platform's other features.",
+  dataAsOfNote: "The driver, team, and results data used by the games goes up to the 2025 season.",
 
   gamesHeading: "The 6 games",
   gamesIntro:

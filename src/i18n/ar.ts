@@ -28,7 +28,6 @@ const ar: Translations = {
   "shell.time": "الوقت", "shell.time_limit": "حد الوقت: {{seconds}} ثانية",
   "shell.no_time_limit": "بدون حد زمني",
   "shell.untimed": "بدون وقت",
-  "shell.untimed_hint": "نقاط ثابتة قليلة، بدون ساعة",
   "shell.fails_left": "تبقى {{count}} من {{total}} محاولات",
   "shell.start": "ابدأ",
   "shell.surrender": "استسلم", "shell.no": "لا",

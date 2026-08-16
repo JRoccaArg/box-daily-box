@@ -403,7 +403,7 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
                 }}
                 options={[
                   ...timeOptions.map((s) => ({ value: s, label: `${s}s` })),
-                  { value: UNTIMED_TIME_VALUE, label: t("shell.untimed"), hint: t("shell.untimed_hint") },
+                  { value: UNTIMED_TIME_VALUE, label: t("shell.untimed") },
                 ]}
               />
             </section>
@@ -418,7 +418,7 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
                 onChange={(v) => setUntimed(v === UNTIMED_TIME_VALUE)}
                 options={[
                   { value: game.timer.seconds, label: t("shell.time_limit", { seconds: game.timer.seconds }) },
-                  { value: UNTIMED_TIME_VALUE, label: t("shell.untimed"), hint: t("shell.untimed_hint") },
+                  { value: UNTIMED_TIME_VALUE, label: t("shell.untimed") },
                 ]}
               />
             </section>

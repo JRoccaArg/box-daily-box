@@ -5,6 +5,7 @@ const content: InfoContent = {
   title: "游戏玩法",
   subtitle:
     "Box Daily Box 每天提供六个一级方程式（F1）迷你游戏。每个游戏每天只能玩一次，午夜会更新新的挑战。下面介绍每个游戏的规则、积分如何计算、排行榜如何运作，以及平台的其他功能。",
+  dataAsOfNote: "游戏使用的车手、车队和赛果数据截至2025赛季。",
 
   gamesHeading: "6个游戏",
   gamesIntro:

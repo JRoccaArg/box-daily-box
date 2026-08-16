@@ -56,6 +56,9 @@ export function InfoPage() {
               {info.title}
             </h1>
             <p className="leading-relaxed text-ink-muted">{info.subtitle}</p>
+            <p className="rounded-lg border border-white/10 bg-asphalt-700 px-3 py-2 text-xs leading-relaxed text-ink-muted">
+              {info.dataAsOfNote}
+            </p>
           </header>
 
           {/* Los 6 juegos */}

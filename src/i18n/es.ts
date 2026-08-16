@@ -50,7 +50,6 @@ const es: Translations = {
   "shell.time_limit": "Tiempo limite: {{seconds}} segundos",
   "shell.no_time_limit": "Sin limite de tiempo",
   "shell.untimed": "Sin Tiempo",
-  "shell.untimed_hint": "Pocos puntos fijos, sin cronometro",
   "shell.fails_left": "Te quedan {{count}} de {{total}} intentos",
   "shell.start": "Comenzar",
   "shell.surrender": "Rendirse",

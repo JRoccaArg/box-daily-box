@@ -5,6 +5,7 @@ const content: InfoContent = {
   title: "Nasıl oynanır",
   subtitle:
     "Box Daily Box'ta altı günlük Formula 1 mini oyunu var. Her biri günde bir kez, gece yarısı yenilenen bir meydan okumayla oynanır. Burada her oyunun kurallarını, puanların nasıl hesaplandığını, sıralamanın nasıl çalıştığını ve platformun diğer özelliklerini anlatıyoruz.",
+  dataAsOfNote: "Oyunlarda kullanılan pilot, takım ve sonuç verileri 2025 sezonuna kadar günceldir.",
 
   gamesHeading: "6 oyun",
   gamesIntro:

@@ -45,7 +45,6 @@ const en: Translations = {
   "shell.time_limit": "Time limit: {{seconds}} seconds",
   "shell.no_time_limit": "No time limit",
   "shell.untimed": "Untimed",
-  "shell.untimed_hint": "Low fixed score, no clock",
   "shell.fails_left": "{{count}} of {{total}} attempts left",
   "shell.start": "Start",
   "shell.surrender": "Give up",

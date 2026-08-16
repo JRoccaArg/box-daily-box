@@ -5,6 +5,7 @@ const content: InfoContent = {
   title: "Kako igrati",
   subtitle:
     "Box Daily Box ponuja šest dnevnih mini iger o Formuli 1. Vsaka se igra enkrat na dan, z novim izzivom ob polnoči. Tu razložimo pravila vsake igre, kako se izračuna rezultat, kako deluje lestvica in druge funkcije platforme.",
+  dataAsOfNote: "Podatki o dirkačih, ekipah in rezultatih, uporabljeni v igrah, segajo do sezone 2025.",
 
   gamesHeading: "6 iger",
   gamesIntro:

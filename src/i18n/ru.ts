@@ -34,7 +34,6 @@ const ru: Translations = {
   "shell.time_limit": "Лимит времени: {{seconds}} секунд",
   "shell.no_time_limit": "Без ограничения по времени",
   "shell.untimed": "Без времени",
-  "shell.untimed_hint": "Мало фиксированных очков, без таймера",
   "shell.fails_left": "Осталось {{count}} из {{total}} попыток",
   "shell.start": "Начать",
   "shell.surrender": "Сдаться",

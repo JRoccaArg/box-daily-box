@@ -45,7 +45,6 @@ const tr: Translations = {
   "shell.time_limit": "Süre sınırı: {{seconds}} saniye",
   "shell.no_time_limit": "Süre sınırı yok",
   "shell.untimed": "Süresiz",
-  "shell.untimed_hint": "Az sabit puan, saat yok",
   "shell.fails_left": "{{total}} denemeden {{count}} kaldı",
   "shell.start": "Başla",
   "shell.surrender": "Pes et",
