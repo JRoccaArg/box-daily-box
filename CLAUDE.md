@@ -13,8 +13,8 @@
 - Documentar cada fix/feature importante en `Box_Daily_Box_Context.md` (sección 9) — NUNCA en archivos trackeados por git (repo público).
 
 ## Proyecto
-Plataforma de minijuegos diarios de F1. 6 juegos, determinista por fecha.
-Frontend: Vite + React 18 + TS + Tailwind. Prerender SSG (14 idiomas × 7 rutas).
+Plataforma de minijuegos diarios de F1. 7 juegos, determinista por fecha.
+Frontend: Vite + React 18 + TS + Tailwind. Prerender SSG (14 idiomas × 12 rutas: home + 7 juegos + terms + privacy + info + contact).
 Backend: Fastify + PostgreSQL (Railway). Auth: Google OAuth directo.
 Seguridad: HMAC-SHA256 (sessionToken + identityToken). Server-authoritative.
 
@@ -132,16 +132,19 @@ animate-ui ya tiene el componente antes de construirlo desde cero.
 ```
 npm run dev        # Vite dev server (5173)
 npm run dev:api    # Backend Fastify con watch
-npm run build      # tsc + gen sitemap + vite-react-ssg build (~100 páginas)
+npm run build      # tsc + gen sitemap + vite-react-ssg build (~168 páginas)
 npm run typecheck  # tsc -b --noEmit
 npm run lint       # eslint estricto (--max-warnings 0)
-npm test           # cadena completa (~20 suites)
+npm test           # cadena completa (~24 suites)
 ```
 
 ## Tests
-npm test corre ~20 suites: identity-token, migration (4 escenarios), sync,
+npm test corre ~24 suites: identity-token, migration (4 escenarios), sync,
 attempts-flow, country, user-rank, ranked-by-ip, session-token, verify-solution
-(513 asserts), scoring, idor-protection, smoke (90 días × 4 dificultades).
+(529 asserts, incluye El Intruso: sin regla de nacionalidad, colores
+distinguibles por partida), scoring, idor-protection, badges, streak,
+duels, friends (incluye presencia online/offline), smoke (90 días × 4
+dificultades).
 
 ## Documentación — qué va dónde
 
