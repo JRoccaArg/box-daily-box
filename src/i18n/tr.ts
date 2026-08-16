@@ -104,6 +104,12 @@ const tr: Translations = {
   "footer.line2": "Her gün gece yarısı yeni bir meydan okuma.",
   "footer.info": "Nasıl oynanır",
   "footer.contact": "İletişim",
+  "footer.support": "Projeyi destekle",
+  "support.title": "Projeyi destekle",
+  "support.body": "Box Daily Box ücretsizdi ve ücretsiz kalacak. Beğendiysen gönüllü bir katkı bırakabilirsin — bu, oyun içinde herhangi bir avantaj sağlamaz, sadece projeye destek olmanın bir yoludur.",
+  "support.disclaimer": "Özel içeriğe, ekstra denemeye ya da öncelikli sıralamaya erişim sağlamaz.",
+  "support.cafecito": "Cafecito (Arjantin)",
+  "support.kofi": "Ko-fi (uluslararası)",
 
   // ─── Profile (IdentityModal) ────────────────────────────────────────
   "profile.title": "Profilin",
@@ -259,7 +265,12 @@ const tr: Translations = {
   "intruso.rule.team": "{{team}} için yarıştılar",
   "intruso.rule.champ": "Dünya şampiyonu oldular",
   "intruso.rule.non_champ": "Hiç dünya şampiyonu olmadılar",
-  "intruso.rule.nationality": "Aynı uyruğa sahipler ({{nat}})",
+  "intruso.rule.winner": "En az bir Grand Prix kazandılar",
+  "intruso.rule.non_winner": "Hiç Grand Prix kazanmadılar",
+  "intruso.rule.poleman": "En az bir pole pozisyonu aldılar",
+  "intruso.rule.non_poleman": "Hiç pole pozisyonu almadılar",
+  "intruso.rule.podium": "En az bir kez podyuma çıktılar",
+  "intruso.rule.non_podium": "Hiç podyuma çıkmadılar",
   "intruso.rule.none": "Kural yok",
 
   // ─── ParrillaBingo extra ──────────────────────────────────────────────
@@ -439,6 +450,8 @@ const tr: Translations = {
   "friends.request_sent": "İstek gönderildi",
   "friends.request_accepted": "Artık arkadaşsınız!",
   "friends.remove": "Arkadaşı kaldır",
+  "friends.online": "Çevrimiçi",
+  "friends.offline": "Çevrimdışı",
   "friends.remove_confirm": "Bu arkadaşı kaldırmak ister misiniz?",
   "friends.list_empty_short": "Henüz arkadaş yok",
 

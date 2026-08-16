@@ -547,7 +547,14 @@ export type PendingDuel = {
   expiresAt: string;
 };
 
-export type Friend = { userId: string; displayName: string | null; countryCode: string | null };
+export type Friend = {
+  userId: string;
+  displayName: string | null;
+  countryCode: string | null;
+  /** ¿Tiene la web abierta ahora? Lo calcula el server (ventana de 2 min);
+   *  nunca llega el timestamp crudo de la última conexión. */
+  online: boolean;
+};
 export type FriendRequest = {
   requestId: number;
   fromUserId: string;

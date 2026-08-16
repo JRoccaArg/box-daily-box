@@ -19,6 +19,7 @@ import { useI18n } from "@/context";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { OnlineDot } from "@/components/ui/OnlineDot";
 import { Users } from "@/components/ui/Icon";
 import { apiListFriends, apiCreateDuel, apiSendFriendRequest, isApiError, type Friend } from "@/lib/api";
 import { duelPath } from "@/lib/routes";
@@ -172,10 +173,16 @@ export function DuelChallengeModal({ open, onClose, mode }: Props) {
                     className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-asphalt-700 px-3 py-2.5"
                   >
                     <span className="flex min-w-0 flex-1 items-center gap-2 text-sm text-ink">
+                      <OnlineDot online={f.online} />
                       {nat && <span className={`fi fi-${nat.alpha2} shrink-0`} role="img" aria-label={nat.name} />}
                       <span className="truncate">{f.displayName || t("stats.no_name")}</span>
                     </span>
-                    <Button size="sm" disabled={creating} onClick={() => createAndGo(f.userId)} className="shrink-0">
+                    <Button
+                      size="sm"
+                      disabled={creating}
+                      onClick={() => createAndGo(f.userId)}
+                      className={`shrink-0 ${f.online ? "" : "opacity-50"}`}
+                    >
                       {t("duel.challenge_button")}
                     </Button>
                   </li>

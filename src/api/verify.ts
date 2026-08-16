@@ -198,8 +198,8 @@ function verifyElIntruso(
   return {
     won,
     detail: won
-      ? `Correcto: ${puzzle.intruderId} (regla: ${puzzle.rule})`
-      : `Incorrecto. Intruso era: ${puzzle.intruderId}, recibido: ${solution.driverId}. Regla: ${puzzle.rule}`,
+      ? `Correcto: ${puzzle.intruderId} (regla: ${puzzle.rule.key})`
+      : `Incorrecto. Intruso era: ${puzzle.intruderId}, recibido: ${solution.driverId}. Regla: ${puzzle.rule.key}`,
   };
 }
 

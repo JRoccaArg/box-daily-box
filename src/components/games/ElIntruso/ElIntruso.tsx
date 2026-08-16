@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { GameProps } from "@/types";
 import { buildIntruso } from "./intruso.logic";
 import { DriverCard } from "@/components/games/shared/DriverCard";
-import { countryName } from "@/data";
+import { assignPuzzleColors } from "@/components/games/shared/puzzleColors";
 import { useI18n } from "@/context";
 import { Panel } from "@/components/ui/Panel";
 import { Button } from "@/components/ui/Button";
@@ -14,17 +14,16 @@ import { Button } from "@/components/ui/Button";
 export function ElIntruso({ difficulty, date, seed, status, onWin, onLose }: GameProps) {
   const { t } = useI18n();
   const puzzle = useMemo(() => buildIntruso(difficulty, date, seed), [difficulty, date, seed]);
+  const colors = useMemo(
+    () => assignPuzzleColors(puzzle.tiles, difficulty, date, seed),
+    [puzzle, difficulty, date, seed],
+  );
 
   const [selected, setSelected] = useState<string | null>(null);
   const [submittedId, setSubmittedId] = useState<string | null>(null);
 
   const finished = status !== "playing";
   const revealed = submittedId !== null || finished;
-
-  const ruleVars =
-    typeof puzzle.rule.vars?.natCode === "string"
-      ? { ...puzzle.rule.vars, nat: countryName(puzzle.rule.vars.natCode, t) }
-      : puzzle.rule.vars;
 
   useEffect(() => {
     if (finished && submittedId === null) setSelected(null);
@@ -62,6 +61,7 @@ export function ElIntruso({ difficulty, date, seed, status, onWin, onLose }: Gam
             <DriverCard
               key={d.id}
               driver={d}
+              color={colors.get(d.id)}
               state={state}
               disabled={revealed}
               onClick={() => !revealed && setSelected(d.id)}
@@ -73,7 +73,7 @@ export function ElIntruso({ difficulty, date, seed, status, onWin, onLose }: Gam
       {revealed ? (
         <div className="mt-5 rounded-lg border border-white/10 bg-asphalt-700 px-4 py-3 text-center">
           <p className="eyebrow">{t("intruso.rule_label")}</p>
-          <p className="mt-1 font-display text-lg font-semibold text-white">{t(puzzle.rule.key, ruleVars)}</p>
+          <p className="mt-1 font-display text-lg font-semibold text-white">{t(puzzle.rule.key, puzzle.rule.vars)}</p>
         </div>
       ) : (
         <div className="mt-5">

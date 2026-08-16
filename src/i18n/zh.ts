@@ -93,6 +93,12 @@ const zh: Translations = {
   "footer.line2": "每天午夜更新新挑战。",
   "footer.info": "游戏玩法",
   "footer.contact": "联系我们",
+  "footer.support": "支持本项目",
+  "support.title": "支持本项目",
+  "support.body": "Box Daily Box 现在免费，以后也将一直免费。如果你喜欢，可以自愿捐助——这不会给你在游戏中带来任何优势，只是支持项目的一种方式。",
+  "support.disclaimer": "不提供专属内容、额外尝试次数或优先排名。",
+  "support.cafecito": "Cafecito（阿根廷）",
+  "support.kofi": "Ko-fi（国际）",
 
   "profile.title": "你的资料",
   "profile.subtitle": "你将以此名字和国家出现在全球排名中。",
@@ -208,7 +214,12 @@ const zh: Translations = {
   "intruso.rule.team": "曾为{{team}}车队效力",
   "intruso.rule.champ": "曾是世界冠军",
   "intruso.rule.non_champ": "从未获得过世界冠军",
-  "intruso.rule.nationality": "国籍相同（{{nat}}）",
+  "intruso.rule.winner": "至少赢得过一场大奖赛",
+  "intruso.rule.non_winner": "从未赢得过大奖赛",
+  "intruso.rule.poleman": "至少获得过一次杆位",
+  "intruso.rule.non_poleman": "从未获得过杆位",
+  "intruso.rule.podium": "至少登上过一次领奖台",
+  "intruso.rule.non_podium": "从未登上过领奖台",
   "intruso.rule.none": "没有可用规则",
 
   "bingo.pick_driver": "选择车手",
@@ -293,7 +304,7 @@ const zh: Translations = {
   "seo.game.top10-standings.description": "猜出1至4年内F1车手积分榜累计的前10名。",
 
   "gamepage.not_found_title": "未找到游戏",
-  "gamepage.not_found_body": "您要找的挑战不存在或已更改地址。",
+  "gamepage.not_found_body": "你要找的挑战不存在或已更改地址。",
   "gamepage.see_all": "查看所有挑战",
 
   // ─── Country names (driver nationality flags) ─────────────────────────
@@ -346,13 +357,13 @@ const zh: Translations = {
   "badge.more": "+{{count}}",
   "badge.gallery_title": "我的徽章",
   "badge.gallery_empty":
-    "您还没有获得任何徽章。在月度排名中排名前3!",
+    "你还没有获得任何徽章。在月度排名中排名前3!",
   "badge.gallery_hint": "点击徽章以在排名中显示(最多3个)。",
   "badge.featured_count": "{{count}}/3 已显示",
   "badge.won_months": "获得于: {{months}}",
   "badge.show_grouped": "分组(×{{count}})",
   "badge.show_individual": "单个",
-  "badge.max_reached": "您已选择最多3个徽章显示",
+  "badge.max_reached": "你已选择最多3个徽章显示",
   "badge.save": "保存选择",
   "badge.saving": "保存中...",
   "badge.save_error": "无法保存。请重试。",
@@ -383,6 +394,8 @@ const zh: Translations = {
   "friends.request_sent": "请求已发送",
   "friends.request_accepted": "你们现在是朋友了！",
   "friends.remove": "删除朋友",
+  "friends.online": "在线",
+  "friends.offline": "离线",
   "friends.remove_confirm": "删除这位朋友？",
   "friends.list_empty_short": "还没有朋友",
 

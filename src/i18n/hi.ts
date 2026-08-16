@@ -99,6 +99,12 @@ const hi: Translations = {
   "footer.line2": "हर रात 12 बजे एक नई चुनौती।",
   "footer.info": "कैसे खेलें",
   "footer.contact": "संपर्क करें",
+  "footer.support": "प्रोजेक्ट को सपोर्ट करें",
+  "support.title": "प्रोजेक्ट को सपोर्ट करें",
+  "support.body": "Box Daily Box मुफ़्त है और मुफ़्त ही रहेगा। अगर आपको यह पसंद है, तो आप स्वेच्छा से योगदान दे सकते हैं — इससे गेम के अंदर कोई फायदा नहीं मिलता, यह सिर्फ प्रोजेक्ट को सपोर्ट करने का एक तरीका है।",
+  "support.disclaimer": "इससे एक्सक्लूसिव कंटेंट, अतिरिक्त प्रयास या प्राथमिकता रैंकिंग नहीं मिलती।",
+  "support.cafecito": "Cafecito (अर्जेंटीना)",
+  "support.kofi": "Ko-fi (अंतरराष्ट्रीय)",
 
   "profile.title": "आपकी प्रोफ़ाइल",
   "profile.subtitle":
@@ -246,7 +252,12 @@ const hi: Translations = {
   "intruso.rule.team": "{{team}} के लिए दौड़े",
   "intruso.rule.champ": "विश्व चैंपियन रहे",
   "intruso.rule.non_champ": "कभी विश्व चैंपियन नहीं रहे",
-  "intruso.rule.nationality": "एक ही राष्ट्रीयता के हैं ({{nat}})",
+  "intruso.rule.winner": "कम से कम एक ग्रांड प्रिक्स जीता",
+  "intruso.rule.non_winner": "कभी ग्रांड प्रिक्स नहीं जीता",
+  "intruso.rule.poleman": "कम से कम एक पोल पोजीशन हासिल की",
+  "intruso.rule.non_poleman": "कभी पोल पोजीशन हासिल नहीं की",
+  "intruso.rule.podium": "कम से कम एक बार पोडियम पर पहुंचे",
+  "intruso.rule.non_podium": "कभी पोडियम पर नहीं पहुंचे",
   "intruso.rule.none": "कोई नियम उपलब्ध नहीं",
 
   "bingo.eyebrow": "ग्रिड बिंगो",
@@ -423,6 +434,8 @@ const hi: Translations = {
   "friends.request_sent": "अनुरोध भेजा गया",
   "friends.request_accepted": "अब आप दोस्त हैं!",
   "friends.remove": "दोस्त हटाएँ",
+  "friends.online": "ऑनलाइन",
+  "friends.offline": "ऑफ़लाइन",
   "friends.remove_confirm": "इस दोस्त को हटाएँ?",
   "friends.list_empty_short": "अभी तक कोई दोस्त नहीं",
 

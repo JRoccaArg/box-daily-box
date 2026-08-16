@@ -113,6 +113,12 @@ const en: Translations = {
   "footer.terms": "Terms and Conditions",
   "footer.privacy": "Privacy Policy",
   "footer.contact": "Contact",
+  "footer.support": "Support the project",
+  "support.title": "Support the project",
+  "support.body": "Box Daily Box is and will remain free. If you enjoy it, you can leave a voluntary contribution — it doesn't give any advantage inside the game, it's just a way to help fund the project.",
+  "support.disclaimer": "It does not grant access to exclusive content, extra attempts, or preferential ranking.",
+  "support.cafecito": "Cafecito (Argentina)",
+  "support.kofi": "Ko-fi (international)",
 
   // ─── Legal pages ────────────────────────────────────────────────────
   "legal.updated": "Last updated: {{date}}",
@@ -314,7 +320,12 @@ const en: Translations = {
   "intruso.rule.team": "Drove for {{team}}",
   "intruso.rule.champ": "Were world champions",
   "intruso.rule.non_champ": "Were never world champions",
-  "intruso.rule.nationality": "Are the same nationality ({{nat}})",
+  "intruso.rule.winner": "Won at least one Grand Prix",
+  "intruso.rule.non_winner": "Never won a Grand Prix",
+  "intruso.rule.poleman": "Took at least one pole position",
+  "intruso.rule.non_poleman": "Never took a pole position",
+  "intruso.rule.podium": "Finished on the podium at least once",
+  "intruso.rule.non_podium": "Never finished on the podium",
   "intruso.rule.none": "No rule available",
 
   // ─── ParrillaBingo extra ──────────────────────────────────────────────
@@ -466,6 +477,8 @@ const en: Translations = {
   "friends.request_sent": "Request sent",
   "friends.request_accepted": "You're now friends!",
   "friends.remove": "Remove friend",
+  "friends.online": "Online",
+  "friends.offline": "Offline",
   "friends.remove_confirm": "Remove this friend?",
   "friends.list_empty_short": "No friends yet",
 

@@ -104,6 +104,12 @@ const sl: Translations = {
   "footer.line2": "Nov izziv vsak dan ob polnoči.",
   "footer.info": "Kako igrati",
   "footer.contact": "Kontakt",
+  "footer.support": "Podpri projekt",
+  "support.title": "Podpri projekt",
+  "support.body": "Box Daily Box je in bo ostal brezplačen. Če ti je všeč, lahko pustiš prostovoljni prispevek — ta ne prinaša nobene prednosti v igri, je le način za podporo projektu.",
+  "support.disclaimer": "Ne daje dostopa do ekskluzivne vsebine, dodatnih poskusov ali prednostne uvrstitve.",
+  "support.cafecito": "Cafecito (Argentina)",
+  "support.kofi": "Ko-fi (mednarodno)",
 
   // ─── Profile (IdentityModal) ────────────────────────────────────────
   "profile.title": "Tvoj profil",
@@ -259,7 +265,12 @@ const sl: Translations = {
   "intruso.rule.team": "Vozili so za {{team}}",
   "intruso.rule.champ": "Bili so svetovni prvaki",
   "intruso.rule.non_champ": "Nikoli niso bili svetovni prvaki",
-  "intruso.rule.nationality": "So iste narodnosti ({{nat}})",
+  "intruso.rule.winner": "Zmagali so vsaj na eni dirki za Veliko nagrado",
+  "intruso.rule.non_winner": "Nikoli niso zmagali na dirki za Veliko nagrado",
+  "intruso.rule.poleman": "Osvojili so vsaj en najboljši startni položaj",
+  "intruso.rule.non_poleman": "Nikoli niso osvojili najboljšega startnega položaja",
+  "intruso.rule.podium": "Vsaj enkrat so stali na stopničkah",
+  "intruso.rule.non_podium": "Nikoli niso stali na stopničkah",
   "intruso.rule.none": "Pravilo ni na voljo",
 
   // ─── ParrillaBingo extra ──────────────────────────────────────────────
@@ -438,6 +449,8 @@ const sl: Translations = {
   "friends.request_sent": "Prošnja poslana",
   "friends.request_accepted": "Zdaj ste prijatelji!",
   "friends.remove": "Odstrani prijatelja",
+  "friends.online": "Na spletu",
+  "friends.offline": "Nepovezan",
   "friends.remove_confirm": "Želite odstraniti tega prijatelja?",
   "friends.list_empty_short": "Še brez prijateljev",
 

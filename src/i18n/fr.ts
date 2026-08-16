@@ -99,6 +99,12 @@ const fr: Translations = {
   "footer.line2": "Un nouveau défi chaque jour à minuit.",
   "footer.info": "Comment jouer",
   "footer.contact": "Contact",
+  "footer.support": "Soutenir le projet",
+  "support.title": "Soutenir le projet",
+  "support.body": "Box Daily Box est et restera gratuit. Si vous aimez le site, vous pouvez laisser une contribution volontaire — elle ne donne aucun avantage dans le jeu, c'est juste une façon de soutenir le projet.",
+  "support.disclaimer": "Elle ne donne accès à aucun contenu exclusif, essai supplémentaire ni classement préférentiel.",
+  "support.cafecito": "Cafecito (Argentine)",
+  "support.kofi": "Ko-fi (international)",
 
   "profile.title": "Votre profil",
   "profile.subtitle":
@@ -248,7 +254,12 @@ const fr: Translations = {
   "intruso.rule.team": "Ont couru pour {{team}}",
   "intruso.rule.champ": "Ont été champions du monde",
   "intruso.rule.non_champ": "N'ont jamais été champions du monde",
-  "intruso.rule.nationality": "Sont de la même nationalité ({{nat}})",
+  "intruso.rule.winner": "Ont gagné au moins un Grand Prix",
+  "intruso.rule.non_winner": "N'ont jamais gagné un Grand Prix",
+  "intruso.rule.poleman": "Ont signé au moins une pole position",
+  "intruso.rule.non_poleman": "N'ont jamais signé de pole position",
+  "intruso.rule.podium": "Sont montés au moins une fois sur le podium",
+  "intruso.rule.non_podium": "Ne sont jamais montés sur le podium",
   "intruso.rule.none": "Aucune règle disponible",
 
   "bingo.eyebrow": "Grille Bingo",
@@ -425,6 +436,8 @@ const fr: Translations = {
   "friends.request_sent": "Demande envoyée",
   "friends.request_accepted": "Vous êtes amis maintenant !",
   "friends.remove": "Supprimer ami",
+  "friends.online": "En ligne",
+  "friends.offline": "Hors ligne",
   "friends.remove_confirm": "Supprimer cet ami ?",
   "friends.list_empty_short": "Pas d'amis encore",
 

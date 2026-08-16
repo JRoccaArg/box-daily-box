@@ -99,6 +99,12 @@ const it: Translations = {
   "footer.line2": "Una nuova sfida ogni giorno a mezzanotte.",
   "footer.info": "Come si gioca",
   "footer.contact": "Contatti",
+  "footer.support": "Sostieni il progetto",
+  "support.title": "Sostieni il progetto",
+  "support.body": "Box Daily Box è e resterà gratuito. Se ti piace, puoi lasciare un contributo volontario — non dà alcun vantaggio nel gioco, è solo un modo per sostenere il progetto.",
+  "support.disclaimer": "Non dà accesso a contenuti esclusivi, tentativi extra o classifiche preferenziali.",
+  "support.cafecito": "Cafecito (Argentina)",
+  "support.kofi": "Ko-fi (internazionale)",
 
   "profile.title": "Il tuo profilo",
   "profile.subtitle":
@@ -247,7 +253,12 @@ const it: Translations = {
   "intruso.rule.team": "Hanno guidato per {{team}}",
   "intruso.rule.champ": "Sono stati campioni del mondo",
   "intruso.rule.non_champ": "Non sono mai stati campioni del mondo",
-  "intruso.rule.nationality": "Sono della stessa nazionalità ({{nat}})",
+  "intruso.rule.winner": "Hanno vinto almeno un Gran Premio",
+  "intruso.rule.non_winner": "Non hanno mai vinto un Gran Premio",
+  "intruso.rule.poleman": "Hanno ottenuto almeno una pole position",
+  "intruso.rule.non_poleman": "Non hanno mai ottenuto una pole position",
+  "intruso.rule.podium": "Sono saliti sul podio almeno una volta",
+  "intruso.rule.non_podium": "Non sono mai saliti sul podio",
   "intruso.rule.none": "Nessuna regola disponibile",
 
   "bingo.eyebrow": "Griglia Bingo",
@@ -424,6 +435,8 @@ const it: Translations = {
   "friends.request_sent": "Richiesta inviata",
   "friends.request_accepted": "Ora siete amici!",
   "friends.remove": "Rimuovi amico",
+  "friends.online": "Online",
+  "friends.offline": "Offline",
   "friends.remove_confirm": "Rimuovere questo amico?",
   "friends.list_empty_short": "Nessun amico ancora",
 

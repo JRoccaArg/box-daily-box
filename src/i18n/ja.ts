@@ -93,6 +93,12 @@ const ja: Translations = {
   "footer.line2": "毎日午前0時に新しいチャレンジ。",
   "footer.info": "遊び方",
   "footer.contact": "お問い合わせ",
+  "footer.support": "プロジェクトを支援する",
+  "support.title": "プロジェクトを支援する",
+  "support.body": "Box Daily Boxは今も、これからも無料です。気に入ったら、自由意志で寄付をすることができます——ゲーム内で有利になることはなく、プロジェクトを支える一つの方法です。",
+  "support.disclaimer": "限定コンテンツ、追加のチャレンジ回数、優先ランキングは付与されません。",
+  "support.cafecito": "Cafecito（アルゼンチン）",
+  "support.kofi": "Ko-fi（国際）",
 
   "profile.title": "あなたのプロフィール",
   "profile.subtitle": "この名前と国でグローバルランキングに表示されます。",
@@ -208,7 +214,12 @@ const ja: Translations = {
   "intruso.rule.team": "{{team}}でドライブした",
   "intruso.rule.champ": "世界チャンピオンだった",
   "intruso.rule.non_champ": "世界チャンピオンになったことがない",
-  "intruso.rule.nationality": "同じ国籍（{{nat}}）",
+  "intruso.rule.winner": "グランプリで1勝以上している",
+  "intruso.rule.non_winner": "グランプリで勝ったことがない",
+  "intruso.rule.poleman": "ポールポジションを1回以上獲得している",
+  "intruso.rule.non_poleman": "ポールポジションを獲得したことがない",
+  "intruso.rule.podium": "表彰台に1回以上上がっている",
+  "intruso.rule.non_podium": "表彰台に上がったことがない",
   "intruso.rule.none": "ルールがありません",
 
   "bingo.pick_driver": "ドライバーを選択",
@@ -253,7 +264,7 @@ const ja: Translations = {
   "profile.name_available": "✓ 利用可能",
 
   "game.top10-standings.name": "Top 10 Standings",
-  "game.top10-standings.tagline": "1〜4年間のドライバーズチャンピオンシップの累計トップ10ポイントを当ててください。",
+  "game.top10-standings.tagline": "1〜4年間のドライバーズチャンピオンシップの累計トップ10ポイントを当ててみよう。",
   "top10standings.eyebrow": "ドライバーズチャンピオンシップ",
   "top10standings.subtitle": "期間の累計トップ10ポイント",
   "top10standings.search_placeholder": "ドライバー名を入力…",
@@ -299,7 +310,7 @@ const ja: Translations = {
     "時間切れになる前に歴史的なF1グランプリのトップ10を完成させましょう。新しい無料の毎日のパズル。",
   "seo.game.top10-standings.title": "Top 10 Standings — F1選手権パズル | Box Daily Box",
   "seo.game.top10-standings.description":
-    "1〜4年間のF1ドライバーズチャンピオンシップの累計トップ10ポイントを当ててください。",
+    "1〜4年間のF1ドライバーズチャンピオンシップの累計トップ10ポイントを当ててみよう。",
 
   "gamepage.not_found_title": "ゲームが見つかりません",
   "gamepage.not_found_body": "お探しのチャレンジは存在しないか、移動しました。",
@@ -392,6 +403,8 @@ const ja: Translations = {
   "friends.request_sent": "リクエスト送信済み",
   "friends.request_accepted": "友達になりました！",
   "friends.remove": "友達を削除",
+  "friends.online": "オンライン",
+  "friends.offline": "オフライン",
   "friends.remove_confirm": "この友達を削除しますか？",
   "friends.list_empty_short": "まだ友達なし",
 
