@@ -7,8 +7,9 @@
  *    logo NUNCA aparecen en el pool jugable.
  *  - Todo target generado tiene cadena >=2 y CADA escuderia de esa cadena
  *    tiene logo en TEAM_IDS_WITH_LOGO.
- *  - Smoke de 90 dias x 4 dificultades: sin excepciones, con variedad
- *    razonable de pilotos (no siempre el mismo).
+ *  - Smoke de 90 dias x dificultades habilitadas (facil/medio/dificil; NO
+ *    "leyenda", desactivada porque su pool no se diferencia de "dificil"):
+ *    sin excepciones, con variedad razonable de pilotos (no siempre el mismo).
  *  - getCareerChain colapsa temporadas consecutivas del mismo equipo pero
  *    preserva un regreso (caso Fisichella: jordan aparece dos veces, no
  *    consecutivas, en su cadena real).
@@ -17,8 +18,13 @@
  */
 import { DRIVERS, DRIVERS_BY_ID, hasFullLogoChain, getCareerChain, TEAM_IDS_WITH_LOGO } from "../src/data";
 import { buildCareerPathTarget, targetChain, getCareerPathPool } from "../src/components/games/CareerPath/careerpath.logic";
-import { DIFFICULTY_ORDER } from "../src/lib/filters";
 import type { Difficulty } from "../src/types";
+
+// Dificultades habilitadas para este juego (debe coincidir con
+// src/components/games/registry.ts). No se importa el registry acá: arrastra
+// los componentes React de todos los juegos (mismo motivo documentado en
+// scripts/gen-sitemap.ts para GAME_IDS).
+const CAREER_PATH_DIFFICULTIES: Difficulty[] = ["facil", "medio", "dificil"];
 
 let passed = 0;
 let failed = 0;
@@ -93,9 +99,9 @@ assert(!!duelTarget.id, "buildCareerPathTarget con seed de duelo no explota");
 
 // ─── Parte C: smoke 90 dias x 4 dificultades ────────────────────────
 
-console.log("\n=== Parte C: smoke (90 dias x 4 dificultades) ===");
+console.log("\n=== Parte C: smoke (90 dias x dificultades habilitadas) ===");
 
-for (const diff of DIFFICULTY_ORDER) {
+for (const diff of CAREER_PATH_DIFFICULTIES) {
   const pool = getCareerPathPool(diff as Difficulty);
   assert(pool.length > 0, `[${diff}] pool no vacio (${pool.length} pilotos)`);
 

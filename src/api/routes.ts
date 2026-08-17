@@ -46,6 +46,7 @@ const GAME_TIME_OPTIONS: Record<string, number[]> = {
   "gp-resultado": [90, 120, 150, 180],
   "top10-standings": [90, 120, 150, 180],
   "career-path": [60, 90],
+  "team-radio": [45, 60],
 };
 
 // Tiempo máximo por juego (para fallback de sesiones antiguas sin timeLimit guardado).
@@ -57,10 +58,29 @@ const TIME_LIMITS: Record<string, number> = {
   "gp-resultado": 180,
   "top10-standings": 180,
   "career-path": 90,
+  "team-radio": 60,
 };
 
-const VALID_GAMES = ["pittexto", "polewordle", "el-intruso", "parrilla-bingo", "gp-resultado", "top10-standings", "career-path"];
-const VALID_DIFFS = ["facil", "medio", "dificil", "leyenda"];
+const VALID_GAMES = ["pittexto", "polewordle", "el-intruso", "parrilla-bingo", "gp-resultado", "top10-standings", "career-path", "team-radio"];
+
+// Dificultades habilitadas por juego. Debe coincidir con `difficulties` en
+// src/components/games/registry.ts. Por defecto un juego habilita las 4;
+// "career-path" restringe "leyenda" porque su pool de pilotos jugables no se
+// diferencia del de "dificil" (mismas 42 escuderías con logo disponible),
+// así que pagaría más puntos por un juego idéntico.
+const GAME_DIFFICULTIES: Record<string, string[]> = {
+  "pittexto": ["facil", "medio", "dificil", "leyenda"],
+  "polewordle": ["facil", "medio", "dificil", "leyenda"],
+  "el-intruso": ["facil", "medio", "dificil", "leyenda"],
+  "parrilla-bingo": ["facil", "medio", "dificil", "leyenda"],
+  "gp-resultado": ["facil", "medio", "dificil", "leyenda"],
+  "top10-standings": ["facil", "medio", "dificil", "leyenda"],
+  "career-path": ["facil", "medio", "dificil"],
+  // "team-radio" no tiene "leyenda": usa rangos de año EXCLUSIVOS (no
+  // acumulativos), calibrados a cuánto material de radios existe por época
+  // (ver teamradio.logic.ts DIFFICULTY_RANGES).
+  "team-radio": ["facil", "medio", "dificil"],
+};
 
 // ─── Token firmado (HMAC-SHA256) ────────────────────────────────────
 
@@ -141,12 +161,12 @@ export async function startChallenge(
       return;
     }
 
-    if (!difficulty || !VALID_DIFFS.includes(difficulty)) {
-      reply.code(422).send({ error: "Dificultad inválida" });
-      return;
-    }
     if (!VALID_GAMES.includes(gameId)) {
       reply.code(422).send({ error: "Juego inválido" });
+      return;
+    }
+    if (!difficulty || !GAME_DIFFICULTIES[gameId]?.includes(difficulty)) {
+      reply.code(422).send({ error: "Dificultad inválida" });
       return;
     }
 
@@ -2199,7 +2219,7 @@ export async function createDuel(req: FastifyRequest, reply: FastifyReply): Prom
       reply.code(422).send({ error: "Juego inválido" });
       return;
     }
-    if (!difficulty || !VALID_DIFFS.includes(difficulty)) {
+    if (!difficulty || !GAME_DIFFICULTIES[gameId]?.includes(difficulty)) {
       reply.code(422).send({ error: "Dificultad inválida" });
       return;
     }

@@ -10,11 +10,11 @@
 - Sin emojis en código/docs/UI salvo pedido.
 - Respuestas concisas, sin narrar deliberación.
 - Verificación real: dev server + prueba en navegador, no solo typecheck.
-- Documentar cada fix/feature importante en `Box_Daily_Box_Context.md` (sección 9) — NUNCA en archivos trackeados por git (repo público).
+- Documentar cada fix/feature importante en `Box_Daily_Box_Context.md` (historial de sesiones) — NUNCA en archivos trackeados por git (repo público).
 
 ## Proyecto
-Plataforma de minijuegos diarios de F1. 7 juegos, determinista por fecha.
-Frontend: Vite + React 18 + TS + Tailwind. Prerender SSG (14 idiomas × 12 rutas: home + 7 juegos + terms + privacy + info + contact).
+Plataforma de minijuegos diarios de F1. 8 juegos, determinista por fecha.
+Frontend: Vite + React 18 + TS + Tailwind. Prerender SSG (14 idiomas × 13 rutas: home + 8 juegos + terms + privacy + info + contact).
 Backend: Fastify + PostgreSQL (Railway). Auth: Google OAuth directo.
 Seguridad: HMAC-SHA256 (sessionToken + identityToken). Server-authoritative.
 
@@ -44,12 +44,35 @@ Seguridad: HMAC-SHA256 (sessionToken + identityToken). Server-authoritative.
   el dispositivo actual, pero si el intento nunca llegó al server, desloguearse + borrar
   localStorage + re-loguearse hace que el reto reaparezca como no jugado. La fuente de
   verdad real es siempre el server.
-- **Un juego nuevo debe registrarse en 6 listas**: `src/components/games/registry.ts`
-  (`GAMES`) + `VALID_GAMES`/`GAME_TIME_OPTIONS`/`TIME_LIMITS` (`src/api/routes.ts`) +
-  el switch de `verifyChallenge` (`src/api/verify.ts`) + `VALID_GAME_IDS`/
-  `IMPORT_TIME_LIMITS` (`src/api/auth.ts`). Hay un test que lo valida automáticamente:
-  `scripts/test-game-registry.mjs` (parte de `npm test`) — si falta en una lista, el
-  test falla y dice cuál.
+- **Un juego nuevo debe registrarse en 9 listas**: `src/components/games/registry.ts`
+  (`GAMES`) + `VALID_GAMES`/`GAME_TIME_OPTIONS`/`TIME_LIMITS`/`GAME_DIFFICULTIES`
+  (`src/api/routes.ts`) + el switch de `verifyChallenge` (`src/api/verify.ts`) +
+  `VALID_GAME_IDS`/`IMPORT_TIME_LIMITS`/`GAME_DIFFICULTIES` (`src/api/auth.ts`) +
+  `GAME_IDS` (`scripts/gen-sitemap.ts`) + `GAMES` (`tests/visual/games.spec.ts`) +
+  `InfoGameId` (`src/content/info/types.ts`, con su `gameDetail` en los 14 idiomas).
+  `scripts/test-game-registry.mjs` (parte de `npm test`) valida automáticamente las
+  primeras 7 (registry + routes + verify + auth) y falla diciendo cuál falta; las
+  últimas 2 (`gen-sitemap.ts`, `InfoGameId`) **no tienen test** — hay que revisarlas
+  a mano.
+- **Las dificultades de un juego se validan también en el backend, por juego, no
+  solo en el registry.** `GAME_DIFFICULTIES` (`src/api/routes.ts` y `src/api/auth.ts`,
+  mismo patrón que `GAME_TIME_OPTIONS`) es la lista real de dificultades aceptadas
+  para cada `gameId` en `startChallenge`, la creación de duelos y el import de
+  attempts. Si un juego solo ofrece 3 dificultades en `registry.ts` pero el backend
+  no lo refleja, un cliente modificado puede seguir mandando la dificultad
+  deshabilitada y cobrar sus puntos (más altos) con el puzzle de una dificultad
+  más floja — es exactamente el agujero que tenía Career Path antes de sacarle
+  `leyenda`.
+- **Una dificultad solo existe si aporta material propio.** Antes de activar un
+  nivel de dificultad para un juego, contar cuántos ítems jugables agrega sobre el
+  nivel anterior (pilotos, escuderías, radios, lo que corresponda). Si aporta menos
+  de 10 de diferencia, el nivel es redundante — se desactiva (o ni se agrega). Así
+  se detectó y sacó `leyenda` de Career Path (2 pilotos y 0 escuderías nuevas sobre
+  `dificil`, pero pagaba +58% de puntos) y se decidió qué dificultades activar en
+  Team Radio. **Team Radio usa rangos de año EXCLUSIVOS por dificultad** (no
+  acumulados con `difficultyFloor` como el resto del sitio) — desviación deliberada
+  y documentada en `teamradio.logic.ts`, porque el material de radios reales es
+  escaso antes de mediados de los 2000s.
 - **Ningún string user-facing generado por `*.logic.ts` puede ser un literal en español**:
   la lógica de generación de un juego (labels, reglas, condiciones reveladas al terminar)
   debe devolver `I18nText` (`{ key: string; vars?: Record<string, string|number> }`,
@@ -88,9 +111,9 @@ Seguridad: HMAC-SHA256 (sessionToken + identityToken). Server-authoritative.
   para no alterar el puzzle. Los colores NO entran en `verifyChallenge` (solo se compara
   `driverId`), por eso pueden vivir en el cliente.
 - Para agregar un juego nuevo con i18n + SEO correctos, seguí el checklist completo de
-  `Box_Daily_Box_Context.md` sección 7 — es la fuente autoritativa (incluye keys SEO,
-  patrón `I18nText`, y las 6 listas backend); este archivo solo resume los invariantes
-  críticos. Detalle de historial de bugs en la sección 9 del mismo archivo.
+  `Box_Daily_Box_Context.md` — es la fuente autoritativa (incluye keys SEO,
+  patrón `I18nText`, y las 9 listas backend); este archivo solo resume los invariantes
+  críticos. Detalle de historial de bugs en el mismo archivo.
 
 ## Idioma y registro en textos de usuario
 
@@ -132,19 +155,21 @@ animate-ui ya tiene el componente antes de construirlo desde cero.
 ```
 npm run dev        # Vite dev server (5173)
 npm run dev:api    # Backend Fastify con watch
-npm run build      # tsc + gen sitemap + vite-react-ssg build (~168 páginas)
+npm run build      # tsc + gen sitemap + vite-react-ssg build (184 páginas)
 npm run typecheck  # tsc -b --noEmit
 npm run lint       # eslint estricto (--max-warnings 0)
-npm test           # cadena completa (~24 suites)
+npm test           # cadena completa (~27 suites)
 ```
 
 ## Tests
-npm test corre ~24 suites: identity-token, migration (4 escenarios), sync,
+npm test corre ~27 suites: identity-token, migration (4 escenarios), sync,
 attempts-flow, country, user-rank, ranked-by-ip, session-token, verify-solution
-(529 asserts, incluye El Intruso: sin regla de nacionalidad, colores
-distinguibles por partida), scoring, idor-protection, badges, streak,
-duels, friends (incluye presencia online/offline), smoke (90 días × 4
-dificultades).
+(697 asserts, incluye El Intruso: sin regla de nacionalidad, colores
+distinguibles por partida; incluye Career Path y Team Radio), scoring,
+idor-protection, badges, streak, duels, friends (incluye presencia
+online/offline), career-path, teamradio-data, teamradio, i18n-parity
+(paridad de keys entre los 14 idiomas), smoke (90 días × dificultades activas
+por juego).
 
 ## Documentación — qué va dónde
 

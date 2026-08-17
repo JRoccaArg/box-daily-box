@@ -6,6 +6,7 @@ import { ParrillaBingo } from "./ParrillaBingo/ParrillaBingo";
 import { GPResultado } from "./GPResultado/GPResultado";
 import { Top10Standings } from "./Top10Standings/Top10Standings";
 import { CareerPath } from "./CareerPath/CareerPath";
+import { TeamRadio } from "./TeamRadio/TeamRadio";
 
 /**
  * Registro central de juegos. Cada entrada es autodescriptiva: el resto de la
@@ -67,9 +68,25 @@ export const GAMES: GameDefinition[] = [
   {
     id: "career-path",
     glyph: "CP",
-    difficulties: [...DIFFS],
+    // "leyenda" desactivada a propósito: con los logos de escudería
+    // disponibles hoy (42, casi todos modernos), el pool de "leyenda" difiere
+    // del de "dificil" en solo 2 pilotos y las mismas 42 escuderías, pero
+    // paga 600 pts base vs 380 por el mismo juego. Reactivar cuando se sumen
+    // logos históricos (ver docs/contexto.md).
+    difficulties: ["facil", "medio", "dificil"],
     timer: { kind: "choice", options: [60, 90] },
     component: CareerPath,
+  },
+  {
+    id: "team-radio",
+    glyph: "TR",
+    // Dificultades EXCLUSIVAS por año (no acumulativas): facil=2022+,
+    // medio=2017-2021, dificil=hasta 2016. "leyenda" no existe en este
+    // juego. Ver teamradio.logic.ts (DIFFICULTY_RANGES) para el detalle
+    // completo de por qué este juego no sigue el patrón difficultyFloor.
+    difficulties: ["facil", "medio", "dificil"],
+    timer: { kind: "choice", options: [45, 60] },
+    component: TeamRadio,
   },
 ];
 

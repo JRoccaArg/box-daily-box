@@ -281,9 +281,9 @@ const ja: Translations = {
   "careerpath.found": "見つけました：",
   "careerpath.answer_was": "ドライバーは：",
 
-  "seo.home.title": "Box Daily Box — 毎日のF1ミニゲーム | 6つの無料パズル",
+  "seo.home.title": "Box Daily Box — 毎日のF1ミニゲーム | 8つの無料パズル",
   "seo.home.description":
-    "6つの毎日のF1ミニゲーム：ドライバーを当てる、トップ10を完成させる、部外者を見つけるなど。無料のグローバルランキング、登録不要。",
+    "8つの毎日のF1ミニゲーム：ドライバーを当てる、トップ10を完成させる、部外者を見つけるなど。無料のグローバルランキング、登録不要。",
   "seo.contact.title": "お問い合わせ | Box Daily Box",
   "seo.contact.description": "Box Daily Boxの技術的な問題や新しいアイデアがありますか？お問い合わせください。",
   "seo.game.career-path.title": "Career Path — チーム履歴からドライバーを当てよう | Box Daily Box",
@@ -439,6 +439,61 @@ const ja: Translations = {
   "duel.go_home": "ホームに戻る",
   "duel.share_link": "リンクを共有",
   "duel.link_copied": "リンクをクリップボードにコピーしました",
+
+  "settings.trigger_label": "サウンドとバイブレーション",
+  "settings.sound": "サウンド",
+  "settings.haptics": "バイブレーション",
+  "settings.on": "オン",
+  "settings.off": "オフ",
+
+  "footer.terms": "利用規約",
+  "footer.privacy": "プライバシーポリシー",
+  "legal.updated": "最終更新日：{{date}}",
+
+  "ranking.streak_title": "{{count}}日連続勝利",
+
+  "monthly.daily_title": "日別",
+  "monthly.weekly_title": "週別",
+  "monthly.week_tooltip": "第{{n}}週：{{points}}ポイント",
+  "monthly.by_difficulty": "難易度別",
+  "monthly.by_game": "ゲーム別",
+
+  "seo.terms.title": "利用規約 | Box Daily Box",
+  "seo.terms.description": "Box Daily Boxの利用規約。F1の無料デイリーミニゲームプラットフォーム。",
+  "seo.privacy.title": "プライバシーポリシー | Box Daily Box",
+  "seo.privacy.description": "Box Daily Boxが個人データをどのように扱うか：収集する内容、目的、あなたの権利について。",
+
+  "friends.need_to_play": "フレンド機能を使うには、まずチャレンジをプレイしてください。",
+
+  "duel.error_start": "デュエルを読み込めませんでした。ホームからやり直してください。",
+  "duel.leave_button": "退出する",
+  "duel.leave_title": "デュエルを退出しますか？",
+  "duel.leave_msg": "今退出すると、デュエルを放棄し、相手の勝利になります。この操作は取り消せません。",
+  "duel.leave_confirm": "はい、退出して負けを認める",
+  "duel.leave_cancel": "プレイを続ける",
+  "duel.accept_while_playing_title": "デュエルを受けますか？",
+  "duel.accept_while_playing_msg":
+    "現在プレイ中のゲームがあります。このデュエルを受けると、現在のゲームとその挑戦を失います。この操作は取り消せません。",
+  "duel.accept_while_playing_confirm": "はい、受けて今のゲームを失う",
+  "duel.accept_while_playing_cancel": "プレイを続ける",
+  "duel.reason_nobody_played": "どちらも時間内にチャレンジを完了しませんでした。",
+  "duel.reason_opponent_absent": "相手はプレイしませんでした。",
+  "duel.reason_you_absent": "あなたはプレイしませんでした。",
+  "duel.reason_opponent_forfeit": "相手がデュエルを退出しました。",
+  "duel.reason_you_forfeit": "あなたがデュエルを退出しました。",
+
+  "teamradio.eyebrow": "Team Radio",
+  "teamradio.hint": "これは実際のチーム無線です。どのグランプリで発言されたか当ててください。",
+  "teamradio.said_by": "発言者：{{driver}}",
+  "teamradio.select": "グランプリを選択",
+  "teamradio.confirm": "確定",
+  "teamradio.answer_was": "正解は：",
+  "teamradio.correct": "正解",
+  "game.team-radio.name": "Team Radio",
+  "game.team-radio.tagline": "F1の象徴的なチーム無線を読んで、どのグランプリで発言されたか当ててみよう。",
+  "seo.game.team-radio.title": "Team Radio — チーム無線からグランプリを当てよう | Box Daily Box",
+  "seo.game.team-radio.description":
+    "F1の象徴的なチーム無線メッセージを読み、6つの選択肢からどのグランプリで発言されたか当てよう。無料の毎日パズル。",
 };
 
 export default ja;

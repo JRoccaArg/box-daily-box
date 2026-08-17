@@ -231,9 +231,9 @@ const de: Translations = {
   "careerpath.found": "Gefunden:",
   "careerpath.answer_was": "Der Fahrer war:",
 
-  "seo.home.title": "Box Daily Box — Tägliche Formel-1-Minispiele | 6 kostenlose Rätsel",
+  "seo.home.title": "Box Daily Box — Tägliche Formel-1-Minispiele | 8 kostenlose Rätsel",
   "seo.home.description":
-    "Sechs tägliche Formel-1-Minispiele: Fahrer erraten, die Top 10 vervollständigen, den Eindringling finden und mehr. Kostenlose globale Rangliste, keine Anmeldung nötig.",
+    "Acht tägliche Formel-1-Minispiele: Fahrer erraten, die Top 10 vervollständigen, den Eindringling finden und mehr. Kostenlose globale Rangliste, keine Anmeldung nötig.",
   "seo.contact.title": "Kontakt | Box Daily Box",
   "seo.contact.description": "Technisches Problem oder Idee für Box Daily Box? Kontaktiere uns.",
   "seo.game.career-path.title": "Career Path — Errate den Fahrer anhand seiner Karriere | Box Daily Box",
@@ -389,6 +389,63 @@ const de: Translations = {
   "duel.go_home": "Zurück zur Startseite",
   "duel.share_link": "Link teilen",
   "duel.link_copied": "Link in die Zwischenablage kopiert",
+
+  "settings.trigger_label": "Ton und Vibration",
+  "settings.sound": "Ton",
+  "settings.haptics": "Vibration",
+  "settings.on": "An",
+  "settings.off": "Aus",
+
+  "footer.terms": "Allgemeine Geschäftsbedingungen",
+  "footer.privacy": "Datenschutzrichtlinie",
+  "legal.updated": "Zuletzt aktualisiert: {{date}}",
+
+  "ranking.streak_title": "{{count}}-Tage-Siegesserie",
+
+  "monthly.daily_title": "Nach Tag",
+  "monthly.weekly_title": "Nach Woche",
+  "monthly.week_tooltip": "Woche {{n}}: {{points}} Pkt.",
+  "monthly.by_difficulty": "Nach Schwierigkeit",
+  "monthly.by_game": "Nach Spiel",
+
+  "seo.terms.title": "Allgemeine Geschäftsbedingungen | Box Daily Box",
+  "seo.terms.description":
+    "Allgemeine Geschäftsbedingungen von Box Daily Box, einer kostenlosen Plattform mit täglichen Formel-1-Minispielen.",
+  "seo.privacy.title": "Datenschutzrichtlinie | Box Daily Box",
+  "seo.privacy.description":
+    "Wie Box Daily Box mit deinen persönlichen Daten umgeht: was gesammelt wird, warum, und deine Rechte.",
+
+  "friends.need_to_play": "Spiel zuerst eine Herausforderung, um Freunde freizuschalten.",
+
+  "duel.error_start": "Das Duell konnte nicht geladen werden. Versuch es erneut von der Startseite aus.",
+  "duel.leave_button": "Verlassen",
+  "duel.leave_title": "Duell verlassen?",
+  "duel.leave_msg": "Wenn du jetzt gehst, gibst du das Duell auf und dein Gegner gewinnt. Das kann nicht rückgängig gemacht werden.",
+  "duel.leave_confirm": "Ja, verlassen und verlieren",
+  "duel.leave_cancel": "Weiterspielen",
+  "duel.accept_while_playing_title": "Duell annehmen?",
+  "duel.accept_while_playing_msg":
+    "Du bist gerade mitten in einem Spiel. Wenn du dieses Duell annimmst, verlierst du dein aktuelles Spiel und diesen Versuch. Das kann nicht rückgängig gemacht werden.",
+  "duel.accept_while_playing_confirm": "Ja, annehmen und mein Spiel verlieren",
+  "duel.accept_while_playing_cancel": "Weiterspielen",
+  "duel.reason_nobody_played": "Keiner von beiden hat die Herausforderung rechtzeitig abgeschlossen.",
+  "duel.reason_opponent_absent": "Dein Gegner hat nie gespielt.",
+  "duel.reason_you_absent": "Du hast nie gespielt.",
+  "duel.reason_opponent_forfeit": "Dein Gegner hat das Duell verlassen.",
+  "duel.reason_you_forfeit": "Du hast das Duell verlassen.",
+
+  "teamradio.eyebrow": "Team Radio",
+  "teamradio.hint": "Das ist ein echter Team-Funkspruch. Rate, bei welchem Grand Prix er gesagt wurde.",
+  "teamradio.said_by": "Gesagt von: {{driver}}",
+  "teamradio.select": "Wähle einen Grand Prix",
+  "teamradio.confirm": "Bestätigen",
+  "teamradio.answer_was": "Es war:",
+  "teamradio.correct": "Richtig",
+  "game.team-radio.name": "Team Radio",
+  "game.team-radio.tagline": "Lies einen legendären F1-Team-Funkspruch und rate, bei welchem Grand Prix er gesagt wurde.",
+  "seo.game.team-radio.title": "Team Radio — Errate den Grand Prix anhand des Team-Funkspruchs | Box Daily Box",
+  "seo.game.team-radio.description":
+    "Lies einen legendären F1-Team-Funkspruch und rate aus 6 Optionen, bei welchem Grand Prix er gesagt wurde. Kostenloses Tagesrätsel.",
 };
 
 export default de;

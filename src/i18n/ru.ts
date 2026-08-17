@@ -231,9 +231,9 @@ const ru: Translations = {
   "careerpath.found": "Найден:",
   "careerpath.answer_was": "Это был:",
 
-  "seo.home.title": "Box Daily Box — Ежедневные мини-игры Формулы 1 | 6 бесплатных головоломок",
+  "seo.home.title": "Box Daily Box — Ежедневные мини-игры Формулы 1 | 8 бесплатных головоломок",
   "seo.home.description":
-    "Шесть ежедневных мини-игр Формулы 1: угадывай пилотов, заполняй топ-10, находи лишнего и многое другое. Бесплатный мировой рейтинг, без регистрации.",
+    "Восемь ежедневных мини-игр Формулы 1: угадывай пилотов, заполняй топ-10, находи лишнего и многое другое. Бесплатный мировой рейтинг, без регистрации.",
   "seo.contact.title": "Контакты | Box Daily Box",
   "seo.contact.description": "Есть техническая проблема или идея для Box Daily Box? Свяжитесь с нами.",
   "seo.game.career-path.title": "Career Path — Угадай гонщика по его карьере | Box Daily Box",
@@ -388,6 +388,63 @@ const ru: Translations = {
   "duel.go_home": "Вернуться на главную",
   "duel.share_link": "Поделиться ссылкой",
   "duel.link_copied": "Ссылка скопирована в буфер обмена",
+
+  "settings.trigger_label": "Звук и вибрация",
+  "settings.sound": "Звук",
+  "settings.haptics": "Вибрация",
+  "settings.on": "Вкл",
+  "settings.off": "Выкл",
+
+  "footer.terms": "Условия использования",
+  "footer.privacy": "Политика конфиденциальности",
+  "legal.updated": "Последнее обновление: {{date}}",
+
+  "ranking.streak_title": "Серия побед: {{count}} дней",
+
+  "monthly.daily_title": "По дням",
+  "monthly.weekly_title": "По неделям",
+  "monthly.week_tooltip": "Неделя {{n}}: {{points}} очк.",
+  "monthly.by_difficulty": "По сложности",
+  "monthly.by_game": "По игре",
+
+  "seo.terms.title": "Условия использования | Box Daily Box",
+  "seo.terms.description":
+    "Условия использования Box Daily Box, бесплатной платформы ежедневных мини-игр Формулы 1.",
+  "seo.privacy.title": "Политика конфиденциальности | Box Daily Box",
+  "seo.privacy.description":
+    "Как Box Daily Box обрабатывает ваши персональные данные: что собирает, зачем и какие у вас права.",
+
+  "friends.need_to_play": "Сыграйте испытание, чтобы разблокировать раздел «Друзья».",
+
+  "duel.error_start": "Не удалось загрузить дуэль. Попробуйте снова с главной страницы.",
+  "duel.leave_button": "Покинуть",
+  "duel.leave_title": "Покинуть дуэль?",
+  "duel.leave_msg": "Если вы уйдёте сейчас, вы проиграете дуэль, и победит соперник. Это нельзя отменить.",
+  "duel.leave_confirm": "Да, покинуть и проиграть",
+  "duel.leave_cancel": "Продолжить игру",
+  "duel.accept_while_playing_title": "Принять дуэль?",
+  "duel.accept_while_playing_msg":
+    "Вы сейчас в середине игры. Если примете эту дуэль, вы потеряете текущую игру и её попытку. Это нельзя отменить.",
+  "duel.accept_while_playing_confirm": "Да, принять и потерять свою игру",
+  "duel.accept_while_playing_cancel": "Продолжить игру",
+  "duel.reason_nobody_played": "Ни один из игроков не завершил испытание вовремя.",
+  "duel.reason_opponent_absent": "Соперник так и не сыграл.",
+  "duel.reason_you_absent": "Вы так и не сыграли.",
+  "duel.reason_opponent_forfeit": "Соперник покинул дуэль.",
+  "duel.reason_you_forfeit": "Вы покинули дуэль.",
+
+  "teamradio.eyebrow": "Team Radio",
+  "teamradio.hint": "Это настоящее сообщение по командной радиосвязи. Угадайте, на каком Гран-при это было сказано.",
+  "teamradio.said_by": "Сказал: {{driver}}",
+  "teamradio.select": "Выберите Гран-при",
+  "teamradio.confirm": "Подтвердить",
+  "teamradio.answer_was": "Правильный ответ:",
+  "teamradio.correct": "Верно",
+  "game.team-radio.name": "Team Radio",
+  "game.team-radio.tagline": "Прочитайте культовое сообщение командной радиосвязи F1 и угадайте, на каком Гран-при это было сказано.",
+  "seo.game.team-radio.title": "Team Radio — угадайте Гран-при по командной радиосвязи | Box Daily Box",
+  "seo.game.team-radio.description":
+    "Прочитайте культовое сообщение командной радиосвязи F1 и угадайте, на каком Гран-при это было сказано, из 6 вариантов. Бесплатная ежедневная головоломка.",
 };
 
 export default ru;

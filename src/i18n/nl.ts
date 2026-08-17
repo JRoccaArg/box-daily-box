@@ -218,9 +218,9 @@ const nl: Translations = {
   "careerpath.found": "Gevonden:",
   "careerpath.answer_was": "De coureur was:",
 
-  "seo.home.title": "Box Daily Box — Dagelijkse Formule 1-minigames | 6 gratis puzzels",
+  "seo.home.title": "Box Daily Box — Dagelijkse Formule 1-minigames | 8 gratis puzzels",
   "seo.home.description":
-    "Zes dagelijkse Formule 1-minigames: raad coureurs, vul de top 10 in, vind de indringer en meer. Gratis wereldwijde ranglijst, geen registratie nodig.",
+    "Acht dagelijkse Formule 1-minigames: raad coureurs, vul de top 10 in, vind de indringer en meer. Gratis wereldwijde ranglijst, geen registratie nodig.",
   "seo.contact.title": "Contact | Box Daily Box",
   "seo.contact.description": "Technisch probleem of idee voor Box Daily Box? Neem contact op.",
   "seo.game.career-path.title": "Career Path — Raad de coureur aan zijn carrière | Box Daily Box",
@@ -376,6 +376,63 @@ const nl: Translations = {
   "duel.go_home": "Terug naar start",
   "duel.share_link": "Link delen",
   "duel.link_copied": "Link gekopieerd naar klembord",
+
+  "settings.trigger_label": "Geluid en trilling",
+  "settings.sound": "Geluid",
+  "settings.haptics": "Trilling",
+  "settings.on": "Aan",
+  "settings.off": "Uit",
+
+  "footer.terms": "Algemene Voorwaarden",
+  "footer.privacy": "Privacybeleid",
+  "legal.updated": "Laatst bijgewerkt: {{date}}",
+
+  "ranking.streak_title": "{{count}}-daagse winstreeks",
+
+  "monthly.daily_title": "Per dag",
+  "monthly.weekly_title": "Per week",
+  "monthly.week_tooltip": "Week {{n}}: {{points}} pt",
+  "monthly.by_difficulty": "Per moeilijkheidsgraad",
+  "monthly.by_game": "Per spel",
+
+  "seo.terms.title": "Algemene Voorwaarden | Box Daily Box",
+  "seo.terms.description":
+    "Algemene voorwaarden van Box Daily Box, een gratis platform met dagelijkse Formule 1-minigames.",
+  "seo.privacy.title": "Privacybeleid | Box Daily Box",
+  "seo.privacy.description":
+    "Hoe Box Daily Box omgaat met je persoonlijke gegevens: wat er wordt verzameld, waarom, en je rechten.",
+
+  "friends.need_to_play": "Speel eerst een uitdaging om Vrienden te ontgrendelen.",
+
+  "duel.error_start": "Kon de duel niet laden. Probeer het opnieuw vanaf de startpagina.",
+  "duel.leave_button": "Verlaten",
+  "duel.leave_title": "Duel verlaten?",
+  "duel.leave_msg": "Als je nu vertrekt, geef je de duel op en wint je tegenstander. Dit kan niet ongedaan worden gemaakt.",
+  "duel.leave_confirm": "Ja, verlaten en verliezen",
+  "duel.leave_cancel": "Doorspelen",
+  "duel.accept_while_playing_title": "Duel accepteren?",
+  "duel.accept_while_playing_msg":
+    "Je bent midden in een spel. Als je deze duel accepteert, verlies je je huidige spel en die poging. Dit kan niet ongedaan worden gemaakt.",
+  "duel.accept_while_playing_confirm": "Ja, accepteren en mijn spel verliezen",
+  "duel.accept_while_playing_cancel": "Doorspelen",
+  "duel.reason_nobody_played": "Geen van beiden voltooide de uitdaging op tijd.",
+  "duel.reason_opponent_absent": "Je tegenstander heeft nooit gespeeld.",
+  "duel.reason_you_absent": "Je hebt nooit gespeeld.",
+  "duel.reason_opponent_forfeit": "Je tegenstander heeft de duel verlaten.",
+  "duel.reason_you_forfeit": "Je hebt de duel verlaten.",
+
+  "teamradio.eyebrow": "Team Radio",
+  "teamradio.hint": "Dit is een echt teamradiobericht. Raad bij welke Grand Prix het werd gezegd.",
+  "teamradio.said_by": "Gezegd door: {{driver}}",
+  "teamradio.select": "Kies een Grand Prix",
+  "teamradio.confirm": "Bevestigen",
+  "teamradio.answer_was": "Het was:",
+  "teamradio.correct": "Correct",
+  "game.team-radio.name": "Team Radio",
+  "game.team-radio.tagline": "Lees een iconisch F1-teamradiobericht en raad bij welke Grand Prix het werd gezegd.",
+  "seo.game.team-radio.title": "Team Radio — Raad de Grand Prix aan de hand van de teamradio | Box Daily Box",
+  "seo.game.team-radio.description":
+    "Lees een iconisch F1-teamradiobericht en raad uit 6 opties bij welke Grand Prix het werd gezegd. Gratis dagelijkse puzzel.",
 };
 
 export default nl;
