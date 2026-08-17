@@ -97,5 +97,66 @@ for (const { name, ids } of lists) {
   }
 }
 
+// ─── Dificultades: registry.ts vs GAME_DIFFICULTIES (routes.ts / auth.ts) ───
+// Un juego puede restringir sus dificultades en el registry (ej: career-path
+// sin "leyenda"). El backend tiene su propia tabla por juego (no puede
+// importar registry.ts: arrastra los componentes React de cada juego). Si
+// las dos tablas se desincronizan, el backend acepta una dificultad que el
+// frontend nunca ofrece (agujero de puntaje) o rechaza una que sí ofrece.
+
+const DIFFS_CONST = [...registrySrc.matchAll(/const DIFFS = \[([^\]]*)\]/g)]
+  .map((m) => [...m[1].matchAll(/"([a-z0-9-]+)"/g)].map((x) => x[1]))[0];
+
+function difficultiesFromRegistry(src) {
+  // Cada entrada: `id: "slug", ... difficulties: [...DIFFS]` o un array literal.
+  const map = {};
+  for (const m of src.matchAll(/id:\s*"([a-z0-9-]+)"[\s\S]*?difficulties:\s*\[([^\]]*)\]/g)) {
+    const [, id, body] = m;
+    if (body.includes("...DIFFS")) {
+      map[id] = DIFFS_CONST;
+    } else {
+      map[id] = [...body.matchAll(/"([a-z0-9-]+)"/g)].map((x) => x[1]);
+    }
+  }
+  return map;
+}
+
+function difficultiesFromBackendMap(src, varName) {
+  // const GAME_DIFFICULTIES: Record<string, string[]> = { "id": ["a","b"], ... };
+  const re = new RegExp(`${varName}[^={]*=\\s*\\{([^;]*?)\\n\\};`, "s");
+  const match = src.match(re);
+  if (!match) return null;
+  const map = {};
+  for (const m of match[1].matchAll(/"([a-z0-9-]+)":\s*\[([^\]]*)\]/g)) {
+    const [, id, body] = m;
+    map[id] = [...body.matchAll(/"([a-z0-9-]+)"/g)].map((x) => x[1]);
+  }
+  return map;
+}
+
+console.log("\n▶ Dificultades por juego: registry.ts debe coincidir con GAME_DIFFICULTIES\n");
+
+const registryDiffs = difficultiesFromRegistry(registrySrc);
+const diffSources = [
+  { name: "GAME_DIFFICULTIES (routes.ts)", diffs: difficultiesFromBackendMap(routesSrc, "GAME_DIFFICULTIES") },
+  { name: "GAME_DIFFICULTIES (auth.ts)", diffs: difficultiesFromBackendMap(authSrc, "GAME_DIFFICULTIES") },
+];
+
+for (const { name, diffs } of diffSources) {
+  assert(diffs !== null, `${name}: se pudo extraer el mapa (regex encontro la variable)`);
+  if (diffs === null) continue;
+
+  for (const gameId of registryIds) {
+    const expected = registryDiffs[gameId] ?? [];
+    const actual = diffs[gameId] ?? [];
+    const sameSet =
+      expected.length === actual.length && expected.every((d) => actual.includes(d));
+    assert(
+      sameSet,
+      `${name}: "${gameId}" coincide con el registry (registry: [${expected.join(",")}], backend: [${actual.join(",")}])`,
+    );
+  }
+}
+
 console.log(`\n═══ RESULTADO: ${passed} passed, ${failed} failed ═══`);
 process.exit(failed > 0 ? 1 : 0);

@@ -12,14 +12,16 @@
 // nuevo de acá se limita a las explicaciones adicionales, sin duplicar textos
 // que ya existen y podrían divergir.
 
-/** Ids de los 6 juegos (slugs estables, ver src/components/games/registry.ts). */
+/** Ids de los 8 juegos (slugs estables, ver src/components/games/registry.ts). */
 export type InfoGameId =
   | "pittexto"
   | "polewordle"
   | "el-intruso"
   | "parrilla-bingo"
   | "gp-resultado"
-  | "top10-standings";
+  | "top10-standings"
+  | "career-path"
+  | "team-radio";
 
 export type FaqItem = { q: string; a: string };
 

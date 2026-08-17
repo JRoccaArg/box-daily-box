@@ -312,9 +312,9 @@ const hi: Translations = {
   "careerpath.found": "आपने पाया:",
   "careerpath.answer_was": "ड्राइवर था:",
 
-  "seo.home.title": "Box Daily Box — दैनिक फॉर्मूला 1 मिनी-गेम्स | 6 मुफ़्त पहेलियाँ",
+  "seo.home.title": "Box Daily Box — दैनिक फॉर्मूला 1 मिनी-गेम्स | 8 मुफ़्त पहेलियाँ",
   "seo.home.description":
-    "छह दैनिक फॉर्मूला 1 मिनी-गेम्स: ड्राइवरों का अनुमान लगाएं, टॉप 10 पूरा करें, घुसपैठिए को खोजें और भी बहुत कुछ। मुफ़्त वैश्विक रैंकिंग, बिना पंजीकरण।",
+    "आठ दैनिक फॉर्मूला 1 मिनी-गेम्स: ड्राइवरों का अनुमान लगाएं, टॉप 10 पूरा करें, घुसपैठिए को खोजें और भी बहुत कुछ। मुफ़्त वैश्विक रैंकिंग, बिना पंजीकरण।",
   "seo.contact.title": "संपर्क करें | Box Daily Box",
   "seo.contact.description": "Box Daily Box में कोई तकनीकी समस्या या नया विचार है? हमसे संपर्क करें।",
   "seo.game.career-path.title": "Career Path — टीम इतिहास से ड्राइवर का अनुमान लगाएं | Box Daily Box",
@@ -470,6 +470,63 @@ const hi: Translations = {
   "duel.go_home": "होम पर वापस जाएँ",
   "duel.share_link": "लिंक साझा करें",
   "duel.link_copied": "लिंक क्लिपबोर्ड पर कॉपी किया गया",
+
+  "settings.trigger_label": "ध्वनि और वाइब्रेशन",
+  "settings.sound": "ध्वनि",
+  "settings.haptics": "वाइब्रेशन",
+  "settings.on": "चालू",
+  "settings.off": "बंद",
+
+  "footer.terms": "नियम और शर्तें",
+  "footer.privacy": "गोपनीयता नीति",
+  "legal.updated": "आखिरी अपडेट: {{date}}",
+
+  "ranking.streak_title": "{{count}} दिन की जीत की लगातार श्रृंखला",
+
+  "monthly.daily_title": "दिन के हिसाब से",
+  "monthly.weekly_title": "हफ्ते के हिसाब से",
+  "monthly.week_tooltip": "हफ्ता {{n}}: {{points}} अंक",
+  "monthly.by_difficulty": "कठिनाई के हिसाब से",
+  "monthly.by_game": "खेल के हिसाब से",
+
+  "seo.terms.title": "नियम और शर्तें | Box Daily Box",
+  "seo.terms.description":
+    "Box Daily Box के इस्तेमाल के नियम और शर्तें, फॉर्मूला 1 के रोज़ाना मुफ्त मिनी-गेम्स का प्लेटफ़ॉर्म।",
+  "seo.privacy.title": "गोपनीयता नीति | Box Daily Box",
+  "seo.privacy.description":
+    "Box Daily Box आपका व्यक्तिगत डेटा कैसे संभालता है: क्या इकट्ठा करता है, क्यों, और आपके अधिकार।",
+
+  "friends.need_to_play": "मित्र सूची अनलॉक करने के लिए पहले एक चैलेंज खेलें।",
+
+  "duel.error_start": "द्वंद्व लोड नहीं हो सका। होम से फिर से कोशिश करें।",
+  "duel.leave_button": "छोड़ें",
+  "duel.leave_title": "द्वंद्व छोड़ें?",
+  "duel.leave_msg": "अगर अभी छोड़ते हैं, तो द्वंद्व हार जाते हैं और आपका प्रतिद्वंद्वी जीत जाता है। यह वापस नहीं हो सकता।",
+  "duel.leave_confirm": "हाँ, छोड़ें और हारें",
+  "duel.leave_cancel": "खेलना जारी रखें",
+  "duel.accept_while_playing_title": "द्वंद्व स्वीकार करें?",
+  "duel.accept_while_playing_msg":
+    "आप अभी एक गेम के बीच में हैं। अगर यह द्वंद्व स्वीकार करते हैं, तो अपना मौजूदा गेम और उसका प्रयास खो देते हैं। यह वापस नहीं हो सकता।",
+  "duel.accept_while_playing_confirm": "हाँ, स्वीकार करें और अपना गेम खोएं",
+  "duel.accept_while_playing_cancel": "खेलना जारी रखें",
+  "duel.reason_nobody_played": "किसी ने भी समय पर चैलेंज पूरा नहीं किया।",
+  "duel.reason_opponent_absent": "आपका प्रतिद्वंद्वी कभी खेलने नहीं आया।",
+  "duel.reason_you_absent": "आप कभी खेलने नहीं आए।",
+  "duel.reason_opponent_forfeit": "आपके प्रतिद्वंद्वी ने द्वंद्व छोड़ दिया।",
+  "duel.reason_you_forfeit": "आपने द्वंद्व छोड़ दिया।",
+
+  "teamradio.eyebrow": "टीम रेडियो",
+  "teamradio.hint": "यह F1 की एक असली टीम रेडियो मैसेज है। अंदाज़ा लगाएं कि यह किस ग्रां प्री में कहा गया था।",
+  "teamradio.said_by": "यह कहा: {{driver}}",
+  "teamradio.select": "एक ग्रां प्री चुनें",
+  "teamradio.confirm": "पुष्टि करें",
+  "teamradio.answer_was": "सही जवाब था:",
+  "teamradio.correct": "सही",
+  "game.team-radio.name": "Team Radio",
+  "game.team-radio.tagline": "F1 का एक मशहूर टीम रेडियो पढ़ें और अंदाज़ा लगाएं कि यह किस ग्रां प्री में कहा गया था।",
+  "seo.game.team-radio.title": "Team Radio — टीम रेडियो से ग्रां प्री का अंदाज़ा लगाएं | Box Daily Box",
+  "seo.game.team-radio.description":
+    "F1 की एक मशहूर टीम रेडियो मैसेज पढ़ें और 6 विकल्पों में से अंदाज़ा लगाएं कि यह किस ग्रां प्री में कहा गया था। रोज़ाना मुफ्त पज़ल।",
 };
 
 export default hi;

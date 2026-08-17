@@ -218,9 +218,9 @@ const ar: Translations = {
   "careerpath.found": "وجدته:",
   "careerpath.answer_was": "السائق كان:",
 
-  "seo.home.title": "Box Daily Box — ألعاب فورمولا 1 المصغّرة اليومية | 6 ألغاز مجانية",
+  "seo.home.title": "Box Daily Box — ألعاب فورمولا 1 المصغّرة اليومية | 8 ألغاز مجانية",
   "seo.home.description":
-    "ست ألعاب فورمولا 1 مصغّرة يومية: خمّن السائقين، أكمل أفضل 10، اعثر على الدخيل والمزيد. تصنيف عالمي مجاني، دون تسجيل.",
+    "ثماني ألعاب فورمولا 1 مصغّرة يومية: خمّن السائقين، أكمل أفضل 10، اعثر على الدخيل والمزيد. تصنيف عالمي مجاني، دون تسجيل.",
   "seo.contact.title": "اتصل بنا | Box Daily Box",
   "seo.contact.description": "هل لديك مشكلة تقنية أو فكرة لـ Box Daily Box؟ تواصل معنا.",
   "seo.game.career-path.title": "Career Path — خمّن السائق من مسيرته | Box Daily Box",
@@ -375,6 +375,60 @@ const ar: Translations = {
   "duel.go_home": "العودة إلى الرئيسية",
   "duel.share_link": "مشاركة الرابط",
   "duel.link_copied": "تم نسخ الرابط إلى الحافظة",
+
+  "settings.trigger_label": "الصوت والاهتزاز",
+  "settings.sound": "الصوت",
+  "settings.haptics": "الاهتزاز",
+  "settings.on": "مفعّل",
+  "settings.off": "معطّل",
+
+  "footer.terms": "الشروط والأحكام",
+  "footer.privacy": "سياسة الخصوصية",
+  "legal.updated": "آخر تحديث: {{date}}",
+
+  "ranking.streak_title": "سلسلة انتصارات {{count}} يوم",
+
+  "monthly.daily_title": "حسب اليوم",
+  "monthly.weekly_title": "حسب الأسبوع",
+  "monthly.week_tooltip": "الأسبوع {{n}}: {{points}} نقطة",
+  "monthly.by_difficulty": "حسب الصعوبة",
+  "monthly.by_game": "حسب اللعبة",
+
+  "seo.terms.title": "الشروط والأحكام | Box Daily Box",
+  "seo.terms.description": "شروط وأحكام استخدام Box Daily Box، منصة مجانية لألعاب فورمولا 1 اليومية المصغّرة.",
+  "seo.privacy.title": "سياسة الخصوصية | Box Daily Box",
+  "seo.privacy.description": "كيف تتعامل Box Daily Box مع بياناتك الشخصية: ماذا تجمع، ولماذا، وما هي حقوقك.",
+
+  "friends.need_to_play": "العب تحدياً أولاً لفتح قسم الأصدقاء.",
+
+  "duel.error_start": "تعذّر تحميل التحدي. حاول مرة أخرى من الصفحة الرئيسية.",
+  "duel.leave_button": "مغادرة",
+  "duel.leave_title": "مغادرة التحدي؟",
+  "duel.leave_msg": "إذا غادرت الآن، ستخسر التحدي ويفوز خصمك. لا يمكن التراجع عن هذا.",
+  "duel.leave_confirm": "نعم، مغادرة وخسارة",
+  "duel.leave_cancel": "متابعة اللعب",
+  "duel.accept_while_playing_title": "قبول التحدي؟",
+  "duel.accept_while_playing_msg": "أنت في منتصف لعبة الآن. إذا قبلت هذا التحدي، ستخسر لعبتك الحالية ومحاولتها. لا يمكن التراجع عن هذا.",
+  "duel.accept_while_playing_confirm": "نعم، القبول وخسارة لعبتي",
+  "duel.accept_while_playing_cancel": "متابعة اللعب",
+  "duel.reason_nobody_played": "لم يكمل أي منكما التحدي في الوقت المحدد.",
+  "duel.reason_opponent_absent": "خصمك لم يلعب أبداً.",
+  "duel.reason_you_absent": "أنت لم تلعب أبداً.",
+  "duel.reason_opponent_forfeit": "غادر خصمك التحدي.",
+  "duel.reason_you_forfeit": "غادرت التحدي.",
+
+  "teamradio.eyebrow": "Team Radio",
+  "teamradio.hint": "هذه رسالة لاسلكية حقيقية بين فريق وسائقه. خمّن في أي جائزة كبرى قيلت.",
+  "teamradio.said_by": "قالها: {{driver}}",
+  "teamradio.select": "اختر جائزة كبرى",
+  "teamradio.confirm": "تأكيد",
+  "teamradio.answer_was": "كانت:",
+  "teamradio.correct": "صحيح",
+  "game.team-radio.name": "Team Radio",
+  "game.team-radio.tagline": "اقرأ رسالة لاسلكية شهيرة من فورمولا 1 وخمّن في أي جائزة كبرى قيلت.",
+  "seo.game.team-radio.title": "Team Radio — خمّن الجائزة الكبرى من رسالة الفريق اللاسلكية | Box Daily Box",
+  "seo.game.team-radio.description":
+    "اقرأ رسالة لاسلكية شهيرة بين فريق وسائقه في فورمولا 1 وخمّن في أي جائزة كبرى قيلت، من بين 6 خيارات. لغز يومي مجاني.",
 };
 
 export default ar;

@@ -10,6 +10,7 @@
 import type { Difficulty, Driver } from "@/types";
 import { DRIVERS, hasFullLogoChain, getCareerChain } from "@/data";
 import { dailyPick } from "@/lib/daily";
+import { difficultyFloor } from "@/lib/filters";
 
 /** Pool de pilotos jugables para una dificultad: respeta el corte de anios de
  *  la dificultad, pero SIEMPRE filtra a los que tienen logo completo. Si la
@@ -22,22 +23,9 @@ export function getCareerPathPool(difficulty: Difficulty): Driver[] {
     (d) => hasFullLogoChain(d) && (floor === -Infinity || (d.active.end ?? 9999) >= floor),
   );
   if (filtered.length >= 5) return filtered;
-  // Aflojar: con los logos actuales (Etapa 2, solo "medio") esto en la
-  // practica siempre devuelve el pool completo de pilotos con logo.
+  // Aflojar: con los logos actuales esto en la practica siempre devuelve el
+  // pool completo de pilotos con logo.
   return DRIVERS.filter(hasFullLogoChain);
-}
-
-function difficultyFloor(difficulty: Difficulty): number {
-  switch (difficulty) {
-    case "facil":
-      return new Date().getFullYear() - 6;
-    case "medio":
-      return 2006;
-    case "dificil":
-      return 1990;
-    case "leyenda":
-      return -Infinity;
-  }
 }
 
 /** Objetivo del dia para la dificultad elegida (o para un duelo si hay `seed`). */

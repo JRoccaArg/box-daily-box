@@ -4,10 +4,10 @@ import type { InfoContent } from "./types";
 const content: InfoContent = {
   title: "Cómo jugar",
   subtitle:
-    "Box Daily Box tiene seis minijuegos diarios de Fórmula 1. Cada uno se juega una vez por día, con un desafío nuevo a la medianoche. Acá te explicamos las reglas de cada juego, cómo se calcula el puntaje, cómo funciona el ranking y las demás funciones de la plataforma.",
+    "Box Daily Box tiene ocho minijuegos diarios de Fórmula 1. Cada uno se juega una vez por día, con un desafío nuevo a la medianoche. Acá te explicamos las reglas de cada juego, cómo se calcula el puntaje, cómo funciona el ranking y las demás funciones de la plataforma.",
   dataAsOfNote: "Los datos de pilotos, escuderías y resultados que usan los juegos llegan hasta la temporada 2025.",
 
-  gamesHeading: "Los 6 juegos",
+  gamesHeading: "Los 8 juegos",
   gamesIntro:
     "Todos los juegos usan datos reales de la Fórmula 1: pilotos, escuderías, nacionalidades y resultados históricos. El desafío del día es el mismo para todos los jugadores del mundo.",
   gameDetail: {
@@ -23,6 +23,10 @@ const content: InfoContent = {
       "Se te muestra un Gran Premio histórico y tenés que completar el top 10 de esa carrera: qué piloto terminó en cada posición. Tiene autocompletado para buscar más rápido entre los pilotos.",
     "top10-standings":
       "Similar al anterior, pero con el campeonato acumulado de pilotos de una temporada (elegida al azar entre un período de 1 a 4 años), no de una sola carrera. Las pistas son la nacionalidad de cada piloto y los puntos que sumó ese año.",
+    "career-path":
+      "Se muestra la cadena de escuderías por las que pasó un piloto de Fórmula 1, en orden cronológico, representada con los logos de cada equipo. Tenés que adivinar de qué piloto se trata escribiendo su nombre, con autocompletado para buscar más rápido. Tenés un máximo de 3 intentos.",
+    "team-radio":
+      "Se muestra el texto real de una radio icónica de equipo de Fórmula 1, junto con el piloto que la dijo. Tenés que adivinar en qué Gran Premio se dijo, eligiendo entre 6 opciones. Las opciones falsas son carreras del mismo año o del mismo circuito en años cercanos, así que no alcanza con adivinar: hay que conocer bien el contexto.",
   },
 
   difficultyHeading: "Dificultades",
@@ -64,7 +68,7 @@ const content: InfoContent = {
     },
     {
       q: "¿Cuántas veces por día puedo jugar cada reto?",
-      a: "Una vez por día por juego. A la medianoche se genera un desafío nuevo para cada uno de los 6 juegos. Los duelos con amigos son la excepción: podés jugarlos las veces que quieras, ya que no son el reto diario.",
+      a: "Una vez por día por juego. A la medianoche se genera un desafío nuevo para cada uno de los 8 juegos. Los duelos con amigos son la excepción: podés jugarlos las veces que quieras, ya que no son el reto diario.",
     },
     {
       q: "¿Cómo se calculan los puntos?",

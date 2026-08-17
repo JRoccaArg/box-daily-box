@@ -314,9 +314,9 @@ const fr: Translations = {
   "careerpath.found": "Vous l'avez trouvé :",
   "careerpath.answer_was": "Le pilote était :",
 
-  "seo.home.title": "Box Daily Box — Minijeux quotidiens de Formule 1 | 6 puzzles gratuits",
+  "seo.home.title": "Box Daily Box — Minijeux quotidiens de Formule 1 | 8 puzzles gratuits",
   "seo.home.description":
-    "Six minijeux quotidiens de Formule 1 : devinez des pilotes, complétez le top 10, trouvez l'intrus et plus encore. Classement mondial gratuit, sans inscription.",
+    "Huit minijeux quotidiens de Formule 1 : devinez des pilotes, complétez le top 10, trouvez l'intrus et plus encore. Classement mondial gratuit, sans inscription.",
   "seo.contact.title": "Contact | Box Daily Box",
   "seo.contact.description": "Un problème technique ou une idée pour Box Daily Box ? Contactez-nous.",
   "seo.game.career-path.title": "Career Path — Devinez le pilote grâce à son parcours | Box Daily Box",
@@ -472,6 +472,63 @@ const fr: Translations = {
   "duel.go_home": "Retour à l'accueil",
   "duel.share_link": "Partager lien",
   "duel.link_copied": "Lien copié dans le presse-papiers",
+
+  "settings.trigger_label": "Son et vibration",
+  "settings.sound": "Son",
+  "settings.haptics": "Vibration",
+  "settings.on": "Activé",
+  "settings.off": "Désactivé",
+
+  "footer.terms": "Conditions Générales",
+  "footer.privacy": "Politique de Confidentialité",
+  "legal.updated": "Dernière mise à jour : {{date}}",
+
+  "ranking.streak_title": "Série de {{count}} jours de victoires",
+
+  "monthly.daily_title": "Par jour",
+  "monthly.weekly_title": "Par semaine",
+  "monthly.week_tooltip": "Semaine {{n}} : {{points}} pts",
+  "monthly.by_difficulty": "Par difficulté",
+  "monthly.by_game": "Par jeu",
+
+  "seo.terms.title": "Conditions Générales | Box Daily Box",
+  "seo.terms.description":
+    "Conditions générales d'utilisation de Box Daily Box, plateforme gratuite de mini-jeux quotidiens de Formule 1.",
+  "seo.privacy.title": "Politique de Confidentialité | Box Daily Box",
+  "seo.privacy.description":
+    "Comment Box Daily Box traite vos données personnelles : ce qu'elle collecte, pourquoi, et vos droits.",
+
+  "friends.need_to_play": "Joue d'abord un défi pour débloquer Amis.",
+
+  "duel.error_start": "Impossible de charger le duel. Réessaie depuis l'accueil.",
+  "duel.leave_button": "Abandonner",
+  "duel.leave_title": "Abandonner le duel ?",
+  "duel.leave_msg": "Si tu quittes maintenant, tu abandonnes le duel et ton adversaire gagne. C'est irréversible.",
+  "duel.leave_confirm": "Oui, abandonner et perdre",
+  "duel.leave_cancel": "Continuer à jouer",
+  "duel.accept_while_playing_title": "Accepter le duel ?",
+  "duel.accept_while_playing_msg":
+    "Tu es en pleine partie. Si tu acceptes ce duel, tu perds ta partie actuelle et sa tentative. C'est irréversible.",
+  "duel.accept_while_playing_confirm": "Oui, accepter et perdre ma partie",
+  "duel.accept_while_playing_cancel": "Continuer à jouer",
+  "duel.reason_nobody_played": "Aucun des deux n'a terminé le défi à temps.",
+  "duel.reason_opponent_absent": "Ton adversaire n'a jamais joué.",
+  "duel.reason_you_absent": "Tu n'as jamais joué.",
+  "duel.reason_opponent_forfeit": "Ton adversaire a quitté le duel.",
+  "duel.reason_you_forfeit": "Tu as quitté le duel.",
+
+  "teamradio.eyebrow": "Team Radio",
+  "teamradio.hint": "Ceci est un vrai message radio d'écurie. Devine à quel Grand Prix il a été dit.",
+  "teamradio.said_by": "Dit par : {{driver}}",
+  "teamradio.select": "Sélectionne un Grand Prix",
+  "teamradio.confirm": "Confirmer",
+  "teamradio.answer_was": "C'était :",
+  "teamradio.correct": "Correct",
+  "game.team-radio.name": "Team Radio",
+  "game.team-radio.tagline": "Lis un message radio d'écurie emblématique de F1 et devine à quel Grand Prix il a été dit.",
+  "seo.game.team-radio.title": "Team Radio — Devine le Grand Prix grâce au message radio d'écurie | Box Daily Box",
+  "seo.game.team-radio.description":
+    "Lis un message radio d'écurie emblématique de F1 et devine à quel Grand Prix il a été dit, parmi 6 options. Puzzle quotidien gratuit.",
 };
 
 export default fr;

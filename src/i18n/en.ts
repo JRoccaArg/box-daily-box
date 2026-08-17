@@ -267,6 +267,14 @@ const en: Translations = {
   "intruso.confirm": "Confirm intruder",
   "intruso.select": "Select a driver",
 
+  "teamradio.eyebrow": "Team Radio",
+  "teamradio.hint": "This is a real team radio message. Guess which Grand Prix it was said at.",
+  "teamradio.said_by": "Said by: {{driver}}",
+  "teamradio.select": "Select a Grand Prix",
+  "teamradio.confirm": "Confirm",
+  "teamradio.answer_was": "It was:",
+  "teamradio.correct": "Correct",
+
   "bingo.pick_driver": "Pick a driver",
   "bingo.drove_for": "drove for {{team}}",
   "bingo.nationality": "nationality {{name}}",
@@ -374,6 +382,9 @@ const en: Translations = {
   "careerpath.found": "You found them:",
   "careerpath.answer_was": "The driver was:",
 
+  "game.team-radio.name": "Team Radio",
+  "game.team-radio.tagline": "Read an iconic F1 team radio and guess which Grand Prix it was said at.",
+
   "lang.label": "Language",
 
   // ─── SEO (title/description per page) ─────────────────────────────────
@@ -386,9 +397,9 @@ const en: Translations = {
   "seo.contact.description": "Have a technical issue or an idea for Box Daily Box? Get in touch.",
   "seo.privacy.description":
     "How Box Daily Box handles your personal data: what it collects, why, and your rights.",
-  "seo.home.title": "Box Daily Box — Daily Formula 1 Minigames | 6 Free Puzzles",
+  "seo.home.title": "Box Daily Box — Daily Formula 1 Minigames | 8 Free Puzzles",
   "seo.home.description":
-    "Six daily Formula 1 minigames: guess drivers, complete the top 10, find the odd one out, and more. Free global ranking, no sign-up.",
+    "Eight daily Formula 1 minigames: guess drivers, complete the top 10, find the odd one out, and more. Free global ranking, no sign-up.",
   "seo.game.pittexto.title": "PitTexto — Guess the Secret F1 Driver | Box Daily Box",
   "seo.game.pittexto.description":
     "Guess today's secret Formula 1 driver. Each guess tells you how close you are. A new challenge every 24 hours.",
@@ -410,6 +421,9 @@ const en: Translations = {
   "seo.game.career-path.title": "Career Path — Guess the F1 driver by their team history | Box Daily Box",
   "seo.game.career-path.description":
     "Look at the chain of F1 teams a driver raced for and guess who it is. Free daily puzzle.",
+  "seo.game.team-radio.title": "Team Radio — Guess the Grand Prix from the team radio | Box Daily Box",
+  "seo.game.team-radio.description":
+    "Read an iconic F1 team radio message and guess which Grand Prix it was said at, out of 6 options. Free daily puzzle.",
 
   // ─── GamePage (not found) ──────────────────────────────────────────────
   "gamepage.not_found_title": "Game not found",

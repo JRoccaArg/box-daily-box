@@ -446,12 +446,25 @@ const IMPORT_TIME_LIMITS: Record<string, number> = {
   "gp-resultado": 180,
   "top10-standings": 180,
   "career-path": 90,
+  "team-radio": 60,
 };
 
 const VALID_GAME_IDS = new Set([
-  "pittexto", "polewordle", "el-intruso", "parrilla-bingo", "gp-resultado", "top10-standings", "career-path",
+  "pittexto", "polewordle", "el-intruso", "parrilla-bingo", "gp-resultado", "top10-standings", "career-path", "team-radio",
 ]);
-const VALID_DIFFICULTIES = new Set(["facil", "medio", "dificil", "leyenda"]);
+
+// Dificultades habilitadas por juego. Debe coincidir con `difficulties` en
+// src/components/games/registry.ts (ver mismo mapa en src/api/routes.ts).
+const GAME_DIFFICULTIES: Record<string, string[]> = {
+  "pittexto": ["facil", "medio", "dificil", "leyenda"],
+  "polewordle": ["facil", "medio", "dificil", "leyenda"],
+  "el-intruso": ["facil", "medio", "dificil", "leyenda"],
+  "parrilla-bingo": ["facil", "medio", "dificil", "leyenda"],
+  "gp-resultado": ["facil", "medio", "dificil", "leyenda"],
+  "top10-standings": ["facil", "medio", "dificil", "leyenda"],
+  "career-path": ["facil", "medio", "dificil"],
+  "team-radio": ["facil", "medio", "dificil"],
+};
 
 /**
  * Importa intentos locales al userId de la cuenta, RE-VERIFICANDO cada uno
@@ -490,7 +503,7 @@ async function importLocalAttempts(
 
     // Validaciones estrictas: solo juegos y dificultades conocidos.
     if (typeof gameId !== "string" || !VALID_GAME_IDS.has(gameId)) continue;
-    if (typeof difficulty !== "string" || !VALID_DIFFICULTIES.has(difficulty)) continue;
+    if (typeof difficulty !== "string" || !GAME_DIFFICULTIES[gameId]?.includes(difficulty)) continue;
 
     // ¿La cuenta ya tiene este juego ese día? → inmutable, descartar local.
     const existing = await query(

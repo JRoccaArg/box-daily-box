@@ -4,10 +4,10 @@ import type { InfoContent } from "./types";
 const content: InfoContent = {
   title: "Comment jouer",
   subtitle:
-    "Box Daily Box propose six mini-jeux quotidiens de Formule 1. Chacun se joue une fois par jour, avec un nouveau défi à minuit. Voici les règles de chaque jeu, comment le score est calculé, comment fonctionne le classement, et les autres fonctionnalités de la plateforme.",
+    "Box Daily Box propose huit mini-jeux quotidiens de Formule 1. Chacun se joue une fois par jour, avec un nouveau défi à minuit. Voici les règles de chaque jeu, comment le score est calculé, comment fonctionne le classement, et les autres fonctionnalités de la plateforme.",
   dataAsOfNote: "Les données de pilotes, d'écuries et de résultats utilisées par les jeux vont jusqu'à la saison 2025.",
 
-  gamesHeading: "Les 6 jeux",
+  gamesHeading: "Les 8 jeux",
   gamesIntro:
     "Tous les jeux utilisent de vraies données de Formule 1 : pilotes, écuries, nationalités et résultats historiques. Le défi du jour est le même pour tous les joueurs du monde.",
   gameDetail: {
@@ -23,6 +23,10 @@ const content: InfoContent = {
       "Un Grand Prix historique vous est présenté et vous devez compléter le top 10 de cette course : quel pilote a terminé à chaque position. Une saisie semi-automatique permet de chercher plus rapidement parmi les pilotes.",
     "top10-standings":
       "Similaire au précédent, mais avec le classement cumulé des pilotes d'une saison (choisie au hasard sur une période de 1 à 4 ans), et non d'une seule course. Les indices sont la nationalité de chaque pilote et les points marqués cette année-là.",
+    "career-path":
+      "La chaîne des écuries pour lesquelles un pilote de Formule 1 a couru vous est montrée, dans l'ordre chronologique, représentée par le logo de chaque équipe. Vous devez deviner de qui il s'agit en tapant son nom, avec une saisie semi-automatique pour chercher plus vite. Vous avez jusqu'à 3 tentatives.",
+    "team-radio":
+      "Le texte réel d'un message radio d'écurie emblématique de Formule 1 vous est montré, avec le pilote qui l'a prononcé. Vous devez deviner à quel Grand Prix il a été dit, en choisissant parmi 6 options. Les mauvaises options sont des courses de la même année ou du même circuit à des années proches, donc deviner au hasard ne suffit pas : il faut bien connaître le contexte.",
   },
 
   difficultyHeading: "Niveaux de difficulté",
@@ -63,7 +67,7 @@ const content: InfoContent = {
     },
     {
       q: "Combien de fois par jour puis-je jouer à chaque défi ?",
-      a: "Une fois par jour et par jeu. Un nouveau défi pour chacun des 6 jeux est généré à minuit. Les duels entre amis font exception : vous pouvez en jouer autant que vous voulez, puisqu'ils ne sont pas le défi quotidien.",
+      a: "Une fois par jour et par jeu. Un nouveau défi pour chacun des 8 jeux est généré à minuit. Les duels entre amis font exception : vous pouvez en jouer autant que vous voulez, puisqu'ils ne sont pas le défi quotidien.",
     },
     {
       q: "Comment le score est-il calculé ?",
