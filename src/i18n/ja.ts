@@ -38,7 +38,6 @@ const ja: Translations = {
   "shell.time_limit": "制限時間：{{seconds}}秒",
   "shell.no_time_limit": "時間制限なし",
   "shell.untimed": "タイムなし",
-  "shell.untimed_hint": "固定の低得点、タイマーなし",
   "shell.fails_left": "残り試行回数 {{count}}/{{total}}",
   "shell.start": "スタート",
   "shell.surrender": "ギブアップ",

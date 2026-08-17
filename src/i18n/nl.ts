@@ -28,7 +28,6 @@ const nl: Translations = {
   "shell.time": "Tijd", "shell.time_limit": "Tijdslimiet: {{seconds}} seconden",
   "shell.no_time_limit": "Geen tijdslimiet",
   "shell.untimed": "Zonder Tijd",
-  "shell.untimed_hint": "Weinig vaste punten, geen klok",
   "shell.fails_left": "Nog {{count}} van {{total}} pogingen",
   "shell.start": "Start",
   "shell.surrender": "Opgeven", "shell.no": "Nee",

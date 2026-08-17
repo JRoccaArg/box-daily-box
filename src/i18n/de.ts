@@ -34,7 +34,6 @@ const de: Translations = {
   "shell.time_limit": "Zeitlimit: {{seconds}} Sekunden",
   "shell.no_time_limit": "Kein Zeitlimit",
   "shell.untimed": "Ohne Zeit",
-  "shell.untimed_hint": "Wenige feste Punkte, keine Uhr",
   "shell.fails_left": "Noch {{count}} von {{total}} Versuchen",
   "shell.start": "Start",
   "shell.surrender": "Aufgeben",

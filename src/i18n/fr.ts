@@ -42,7 +42,6 @@ const fr: Translations = {
   "shell.time_limit": "Limite de temps : {{seconds}} secondes",
   "shell.no_time_limit": "Pas de limite de temps",
   "shell.untimed": "Sans Chrono",
-  "shell.untimed_hint": "Peu de points fixes, sans chronometre",
   "shell.fails_left": "Il reste {{count}} tentatives sur {{total}}",
   "shell.start": "Commencer",
   "shell.surrender": "Abandonner",

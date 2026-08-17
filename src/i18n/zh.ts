@@ -38,7 +38,6 @@ const zh: Translations = {
   "shell.time_limit": "时间限制：{{seconds}}秒",
   "shell.no_time_limit": "无时间限制",
   "shell.untimed": "无计时",
-  "shell.untimed_hint": "固定低分，没有计时器",
   "shell.fails_left": "剩余 {{count}}/{{total}} 次尝试",
   "shell.start": "开始",
   "shell.surrender": "放弃",

@@ -26,6 +26,9 @@ export type FaqItem = { q: string; a: string };
 export type InfoContent = {
   title: string;
   subtitle: string;
+  /** Aviso de hasta qué temporada llegan los datos (DATA_AS_OF_SEASON en
+   *  src/data/drivers.ts). Se muestra bien arriba, justo debajo del subtitulo. */
+  dataAsOfNote: string;
 
   gamesHeading: string;
   gamesIntro: string;
