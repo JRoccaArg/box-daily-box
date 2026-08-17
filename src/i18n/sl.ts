@@ -532,7 +532,7 @@ const sl: Translations = {
 
   "teamradio.eyebrow": "Team Radio",
   "teamradio.hint": "To je pravo sporočilo ekipne radijske zveze. Ugani, na kateri Veliki nagradi je bilo izrečeno.",
-  "teamradio.said_by": "Izrekel: {{driver}}",
+  "teamradio.said_by": "Izrečeno na radijski zvezi: {{driver}}",
   "teamradio.select": "Izberi Veliko nagrado",
   "teamradio.confirm": "Potrdi",
   "teamradio.answer_was": "Pravilen odgovor je bil:",

@@ -269,7 +269,7 @@ const en: Translations = {
 
   "teamradio.eyebrow": "Team Radio",
   "teamradio.hint": "This is a real team radio message. Guess which Grand Prix it was said at.",
-  "teamradio.said_by": "Said by: {{driver}}",
+  "teamradio.said_by": "Said on {{driver}}'s radio",
   "teamradio.select": "Select a Grand Prix",
   "teamradio.confirm": "Confirm",
   "teamradio.answer_was": "It was:",

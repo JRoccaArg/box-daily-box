@@ -474,7 +474,7 @@ const zh: Translations = {
 
   "teamradio.eyebrow": "Team Radio",
   "teamradio.hint": "这是一条真实的车队无线电通讯。猜猜这是在哪场大奖赛上说的。",
-  "teamradio.said_by": "说话人：{{driver}}",
+  "teamradio.said_by": "在{{driver}}的车队无线电中说出",
   "teamradio.select": "选择一场大奖赛",
   "teamradio.confirm": "确认",
   "teamradio.answer_was": "正确答案是：",

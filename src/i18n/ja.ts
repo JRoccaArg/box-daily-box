@@ -484,7 +484,7 @@ const ja: Translations = {
 
   "teamradio.eyebrow": "Team Radio",
   "teamradio.hint": "これは実際のチーム無線です。どのグランプリで発言されたか当ててください。",
-  "teamradio.said_by": "発言者：{{driver}}",
+  "teamradio.said_by": "{{driver}}の無線での発言",
   "teamradio.select": "グランプリを選択",
   "teamradio.confirm": "確定",
   "teamradio.answer_was": "正解は：",
