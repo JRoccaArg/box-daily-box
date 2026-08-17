@@ -8,6 +8,7 @@ import { buildTarget, scoreGuess } from "@/components/games/PitTexto/pittexto.lo
 import { buildIntruso } from "@/components/games/ElIntruso/intruso.logic";
 import { buildBingo, completeGrid } from "@/components/games/ParrillaBingo/bingo.logic";
 import { buildGPChallenge, verifyGPResultado } from "@/components/games/GPResultado/gpresultado.logic";
+import { buildTeamRadio, OPTION_COUNT } from "@/components/games/TeamRadio/teamradio.logic";
 
 const DIFFS: Difficulty[] = ["facil", "medio", "dificil", "leyenda"];
 const DAYS = 90;
@@ -100,6 +101,18 @@ for (const diff of DIFFS) {
       const incomplete = [...names.slice(0, 9), null];
       if (verifyGPResultado(diff, date, { grid: incomplete }).won) fail(`gp-resultado: grid incompleto gana (${gp.y})`);
     } catch (e) { fail(`gp-resultado throw: ${(e as Error).message}`); }
+
+    // Team Radio: no ofrece "leyenda" (dificultades exclusivas por año, ver
+    // registry.ts), así que se saltea esa dificultad puntual acá.
+    if (diff !== "leyenda") {
+      try {
+        const tr = buildTeamRadio(diff, date);
+        if (tr.options.length !== OPTION_COUNT) fail(`team-radio: ${tr.options.length} opciones (esperado ${OPTION_COUNT})`);
+        if (!tr.options.some((o) => o.id === tr.correctId)) fail(`team-radio: opción correcta ausente (${tr.radio.id})`);
+        const distinctOptions = new Set(tr.options.map((o) => o.id));
+        if (distinctOptions.size !== tr.options.length) fail(`team-radio: opciones repetidas (${tr.radio.id})`);
+      } catch (e) { fail(`team-radio throw: ${(e as Error).message}`); }
+    }
   }
   console.log(`[${diff}] OK (${DAYS} dias) — bingo repetidos: ${bingoRepeats} | anacronismos: ${bingoAnachro}`);
 }

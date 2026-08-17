@@ -68,6 +68,10 @@ export default {
           "0%": { transform: "translateY(0)", opacity: "1" },
           "100%": { transform: "translateY(4px)", opacity: "0" },
         },
+        "radio-wave": {
+          "0%, 100%": { transform: "scaleY(0.25)" },
+          "50%": { transform: "scaleY(1)" },
+        },
       },
       animation: {
         "flip-in": "flip-in 0.45s ease forwards",
@@ -76,6 +80,7 @@ export default {
         rise: "rise 0.35s ease forwards",
         sweep: "sweep 1.4s linear infinite",
         "toast-out": "toast-out 0.25s ease-in forwards",
+        "radio-wave": "radio-wave 1s ease-in-out infinite",
       },
     },
   },

@@ -4,10 +4,10 @@ import type { InfoContent } from "./types";
 const content: InfoContent = {
   title: "Come si gioca",
   subtitle:
-    "Box Daily Box ha sei minigiochi giornalieri di Formula 1. Ognuno si gioca una volta al giorno, con una nuova sfida a mezzanotte. Qui trovi le regole di ogni gioco, come si calcola il punteggio, come funziona la classifica e le altre funzioni della piattaforma.",
+    "Box Daily Box ha otto minigiochi giornalieri di Formula 1. Ognuno si gioca una volta al giorno, con una nuova sfida a mezzanotte. Qui trovi le regole di ogni gioco, come si calcola il punteggio, come funziona la classifica e le altre funzioni della piattaforma.",
   dataAsOfNote: "I dati di piloti, scuderie e risultati usati nei giochi arrivano fino alla stagione 2025.",
 
-  gamesHeading: "I 6 giochi",
+  gamesHeading: "Gli 8 giochi",
   gamesIntro:
     "Tutti i giochi usano dati reali della Formula 1: piloti, scuderie, nazionalità e risultati storici. La sfida del giorno è la stessa per tutti i giocatori del mondo.",
   gameDetail: {
@@ -23,6 +23,10 @@ const content: InfoContent = {
       "Ti viene mostrato un Gran Premio storico e devi completare la top 10 di quella gara: quale pilota ha concluso in ogni posizione. Ha l'autocompletamento per cercare più velocemente tra i piloti.",
     "top10-standings":
       "Simile al precedente, ma con la classifica piloti accumulata di una stagione (scelta a caso in un periodo da 1 a 4 anni), non di una singola gara. Gli indizi sono la nazionalità di ogni pilota e i punti totalizzati quell'anno.",
+    "career-path":
+      "Viene mostrata la catena di scuderie per cui ha corso un pilota di Formula 1, in ordine cronologico, rappresentata con il logo di ogni squadra. Devi indovinare chi è il pilota digitando il suo nome, con l'autocompletamento per cercare più velocemente. Hai fino a 3 tentativi.",
+    "team-radio":
+      "Viene mostrato il testo reale di un messaggio radio di scuderia iconico della Formula 1, insieme al pilota che lo ha detto. Devi indovinare in quale Gran Premio è stato detto, scegliendo tra 6 opzioni. Le opzioni sbagliate sono gare dello stesso anno o dello stesso circuito in anni vicini, quindi non basta tirare a indovinare: bisogna conoscere bene il contesto.",
   },
 
   difficultyHeading: "Livelli di difficoltà",
@@ -63,7 +67,7 @@ const content: InfoContent = {
     },
     {
       q: "Quante volte al giorno posso giocare ogni sfida?",
-      a: "Una volta al giorno per gioco. A mezzanotte viene generata una nuova sfida per ciascuno dei 6 giochi. Le sfide dirette con gli amici sono un'eccezione: puoi giocarle quante volte vuoi, dato che non sono la sfida giornaliera.",
+      a: "Una volta al giorno per gioco. A mezzanotte viene generata una nuova sfida per ciascuno degli 8 giochi. Le sfide dirette con gli amici sono un'eccezione: puoi giocarle quante volte vuoi, dato che non sono la sfida giornaliera.",
     },
     {
       q: "Come si calcola il punteggio?",

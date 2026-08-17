@@ -15,6 +15,7 @@ import { buildBingo } from "../components/games/ParrillaBingo/bingo.logic";
 import { buildGPChallenge } from "../components/games/GPResultado/gpresultado.logic";
 import { buildChallenge as buildTop10StandingsChallenge } from "../components/games/Top10Standings/top10standings.logic";
 import { buildCareerPathTarget } from "../components/games/CareerPath/careerpath.logic";
+import { buildTeamRadio, optionId } from "../components/games/TeamRadio/teamradio.logic";
 
 // ─── Tipos de solución por juego ────────────────────────────────────
 
@@ -63,6 +64,11 @@ interface CareerPathSolution {
   driverId: string;
 }
 
+interface TeamRadioSolution {
+  /** Id de la opción elegida ("<año>::<nombre del GP>"), una de las 6 que se mostraron. */
+  optionId: string;
+}
+
 type AnySolution =
   | PitTextoSolution
   | PoleWordleSolution
@@ -70,7 +76,8 @@ type AnySolution =
   | BingoSolution
   | GPResultadoSolution
   | Top10StandingsSolution
-  | CareerPathSolution;
+  | CareerPathSolution
+  | TeamRadioSolution;
 
 export interface VerifyResult {
   won: boolean;
@@ -111,6 +118,8 @@ export function verifyChallenge(
       return verifyTop10Standings(difficulty, date, solution as Top10StandingsSolution, duelSeed);
     case "career-path":
       return verifyCareerPath(difficulty, date, solution as CareerPathSolution, duelSeed);
+    case "team-radio":
+      return verifyTeamRadio(difficulty, date, solution as TeamRadioSolution, duelSeed);
     default:
       return { won: false, detail: `Juego desconocido: ${gameId}` };
   }
@@ -391,5 +400,34 @@ function verifyCareerPath(
     detail: won
       ? `Correcto: ${target.id}`
       : `Incorrecto. Esperado: ${target.id}, recibido: ${solution.driverId}`,
+  };
+}
+
+// ─── Team Radio ─────────────────────────────────────────────────────
+//
+// Regla: HAY UNA SOLA opción correcta (el GP real donde se dijo la radio),
+// entre las 6 que se le mostraron al usuario. El frontend usa
+// buildTeamRadio(difficulty, date) para generar el puzzle completo
+// (radio + las 6 opciones); acá solo hace falta la opción correcta.
+
+function verifyTeamRadio(
+  difficulty: Difficulty,
+  date: Date,
+  solution: TeamRadioSolution,
+  seed?: string,
+): VerifyResult {
+  if (!solution.optionId) {
+    return { won: false, detail: "Falta optionId en la solución" };
+  }
+
+  const puzzle = buildTeamRadio(difficulty, date, seed);
+  const correctId = optionId({ y: puzzle.radio.y, g: puzzle.radio.g, c: puzzle.radio.c });
+  const won = solution.optionId === correctId;
+
+  return {
+    won,
+    detail: won
+      ? `Correcto: ${puzzle.radio.g} ${puzzle.radio.y}`
+      : `Incorrecto. Esperado: ${correctId}, recibido: ${solution.optionId}`,
   };
 }

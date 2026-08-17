@@ -313,9 +313,9 @@ const pt: Translations = {
   "careerpath.found": "Você encontrou:",
   "careerpath.answer_was": "O piloto era:",
 
-  "seo.home.title": "Box Daily Box — Minijogos diários de Fórmula 1 | 6 puzzles grátis",
+  "seo.home.title": "Box Daily Box — Minijogos diários de Fórmula 1 | 8 puzzles grátis",
   "seo.home.description":
-    "Seis minijogos diários de Fórmula 1: adivinhe pilotos, complete o top 10, encontre o intruso e mais. Ranking global grátis, sem cadastro.",
+    "Oito minijogos diários de Fórmula 1: adivinhe pilotos, complete o top 10, encontre o intruso e mais. Ranking global grátis, sem cadastro.",
   "seo.contact.title": "Contato | Box Daily Box",
   "seo.contact.description": "Tem um problema técnico ou uma ideia para o Box Daily Box? Fale conosco.",
   "seo.game.career-path.title": "Career Path — Adivinhe o piloto pela trajetória | Box Daily Box",
@@ -471,6 +471,63 @@ const pt: Translations = {
   "duel.go_home": "Voltar ao início",
   "duel.share_link": "Compartilhar link",
   "duel.link_copied": "Link copiado para a área de transferência",
+
+  "settings.trigger_label": "Som e vibração",
+  "settings.sound": "Som",
+  "settings.haptics": "Vibração",
+  "settings.on": "Ativado",
+  "settings.off": "Desativado",
+
+  "footer.terms": "Termos e Condições",
+  "footer.privacy": "Política de Privacidade",
+  "legal.updated": "Última atualização: {{date}}",
+
+  "ranking.streak_title": "Sequência de {{count}} dias vencendo",
+
+  "monthly.daily_title": "Por dia",
+  "monthly.weekly_title": "Por semana",
+  "monthly.week_tooltip": "Semana {{n}}: {{points}} pts",
+  "monthly.by_difficulty": "Por dificuldade",
+  "monthly.by_game": "Por jogo",
+
+  "seo.terms.title": "Termos e Condições | Box Daily Box",
+  "seo.terms.description":
+    "Termos e condições de uso do Box Daily Box, plataforma gratuita de minijogos diários de Fórmula 1.",
+  "seo.privacy.title": "Política de Privacidade | Box Daily Box",
+  "seo.privacy.description":
+    "Como o Box Daily Box trata seus dados pessoais: o que coleta, para quê, e seus direitos.",
+
+  "friends.need_to_play": "Jogue um desafio primeiro para desbloquear Amigos.",
+
+  "duel.error_start": "Não foi possível carregar o duelo. Tente novamente a partir do início.",
+  "duel.leave_button": "Abandonar",
+  "duel.leave_title": "Abandonar o duelo?",
+  "duel.leave_msg": "Se você sair agora, abandona o duelo e seu rival vence. Isso não pode ser desfeito.",
+  "duel.leave_confirm": "Sim, abandonar e perder",
+  "duel.leave_cancel": "Continuar jogando",
+  "duel.accept_while_playing_title": "Aceitar o duelo?",
+  "duel.accept_while_playing_msg":
+    "Você está no meio de uma partida. Se aceitar este duelo, perde sua partida atual e essa tentativa. Isso não pode ser desfeito.",
+  "duel.accept_while_playing_confirm": "Sim, aceitar e perder minha partida",
+  "duel.accept_while_playing_cancel": "Continuar jogando",
+  "duel.reason_nobody_played": "Nenhum dos dois completou o desafio a tempo.",
+  "duel.reason_opponent_absent": "Seu rival não chegou a jogar.",
+  "duel.reason_you_absent": "Você não chegou a jogar.",
+  "duel.reason_opponent_forfeit": "Seu rival abandonou o duelo.",
+  "duel.reason_you_forfeit": "Você abandonou o duelo.",
+
+  "teamradio.eyebrow": "Team Radio",
+  "teamradio.hint": "Esta é uma mensagem real de rádio de equipe. Adivinhe em qual Grande Prêmio foi dita.",
+  "teamradio.said_by": "Dito por: {{driver}}",
+  "teamradio.select": "Selecione um Grande Prêmio",
+  "teamradio.confirm": "Confirmar",
+  "teamradio.answer_was": "Era:",
+  "teamradio.correct": "Correto",
+  "game.team-radio.name": "Team Radio",
+  "game.team-radio.tagline": "Leia um rádio de equipe icônico da F1 e adivinhe em qual Grande Prêmio foi dito.",
+  "seo.game.team-radio.title": "Team Radio — Adivinhe o Grande Prêmio pelo rádio de equipe | Box Daily Box",
+  "seo.game.team-radio.description":
+    "Leia uma mensagem icônica de rádio de equipe da F1 e adivinhe em qual Grande Prêmio foi dita, entre 6 opções. Puzzle diário grátis.",
 };
 
 export default pt;

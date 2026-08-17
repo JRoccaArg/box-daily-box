@@ -4,10 +4,10 @@ import type { InfoContent } from "./types";
 const content: InfoContent = {
   title: "Como jogar",
   subtitle:
-    "O Box Daily Box tem seis minijogos diários de Fórmula 1. Cada um se joga uma vez por dia, com um novo desafio à meia-noite. Aqui explicamos as regras de cada jogo, como a pontuação é calculada, como funciona o ranking e os outros recursos da plataforma.",
+    "O Box Daily Box tem oito minijogos diários de Fórmula 1. Cada um se joga uma vez por dia, com um novo desafio à meia-noite. Aqui explicamos as regras de cada jogo, como a pontuação é calculada, como funciona o ranking e os outros recursos da plataforma.",
   dataAsOfNote: "Os dados de pilotos, escuderias e resultados usados nos jogos vão até a temporada de 2025.",
 
-  gamesHeading: "Os 6 jogos",
+  gamesHeading: "Os 8 jogos",
   gamesIntro:
     "Todos os jogos usam dados reais da Fórmula 1: pilotos, equipes, nacionalidades e resultados históricos. O desafio do dia é o mesmo para todos os jogadores do mundo.",
   gameDetail: {
@@ -23,6 +23,10 @@ const content: InfoContent = {
       "É mostrado um Grande Prêmio histórico e você precisa completar o top 10 dessa corrida: qual piloto terminou em cada posição. Tem autocompletar para buscar mais rápido entre os pilotos.",
     "top10-standings":
       "Parecido com o anterior, mas com o campeonato acumulado de pilotos de uma temporada (escolhida aleatoriamente em um período de 1 a 4 anos), não de uma única corrida. As pistas são a nacionalidade de cada piloto e os pontos que ele somou naquele ano.",
+    "career-path":
+      "É mostrada a cadeia de equipes pelas quais um piloto de Fórmula 1 passou, em ordem cronológica, representada com o logo de cada equipe. Você precisa adivinhar quem é o piloto digitando o nome dele, com autocompletar para buscar mais rápido. Você tem até 3 tentativas.",
+    "team-radio":
+      "É mostrado o texto real de uma mensagem icônica de rádio de equipe da Fórmula 1, junto com o piloto que a disse. Você precisa adivinhar em qual Grande Prêmio ela foi dita, escolhendo entre 6 opções. As opções erradas são corridas do mesmo ano ou do mesmo circuito em anos próximos, então só chutar não basta: é preciso conhecer bem o contexto.",
   },
 
   difficultyHeading: "Dificuldades",
@@ -63,7 +67,7 @@ const content: InfoContent = {
     },
     {
       q: "Quantas vezes por dia posso jogar cada desafio?",
-      a: "Uma vez por dia, por jogo. À meia-noite é gerado um novo desafio para cada um dos 6 jogos. Os duelos com amigos são a exceção: você pode jogá-los quantas vezes quiser, já que não são o desafio diário.",
+      a: "Uma vez por dia, por jogo. À meia-noite é gerado um novo desafio para cada um dos 8 jogos. Os duelos com amigos são a exceção: você pode jogá-los quantas vezes quiser, já que não são o desafio diário.",
     },
     {
       q: "Como a pontuação é calculada?",

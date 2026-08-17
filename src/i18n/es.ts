@@ -285,6 +285,15 @@ const es: Translations = {
   "intruso.confirm": "Confirmar intruso",
   "intruso.select": "Selecciona un piloto",
 
+  // Team Radio
+  "teamradio.eyebrow": "Team Radio",
+  "teamradio.hint": "Esta es una radio real de equipo. Adivina en que Gran Premio se dijo.",
+  "teamradio.said_by": "Lo dijo: {{driver}}",
+  "teamradio.select": "Selecciona un Gran Premio",
+  "teamradio.confirm": "Confirmar",
+  "teamradio.answer_was": "Era:",
+  "teamradio.correct": "Correcto",
+
   // Parrilla Bingo
   "bingo.pick_driver": "Elegir piloto",
   "bingo.drove_for": "corrió en {{team}}",
@@ -393,6 +402,9 @@ const es: Translations = {
   "careerpath.found": "Lo encontraste:",
   "careerpath.answer_was": "El piloto era:",
 
+  "game.team-radio.name": "Team Radio",
+  "game.team-radio.tagline": "Escucha (con los ojos) una radio icónica de F1 y adivina en qué Gran Premio se dijo.",
+
   "lang.label": "Idioma",
 
   // ─── SEO (title/description por página) ──────────────────────────────
@@ -405,9 +417,9 @@ const es: Translations = {
   "seo.contact.description": "¿Tienes un problema técnico o una idea para Box Daily Box? Escríbenos.",
   "seo.privacy.description":
     "Cómo Box Daily Box trata tus datos personales: qué recopila, para qué, y tus derechos.",
-  "seo.home.title": "Box Daily Box — Minijuegos diarios de Fórmula 1 | 6 puzzles gratis",
+  "seo.home.title": "Box Daily Box — Minijuegos diarios de Fórmula 1 | 8 puzzles gratis",
   "seo.home.description":
-    "Seis minijuegos diarios de Fórmula 1: adivina pilotos, completa el top 10, encuentra al intruso y más. Ranking global gratis, sin registro.",
+    "Ocho minijuegos diarios de Fórmula 1: adivina pilotos, completa el top 10, encuentra al intruso y más. Ranking global gratis, sin registro.",
   "seo.game.pittexto.title": "PitTexto — Adivina al piloto secreto de F1 | Box Daily Box",
   "seo.game.pittexto.description":
     "Adivina el piloto de Fórmula 1 secreto del día. Cada intento te dice qué tan cerca estás. Nuevo reto cada 24 horas.",
@@ -429,6 +441,9 @@ const es: Translations = {
   "seo.game.career-path.title": "Career Path — Adivina al piloto por su trayectoria | Box Daily Box",
   "seo.game.career-path.description":
     "Mira la cadena de escuderías por las que pasó un piloto de F1 y adivina quién es. Puzzle diario gratis.",
+  "seo.game.team-radio.title": "Team Radio — Adivina el Gran Premio por la radio de equipo | Box Daily Box",
+  "seo.game.team-radio.description":
+    "Lee una radio icónica de equipo de F1 y adivina en qué Gran Premio se dijo, entre 6 opciones. Puzzle diario gratis.",
 
   // ─── GamePage (no encontrado) ─────────────────────────────────────────
   "gamepage.not_found_title": "Juego no encontrado",

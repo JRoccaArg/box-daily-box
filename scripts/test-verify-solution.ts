@@ -24,6 +24,8 @@ import { assignPuzzleColors } from "@/components/games/shared/puzzleColors";
 import { buildBingo } from "@/components/games/ParrillaBingo/bingo.logic";
 import { buildGPChallenge } from "@/components/games/GPResultado/gpresultado.logic";
 import { buildChallenge as buildTop10Challenge } from "@/components/games/Top10Standings/top10standings.logic";
+import { buildCareerPathTarget, getCareerPathPool } from "@/components/games/CareerPath/careerpath.logic";
+import { buildTeamRadio } from "@/components/games/TeamRadio/teamradio.logic";
 import { getDriverPoolAtLeast } from "@/lib/filters";
 import { dailyPick } from "@/lib/daily";
 
@@ -248,6 +250,61 @@ function top10Standings() {
   }
 }
 
+// career-path y team-radio no ofrecen "leyenda" (ver registry.ts): iterar
+// DIFFS completo mandaría una dificultad que el backend rechaza de entrada.
+const DIFFS_SIN_LEYENDA: Difficulty[] = ["facil", "medio", "dificil"];
+
+function careerPath() {
+  console.log("\n▶ Career Path");
+  for (const diff of DIFFS_SIN_LEYENDA) {
+    for (const date of testDates()) {
+      const key = dateKey(date);
+      const target = buildCareerPathTarget(diff, date);
+      const pool = getCareerPathPool(diff);
+      const wrongDriver = pool.find((d) => d.id !== target.id)!;
+      assert(
+        verifyChallenge("career-path", diff, key, { driverId: target.id }).won === true,
+        `[${diff} ${key}] driverId correcto (${target.id}) gana`,
+      );
+      assert(
+        verifyChallenge("career-path", diff, key, { driverId: wrongDriver.id }).won === false,
+        `[${diff} ${key}] otro piloto del pool pierde`,
+      );
+      assert(
+        verifyChallenge("career-path", diff, key, { driverId: "" } as any).won === false,
+        `[${diff} ${key}] driverId vacío pierde (no revienta)`,
+      );
+    }
+  }
+}
+
+function teamRadio() {
+  console.log("\n▶ Team Radio");
+  for (const diff of DIFFS_SIN_LEYENDA) {
+    for (const date of testDates()) {
+      const key = dateKey(date);
+      const puzzle = buildTeamRadio(diff, date);
+      const wrongOption = puzzle.options.find((o) => o.id !== puzzle.correctId)!;
+      assert(
+        verifyChallenge("team-radio", diff, key, { optionId: puzzle.correctId }).won === true,
+        `[${diff} ${key}] opción correcta (${puzzle.correctId}) gana`,
+      );
+      assert(
+        verifyChallenge("team-radio", diff, key, { optionId: wrongOption.id }).won === false,
+        `[${diff} ${key}] una de las 5 opciones falsas pierde`,
+      );
+      assert(
+        verifyChallenge("team-radio", diff, key, { optionId: "" } as any).won === false,
+        `[${diff} ${key}] optionId vacío pierde (no revienta)`,
+      );
+      assert(
+        verifyChallenge("team-radio", diff, key, { optionId: "9999::Fake Grand Prix" }).won === false,
+        `[${diff} ${key}] optionId que no estaba en pantalla pierde`,
+      );
+    }
+  }
+}
+
 function unknownGame() {
   console.log("\n▶ Juego desconocido");
   const key = dateKey(new Date());
@@ -264,6 +321,8 @@ function unknownGame() {
   parrillaBingo();
   gpResultado();
   top10Standings();
+  careerPath();
+  teamRadio();
   unknownGame();
   console.log(`\n═══ RESULTADO: ${passed} passed, ${failed} failed ═══`);
   process.exit(failed > 0 ? 1 : 0);

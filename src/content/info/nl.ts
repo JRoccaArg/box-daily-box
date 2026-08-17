@@ -4,10 +4,10 @@ import type { InfoContent } from "./types";
 const content: InfoContent = {
   title: "Hoe te spelen",
   subtitle:
-    "Box Daily Box heeft zes dagelijkse Formule 1-minigames. Elk spel wordt één keer per dag gespeeld, met een nieuwe uitdaging om middernacht. Hier leggen we de regels van elk spel uit, hoe de score wordt berekend, hoe de ranglijst werkt en de andere functies van het platform.",
+    "Box Daily Box heeft acht dagelijkse Formule 1-minigames. Elk spel wordt één keer per dag gespeeld, met een nieuwe uitdaging om middernacht. Hier leggen we de regels van elk spel uit, hoe de score wordt berekend, hoe de ranglijst werkt en de andere functies van het platform.",
   dataAsOfNote: "De coureurs-, team- en uitslaggegevens die in de spellen worden gebruikt, lopen tot en met het seizoen 2025.",
 
-  gamesHeading: "De 6 spellen",
+  gamesHeading: "De 8 spellen",
   gamesIntro:
     "Alle spellen gebruiken echte Formule 1-gegevens: coureurs, teams, nationaliteiten en historische resultaten. De dagelijkse uitdaging is voor alle spelers ter wereld hetzelfde.",
   gameDetail: {
@@ -23,6 +23,10 @@ const content: InfoContent = {
       "Je krijgt een historische Grand Prix te zien en moet de top 10 van die race invullen: welke coureur op welke plek eindigde. Er is automatisch aanvullen om sneller tussen de coureurs te zoeken.",
     "top10-standings":
       "Vergelijkbaar met de vorige, maar met de opgebouwde coureursstand van een seizoen (willekeurig gekozen uit een periode van 1 tot 4 jaar), niet van één race. De aanwijzingen zijn de nationaliteit van elke coureur en de punten die hij dat jaar behaalde.",
+    "career-path":
+      "Je krijgt de keten van teams te zien waarvoor een Formule 1-coureur heeft gereden, in chronologische volgorde, weergegeven met het logo van elk team. Je moet raden om welke coureur het gaat door zijn naam te typen, met automatisch aanvullen om sneller te zoeken. Je hebt maximaal 3 pogingen.",
+    "team-radio":
+      "Je krijgt de echte tekst van een iconisch Formule 1-teamradiobericht te zien, samen met de coureur die het zei. Je moet raden bij welke Grand Prix het werd gezegd, kiezend uit 6 opties. De verkeerde opties zijn races uit hetzelfde jaar of van hetzelfde circuit in nabije jaren, dus zomaar gokken is niet genoeg: je moet de context echt kennen.",
   },
 
   difficultyHeading: "Moeilijkheidsgraden",
@@ -63,7 +67,7 @@ const content: InfoContent = {
     },
     {
       q: "Hoe vaak per dag kan ik elke uitdaging spelen?",
-      a: "Eén keer per dag per spel. Om middernacht wordt voor elk van de 6 spellen een nieuwe uitdaging gegenereerd. Duels met vrienden zijn de uitzondering: je kunt ze zo vaak spelen als je wilt, omdat het niet de dagelijkse uitdaging zijn.",
+      a: "Eén keer per dag per spel. Om middernacht wordt voor elk van de 8 spellen een nieuwe uitdaging gegenereerd. Duels met vrienden zijn de uitzondering: je kunt ze zo vaak spelen als je wilt, omdat het niet de dagelijkse uitdaging zijn.",
     },
     {
       q: "Hoe wordt de score berekend?",

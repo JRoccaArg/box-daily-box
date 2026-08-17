@@ -4,10 +4,10 @@ import type { InfoContent } from "./types";
 const content: InfoContent = {
   title: "How to play",
   subtitle:
-    "Box Daily Box has six daily Formula 1 minigames. Each one is played once per day, with a new challenge at midnight. Here's how the rules of each game work, how scoring is calculated, how the ranking works, and the platform's other features.",
+    "Box Daily Box has eight daily Formula 1 minigames. Each one is played once per day, with a new challenge at midnight. Here's how the rules of each game work, how scoring is calculated, how the ranking works, and the platform's other features.",
   dataAsOfNote: "The driver, team, and results data used by the games goes up to the 2025 season.",
 
-  gamesHeading: "The 6 games",
+  gamesHeading: "The 8 games",
   gamesIntro:
     "All games use real Formula 1 data: drivers, teams, nationalities, and historical results. The daily challenge is the same for every player in the world.",
   gameDetail: {
@@ -23,6 +23,10 @@ const content: InfoContent = {
       "You're shown a historic Grand Prix and have to complete the top 10 of that race: which driver finished in each position. It has autocomplete for faster searching among drivers.",
     "top10-standings":
       "Similar to the previous one, but with the accumulated drivers' championship standings for a season (randomly chosen from a 1-to-4-year period), not a single race. The clues are each driver's nationality and the points they scored that year.",
+    "career-path":
+      "You're shown the chain of teams a Formula 1 driver raced for, in chronological order, represented with each team's logo. You have to guess who the driver is by typing their name, with autocomplete for faster searching. You get up to 3 attempts.",
+    "team-radio":
+      "You're shown the real text of an iconic Formula 1 team radio message, along with the driver who said it. You have to guess which Grand Prix it was said at, choosing from 6 options. The wrong options are races from the same year or the same circuit in nearby years, so guessing alone won't cut it — you need to actually know the context.",
   },
 
   difficultyHeading: "Difficulty levels",
@@ -63,7 +67,7 @@ const content: InfoContent = {
     },
     {
       q: "How many times a day can I play each challenge?",
-      a: "Once a day per game. A new challenge for each of the 6 games is generated at midnight. Duels with friends are the exception: you can play as many as you want, since they're not the daily challenge.",
+      a: "Once a day per game. A new challenge for each of the 8 games is generated at midnight. Duels with friends are the exception: you can play as many as you want, since they're not the daily challenge.",
     },
     {
       q: "How is the score calculated?",
