@@ -533,7 +533,7 @@ const tr: Translations = {
 
   "teamradio.eyebrow": "Team Radio",
   "teamradio.hint": "Bu gerçek bir takım telsiz mesajı. Hangi Grand Prix'te söylendiğini tahmin et.",
-  "teamradio.said_by": "Bunu söyleyen: {{driver}}",
+  "teamradio.said_by": "Telsizde söylendi: {{driver}}",
   "teamradio.select": "Bir Grand Prix seç",
   "teamradio.confirm": "Onayla",
   "teamradio.answer_was": "Doğru cevap:",

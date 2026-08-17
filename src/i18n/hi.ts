@@ -517,7 +517,7 @@ const hi: Translations = {
 
   "teamradio.eyebrow": "टीम रेडियो",
   "teamradio.hint": "यह F1 की एक असली टीम रेडियो मैसेज है। अंदाज़ा लगाएं कि यह किस ग्रां प्री में कहा गया था।",
-  "teamradio.said_by": "यह कहा: {{driver}}",
+  "teamradio.said_by": "{{driver}} की रेडियो पर कहा गया",
   "teamradio.select": "एक ग्रां प्री चुनें",
   "teamradio.confirm": "पुष्टि करें",
   "teamradio.answer_was": "सही जवाब था:",

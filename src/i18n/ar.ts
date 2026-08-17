@@ -419,7 +419,7 @@ const ar: Translations = {
 
   "teamradio.eyebrow": "Team Radio",
   "teamradio.hint": "هذه رسالة لاسلكية حقيقية بين فريق وسائقه. خمّن في أي جائزة كبرى قيلت.",
-  "teamradio.said_by": "قالها: {{driver}}",
+  "teamradio.said_by": "قيل في راديو: {{driver}}",
   "teamradio.select": "اختر جائزة كبرى",
   "teamradio.confirm": "تأكيد",
   "teamradio.answer_was": "كانت:",

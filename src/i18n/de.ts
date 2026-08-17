@@ -436,7 +436,7 @@ const de: Translations = {
 
   "teamradio.eyebrow": "Team Radio",
   "teamradio.hint": "Das ist ein echter Team-Funkspruch. Rate, bei welchem Grand Prix er gesagt wurde.",
-  "teamradio.said_by": "Gesagt von: {{driver}}",
+  "teamradio.said_by": "Gesagt im Funk von: {{driver}}",
   "teamradio.select": "Wähle einen Grand Prix",
   "teamradio.confirm": "Bestätigen",
   "teamradio.answer_was": "Es war:",

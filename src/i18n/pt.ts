@@ -518,7 +518,7 @@ const pt: Translations = {
 
   "teamradio.eyebrow": "Team Radio",
   "teamradio.hint": "Esta é uma mensagem real de rádio de equipe. Adivinhe em qual Grande Prêmio foi dita.",
-  "teamradio.said_by": "Dito por: {{driver}}",
+  "teamradio.said_by": "Dito no rádio de: {{driver}}",
   "teamradio.select": "Selecione um Grande Prêmio",
   "teamradio.confirm": "Confirmar",
   "teamradio.answer_was": "Era:",

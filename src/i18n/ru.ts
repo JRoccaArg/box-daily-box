@@ -435,7 +435,7 @@ const ru: Translations = {
 
   "teamradio.eyebrow": "Team Radio",
   "teamradio.hint": "Это настоящее сообщение по командной радиосвязи. Угадайте, на каком Гран-при это было сказано.",
-  "teamradio.said_by": "Сказал: {{driver}}",
+  "teamradio.said_by": "Сказано по радиосвязи: {{driver}}",
   "teamradio.select": "Выберите Гран-при",
   "teamradio.confirm": "Подтвердить",
   "teamradio.answer_was": "Правильный ответ:",

@@ -423,7 +423,7 @@ const nl: Translations = {
 
   "teamradio.eyebrow": "Team Radio",
   "teamradio.hint": "Dit is een echt teamradiobericht. Raad bij welke Grand Prix het werd gezegd.",
-  "teamradio.said_by": "Gezegd door: {{driver}}",
+  "teamradio.said_by": "Gezegd op de radio van: {{driver}}",
   "teamradio.select": "Kies een Grand Prix",
   "teamradio.confirm": "Bevestigen",
   "teamradio.answer_was": "Het was:",
