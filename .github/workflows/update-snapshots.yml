@@ -1,0 +1,31 @@
+name: Update visual snapshots
+
+# Manual, bajo demanda. Genera las capturas de tests/visual en el MISMO
+# entorno que usa ci.yml (ubuntu-latest) y las deja como artifact para
+# descargar y commitear a mano — nunca las commitea directo. Corre solo si
+# alguien lo dispara: no agrega costo de CI en cada push.
+#
+# Por que existe: las capturas se generaban en Windows local y ci.yml corre
+# en Linux — distinto motor de fuentes, distinto renderizado, diffs de
+# pixeles falsos-positivos en el visual regression (ver CLAUDE.md).
+on:
+  workflow_dispatch:
+
+jobs:
+  update-snapshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:visual:update
+        continue-on-error: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-snapshots-linux
+          path: tests/visual/__screenshots__/
+          retention-days: 7
