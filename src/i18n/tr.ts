@@ -17,6 +17,7 @@ const tr: Translations = {
   "home.solved": "Çözüldü",
   "home.played": "Oynandı",
   "home.unplayed": "Oynanmadı",
+  "home.new_badge": "Yeni",
   "home.num.3": "Üç",
   "home.num.4": "Dört",
   "home.num.5": "Beş",

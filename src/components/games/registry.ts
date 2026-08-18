@@ -87,6 +87,7 @@ export const GAMES: GameDefinition[] = [
     difficulties: ["facil", "medio", "dificil"],
     timer: { kind: "choice", options: [45, 60] },
     component: TeamRadio,
+    isNew: true,
   },
 ];
 

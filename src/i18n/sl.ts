@@ -17,6 +17,7 @@ const sl: Translations = {
   "home.solved": "Rešeno",
   "home.played": "Odigrano",
   "home.unplayed": "Neodigrano",
+  "home.new_badge": "Novo",
   "home.num.3": "Trije",
   "home.num.4": "Štirje",
   "home.num.5": "Pet",

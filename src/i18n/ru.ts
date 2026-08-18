@@ -16,6 +16,7 @@ const ru: Translations = {
   "home.solved": "Решено",
   "home.played": "Сыграно",
   "home.unplayed": "Не сыграно",
+  "home.new_badge": "Новое",
   "home.num.3": "Три", "home.num.4": "Четыре", "home.num.5": "Пять",
   "home.num.6": "Шесть", "home.num.7": "Семь", "home.num.8": "Восемь",
 
