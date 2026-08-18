@@ -279,7 +279,7 @@ function KeyButton({
       disabled={disabled}
       className={[
         "flex h-12 min-w-0 items-center justify-center rounded-md font-mono text-sm font-semibold uppercase",
-        "transition-colors disabled:opacity-50",
+        "transition-[background-color,transform] duration-150 ease-out active:scale-90 active:duration-75 disabled:opacity-50 disabled:active:scale-100",
         // Teclas fluidas (`flex-1 min-w-0`) en vez de un ancho fijo en px:
         // 10 teclas en una fila (QWERTYUIOP) con ancho fijo se salian del
         // teclado en pantallas angostas. ENTER/DEL quedan con un poco mas
