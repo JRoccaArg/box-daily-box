@@ -60,8 +60,7 @@ export function Home() {
 /**
  * Apoyo voluntario (Términos §7). Discreta a propósito: no es un feature del
  * juego, es un link de salida hacia un tercero. Cafecito para Argentina,
- * Ko-fi para el resto — el operador todavía no creó ninguna de las dos
- * cuentas (ver src/lib/support.ts), así que los links son placeholders.
+ * Ko-fi para el resto (URLs en src/lib/support.ts).
  */
 function SupportCard() {
   const { t } = useI18n();

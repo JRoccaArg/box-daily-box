@@ -114,6 +114,20 @@ Seguridad: HMAC-SHA256 (sessionToken + identityToken). Server-authoritative.
   `Box_Daily_Box_Context.md` — es la fuente autoritativa (incluye keys SEO,
   patrón `I18nText`, y las 9 listas backend); este archivo solo resume los invariantes
   críticos. Detalle de historial de bugs en el mismo archivo.
+- **Si cambia la cantidad de juegos, o cualquier dato que el SEO menciona
+  explícitamente (número de juegos, idiomas, features destacadas), hay que
+  actualizar el SEO en el mismo cambio.** Las claves `seo.home.title` y
+  `seo.home.description` (en los 14 archivos `src/i18n/*.ts`) hardcodean la
+  cantidad de juegos en texto — no se derivan de `registry.ts`, así que
+  agregar o quitar un juego sin tocarlas deja SEO desactualizado, indexado
+  por Google y visible en la pestaña del navegador. **Lo mismo aplica a
+  `public/og-image.png`** (banner de preview social, usado por
+  `src/lib/seo.ts`): es una imagen estática sin fuente editable en el
+  repo — al cambiar la cantidad de juegos hay que regenerarla (pills
+  "PitTexto", "PoleWordle", "+ N more" donde N = total − 2) y commitearla
+  junto con el resto del cambio. Al agregar/quitar un juego, grepear
+  `seo.home.title`/`seo.home.description` en `src/i18n/` y revisar
+  `public/og-image.png` a ojo.
 
 ## Idioma y registro en textos de usuario
 
