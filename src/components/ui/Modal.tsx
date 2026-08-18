@@ -47,6 +47,15 @@ export function Modal({ open, onClose, title, children, hideClose = false, size 
     };
   }, [open, onClose]);
 
+  // `createPortal` necesita `document`, que no existe durante el prerender
+  // SSG en Node (vite-react-ssg). Ese prerender siempre corre con `open`
+  // en su estado inicial `false` (los modales se abren por interaccion del
+  // usuario), asi que no perdemos ningun HTML real al cortar aca — pero
+  // el guard tiene que estar ANTES de tocar `document`, no adentro del JSX
+  // condicionado a `open`, porque `createPortal(..., document.body)` se
+  // evalua siempre como argumento, sin importar el `open && (...)` de adentro.
+  if (typeof document === "undefined") return null;
+
   return createPortal(
     <AnimatePresence>
       {open && (
