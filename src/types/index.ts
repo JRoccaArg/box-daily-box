@@ -139,6 +139,9 @@ export type GameDefinition = {
   difficulties: Difficulty[];
   timer: TimerConfig;
   component: ComponentType<GameProps>;
+  /** Muestra una etiqueta "Nuevo" en la tarjeta de Home. Sacar manualmente
+   * cuando el juego deje de ser una novedad (unas semanas). */
+  isNew?: boolean;
 };
 
 /** Estado persistido por dia y por juego. */

@@ -16,6 +16,7 @@ const zh: Translations = {
   "home.solved": "已解决",
   "home.played": "已游玩",
   "home.unplayed": "未游玩",
+  "home.new_badge": "新",
   "home.num.3": "三",
   "home.num.4": "四",
   "home.num.5": "五",

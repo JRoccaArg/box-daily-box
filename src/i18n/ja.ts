@@ -16,6 +16,7 @@ const ja: Translations = {
   "home.solved": "解決済み",
   "home.played": "プレイ済み",
   "home.unplayed": "未プレイ",
+  "home.new_badge": "新登場",
   "home.num.3": "3",
   "home.num.4": "4",
   "home.num.5": "5",

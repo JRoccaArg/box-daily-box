@@ -72,6 +72,10 @@ export default {
           "0%, 100%": { transform: "scaleY(0.25)" },
           "50%": { transform: "scaleY(1)" },
         },
+        "badge-glow": {
+          "0%, 100%": { boxShadow: "0 0 0 0 rgba(176, 38, 255, 0.45)" },
+          "50%": { boxShadow: "0 0 0 4px rgba(176, 38, 255, 0)" },
+        },
       },
       animation: {
         "flip-in": "flip-in 0.45s ease forwards",
@@ -81,6 +85,7 @@ export default {
         sweep: "sweep 1.4s linear infinite",
         "toast-out": "toast-out 0.25s ease-in forwards",
         "radio-wave": "radio-wave 1s ease-in-out infinite",
+        "badge-glow": "badge-glow 2.4s ease-in-out infinite",
       },
     },
   },

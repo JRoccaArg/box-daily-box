@@ -11,7 +11,7 @@ const nl: Translations = {
   "home.streak": "{{count}}-daagse reeks",
   "home.day_singular": "dag", "home.day_plural": "dagen",
   "home.play_now": "Nu spelen", "home.come_back": "Kom morgen terug",
-  "home.solved": "Opgelost", "home.played": "Gespeeld", "home.unplayed": "Niet gespeeld",
+  "home.solved": "Opgelost", "home.played": "Gespeeld", "home.unplayed": "Niet gespeeld", "home.new_badge": "Nieuw",
   "home.num.3": "Drie", "home.num.4": "Vier", "home.num.5": "Vijf",
   "home.num.6": "Zes", "home.num.7": "Zeven", "home.num.8": "Acht",
 
