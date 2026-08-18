@@ -45,7 +45,6 @@ const sl: Translations = {
   "shell.time_limit": "Časovna omejitev: {{seconds}} sekund",
   "shell.no_time_limit": "Brez časovne omejitve",
   "shell.untimed": "Brez časa",
-  "shell.untimed_hint": "Malo fiksnih točk, brez ure",
   "shell.fails_left": "Preostalo {{count}} od {{total}} poskusov",
   "shell.start": "Začni",
   "shell.surrender": "Predaj se",
@@ -104,6 +103,12 @@ const sl: Translations = {
   "footer.line2": "Nov izziv vsak dan ob polnoči.",
   "footer.info": "Kako igrati",
   "footer.contact": "Kontakt",
+  "footer.support": "Podpri projekt",
+  "support.title": "Podpri projekt",
+  "support.body": "Box Daily Box je in bo ostal brezplačen. Če ti je všeč, lahko pustiš prostovoljni prispevek — ta ne prinaša nobene prednosti v igri, je le način za podporo projektu.",
+  "support.disclaimer": "Ne daje dostopa do ekskluzivne vsebine, dodatnih poskusov ali prednostne uvrstitve.",
+  "support.cafecito": "Cafecito (Argentina)",
+  "support.kofi": "Ko-fi (mednarodno)",
 
   // ─── Profile (IdentityModal) ────────────────────────────────────────
   "profile.title": "Tvoj profil",
@@ -259,7 +264,12 @@ const sl: Translations = {
   "intruso.rule.team": "Vozili so za {{team}}",
   "intruso.rule.champ": "Bili so svetovni prvaki",
   "intruso.rule.non_champ": "Nikoli niso bili svetovni prvaki",
-  "intruso.rule.nationality": "So iste narodnosti ({{nat}})",
+  "intruso.rule.winner": "Zmagali so vsaj na eni dirki za Veliko nagrado",
+  "intruso.rule.non_winner": "Nikoli niso zmagali na dirki za Veliko nagrado",
+  "intruso.rule.poleman": "Osvojili so vsaj en najboljši startni položaj",
+  "intruso.rule.non_poleman": "Nikoli niso osvojili najboljšega startnega položaja",
+  "intruso.rule.podium": "Vsaj enkrat so stali na stopničkah",
+  "intruso.rule.non_podium": "Nikoli niso stali na stopničkah",
   "intruso.rule.none": "Pravilo ni na voljo",
 
   // ─── ParrillaBingo extra ──────────────────────────────────────────────
@@ -318,9 +328,9 @@ const sl: Translations = {
   "careerpath.found": "Našel si:",
   "careerpath.answer_was": "Dirkač je bil:",
 
-  "seo.home.title": "Box Daily Box — Dnevne mini igre Formule 1 | 6 brezplačnih ugank",
+  "seo.home.title": "Box Daily Box — Dnevne mini igre Formule 1 | 8 brezplačnih ugank",
   "seo.home.description":
-    "Šest dnevnih mini iger Formule 1: ugibajte voznike, dopolnite najboljših 10, poiščite vsiljivca in več. Brezplačna svetovna lestvica, brez prijave.",
+    "Osem dnevnih mini iger Formule 1: ugibajte voznike, dopolnite najboljših 10, poiščite vsiljivca in več. Brezplačna svetovna lestvica, brez prijave.",
   "seo.contact.title": "Kontakt | Box Daily Box",
   "seo.contact.description": "Imate tehnično težavo ali idejo za Box Daily Box? Kontaktirajte nas.",
   "seo.game.career-path.title": "Career Path — Ugani dirkača po njegovi karieri | Box Daily Box",
@@ -438,6 +448,8 @@ const sl: Translations = {
   "friends.request_sent": "Prošnja poslana",
   "friends.request_accepted": "Zdaj ste prijatelji!",
   "friends.remove": "Odstrani prijatelja",
+  "friends.online": "Na spletu",
+  "friends.offline": "Nepovezan",
   "friends.remove_confirm": "Želite odstraniti tega prijatelja?",
   "friends.list_empty_short": "Še brez prijateljev",
 
@@ -473,6 +485,63 @@ const sl: Translations = {
   "duel.go_home": "Nazaj na domačo stran",
   "duel.share_link": "Deli povezavo",
   "duel.link_copied": "Povezava kopirana v odložišče",
+
+  "settings.trigger_label": "Zvok in vibriranje",
+  "settings.sound": "Zvok",
+  "settings.haptics": "Vibriranje",
+  "settings.on": "Vklopljeno",
+  "settings.off": "Izklopljeno",
+
+  "footer.terms": "Pogoji uporabe",
+  "footer.privacy": "Politika zasebnosti",
+  "legal.updated": "Nazadnje posodobljeno: {{date}}",
+
+  "ranking.streak_title": "{{count}}-dnevni zmagovalni niz",
+
+  "monthly.daily_title": "Po dnevih",
+  "monthly.weekly_title": "Po tednih",
+  "monthly.week_tooltip": "Teden {{n}}: {{points}} t.",
+  "monthly.by_difficulty": "Po težavnosti",
+  "monthly.by_game": "Po igri",
+
+  "seo.terms.title": "Pogoji uporabe | Box Daily Box",
+  "seo.terms.description":
+    "Pogoji uporabe Box Daily Box, brezplačne platforme z dnevnimi mini igrami Formule 1.",
+  "seo.privacy.title": "Politika zasebnosti | Box Daily Box",
+  "seo.privacy.description":
+    "Kako Box Daily Box ravna z vašimi osebnimi podatki: kaj zbira, zakaj, in vaše pravice.",
+
+  "friends.need_to_play": "Najprej odigraj izziv, da odkleneš Prijatelje.",
+
+  "duel.error_start": "Dvoboja ni bilo mogoče naložiti. Poskusi znova z domače strani.",
+  "duel.leave_button": "Zapusti",
+  "duel.leave_title": "Zapustiš dvoboj?",
+  "duel.leave_msg": "Če zdaj zapustiš, izgubiš dvoboj in tvoj nasprotnik zmaga. Tega ni mogoče razveljaviti.",
+  "duel.leave_confirm": "Da, zapusti in izgubi",
+  "duel.leave_cancel": "Nadaljuj igro",
+  "duel.accept_while_playing_title": "Sprejmeš dvoboj?",
+  "duel.accept_while_playing_msg":
+    "Trenutno si sredi igre. Če sprejmeš ta dvoboj, izgubiš trenutno igro in ta poskus. Tega ni mogoče razveljaviti.",
+  "duel.accept_while_playing_confirm": "Da, sprejmi in izgubi mojo igro",
+  "duel.accept_while_playing_cancel": "Nadaljuj igro",
+  "duel.reason_nobody_played": "Nihče od igralcev ni pravočasno dokončal izziva.",
+  "duel.reason_opponent_absent": "Tvoj nasprotnik nikoli ni igral.",
+  "duel.reason_you_absent": "Nikoli nisi igral.",
+  "duel.reason_opponent_forfeit": "Tvoj nasprotnik je zapustil dvoboj.",
+  "duel.reason_you_forfeit": "Zapustil si dvoboj.",
+
+  "teamradio.eyebrow": "Team Radio",
+  "teamradio.hint": "To je pravo sporočilo ekipne radijske zveze. Ugani, na kateri Veliki nagradi je bilo izrečeno.",
+  "teamradio.said_by": "Izrečeno na radijski zvezi: {{driver}}",
+  "teamradio.select": "Izberi Veliko nagrado",
+  "teamradio.confirm": "Potrdi",
+  "teamradio.answer_was": "Pravilen odgovor je bil:",
+  "teamradio.correct": "Pravilno",
+  "game.team-radio.name": "Team Radio",
+  "game.team-radio.tagline": "Preberi ikonično sporočilo ekipne radijske zveze F1 in ugani, na kateri Veliki nagradi je bilo izrečeno.",
+  "seo.game.team-radio.title": "Team Radio — ugani Veliko nagrado po ekipni radijski zvezi | Box Daily Box",
+  "seo.game.team-radio.description":
+    "Preberi ikonično sporočilo ekipne radijske zveze F1 in izmed 6 možnosti ugani, na kateri Veliki nagradi je bilo izrečeno. Brezplačna dnevna uganka.",
 };
 
 export default sl;

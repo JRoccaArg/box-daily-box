@@ -284,6 +284,20 @@ export async function initializeDatabase(): Promise<void> {
       WHERE friend_code IS NOT NULL;
     `);
 
+    // Presencia: última vez que el usuario tuvo la web abierta. Lo escribe
+    // `touchLastSeen` desde getPendingDuels (el poll de 3s que ya corre en
+    // todas las páginas), como mucho una vez por minuto por usuario.
+    // Solo se expone a los AMIGOS, y como booleano ya calculado en el server
+    // (getFriends) — nunca el timestamp crudo, para no revelar horarios de uso.
+    // Sin índice a propósito: no se filtra por esta columna, solo se lee en el
+    // JOIN de getFriends, que ya llega por PK.
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMPTZ;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
+    `);
+
     // Amistades (bidireccional). Se guarda SIEMPRE con user_a < user_b para
     // evitar filas duplicadas (A-B y B-A). El CHECK lo fuerza a nivel DB.
     await client.query(`

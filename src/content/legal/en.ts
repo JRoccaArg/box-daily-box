@@ -6,7 +6,7 @@
 
 import type { LegalContent } from "./types";
 
-const LAST_UPDATED = "2026-07-31";
+const LAST_UPDATED = "2026-08-15";
 const CONTACT_EMAIL = "boxdailybox@gmail.com";
 const OPERATOR = "Juan Cruz Rocca";
 
@@ -78,7 +78,32 @@ const content: LegalContent = {
         ],
       },
       {
-        heading: "6. Service \"as is\"",
+        heading: "6. AI-generated or AI-assisted content",
+        blocks: [
+          {
+            p: "Parts of the code, interface text, and some visual elements of the Service were generated or assisted by artificial intelligence tools, and reviewed by the operator before publication.",
+          },
+          {
+            p: "The historical Formula 1 data used (results, teams, drivers, nationalities) comes from public sources and open datasets. We try to keep it accurate, but it may contain errors, inaccuracies, or omissions.",
+          },
+        ],
+      },
+      {
+        heading: "7. Voluntary support",
+        blocks: [
+          {
+            p: "The Service is and will remain free in its current form (see also Section 10, \"Changes to the Service and these Terms\"). If you want, you can support its development with a voluntary contribution through third-party platforms: Cafecito (for Argentina) and Ko-fi (international).",
+          },
+          {
+            p: "That contribution is a donation, not a purchase: it does not create a consumer relationship regarding the Service, does not grant access to exclusive content, gameplay advantages, preferential ranking, or any other benefit within the Service, and is not refundable by the operator.",
+          },
+          {
+            p: "The charge is processed entirely by the platform you choose (Cafecito or Ko-fi), under its own terms and privacy policy. The operator does not receive, store, or process any payment data: clicking the support button takes you off the Service to that platform's site.",
+          },
+        ],
+      },
+      {
+        heading: "8. Service \"as is\"",
         blocks: [
           {
             p: "The Service is provided \"as is\" and \"as available\", without warranties of any kind. We do not guarantee that the Service will be error-free, continuously available, or that the sporting data is accurate. We may modify, suspend, or discontinue the Service (in whole or in part) at any time.",
@@ -86,7 +111,7 @@ const content: LegalContent = {
         ],
       },
       {
-        heading: "7. Limitation of liability",
+        heading: "9. Limitation of liability",
         blocks: [
           {
             p: "To the maximum extent permitted by applicable law, the operator shall not be liable for indirect, incidental, or consequential damages arising from the use of, or inability to use, the Service. Nothing in these Terms limits rights that the law grants you as a consumer on a non-waivable basis.",
@@ -94,18 +119,24 @@ const content: LegalContent = {
         ],
       },
       {
-        heading: "8. Changes to the Service and these Terms",
+        heading: "10. Changes to the Service and these Terms",
         blocks: [
           {
             p: "We may update these Terms to reflect changes in the Service or in the law. The current version will always be available on this page, with its last-updated date.",
           },
           {
-            p: "The Service is currently free and shows no advertising. In the future, advertising, paid features, or other forms of monetization may be introduced. If that happens, these Terms and the Privacy Policy will be updated accordingly, and you will be informed and asked for your consent where the law so requires.",
+            p: "The current free mode of the Service — one attempt per game per day, with no need to sign up or pay — will keep being available at no cost and without needing to watch any ad to play.",
+          },
+          {
+            p: "In the future we might introduce advertising (for example, side banners that don't interrupt gameplay and don't require closing them or waiting to keep playing) and/or an optional paid membership with extra benefits (for example, extra attempts). None of those eventual additions will replace or condition the free mode described in the paragraph above.",
+          },
+          {
+            p: "If advertising, paid features, or another form of monetization is introduced, these Terms and the Privacy Policy will be updated accordingly, and you will be informed and asked for your consent where the law so requires.",
           },
         ],
       },
       {
-        heading: "9. Governing law and jurisdiction",
+        heading: "11. Governing law and jurisdiction",
         blocks: [
           {
             p: "These Terms are governed by the laws of Argentina. Any dispute shall be submitted to the competent courts of Argentina, without prejudice to the rights granted to you by the mandatory consumer protection rules of your country of residence, including the possibility of bringing proceedings before the courts of your domicile where the law so allows.",
@@ -113,14 +144,14 @@ const content: LegalContent = {
         ],
       },
       {
-        heading: "10. Contact",
+        heading: "12. Contact",
         blocks: [
           { p: "For questions about these Terms, you can write to:" },
           { email: CONTACT_EMAIL },
         ],
       },
       {
-        heading: "11. Language",
+        heading: "13. Language",
         blocks: [
           {
             p: "The Spanish version of this document is the binding version. Translations into other languages are provided for convenience only and, in case of any discrepancy, the Spanish version prevails.",
@@ -156,7 +187,7 @@ const content: LegalContent = {
             ],
           },
           {
-            p: "If you use the friends and duels features, we store the relationships you create yourself (who you add as a friend or challenge).",
+            p: "If you use the friends and duels features, we store the relationships you create yourself (who you add as a friend or challenge). If you have friends added, we also store the last time you had the Service open, so we can show you and your friends who is online at that moment. That information is shown only as \"online\" or \"offline\": the exact time and a connection history are never shown.",
           },
           {
             p: "We neither request nor store your password: authentication is performed by Google. We also do not process special categories of sensitive data.",
@@ -171,6 +202,7 @@ const content: LegalContent = {
               "To make the game work and preserve your progress across sessions and devices (performance of the service you request).",
               "To calculate and display rankings and to prevent cheating and abusive use of multiple accounts (legitimate interest in maintaining a fair ranking; the IP is used solely for this purpose).",
               "To link your progress to your account if you sign in with Google (based on your consent when choosing to sign in).",
+              "To show you and your friends who has the Service open right now (performance of the friends feature you activate).",
             ],
           },
           {
@@ -204,6 +236,9 @@ const content: LegalContent = {
           },
           {
             p: "Some of these providers may process data on servers located outside Argentina or the European Economic Area. In such cases, the transfer relies on the safeguards and legal mechanisms offered by those providers.",
+          },
+          {
+            p: "If you click the voluntary support button, you leave the Service for Cafecito or Ko-fi, whichever you choose. They are independent controllers of the data they process on their own site; the operator does not send them any of your data — it is simply a link to their page.",
           },
         ],
       },

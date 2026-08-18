@@ -1,4 +1,8 @@
 // src/i18n/es.ts — Traducciones en español (idioma base).
+//
+// Registro neutro ("tú/tienes/puedes"), no voseo argentino — ver CLAUDE.md
+// "Idioma y registro en textos de usuario". La única excepción intencional
+// es src/content/legal/es.ts (Términos y Privacidad), que sí usa voseo.
 
 import type { Translations } from "./types";
 
@@ -28,7 +32,7 @@ const es: Translations = {
   // ─── Juegos: nombres y taglines ─────────────────────────────────────
   "game.pittexto.name": "PitTexto",
   "game.pittexto.tagline":
-    "Adivina al piloto secreto. Cada intento te dice que tan cerca estas.",
+    "Adivina al piloto secreto. Cada intento te dice qué tan cerca estás.",
   "game.polewordle.name": "PoleWordle",
   "game.polewordle.tagline":
     "Adivina el apellido del piloto del dia, estilo Wordle, en 6 intentos.",
@@ -37,7 +41,7 @@ const es: Translations = {
     "Nueve de diez pilotos comparten algo. Toca al que no encaja.",
   "game.parrilla-bingo.name": "Parrilla Bingo",
   "game.parrilla-bingo.tagline":
-    "Pon en cada celda un piloto que cumpla su escuderia y su condicion.",
+    "Completa cada casilla con un piloto que cumpla la escudería de su fila y la condición de su columna.",
 
   // ─── GameShell ──────────────────────────────────────────────────────
   "shell.daily_challenge": "Reto del dia",
@@ -46,7 +50,6 @@ const es: Translations = {
   "shell.time_limit": "Tiempo limite: {{seconds}} segundos",
   "shell.no_time_limit": "Sin limite de tiempo",
   "shell.untimed": "Sin Tiempo",
-  "shell.untimed_hint": "Pocos puntos fijos, sin cronometro",
   "shell.fails_left": "Te quedan {{count}} de {{total}} intentos",
   "shell.start": "Comenzar",
   "shell.surrender": "Rendirse",
@@ -67,7 +70,7 @@ const es: Translations = {
   // Resultado
   "result.won_title": "Reto superado",
   "result.lost_title": "Fin del intento",
-  "result.won_msg": "Buen trabajo!",
+  "result.won_msg": "¡Buen trabajo!",
   "result.lost_msg": "No esta vez.",
   "result.won_sub": "Sumaste este reto a tu racha.",
   "result.lost_sub": "Repasa las respuestas correctas en el tablero.",
@@ -82,8 +85,8 @@ const es: Translations = {
   // Abandono
   "leave.title": "¿Salir y perder el reto?",
   "leave.msg":
-    "Si salis ahora, este reto cuenta como perdido y ya no podras jugarlo hasta manana. La racha se interrumpe.",
-  "leave.confirm": "Si, salir y dar por perdido",
+    "Si sales ahora, este reto cuenta como perdido y ya no podrás jugarlo hasta mañana. La racha se interrumpe.",
+  "leave.confirm": "Sí, salir y dar por perdido",
   "leave.cancel": "Seguir jugando",
 
   // Bloqueado
@@ -119,6 +122,12 @@ const es: Translations = {
   "footer.terms": "Términos y Condiciones",
   "footer.privacy": "Política de Privacidad",
   "footer.contact": "Contacto",
+  "footer.support": "Apoyar el proyecto",
+  "support.title": "Apoyar el proyecto",
+  "support.body": "Box Daily Box es y va a seguir siendo gratis. Si te gusta, puedes dejar una contribución voluntaria — no da ninguna ventaja dentro del juego, es solo una forma de ayudar a sostener el proyecto.",
+  "support.disclaimer": "No otorga acceso a contenido exclusivo, intentos extra ni ranking preferencial.",
+  "support.cafecito": "Cafecito (Argentina)",
+  "support.kofi": "Ko-fi (internacional)",
 
   // ─── Páginas legales ────────────────────────────────────────────────
   "legal.updated": "Última actualización: {{date}}",
@@ -126,31 +135,31 @@ const es: Translations = {
   // ─── Página de contacto ───────────────────────────────────────────────
   "contact.title": "Contacto",
   "contact.intro":
-    "¿Encontraste un problema, tenés una idea para un juego nuevo, o cualquier otra consulta? Escribinos:",
+    "¿Encontraste un problema, tienes una idea para un juego nuevo, o cualquier otra consulta? Escríbenos:",
 
   // ─── Perfil (IdentityModal) ─────────────────────────────────────────
   "profile.title": "Tu perfil",
   "profile.subtitle":
     "Aparecerás en el ranking global con este nombre y país.",
   "profile.name_label": "Nombre de usuario (visible en ranking)",
-  "profile.name_placeholder": "Elegí un nombre de usuario",
+  "profile.name_placeholder": "Elige un nombre de usuario",
   "profile.name_unique_hint": "Debe ser único: nadie más puede tener este mismo nombre.",
-  "profile.name_taken": "Ese nombre de usuario ya está en uso. Probá con otro.",
+  "profile.name_taken": "Ese nombre de usuario ya está en uso. Prueba con otro.",
   "profile.name_checking": "Comprobando disponibilidad...",
   "profile.name_available": "✓ Disponible",
   "profile.name_locked":
     "Podrás volver a cambiarlo en {{month}}. Este mes ya usaste tu cambio de nombre.",
   "profile.name_warn":
-    "⚠️ Solo podés cambiar tu nombre 1 vez por mes. Elegí bien antes de guardar.",
+    "⚠️ Solo puedes cambiar tu nombre 1 vez por mes. Elige bien antes de guardar.",
   "profile.country_label": "País",
   "profile.country_detecting": "(detectando...)",
   "profile.country_select": "Selecciona tu país",
   "profile.country_fixed": "(fijo)",
-  "profile.country_warn": "⚠️ Una vez guardado, no podés cambiarlo.",
+  "profile.country_warn": "⚠️ Una vez guardado, no podrás cambiarlo.",
   "profile.save": "Guardar",
   "profile.saving": "Guardando...",
   "profile.cancel": "Cancelar",
-  "profile.save_error": "No se pudo guardar. Intentá de nuevo.",
+  "profile.save_error": "No se pudo guardar. Intenta de nuevo.",
   "profile.sync_label": "Sincronizar entre dispositivos",
   "profile.logged_as": "Sesión iniciada como:",
   "profile.logout": "Cerrar sesión",
@@ -182,10 +191,10 @@ const es: Translations = {
   "ranking.loading": "Cargando ranking...",
   "ranking.error": "No se pudo cargar el ranking",
   "ranking.retry": "Reintentar",
-  "ranking.empty_daily": "Nadie jugo hoy todavia. Se el primero!",
+  "ranking.empty_daily": "Nadie jugó hoy todavía. ¡Sé el primero!",
   "ranking.empty_monthly": "Sin resultados este mes.",
   "ranking.anonymous": "Anónimo",
-  "ranking.you": "(vos)",
+  "ranking.you": "(tú)",
   "ranking.challenges_won": "{{count}} {{label}} ganados",
   "ranking.challenge_singular": "reto",
   "ranking.challenge_plural": "retos",
@@ -208,8 +217,8 @@ const es: Translations = {
   "badge.more": "+{{count}}",
   "badge.gallery_title": "Mis Badges",
   "badge.gallery_empty":
-    "Todavía no ganaste ningún badge. ¡Terminá entre los 3 primeros del ranking mensual!",
-  "badge.gallery_hint": "Tocá un badge para destacarlo en el ranking (hasta 3).",
+    "Todavía no ganaste ningún badge. ¡Termina entre los 3 primeros del ranking mensual!",
+  "badge.gallery_hint": "Toca un badge para destacarlo en el ranking (hasta 3).",
   "badge.featured_count": "{{count}}/3 destacados",
   "badge.won_months": "Ganado en: {{months}}",
   "badge.show_grouped": "Agrupado (×{{count}})",
@@ -217,7 +226,7 @@ const es: Translations = {
   "badge.max_reached": "Ya elegiste el máximo de 3 badges destacados",
   "badge.save": "Guardar selección",
   "badge.saving": "Guardando...",
-  "badge.save_error": "No se pudo guardar. Intentá de nuevo.",
+  "badge.save_error": "No se pudo guardar. Intenta de nuevo.",
   "badge.saved": "Selección guardada",
   "badge.tooltip_admin": "Administrador del sitio",
   "badge.tooltip_superadmin": "Super administrador",
@@ -233,7 +242,7 @@ const es: Translations = {
   "monthly.challenges_won": "{{count}} retos ganados",
   "monthly.points_month": "puntos este mes",
   "monthly.no_wins":
-    "Todavía no ganaste retos este mes. ¡Sumá tus primeros puntos!",
+    "Todavía no ganaste retos este mes. ¡Suma tus primeros puntos!",
   "monthly.best_day": "Mejor día: {{day}} ({{points}} pts)",
   "monthly.daily_title": "Por día",
   "monthly.weekly_title": "Por semana",
@@ -276,6 +285,15 @@ const es: Translations = {
   "intruso.confirm": "Confirmar intruso",
   "intruso.select": "Selecciona un piloto",
 
+  // Team Radio
+  "teamradio.eyebrow": "Team Radio",
+  "teamradio.hint": "Esta es una radio real de equipo. Adivina en que Gran Premio se dijo.",
+  "teamradio.said_by": "Dicho en la radio de: {{driver}}",
+  "teamradio.select": "Selecciona un Gran Premio",
+  "teamradio.confirm": "Confirmar",
+  "teamradio.answer_was": "Era:",
+  "teamradio.correct": "Correcto",
+
   // Parrilla Bingo
   "bingo.pick_driver": "Elegir piloto",
   "bingo.drove_for": "corrió en {{team}}",
@@ -299,7 +317,7 @@ const es: Translations = {
   // ─── PitTexto extra ──────────────────────────────────────────────────
   "pittexto.eyebrow": "Adivina el piloto",
   "pittexto.hint":
-    "Cada intento muestra cuanto se parece al piloto secreto. Mas caliente = mas cerca.",
+    "Adivina el piloto secreto: cada intento te muestra qué tan parecido es en nacionalidad, escudería, año de debut, títulos y compañeros de equipo. Cuanto más caliente el color, más cerca estás.",
   "pittexto.attempt": "Intento {{current}} de {{max}}",
   "pittexto.factor.nationality": "Nacionalidad",
   "pittexto.factor.team": "Escuderia",
@@ -317,19 +335,24 @@ const es: Translations = {
   "polewordle.grid_info": "{{len}} letras · {{max}} intentos",
   "polewordle.length_error": "El apellido tiene {{len}} letras",
   "polewordle.was": "Era",
-  "polewordle.correct": "Correcto!",
-  "polewordle.input_label": "Escribí el apellido",
+  "polewordle.correct": "¡Correcto!",
+  "polewordle.input_label": "Escribe el apellido",
   "polewordle.grid_label": "Abrir teclado para escribir",
 
   // ─── ElIntruso extra ──────────────────────────────────────────────────
   "intruso.eyebrow": "El intruso",
   "intruso.hint":
-    "9 de estos 10 pilotos comparten algo en comun. Encontra al que no encaja.",
+    "9 de estos 10 pilotos comparten algo en común. Encuentra al que no encaja.",
   "intruso.rule_label": "Los otros 9",
   "intruso.rule.team": "Condujeron para {{team}}",
   "intruso.rule.champ": "Fueron campeones del mundo",
   "intruso.rule.non_champ": "Nunca fueron campeones del mundo",
-  "intruso.rule.nationality": "Son de la misma nacionalidad ({{nat}})",
+  "intruso.rule.winner": "Ganaron al menos un Gran Premio",
+  "intruso.rule.non_winner": "Nunca ganaron un Gran Premio",
+  "intruso.rule.poleman": "Lograron al menos una pole position",
+  "intruso.rule.non_poleman": "Nunca lograron una pole position",
+  "intruso.rule.podium": "Subieron al podio al menos una vez",
+  "intruso.rule.non_podium": "Nunca subieron al podio",
   "intruso.rule.none": "Sin regla disponible",
 
   // ─── ParrillaBingo extra ──────────────────────────────────────────────
@@ -355,16 +378,16 @@ const es: Translations = {
     "game.gp-resultado.name": "GP Resultado",
   "game.gp-resultado.tagline": "Completa el top 10 de un Gran Premio histórico antes de que se acabe el tiempo.",
   "gpresultado.eyebrow": "Gran Premio",
-  "gpresultado.search_placeholder": "Escribí un piloto…",
+  "gpresultado.search_placeholder": "Escribe un piloto…",
   "gpresultado.found_count": "{{found}} de {{total}} encontrados",
   "gpresultado.not_in_top": "{{name}} no terminó en el top 10.",
   "gpresultado.time_up": "Tiempo agotado. Las posiciones faltantes se muestran arriba.",
 
   "game.top10-standings.name": "Top 10 Standings",
-  "game.top10-standings.tagline": "Adivina el top 10 acumulado de puntos de un período de 1 a 4 años.",
+  "game.top10-standings.tagline": "Adivina el top 10 del campeonato de pilotos, sumando los puntos de un período de 1 a 4 temporadas.",
   "top10standings.eyebrow": "Campeonato de Pilotos",
   "top10standings.subtitle": "Top 10 acumulado de puntos del período",
-  "top10standings.search_placeholder": "Escribí un piloto…",
+  "top10standings.search_placeholder": "Escribe un piloto…",
   "top10standings.found_count": "{{found}} de {{total}} encontrados",
   "top10standings.not_in_top": "{{name}} no está en el top 10 acumulado.",
   "top10standings.points_label": "{{points}} pts",
@@ -375,9 +398,12 @@ const es: Translations = {
   "careerpath.eyebrow": "Trayectoria",
   "careerpath.hint": "Estas son las escuderias por las que paso el piloto, en orden. Adivina quien es.",
   "careerpath.attempt": "Intento {{current}} de {{max}}",
-  "careerpath.placeholder": "Escribi un piloto…",
+  "careerpath.placeholder": "Escribe un piloto…",
   "careerpath.found": "Lo encontraste:",
   "careerpath.answer_was": "El piloto era:",
+
+  "game.team-radio.name": "Team Radio",
+  "game.team-radio.tagline": "Lee una radio icónica de equipo de F1 y adivina en qué Gran Premio se dijo.",
 
   "lang.label": "Idioma",
 
@@ -388,37 +414,40 @@ const es: Translations = {
     "Términos y condiciones de uso de Box Daily Box, plataforma gratuita de minijuegos diarios de Fórmula 1.",
   "seo.privacy.title": "Política de Privacidad | Box Daily Box",
   "seo.contact.title": "Contacto | Box Daily Box",
-  "seo.contact.description": "¿Tenés un problema técnico o una idea para Box Daily Box? Escribinos.",
+  "seo.contact.description": "¿Tienes un problema técnico o una idea para Box Daily Box? Escríbenos.",
   "seo.privacy.description":
     "Cómo Box Daily Box trata tus datos personales: qué recopila, para qué, y tus derechos.",
-  "seo.home.title": "Box Daily Box — Minijuegos diarios de Fórmula 1 | 6 puzzles gratis",
+  "seo.home.title": "Box Daily Box — Minijuegos diarios de Fórmula 1 | 8 puzzles gratis",
   "seo.home.description":
-    "Seis minijuegos diarios de Fórmula 1: adiviná pilotos, completá el top 10, encontrá al intruso y más. Ranking global gratis, sin registro.",
-  "seo.game.pittexto.title": "PitTexto — Adiviná al piloto secreto de F1 | Box Daily Box",
+    "Ocho minijuegos diarios de Fórmula 1: adivina pilotos, completa el top 10, encuentra al intruso y más. Ranking global gratis, sin registro.",
+  "seo.game.pittexto.title": "PitTexto — Adivina al piloto secreto de F1 | Box Daily Box",
   "seo.game.pittexto.description":
-    "Adiviná el piloto de Fórmula 1 secreto del día. Cada intento te dice qué tan cerca estás. Nuevo reto cada 24 horas.",
+    "Adivina el piloto de Fórmula 1 secreto del día. Cada intento te dice qué tan cerca estás. Nuevo reto cada 24 horas.",
   "seo.game.polewordle.title": "PoleWordle — El Wordle de Fórmula 1 | Box Daily Box",
   "seo.game.polewordle.description":
-    "Adiviná el apellido del piloto de F1 del día, estilo Wordle, en 6 intentos. Puzzle diario gratis.",
-  "seo.game.el-intruso.title": "El Intruso — Encontrá al piloto que no encaja | Box Daily Box",
+    "Adivina el apellido del piloto de F1 del día, estilo Wordle, en 6 intentos. Puzzle diario gratis.",
+  "seo.game.el-intruso.title": "El Intruso — Encuentra al piloto que no encaja | Box Daily Box",
   "seo.game.el-intruso.description":
-    "Nueve de diez pilotos de F1 comparten algo en común. Encontrá al intruso en este puzzle diario de Fórmula 1.",
+    "Nueve de diez pilotos de F1 comparten algo en común. Encuentra al intruso en este puzzle diario de Fórmula 1.",
   "seo.game.parrilla-bingo.title": "Parrilla Bingo — Bingo de escuderías de F1 | Box Daily Box",
   "seo.game.parrilla-bingo.description":
-    "Completá cada casilla con un piloto que cumpla su escudería y su condición. El bingo diario de Fórmula 1.",
-  "seo.game.gp-resultado.title": "GP Resultado — Adiviná el top 10 de un Gran Premio | Box Daily Box",
+    "Completa cada casilla con un piloto que cumpla su escudería y su condición. El bingo diario de Fórmula 1.",
+  "seo.game.gp-resultado.title": "GP Resultado — Adivina el top 10 de un Gran Premio | Box Daily Box",
   "seo.game.gp-resultado.description":
-    "Completá el top 10 de un Gran Premio histórico de F1 antes de que se acabe el tiempo. Puzzle diario gratis.",
+    "Completa el top 10 de un Gran Premio histórico de F1 antes de que se acabe el tiempo. Puzzle diario gratis.",
   "seo.game.top10-standings.title": "Top 10 Standings — Campeonato acumulado de F1 | Box Daily Box",
   "seo.game.top10-standings.description":
-    "Adiviná el top 10 acumulado de puntos del campeonato de pilotos de F1 en un período de 1 a 4 años.",
-  "seo.game.career-path.title": "Career Path — Adiviná al piloto por su trayectoria | Box Daily Box",
+    "Adivina el top 10 acumulado de puntos del campeonato de pilotos de F1 en un período de 1 a 4 años.",
+  "seo.game.career-path.title": "Career Path — Adivina al piloto por su trayectoria | Box Daily Box",
   "seo.game.career-path.description":
-    "Mirá la cadena de escuderías por las que pasó un piloto de F1 y adiviná quién es. Puzzle diario gratis.",
+    "Mira la cadena de escuderías por las que pasó un piloto de F1 y adivina quién es. Puzzle diario gratis.",
+  "seo.game.team-radio.title": "Team Radio — Adivina el Gran Premio por la radio de equipo | Box Daily Box",
+  "seo.game.team-radio.description":
+    "Lee una radio icónica de equipo de F1 y adivina en qué Gran Premio se dijo, entre 6 opciones. Puzzle diario gratis.",
 
   // ─── GamePage (no encontrado) ─────────────────────────────────────────
   "gamepage.not_found_title": "Juego no encontrado",
-  "gamepage.not_found_body": "El reto que buscás no existe o cambió de dirección.",
+  "gamepage.not_found_body": "El reto que buscas no existe o cambió de dirección.",
   "gamepage.see_all": "Ver todos los retos",
 
   // ─── Country names (driver nationality flags) ─────────────────────────
@@ -475,12 +504,14 @@ const es: Translations = {
   "friends.sent_requests": "Enviadas, esperando respuesta",
   "friends.accept": "Aceptar",
   "friends.reject": "Rechazar",
-  "friends.no_friends": "Todavía no agregaste amigos. Compartí tu código para que te agreguen.",
-  "friends.anon_warning": "Sos anónimo: si borrás el navegador o cambiás de dispositivo, perdés esta lista. Iniciá sesión con Google para no perderla.",
-  "friends.need_to_play": "Jugá un reto primero para desbloquear Amigos.",
+  "friends.no_friends": "Todavía no agregaste amigos. Comparte tu código para que te agreguen.",
+  "friends.anon_warning": "Eres anónimo: si borras el navegador o cambias de dispositivo, pierdes esta lista. Inicia sesión con Google para no perderla.",
+  "friends.need_to_play": "Juega un reto primero para desbloquear Amigos.",
   "friends.request_sent": "Solicitud enviada",
   "friends.request_accepted": "¡Ahora son amigos!",
   "friends.remove": "Eliminar amigo",
+  "friends.online": "En linea",
+  "friends.offline": "Desconectado",
   "friends.remove_confirm": "¿Eliminar a este amigo?",
   "friends.list_empty_short": "Sin amigos todavía",
 
@@ -492,14 +523,14 @@ const es: Translations = {
   "duel.accept_or_reject_accept": "Aceptar",
   "duel.accept_or_reject_reject": "Rechazar",
   "duel.challenge_button": "Desafiar",
-  "duel.pick_game": "Elegí juego, dificultad y tiempo",
+  "duel.pick_game": "Elige juego, dificultad y tiempo",
   "duel.game_label": "Juego",
   "duel.challenging_friend": "Vas a desafiar a {{name}}",
   "duel.open_link": "Generar link abierto (para cualquiera)",
-  "duel.error_generic": "No se pudo crear el duelo. Probá de nuevo.",
+  "duel.error_generic": "No se pudo crear el duelo. Prueba de nuevo.",
   "duel.loading": "Cargando duelo…",
   "duel.not_found": "Este duelo no existe o ya no está disponible.",
-  "duel.error_start": "No se pudo cargar el duelo. Volvé a intentarlo desde el inicio.",
+  "duel.error_start": "No se pudo cargar el duelo. Vuelve a intentarlo desde el inicio.",
   "duel.waiting_opponent": "Esperando que acepte…",
   "duel.waiting_finish": "Esperando que tu rival termine…",
   "duel.cancel": "Cancelar",
@@ -507,13 +538,13 @@ const es: Translations = {
   "duel.leave_button": "Abandonar",
   "duel.leave_title": "¿Abandonar el duelo?",
   "duel.leave_msg":
-    "Si salís ahora, abandonás el duelo y tu rival gana. No hay vuelta atrás.",
+    "Si sales ahora, abandonas el duelo y tu rival gana. No hay vuelta atrás.",
   "duel.leave_confirm": "Sí, abandonar y perder",
   "duel.leave_cancel": "Seguir jugando",
   // Aceptar un duelo estando en una partida (reto diario o duelo en curso).
   "duel.accept_while_playing_title": "¿Aceptar el duelo?",
   "duel.accept_while_playing_msg":
-    "Estás en medio de una partida. Si aceptás este duelo, perdés tu partida actual y su intento. No hay vuelta atrás.",
+    "Estás en medio de una partida. Si aceptas este duelo, pierdes tu partida actual y su intento. No hay vuelta atrás.",
   "duel.accept_while_playing_confirm": "Sí, aceptar y perder mi partida",
   "duel.accept_while_playing_cancel": "Seguir jugando",
   "duel.cancelled_by_you": "Cancelaste el duelo.",
@@ -531,7 +562,7 @@ const es: Translations = {
   "duel.reason_you_forfeit": "Abandonaste el duelo.",
   "duel.rematch": "Revancha",
   "duel.rematch_sent": "Invitación de revancha enviada",
-  "duel.your_score": "Vos: {{points}} pts en {{seconds}}s",
+  "duel.your_score": "Tú: {{points}} pts en {{seconds}}s",
   "duel.opponent_score": "Rival: {{points}} pts en {{seconds}}s",
   "duel.go_home": "Volver al inicio",
   "duel.share_link": "Compartir link",

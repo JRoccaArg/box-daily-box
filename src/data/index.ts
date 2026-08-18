@@ -6,7 +6,7 @@ import type { Driver } from "@/types";
 import { DRIVERS, DRIVERS_BY_ID } from "./drivers";
 
 export { DRIVERS, DRIVERS_BY_ID, driver, DATA_AS_OF_SEASON } from "./drivers";
-export { TEAMS, team, teamName } from "./teams";
+export { TEAMS, team, teamName, BRAND_TEAM_IDS } from "./teams";
 export { NATIONALITIES, nationality, countryName } from "./nationalities";
 
 /** ¿El piloto estuvo activo en `year`? */

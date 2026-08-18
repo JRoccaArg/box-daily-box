@@ -46,6 +46,7 @@ const GAME_TIME_OPTIONS: Record<string, number[]> = {
   "gp-resultado": [90, 120, 150, 180],
   "top10-standings": [90, 120, 150, 180],
   "career-path": [60, 90],
+  "team-radio": [45, 60],
 };
 
 // Tiempo máximo por juego (para fallback de sesiones antiguas sin timeLimit guardado).
@@ -57,10 +58,29 @@ const TIME_LIMITS: Record<string, number> = {
   "gp-resultado": 180,
   "top10-standings": 180,
   "career-path": 90,
+  "team-radio": 60,
 };
 
-const VALID_GAMES = ["pittexto", "polewordle", "el-intruso", "parrilla-bingo", "gp-resultado", "top10-standings", "career-path"];
-const VALID_DIFFS = ["facil", "medio", "dificil", "leyenda"];
+const VALID_GAMES = ["pittexto", "polewordle", "el-intruso", "parrilla-bingo", "gp-resultado", "top10-standings", "career-path", "team-radio"];
+
+// Dificultades habilitadas por juego. Debe coincidir con `difficulties` en
+// src/components/games/registry.ts. Por defecto un juego habilita las 4;
+// "career-path" restringe "leyenda" porque su pool de pilotos jugables no se
+// diferencia del de "dificil" (mismas 42 escuderías con logo disponible),
+// así que pagaría más puntos por un juego idéntico.
+const GAME_DIFFICULTIES: Record<string, string[]> = {
+  "pittexto": ["facil", "medio", "dificil", "leyenda"],
+  "polewordle": ["facil", "medio", "dificil", "leyenda"],
+  "el-intruso": ["facil", "medio", "dificil", "leyenda"],
+  "parrilla-bingo": ["facil", "medio", "dificil", "leyenda"],
+  "gp-resultado": ["facil", "medio", "dificil", "leyenda"],
+  "top10-standings": ["facil", "medio", "dificil", "leyenda"],
+  "career-path": ["facil", "medio", "dificil"],
+  // "team-radio" no tiene "leyenda": usa rangos de año EXCLUSIVOS (no
+  // acumulativos), calibrados a cuánto material de radios existe por época
+  // (ver teamradio.logic.ts DIFFICULTY_RANGES).
+  "team-radio": ["facil", "medio", "dificil"],
+};
 
 // ─── Token firmado (HMAC-SHA256) ────────────────────────────────────
 
@@ -141,12 +161,12 @@ export async function startChallenge(
       return;
     }
 
-    if (!difficulty || !VALID_DIFFS.includes(difficulty)) {
-      reply.code(422).send({ error: "Dificultad inválida" });
-      return;
-    }
     if (!VALID_GAMES.includes(gameId)) {
       reply.code(422).send({ error: "Juego inválido" });
+      return;
+    }
+    if (!difficulty || !GAME_DIFFICULTIES[gameId]?.includes(difficulty)) {
+      reply.code(422).send({ error: "Dificultad inválida" });
       return;
     }
 
@@ -2199,7 +2219,7 @@ export async function createDuel(req: FastifyRequest, reply: FastifyReply): Prom
       reply.code(422).send({ error: "Juego inválido" });
       return;
     }
-    if (!difficulty || !VALID_DIFFS.includes(difficulty)) {
+    if (!difficulty || !GAME_DIFFICULTIES[gameId]?.includes(difficulty)) {
       reply.code(422).send({ error: "Dificultad inválida" });
       return;
     }
@@ -2563,11 +2583,42 @@ export async function getDuel(req: FastifyRequest, reply: FastifyReply): Promise
   }
 }
 
+/**
+ * Ventana durante la cual un usuario se considera "en línea" desde su último
+ * latido. 2 minutos = 2 ciclos del bump de 60s, así una pestaña de fondo
+ * (que el navegador ralentiza) o una red lenta no lo marcan como desconectado.
+ */
+const PRESENCE_WINDOW_SECONDS = 120;
+
+/**
+ * Marca al usuario como activo ("tiene la web abierta"). No agrega tráfico:
+ * se cuelga de getPendingDuels, el poll de 3s que DuelBanner ya corre en
+ * todas las páginas (Layout.tsx) con userId + identityToken autenticados.
+ *
+ * El UPDATE es CONDICIONAL a propósito: sin el WHERE, cada pestaña abierta
+ * escribiría 20 veces por minuto. Así escribe como mucho 1 vez por minuto
+ * por usuario, y el resto de los polls no tocan la tabla.
+ */
+async function touchLastSeen(userId: string): Promise<void> {
+  try {
+    await query(
+      `UPDATE users SET last_seen = now()
+       WHERE id = $1 AND (last_seen IS NULL OR last_seen < now() - interval '60 seconds')`,
+      [userId],
+    );
+  } catch (err) {
+    // La presencia es cosmética: si falla, el endpoint tiene que seguir
+    // devolviendo las invitaciones igual.
+    console.error("touchLastSeen error:", err);
+  }
+}
+
 /** GET /duels/pending — invitaciones pendientes dirigidas a mí (banner in-app). */
 export async function getPendingDuels(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     const { userId, identityToken } = req.query as { userId?: string; identityToken?: string };
     if (!requireOwnership(reply, identityToken, userId)) return;
+    await touchLastSeen(userId);
     await sweepExpiredDuels(userId);
     const res = await query(
       `SELECT d.id, d.game_id, d.difficulty, d.time_limit, d.expires_at,
@@ -2773,19 +2824,25 @@ export async function getFriends(req: FastifyRequest, reply: FastifyReply): Prom
   try {
     const { userId, identityToken } = req.query as { userId?: string; identityToken?: string };
     if (!requireOwnership(reply, identityToken, userId)) return;
+    // `online` se calcula en el SERVER y sale como booleano: el timestamp
+    // crudo de last_seen nunca se expone, así un amigo no puede deducir tus
+    // horarios de uso. Los conectados van primero porque un duelo caduca a
+    // los 60s: son los únicos a los que tiene sentido desafiar ahora.
     const res = await query(
       `SELECT (CASE WHEN f.user_a = $1 THEN f.user_b ELSE f.user_a END) AS friend_id,
-              u.display_name, u.country_code
+              u.display_name, u.country_code,
+              (u.last_seen IS NOT NULL AND u.last_seen > now() - ($2 * interval '1 second')) AS online
        FROM friendships f
        JOIN users u ON u.id = (CASE WHEN f.user_a = $1 THEN f.user_b ELSE f.user_a END)
        WHERE f.user_a = $1 OR f.user_b = $1
-       ORDER BY f.created_at DESC`,
-      [userId],
+       ORDER BY online DESC, f.created_at DESC`,
+      [userId, PRESENCE_WINDOW_SECONDS],
     );
     const friends = res.rows.map((r: any) => ({
       userId: r.friend_id,
       displayName: r.display_name,
       countryCode: r.country_code,
+      online: r.online === true,
     }));
     reply.code(200).send({ friends });
   } catch (err) {

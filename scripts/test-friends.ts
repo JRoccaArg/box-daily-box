@@ -138,6 +138,7 @@ const q = (sql: string, params?: unknown[]) => db.query(sql, params as any[]);
 async function setupSchema() {
   await q(`CREATE TABLE users (
     id TEXT PRIMARY KEY, display_name TEXT, country_code TEXT, friend_code TEXT,
+    last_seen TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT now()
   );`);
   await q(`CREATE UNIQUE INDEX idx_users_friend_code ON users (friend_code) WHERE friend_code IS NOT NULL;`);
@@ -259,6 +260,98 @@ async function partB() {
   await q("DELETE FROM friendships WHERE user_a = $1 AND user_b = $2", [ra, rb]);
   const afterRemove = await q("SELECT 1 FROM friendships WHERE user_a = $1 AND user_b = $2", [ra, rb]);
   assert(afterRemove.rows.length === 0, "removeFriend borra la friendship");
+
+  await presencia(C);
+}
+
+/**
+ * Presencia online/offline: réplica del SQL de `touchLastSeen` y del SELECT
+ * de `getFriends` (src/api/routes.ts). Verifica las dos propiedades que
+ * hacen que la feature no sea ni cara ni mentirosa:
+ *  - el latido escribe como mucho 1 vez por minuto por usuario (si no, cada
+ *    pestaña abierta escribiría 20 veces por minuto: el poll es cada 3s);
+ *  - la ventana de 2 minutos decide bien quién aparece conectado, y los
+ *    conectados salen primero.
+ */
+async function presencia(C: string) {
+  console.log("\n[Presencia online/offline]");
+  const WINDOW = 120; // PRESENCE_WINDOW_SECONDS en routes.ts
+
+  const touch = (uid: string) =>
+    q(
+      `UPDATE users SET last_seen = now()
+       WHERE id = $1 AND (last_seen IS NULL OR last_seen < now() - interval '60 seconds')`,
+      [uid],
+    );
+
+  const listFriends = (uid: string) =>
+    q(
+      `SELECT (CASE WHEN f.user_a = $1 THEN f.user_b ELSE f.user_a END) AS friend_id,
+              u.display_name, u.country_code,
+              (u.last_seen IS NOT NULL AND u.last_seen > now() - ($2 * interval '1 second')) AS online
+       FROM friendships f
+       JOIN users u ON u.id = (CASE WHEN f.user_a = $1 THEN f.user_b ELSE f.user_a END)
+       WHERE f.user_a = $1 OR f.user_b = $1
+       ORDER BY online DESC, f.created_at DESC`,
+      [uid, WINDOW],
+    );
+
+  // Estado inicial: nadie tuvo la web abierta nunca.
+  await q("UPDATE users SET last_seen = NULL");
+  await q("DELETE FROM friendships");
+
+  // Primer latido: escribe (last_seen era NULL).
+  await touch(A);
+  const first = await q("SELECT last_seen FROM users WHERE id = $1", [A]);
+  assert(first.rows[0].last_seen !== null, "el primer latido escribe last_seen");
+  const t1 = new Date(first.rows[0].last_seen).getTime();
+
+  // Segundo latido inmediato: NO debe escribir (bump condicional).
+  await touch(A);
+  const second = await q("SELECT last_seen FROM users WHERE id = $1", [A]);
+  const t2 = new Date(second.rows[0].last_seen).getTime();
+  assert(t1 === t2, "un segundo latido dentro del minuto NO reescribe (evita 20 writes/min por pestaña)");
+
+  // Pasado el minuto sí se refresca.
+  await q("UPDATE users SET last_seen = now() - interval '90 seconds' WHERE id = $1", [A]);
+  await touch(A);
+  const third = await q("SELECT last_seen FROM users WHERE id = $1", [A]);
+  const t3 = new Date(third.rows[0].last_seen).getTime();
+  assert(t3 > t2, "pasado el minuto, el latido sí refresca last_seen");
+
+  // Ventana de presencia: A recién visto, B hace 5 min, C nunca.
+  const [pa, pb] = orderedPair(A, B);
+  const [qa, qb] = orderedPair(A, C);
+  await q("INSERT INTO friendships (user_a, user_b) VALUES ($1, $2)", [pa, pb]);
+  await q("INSERT INTO friendships (user_a, user_b) VALUES ($1, $2)", [qa, qb]);
+  await q("UPDATE users SET last_seen = now() - interval '5 minutes' WHERE id = $1", [B]);
+  await q("UPDATE users SET last_seen = NULL WHERE id = $1", [C]);
+
+  let rows = (await listFriends(A)).rows as { friend_id: string; online: boolean }[];
+  assert(rows.length === 2, "A ve a sus 2 amigos");
+  assert(rows.find((r) => r.friend_id === B)?.online === false, "visto hace 5 min → desconectado");
+  assert(rows.find((r) => r.friend_id === C)?.online === false, "nunca abrió la web → desconectado");
+
+  // B abre la web: pasa a conectado Y sube al tope de la lista.
+  await touch(B);
+  rows = (await listFriends(A)).rows as { friend_id: string; online: boolean }[];
+  assert(rows.find((r) => r.friend_id === B)?.online === true, "tras el latido → conectado");
+  assert(rows[0]?.friend_id === B, "los conectados aparecen primero en la lista");
+
+  // Justo en el borde de la ventana sigue contando como conectado.
+  await q("UPDATE users SET last_seen = now() - interval '119 seconds' WHERE id = $1", [B]);
+  rows = (await listFriends(A)).rows as { friend_id: string; online: boolean }[];
+  assert(rows.find((r) => r.friend_id === B)?.online === true, "a 119s (dentro de la ventana de 2 min) sigue conectado");
+
+  await q("UPDATE users SET last_seen = now() - interval '121 seconds' WHERE id = $1", [B]);
+  rows = (await listFriends(A)).rows as { friend_id: string; online: boolean }[];
+  assert(rows.find((r) => r.friend_id === B)?.online === false, "a 121s (fuera de la ventana) pasa a desconectado");
+
+  // El timestamp crudo NUNCA sale del server: el SELECT solo expone el booleano.
+  assert(
+    !Object.keys(rows[0] ?? {}).includes("last_seen"),
+    "getFriends no expone last_seen crudo (solo el booleano `online`)",
+  );
 }
 
 (async () => {

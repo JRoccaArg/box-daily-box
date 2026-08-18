@@ -38,7 +38,6 @@ const zh: Translations = {
   "shell.time_limit": "时间限制：{{seconds}}秒",
   "shell.no_time_limit": "无时间限制",
   "shell.untimed": "无计时",
-  "shell.untimed_hint": "固定低分，没有计时器",
   "shell.fails_left": "剩余 {{count}}/{{total}} 次尝试",
   "shell.start": "开始",
   "shell.surrender": "放弃",
@@ -93,6 +92,12 @@ const zh: Translations = {
   "footer.line2": "每天午夜更新新挑战。",
   "footer.info": "游戏玩法",
   "footer.contact": "联系我们",
+  "footer.support": "支持本项目",
+  "support.title": "支持本项目",
+  "support.body": "Box Daily Box 现在免费，以后也将一直免费。如果你喜欢，可以自愿捐助——这不会给你在游戏中带来任何优势，只是支持项目的一种方式。",
+  "support.disclaimer": "不提供专属内容、额外尝试次数或优先排名。",
+  "support.cafecito": "Cafecito（阿根廷）",
+  "support.kofi": "Ko-fi（国际）",
 
   "profile.title": "你的资料",
   "profile.subtitle": "你将以此名字和国家出现在全球排名中。",
@@ -208,7 +213,12 @@ const zh: Translations = {
   "intruso.rule.team": "曾为{{team}}车队效力",
   "intruso.rule.champ": "曾是世界冠军",
   "intruso.rule.non_champ": "从未获得过世界冠军",
-  "intruso.rule.nationality": "国籍相同（{{nat}}）",
+  "intruso.rule.winner": "至少赢得过一场大奖赛",
+  "intruso.rule.non_winner": "从未赢得过大奖赛",
+  "intruso.rule.poleman": "至少获得过一次杆位",
+  "intruso.rule.non_poleman": "从未获得过杆位",
+  "intruso.rule.podium": "至少登上过一次领奖台",
+  "intruso.rule.non_podium": "从未登上过领奖台",
   "intruso.rule.none": "没有可用规则",
 
   "bingo.pick_driver": "选择车手",
@@ -271,8 +281,8 @@ const zh: Translations = {
   "careerpath.found": "你找到了：",
   "careerpath.answer_was": "车手是：",
 
-  "seo.home.title": "Box Daily Box — 每日F1迷你游戏 | 6个免费谜题",
-  "seo.home.description": "六款每日F1迷你游戏：猜车手、完成前10名、找出内鬼等等。免费全球排名，无需注册。",
+  "seo.home.title": "Box Daily Box — 每日F1迷你游戏 | 8个免费谜题",
+  "seo.home.description": "八款每日F1迷你游戏：猜车手、完成前10名、找出内鬼等等。免费全球排名，无需注册。",
   "seo.contact.title": "联系我们 | Box Daily Box",
   "seo.contact.description": "Box Daily Box 有技术问题或新想法？联系我们。",
   "seo.game.career-path.title": "Career Path — 通过车队履历猜车手 | Box Daily Box",
@@ -293,7 +303,7 @@ const zh: Translations = {
   "seo.game.top10-standings.description": "猜出1至4年内F1车手积分榜累计的前10名。",
 
   "gamepage.not_found_title": "未找到游戏",
-  "gamepage.not_found_body": "您要找的挑战不存在或已更改地址。",
+  "gamepage.not_found_body": "你要找的挑战不存在或已更改地址。",
   "gamepage.see_all": "查看所有挑战",
 
   // ─── Country names (driver nationality flags) ─────────────────────────
@@ -346,13 +356,13 @@ const zh: Translations = {
   "badge.more": "+{{count}}",
   "badge.gallery_title": "我的徽章",
   "badge.gallery_empty":
-    "您还没有获得任何徽章。在月度排名中排名前3!",
+    "你还没有获得任何徽章。在月度排名中排名前3!",
   "badge.gallery_hint": "点击徽章以在排名中显示(最多3个)。",
   "badge.featured_count": "{{count}}/3 已显示",
   "badge.won_months": "获得于: {{months}}",
   "badge.show_grouped": "分组(×{{count}})",
   "badge.show_individual": "单个",
-  "badge.max_reached": "您已选择最多3个徽章显示",
+  "badge.max_reached": "你已选择最多3个徽章显示",
   "badge.save": "保存选择",
   "badge.saving": "保存中...",
   "badge.save_error": "无法保存。请重试。",
@@ -383,6 +393,8 @@ const zh: Translations = {
   "friends.request_sent": "请求已发送",
   "friends.request_accepted": "你们现在是朋友了！",
   "friends.remove": "删除朋友",
+  "friends.online": "在线",
+  "friends.offline": "离线",
   "friends.remove_confirm": "删除这位朋友？",
   "friends.list_empty_short": "还没有朋友",
 
@@ -418,6 +430,60 @@ const zh: Translations = {
   "duel.go_home": "返回首页",
   "duel.share_link": "分享链接",
   "duel.link_copied": "链接已复制到剪贴板",
+
+  "settings.trigger_label": "声音和振动",
+  "settings.sound": "声音",
+  "settings.haptics": "振动",
+  "settings.on": "开",
+  "settings.off": "关",
+
+  "footer.terms": "条款和条件",
+  "footer.privacy": "隐私政策",
+  "legal.updated": "最后更新：{{date}}",
+
+  "ranking.streak_title": "连胜 {{count}} 天",
+
+  "monthly.daily_title": "按天",
+  "monthly.weekly_title": "按周",
+  "monthly.week_tooltip": "第 {{n}} 周：{{points}} 分",
+  "monthly.by_difficulty": "按难度",
+  "monthly.by_game": "按游戏",
+
+  "seo.terms.title": "条款和条件 | Box Daily Box",
+  "seo.terms.description": "Box Daily Box 使用条款和条件，一个免费的F1一级方程式每日小游戏平台。",
+  "seo.privacy.title": "隐私政策 | Box Daily Box",
+  "seo.privacy.description": "Box Daily Box 如何处理您的个人数据：收集什么、为什么收集，以及您的权利。",
+
+  "friends.need_to_play": "先玩一个挑战才能解锁好友功能。",
+
+  "duel.error_start": "无法加载对决。请从首页重试。",
+  "duel.leave_button": "退出",
+  "duel.leave_title": "退出对决？",
+  "duel.leave_msg": "如果现在退出，你将放弃这场对决，对手获胜。此操作无法撤销。",
+  "duel.leave_confirm": "是的，退出并认输",
+  "duel.leave_cancel": "继续游戏",
+  "duel.accept_while_playing_title": "接受对决？",
+  "duel.accept_while_playing_msg": "你正在进行一局游戏。如果接受这场对决，你将失去当前的游戏和这次尝试。此操作无法撤销。",
+  "duel.accept_while_playing_confirm": "是的，接受并放弃当前游戏",
+  "duel.accept_while_playing_cancel": "继续游戏",
+  "duel.reason_nobody_played": "双方都未在规定时间内完成挑战。",
+  "duel.reason_opponent_absent": "对手从未参与游戏。",
+  "duel.reason_you_absent": "你从未参与游戏。",
+  "duel.reason_opponent_forfeit": "对手退出了对决。",
+  "duel.reason_you_forfeit": "你退出了对决。",
+
+  "teamradio.eyebrow": "Team Radio",
+  "teamradio.hint": "这是一条真实的车队无线电通讯。猜猜这是在哪场大奖赛上说的。",
+  "teamradio.said_by": "在{{driver}}的车队无线电中说出",
+  "teamradio.select": "选择一场大奖赛",
+  "teamradio.confirm": "确认",
+  "teamradio.answer_was": "正确答案是：",
+  "teamradio.correct": "正确",
+  "game.team-radio.name": "Team Radio",
+  "game.team-radio.tagline": "阅读一段经典的F1车队无线电通讯，猜猜这是在哪场大奖赛上说的。",
+  "seo.game.team-radio.title": "Team Radio — 通过车队无线电猜大奖赛 | Box Daily Box",
+  "seo.game.team-radio.description":
+    "阅读一段经典的F1车队无线电通讯，从6个选项中猜出这是在哪场大奖赛上说的。每日免费解谜游戏。",
 };
 
 export default zh;

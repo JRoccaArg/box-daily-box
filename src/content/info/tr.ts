@@ -4,9 +4,10 @@ import type { InfoContent } from "./types";
 const content: InfoContent = {
   title: "Nasıl oynanır",
   subtitle:
-    "Box Daily Box'ta altı günlük Formula 1 mini oyunu var. Her biri günde bir kez, gece yarısı yenilenen bir meydan okumayla oynanır. Burada her oyunun kurallarını, puanların nasıl hesaplandığını, sıralamanın nasıl çalıştığını ve platformun diğer özelliklerini anlatıyoruz.",
+    "Box Daily Box'ta sekiz günlük Formula 1 mini oyunu var. Her biri günde bir kez, gece yarısı yenilenen bir meydan okumayla oynanır. Burada her oyunun kurallarını, puanların nasıl hesaplandığını, sıralamanın nasıl çalıştığını ve platformun diğer özelliklerini anlatıyoruz.",
+  dataAsOfNote: "Oyunlarda kullanılan pilot, takım ve sonuç verileri 2025 sezonuna kadar günceldir.",
 
-  gamesHeading: "6 oyun",
+  gamesHeading: "8 oyun",
   gamesIntro:
     "Tüm oyunlar gerçek Formula 1 verilerini kullanır: pilotlar, takımlar, uyruklar ve tarihi sonuçlar. Günün meydan okuması dünyadaki tüm oyuncular için aynıdır.",
   gameDetail: {
@@ -22,6 +23,10 @@ const content: InfoContent = {
       "Sana tarihi bir Grand Prix gösterilir ve o yarışın ilk 10'unu tamamlaman gerekir: hangi pilotun hangi sırada bitirdiği. Pilotlar arasında daha hızlı arama yapmak için otomatik tamamlama vardır.",
     "top10-standings":
       "Öncekine benzer, ancak tek bir yarış yerine bir sezonun (1 ila 4 yıllık bir dönemden rastgele seçilen) birikimli pilot şampiyonasıyla ilgilidir. İpuçları, her pilotun uyruğu ve o yıl topladığı puanlardır.",
+    "career-path":
+      "Bir Formula 1 pilotunun kronolojik sırayla yarıştığı takımların zinciri, her takımın logosuyla gösterilir. İsmini yazarak pilotun kim olduğunu tahmin etmen gerekir; daha hızlı arama için otomatik tamamlama vardır. En fazla 3 deneme hakkın var.",
+    "team-radio":
+      "Sana ikonik bir Formula 1 takım telsiz mesajının gerçek metni, onu söyleyen pilotla birlikte gösterilir. 6 seçenek arasından hangi Grand Prix'te söylendiğini tahmin etmen gerekir. Yanlış seçenekler aynı yılın ya da yakın yıllarda aynı pistin yarışlarıdır, bu yüzden sadece tahmin etmek yetmez: bağlamı iyi bilmen gerekir.",
   },
 
   difficultyHeading: "Zorluk seviyeleri",
@@ -62,7 +67,7 @@ const content: InfoContent = {
     },
     {
       q: "Her meydan okumayı günde kaç kez oynayabilirim?",
-      a: "Oyun başına günde bir kez. Gece yarısı, 6 oyunun her biri için yeni bir meydan okuma oluşturulur. Arkadaşlarla düellolar istisnadır: günlük meydan okuma olmadıkları için istediğin kadar oynayabilirsin.",
+      a: "Oyun başına günde bir kez. Gece yarısı, 8 oyunun her biri için yeni bir meydan okuma oluşturulur. Arkadaşlarla düellolar istisnadır: günlük meydan okuma olmadıkları için istediğin kadar oynayabilirsin.",
     },
     {
       q: "Puan nasıl hesaplanır?",

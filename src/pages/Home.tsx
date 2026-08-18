@@ -10,6 +10,7 @@ import { Seo } from "@/components/layout/Seo";
 import { gamePath } from "@/lib/routes";
 import { SITE_URL } from "@/lib/seo";
 import { useMounted } from "@/lib/useMounted";
+import { CAFECITO_URL, KOFI_URL } from "@/lib/support";
 
 /** Pagina principal: lista de los retos del dia con su estado. */
 export function Home() {
@@ -50,7 +51,38 @@ export function Home() {
           <GameCard key={game.id} game={game} result={result} />
         ))}
       </div>
+
+      <SupportCard />
     </div>
+  );
+}
+
+/**
+ * Apoyo voluntario (Términos §7). Discreta a propósito: no es un feature del
+ * juego, es un link de salida hacia un tercero. Cafecito para Argentina,
+ * Ko-fi para el resto (URLs en src/lib/support.ts).
+ */
+function SupportCard() {
+  const { t } = useI18n();
+  const linkClass =
+    "inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-white/15 " +
+    "bg-transparent px-5 text-[15px] font-medium tracking-tight text-ink transition-colors " +
+    "hover:border-white/30 hover:bg-white/5";
+
+  return (
+    <Panel className="text-center">
+      <p className="font-display text-base font-bold text-white">{t("support.title")}</p>
+      <p className="mx-auto mt-1.5 max-w-prose text-sm text-ink-muted">{t("support.body")}</p>
+      <div className="mt-4 flex flex-col gap-2.5 sm:flex-row">
+        <a href={CAFECITO_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>
+          {t("support.cafecito")}
+        </a>
+        <a href={KOFI_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>
+          {t("support.kofi")}
+        </a>
+      </div>
+      <p className="mt-3 text-xs text-ink-faint">{t("support.disclaimer")}</p>
+    </Panel>
   );
 }
 

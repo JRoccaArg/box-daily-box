@@ -45,7 +45,6 @@ const en: Translations = {
   "shell.time_limit": "Time limit: {{seconds}} seconds",
   "shell.no_time_limit": "No time limit",
   "shell.untimed": "Untimed",
-  "shell.untimed_hint": "Low fixed score, no clock",
   "shell.fails_left": "{{count}} of {{total}} attempts left",
   "shell.start": "Start",
   "shell.surrender": "Give up",
@@ -113,6 +112,12 @@ const en: Translations = {
   "footer.terms": "Terms and Conditions",
   "footer.privacy": "Privacy Policy",
   "footer.contact": "Contact",
+  "footer.support": "Support the project",
+  "support.title": "Support the project",
+  "support.body": "Box Daily Box is and will remain free. If you enjoy it, you can leave a voluntary contribution — it doesn't give any advantage inside the game, it's just a way to help fund the project.",
+  "support.disclaimer": "It does not grant access to exclusive content, extra attempts, or preferential ranking.",
+  "support.cafecito": "Cafecito (Argentina)",
+  "support.kofi": "Ko-fi (international)",
 
   // ─── Legal pages ────────────────────────────────────────────────────
   "legal.updated": "Last updated: {{date}}",
@@ -262,6 +267,14 @@ const en: Translations = {
   "intruso.confirm": "Confirm intruder",
   "intruso.select": "Select a driver",
 
+  "teamradio.eyebrow": "Team Radio",
+  "teamradio.hint": "This is a real team radio message. Guess which Grand Prix it was said at.",
+  "teamradio.said_by": "Said on {{driver}}'s radio",
+  "teamradio.select": "Select a Grand Prix",
+  "teamradio.confirm": "Confirm",
+  "teamradio.answer_was": "It was:",
+  "teamradio.correct": "Correct",
+
   "bingo.pick_driver": "Pick a driver",
   "bingo.drove_for": "drove for {{team}}",
   "bingo.nationality": "nationality {{name}}",
@@ -314,7 +327,12 @@ const en: Translations = {
   "intruso.rule.team": "Drove for {{team}}",
   "intruso.rule.champ": "Were world champions",
   "intruso.rule.non_champ": "Were never world champions",
-  "intruso.rule.nationality": "Are the same nationality ({{nat}})",
+  "intruso.rule.winner": "Won at least one Grand Prix",
+  "intruso.rule.non_winner": "Never won a Grand Prix",
+  "intruso.rule.poleman": "Took at least one pole position",
+  "intruso.rule.non_poleman": "Never took a pole position",
+  "intruso.rule.podium": "Finished on the podium at least once",
+  "intruso.rule.non_podium": "Never finished on the podium",
   "intruso.rule.none": "No rule available",
 
   // ─── ParrillaBingo extra ──────────────────────────────────────────────
@@ -364,6 +382,9 @@ const en: Translations = {
   "careerpath.found": "You found them:",
   "careerpath.answer_was": "The driver was:",
 
+  "game.team-radio.name": "Team Radio",
+  "game.team-radio.tagline": "Read an iconic F1 team radio and guess which Grand Prix it was said at.",
+
   "lang.label": "Language",
 
   // ─── SEO (title/description per page) ─────────────────────────────────
@@ -376,9 +397,9 @@ const en: Translations = {
   "seo.contact.description": "Have a technical issue or an idea for Box Daily Box? Get in touch.",
   "seo.privacy.description":
     "How Box Daily Box handles your personal data: what it collects, why, and your rights.",
-  "seo.home.title": "Box Daily Box — Daily Formula 1 Minigames | 6 Free Puzzles",
+  "seo.home.title": "Box Daily Box — Daily Formula 1 Minigames | 8 Free Puzzles",
   "seo.home.description":
-    "Six daily Formula 1 minigames: guess drivers, complete the top 10, find the odd one out, and more. Free global ranking, no sign-up.",
+    "Eight daily Formula 1 minigames: guess drivers, complete the top 10, find the odd one out, and more. Free global ranking, no sign-up.",
   "seo.game.pittexto.title": "PitTexto — Guess the Secret F1 Driver | Box Daily Box",
   "seo.game.pittexto.description":
     "Guess today's secret Formula 1 driver. Each guess tells you how close you are. A new challenge every 24 hours.",
@@ -400,6 +421,9 @@ const en: Translations = {
   "seo.game.career-path.title": "Career Path — Guess the F1 driver by their team history | Box Daily Box",
   "seo.game.career-path.description":
     "Look at the chain of F1 teams a driver raced for and guess who it is. Free daily puzzle.",
+  "seo.game.team-radio.title": "Team Radio — Guess the Grand Prix from the team radio | Box Daily Box",
+  "seo.game.team-radio.description":
+    "Read an iconic F1 team radio message and guess which Grand Prix it was said at, out of 6 options. Free daily puzzle.",
 
   // ─── GamePage (not found) ──────────────────────────────────────────────
   "gamepage.not_found_title": "Game not found",
@@ -466,6 +490,8 @@ const en: Translations = {
   "friends.request_sent": "Request sent",
   "friends.request_accepted": "You're now friends!",
   "friends.remove": "Remove friend",
+  "friends.online": "Online",
+  "friends.offline": "Offline",
   "friends.remove_confirm": "Remove this friend?",
   "friends.list_empty_short": "No friends yet",
 

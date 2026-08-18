@@ -4,9 +4,10 @@ import type { InfoContent } from "./types";
 const content: InfoContent = {
   title: "Kako igrati",
   subtitle:
-    "Box Daily Box ponuja šest dnevnih mini iger o Formuli 1. Vsaka se igra enkrat na dan, z novim izzivom ob polnoči. Tu razložimo pravila vsake igre, kako se izračuna rezultat, kako deluje lestvica in druge funkcije platforme.",
+    "Box Daily Box ponuja osem dnevnih mini iger o Formuli 1. Vsaka se igra enkrat na dan, z novim izzivom ob polnoči. Tu razložimo pravila vsake igre, kako se izračuna rezultat, kako deluje lestvica in druge funkcije platforme.",
+  dataAsOfNote: "Podatki o dirkačih, ekipah in rezultatih, uporabljeni v igrah, segajo do sezone 2025.",
 
-  gamesHeading: "6 iger",
+  gamesHeading: "8 iger",
   gamesIntro:
     "Vse igre uporabljajo resnične podatke Formule 1: dirkače, ekipe, narodnosti in zgodovinske rezultate. Dnevni izziv je enak za vse igralce po svetu.",
   gameDetail: {
@@ -22,6 +23,10 @@ const content: InfoContent = {
       "Prikazana ti je zgodovinska Velika nagrada in dopolniti moraš prvih 10 te dirke: kateri dirkač je končal na kateri poziciji. Na voljo je samodejno dopolnjevanje za hitrejše iskanje med dirkači.",
     "top10-standings":
       "Podobno kot prejšnja igra, vendar s seštevkom dirkaške razpredelnice sezone (naključno izbrane iz obdobja 1 do 4 let), ne posamezne dirke. Namigi so narodnost vsakega dirkača in točke, ki jih je zbral tisto leto.",
+    "career-path":
+      "Prikazana ti je veriga ekip, za katere je dirkač Formule 1 dirkal, v kronološkem vrstnem redu, prikazana z logotipom vsake ekipe. Ugotoviti moraš, kdo je dirkač, tako da natipkaš njegovo ime, s samodejnim dopolnjevanjem za hitrejše iskanje. Na voljo imaš do 3 poskuse.",
+    "team-radio":
+      "Prikazano ti je pravo besedilo znamenitega sporočila ekipne radijske zveze Formule 1, skupaj z dirkačem, ki ga je izrekel. Uganiti moraš, na kateri Veliki nagradi je bilo izrečeno, tako da izbereš med 6 možnostmi. Napačne možnosti so dirke istega leta ali istega dirkališča v bližnjih letih, zato zgolj ugibanje ne zadostuje — poznati moraš dobro ozadje.",
   },
 
   difficultyHeading: "Stopnje težavnosti",
@@ -62,7 +67,7 @@ const content: InfoContent = {
     },
     {
       q: "Kolikokrat na dan lahko igram vsak izziv?",
-      a: "Enkrat na dan na igro. Ob polnoči se za vsako od 6 iger ustvari nov izziv. Dvoboji s prijatelji so izjema: igraš jih lahko kolikorkrat želiš, saj niso dnevni izziv.",
+      a: "Enkrat na dan na igro. Ob polnoči se za vsako od 8 iger ustvari nov izziv. Dvoboji s prijatelji so izjema: igraš jih lahko kolikorkrat želiš, saj niso dnevni izziv.",
     },
     {
       q: "Kako se izračuna rezultat?",

@@ -20,7 +20,7 @@ const ru: Translations = {
   "home.num.6": "Шесть", "home.num.7": "Семь", "home.num.8": "Восемь",
 
   "game.pittexto.name": "Пит Текст",
-  "game.pittexto.tagline": "Угадай секретного гонщика. Каждая попытка показывает, насколько ты близко.",
+  "game.pittexto.tagline": "Угадайте секретного гонщика. Каждая попытка показывает, насколько вы близки.",
   "game.polewordle.name": "PoleWordle",
   "game.polewordle.tagline": "Угадай фамилию гонщика в стиле Wordle за 6 попыток.",
   "game.el-intruso.name": "Чужак",
@@ -34,7 +34,6 @@ const ru: Translations = {
   "shell.time_limit": "Лимит времени: {{seconds}} секунд",
   "shell.no_time_limit": "Без ограничения по времени",
   "shell.untimed": "Без времени",
-  "shell.untimed_hint": "Мало фиксированных очков, без таймера",
   "shell.fails_left": "Осталось {{count}} из {{total}} попыток",
   "shell.start": "Начать",
   "shell.surrender": "Сдаться",
@@ -55,14 +54,14 @@ const ru: Translations = {
   "result.won_sub": "Ты добавил это испытание к своей серии.",
   "result.lost_sub": "Посмотри правильные ответы на доске.",
   "result.points": "очков",
-  "result.not_ranked": "Сегодня другой игрок уже прошёл это испытание с твоего подключения, поэтому твой результат не учитывается в глобальном рейтинге. Он всё равно сохранён в истории.",
+  "result.not_ranked": "Сегодня другой игрок уже прошёл это испытание с вашего подключения, поэтому ваш результат не учитывается в глобальном рейтинге. Он всё равно сохранён в истории.",
   "result.view_board": "Посмотреть доску",
   "result.view_ranking": "Рейтинг дня",
   "result.go_home": "На главную",
   "result.come_back": "Возвращайся завтра за новым испытанием",
 
   "leave.title": "Выйти и потерять испытание?",
-  "leave.msg": "Если выйдешь сейчас, это испытание засчитается как проигрыш, и ты не сможешь сыграть до завтра. Серия прервётся.",
+  "leave.msg": "Если выйти сейчас, это испытание засчитается как проигрыш, и сыграть до завтра будет нельзя. Серия прервётся.",
   "leave.confirm": "Да, выйти и проиграть",
   "leave.cancel": "Продолжить игру",
 
@@ -80,6 +79,12 @@ const ru: Translations = {
   "footer.line2": "Новое испытание каждый день в полночь.",
   "footer.info": "Как играть",
   "footer.contact": "Контакты",
+  "footer.support": "Поддержать проект",
+  "support.title": "Поддержать проект",
+  "support.body": "Box Daily Box был и остаётся бесплатным. Если вам нравится проект, вы можете оставить добровольный взнос — он не даёт никаких преимуществ в игре, это просто способ поддержать проект.",
+  "support.disclaimer": "Не даёт доступа к эксклюзивному контенту, дополнительным попыткам или приоритету в рейтинге.",
+  "support.cafecito": "Cafecito (Аргентина)",
+  "support.kofi": "Ko-fi (международный)",
 
   "profile.title": "Твой профиль",
   "profile.subtitle": "Ты появишься в глобальном рейтинге с этим именем и страной.",
@@ -108,7 +113,7 @@ const ru: Translations = {
   "ranking.error": "Не удалось загрузить рейтинг", "ranking.retry": "Повторить",
   "ranking.empty_daily": "Сегодня ещё никто не играл. Будь первым!",
   "ranking.empty_monthly": "Нет результатов за этот месяц.",
-  "ranking.anonymous": "Аноним", "ranking.you": "(ты)",
+  "ranking.anonymous": "Аноним", "ranking.you": "(вы)",
   "ranking.challenges_won": "{{count}} {{label}} выиграно",
   "ranking.challenge_singular": "испытание", "ranking.challenge_plural": "испытаний",
   "ranking.pts": "очк.",
@@ -164,7 +169,12 @@ const ru: Translations = {
   "intruso.rule.team": "Выступали за {{team}}",
   "intruso.rule.champ": "Были чемпионами мира",
   "intruso.rule.non_champ": "Никогда не были чемпионами мира",
-  "intruso.rule.nationality": "Одной национальности ({{nat}})",
+  "intruso.rule.winner": "Выиграли хотя бы один Гран-при",
+  "intruso.rule.non_winner": "Никогда не выигрывали Гран-при",
+  "intruso.rule.poleman": "Завоевали хотя бы один поул",
+  "intruso.rule.non_poleman": "Никогда не завоёвывали поул",
+  "intruso.rule.podium": "Хотя бы раз поднимались на подиум",
+  "intruso.rule.non_podium": "Никогда не поднимались на подиум",
   "intruso.rule.none": "Правило недоступно",
 
   "bingo.pick_driver": "Выбрать гонщика", "bingo.drove_for": "выступал за {{team}}",
@@ -221,9 +231,9 @@ const ru: Translations = {
   "careerpath.found": "Найден:",
   "careerpath.answer_was": "Это был:",
 
-  "seo.home.title": "Box Daily Box — Ежедневные мини-игры Формулы 1 | 6 бесплатных головоломок",
+  "seo.home.title": "Box Daily Box — Ежедневные мини-игры Формулы 1 | 8 бесплатных головоломок",
   "seo.home.description":
-    "Шесть ежедневных мини-игр Формулы 1: угадывай пилотов, заполняй топ-10, находи лишнего и многое другое. Бесплатный мировой рейтинг, без регистрации.",
+    "Восемь ежедневных мини-игр Формулы 1: угадывай пилотов, заполняй топ-10, находи лишнего и многое другое. Бесплатный мировой рейтинг, без регистрации.",
   "seo.contact.title": "Контакты | Box Daily Box",
   "seo.contact.description": "Есть техническая проблема или идея для Box Daily Box? Свяжитесь с нами.",
   "seo.game.career-path.title": "Career Path — Угадай гонщика по его карьере | Box Daily Box",
@@ -233,7 +243,7 @@ const ru: Translations = {
   "contact.intro": "Нашли проблему, есть идея для новой игры или другой вопрос? Напишите нам:",
   "seo.game.pittexto.title": "PitTexto — Угадай секретного пилота F1 | Box Daily Box",
   "seo.game.pittexto.description":
-    "Угадай секретного пилота Формулы 1 сегодняшнего дня. Каждая попытка показывает, насколько ты близок. Новый вызов каждые 24 часа.",
+    "Угадайте секретного пилота Формулы 1 сегодняшнего дня. Каждая попытка показывает, насколько вы близки. Новый вызов каждые 24 часа.",
   "seo.game.polewordle.title": "PoleWordle — Wordle Формулы 1 | Box Daily Box",
   "seo.game.polewordle.description":
     "Угадай фамилию пилота F1 сегодняшнего дня в стиле Wordle за 6 попыток. Новая бесплатная ежедневная головоломка.",
@@ -341,6 +351,8 @@ const ru: Translations = {
   "friends.request_sent": "Запрос отправлен",
   "friends.request_accepted": "Вы теперь друзья!",
   "friends.remove": "Удалить друга",
+  "friends.online": "В сети",
+  "friends.offline": "Не в сети",
   "friends.remove_confirm": "Удалить этого друга?",
   "friends.list_empty_short": "Друзей еще нет",
 
@@ -376,6 +388,63 @@ const ru: Translations = {
   "duel.go_home": "Вернуться на главную",
   "duel.share_link": "Поделиться ссылкой",
   "duel.link_copied": "Ссылка скопирована в буфер обмена",
+
+  "settings.trigger_label": "Звук и вибрация",
+  "settings.sound": "Звук",
+  "settings.haptics": "Вибрация",
+  "settings.on": "Вкл",
+  "settings.off": "Выкл",
+
+  "footer.terms": "Условия использования",
+  "footer.privacy": "Политика конфиденциальности",
+  "legal.updated": "Последнее обновление: {{date}}",
+
+  "ranking.streak_title": "Серия побед: {{count}} дней",
+
+  "monthly.daily_title": "По дням",
+  "monthly.weekly_title": "По неделям",
+  "monthly.week_tooltip": "Неделя {{n}}: {{points}} очк.",
+  "monthly.by_difficulty": "По сложности",
+  "monthly.by_game": "По игре",
+
+  "seo.terms.title": "Условия использования | Box Daily Box",
+  "seo.terms.description":
+    "Условия использования Box Daily Box, бесплатной платформы ежедневных мини-игр Формулы 1.",
+  "seo.privacy.title": "Политика конфиденциальности | Box Daily Box",
+  "seo.privacy.description":
+    "Как Box Daily Box обрабатывает ваши персональные данные: что собирает, зачем и какие у вас права.",
+
+  "friends.need_to_play": "Сыграйте испытание, чтобы разблокировать раздел «Друзья».",
+
+  "duel.error_start": "Не удалось загрузить дуэль. Попробуйте снова с главной страницы.",
+  "duel.leave_button": "Покинуть",
+  "duel.leave_title": "Покинуть дуэль?",
+  "duel.leave_msg": "Если вы уйдёте сейчас, вы проиграете дуэль, и победит соперник. Это нельзя отменить.",
+  "duel.leave_confirm": "Да, покинуть и проиграть",
+  "duel.leave_cancel": "Продолжить игру",
+  "duel.accept_while_playing_title": "Принять дуэль?",
+  "duel.accept_while_playing_msg":
+    "Вы сейчас в середине игры. Если примете эту дуэль, вы потеряете текущую игру и её попытку. Это нельзя отменить.",
+  "duel.accept_while_playing_confirm": "Да, принять и потерять свою игру",
+  "duel.accept_while_playing_cancel": "Продолжить игру",
+  "duel.reason_nobody_played": "Ни один из игроков не завершил испытание вовремя.",
+  "duel.reason_opponent_absent": "Соперник так и не сыграл.",
+  "duel.reason_you_absent": "Вы так и не сыграли.",
+  "duel.reason_opponent_forfeit": "Соперник покинул дуэль.",
+  "duel.reason_you_forfeit": "Вы покинули дуэль.",
+
+  "teamradio.eyebrow": "Team Radio",
+  "teamradio.hint": "Это настоящее сообщение по командной радиосвязи. Угадайте, на каком Гран-при это было сказано.",
+  "teamradio.said_by": "Сказано по радиосвязи: {{driver}}",
+  "teamradio.select": "Выберите Гран-при",
+  "teamradio.confirm": "Подтвердить",
+  "teamradio.answer_was": "Правильный ответ:",
+  "teamradio.correct": "Верно",
+  "game.team-radio.name": "Team Radio",
+  "game.team-radio.tagline": "Прочитайте культовое сообщение командной радиосвязи F1 и угадайте, на каком Гран-при это было сказано.",
+  "seo.game.team-radio.title": "Team Radio — угадайте Гран-при по командной радиосвязи | Box Daily Box",
+  "seo.game.team-radio.description":
+    "Прочитайте культовое сообщение командной радиосвязи F1 и угадайте, на каком Гран-при это было сказано, из 6 вариантов. Бесплатная ежедневная головоломка.",
 };
 
 export default ru;

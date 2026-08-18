@@ -7,7 +7,7 @@
 
 import type { LegalContent } from "./types";
 
-const LAST_UPDATED = "2026-07-31";
+const LAST_UPDATED = "2026-08-15";
 const CONTACT_EMAIL = "boxdailybox@gmail.com";
 const OPERATOR = "Juan Cruz Rocca";
 
@@ -79,7 +79,32 @@ const content: LegalContent = {
         ],
       },
       {
-        heading: "6. Servicio \"tal cual\"",
+        heading: "6. Contenido generado o asistido por inteligencia artificial",
+        blocks: [
+          {
+            p: "Partes del código, de los textos de la interfaz y de algunos elementos visuales del Servicio fueron generados o asistidos por herramientas de inteligencia artificial, y revisados por el operador antes de publicarse.",
+          },
+          {
+            p: "Los datos históricos de Fórmula 1 utilizados (resultados, escuderías, pilotos, nacionalidades) provienen de fuentes públicas y de conjuntos de datos abiertos. Se procura su exactitud, pero pueden contener errores, imprecisiones u omisiones.",
+          },
+        ],
+      },
+      {
+        heading: "7. Apoyo voluntario",
+        blocks: [
+          {
+            p: "El Servicio es y seguirá siendo gratuito en su modalidad actual (ver también la Sección 10, \"Cambios en el Servicio y en estos Términos\"). Si querés, podés apoyar su desarrollo con una contribución voluntaria a través de plataformas de terceros: Cafecito (para Argentina) y Ko-fi (internacional).",
+          },
+          {
+            p: "Esa contribución es una donación, no una compra: no genera una relación de consumo respecto del Servicio, no otorga acceso a contenido exclusivo, ventajas de juego, ranking preferencial ni ningún otro beneficio dentro del Servicio, y no es reembolsable por parte del operador.",
+          },
+          {
+            p: "El cobro lo procesa íntegramente la plataforma elegida (Cafecito o Ko-fi), bajo sus propios términos y su propia política de privacidad. El operador no recibe, no almacena ni procesa ningún dato de pago: al hacer clic en el botón de apoyo salís del Servicio hacia el sitio de esa plataforma.",
+          },
+        ],
+      },
+      {
+        heading: "8. Servicio \"tal cual\"",
         blocks: [
           {
             p: "El Servicio se ofrece \"tal cual\" y \"según disponibilidad\", sin garantías de ningún tipo. No garantizamos que el Servicio esté libre de errores, disponible de forma ininterrumpida, ni que los datos deportivos sean exactos. Podemos modificar, suspender o discontinuar el Servicio (total o parcialmente) en cualquier momento.",
@@ -87,7 +112,7 @@ const content: LegalContent = {
         ],
       },
       {
-        heading: "7. Limitación de responsabilidad",
+        heading: "9. Limitación de responsabilidad",
         blocks: [
           {
             p: "En la máxima medida permitida por la ley aplicable, el operador no será responsable por daños indirectos, incidentales o consecuentes derivados del uso o la imposibilidad de uso del Servicio. Nada en estos Términos limita derechos que la ley te reconozca de forma irrenunciable como consumidor.",
@@ -95,18 +120,24 @@ const content: LegalContent = {
         ],
       },
       {
-        heading: "8. Cambios en el Servicio y en estos Términos",
+        heading: "10. Cambios en el Servicio y en estos Términos",
         blocks: [
           {
             p: "Podemos actualizar estos Términos para reflejar cambios en el Servicio o en la ley. La versión vigente estará siempre disponible en esta página, con su fecha de última actualización.",
           },
           {
-            p: "Actualmente el Servicio es gratuito y no muestra publicidad. En el futuro podrían introducirse anuncios, funciones pagas u otras formas de monetización. Si eso ocurre, estos Términos y la Política de Privacidad se actualizarán en consecuencia, y se te informará y solicitará tu consentimiento cuando la ley así lo requiera.",
+            p: "El modo gratuito actual del Servicio —un intento por juego por día, sin necesidad de registrarte ni de pagar— va a seguir estando disponible sin costo y sin que sea necesario ver ningún anuncio para poder jugar.",
+          },
+          {
+            p: "En el futuro podríamos incorporar publicidad (por ejemplo, banners laterales que no interrumpen el juego ni requieren cerrarlos o esperar para poder seguir jugando) y/o una membresía opcional paga con beneficios adicionales (por ejemplo, intentos extra). Ninguna de esas eventuales novedades va a reemplazar ni a condicionar el modo gratuito descripto en el párrafo anterior.",
+          },
+          {
+            p: "Si se introduce publicidad, funciones pagas u otra forma de monetización, estos Términos y la Política de Privacidad se actualizarán en consecuencia, y se te informará y solicitará tu consentimiento cuando la ley así lo requiera.",
           },
         ],
       },
       {
-        heading: "9. Ley aplicable y jurisdicción",
+        heading: "11. Ley aplicable y jurisdicción",
         blocks: [
           {
             p: "Estos Términos se rigen por las leyes de la República Argentina. Cualquier controversia se someterá a los tribunales competentes de Argentina, sin perjuicio de los derechos que las normas imperativas de protección al consumidor de tu país de residencia te reconozcan, incluida la posibilidad de recurrir a los tribunales de tu domicilio cuando la ley lo permita.",
@@ -114,14 +145,14 @@ const content: LegalContent = {
         ],
       },
       {
-        heading: "10. Contacto",
+        heading: "12. Contacto",
         blocks: [
           { p: "Para consultas sobre estos Términos podés escribir a:" },
           { email: CONTACT_EMAIL },
         ],
       },
       {
-        heading: "11. Idioma",
+        heading: "13. Idioma",
         blocks: [
           {
             p: "La versión en español de este documento es la versión vinculante. Las traducciones a otros idiomas se ofrecen únicamente por conveniencia y, en caso de discrepancia, prevalece la versión en español.",
@@ -157,7 +188,7 @@ const content: LegalContent = {
             ],
           },
           {
-            p: "Si usás las funciones de amigos y duelos, guardamos las relaciones que vos mismo creás (a quién agregás como amigo o desafiás).",
+            p: "Si usás las funciones de amigos y duelos, guardamos las relaciones que vos mismo creás (a quién agregás como amigo o desafiás). Si tenés amigos agregados, también guardamos la última vez que tuviste el Servicio abierto, para poder mostrarte a vos y a tus amigos quién está conectado en ese momento. Esa información se muestra únicamente como \"conectado\" o \"desconectado\": nunca se muestra la hora exacta ni un historial de conexiones.",
           },
           {
             p: "No solicitamos ni almacenamos tu contraseña: la autenticación la realiza Google. Tampoco tratamos categorías de datos sensibles.",
@@ -172,6 +203,7 @@ const content: LegalContent = {
               "Para que el juego funcione y tu progreso se conserve entre sesiones y dispositivos (ejecución del servicio que solicitás).",
               "Para calcular y mostrar los rankings y para prevenir trampas y el uso abusivo de múltiples cuentas (interés legítimo en mantener un ranking justo; la IP se usa con este único fin).",
               "Para vincular tu progreso a tu cuenta si iniciás sesión con Google (con base en tu consentimiento al elegir iniciar sesión).",
+              "Para mostrarte, a vos y a tus amigos, quién tiene el Servicio abierto en este momento (ejecución de la funcionalidad de amigos que vos activás).",
             ],
           },
           {
@@ -205,6 +237,9 @@ const content: LegalContent = {
           },
           {
             p: "Algunos de estos proveedores pueden procesar datos en servidores ubicados fuera de Argentina o del Espacio Económico Europeo. En esos casos, la transferencia se realiza amparada en las salvaguardas y mecanismos legales que ofrecen dichos proveedores.",
+          },
+          {
+            p: "Si hacés clic en el botón de apoyo voluntario, salís del Servicio hacia Cafecito o Ko-fi, según cuál elijas. Son responsables independientes del tratamiento de datos en su propio sitio; el operador no les envía ningún dato tuyo, es simplemente un enlace hacia su página.",
           },
         ],
       },

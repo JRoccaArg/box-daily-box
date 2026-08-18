@@ -42,7 +42,6 @@ const it: Translations = {
   "shell.time_limit": "Limite di tempo: {{seconds}} secondi",
   "shell.no_time_limit": "Senza limite di tempo",
   "shell.untimed": "Senza Tempo",
-  "shell.untimed_hint": "Pochi punti fissi, senza cronometro",
   "shell.fails_left": "Restano {{count}} di {{total}} tentativi",
   "shell.start": "Inizia",
   "shell.surrender": "Arrendersi",
@@ -99,6 +98,12 @@ const it: Translations = {
   "footer.line2": "Una nuova sfida ogni giorno a mezzanotte.",
   "footer.info": "Come si gioca",
   "footer.contact": "Contatti",
+  "footer.support": "Sostieni il progetto",
+  "support.title": "Sostieni il progetto",
+  "support.body": "Box Daily Box è e resterà gratuito. Se ti piace, puoi lasciare un contributo volontario — non dà alcun vantaggio nel gioco, è solo un modo per sostenere il progetto.",
+  "support.disclaimer": "Non dà accesso a contenuti esclusivi, tentativi extra o classifiche preferenziali.",
+  "support.cafecito": "Cafecito (Argentina)",
+  "support.kofi": "Ko-fi (internazionale)",
 
   "profile.title": "Il tuo profilo",
   "profile.subtitle":
@@ -247,7 +252,12 @@ const it: Translations = {
   "intruso.rule.team": "Hanno guidato per {{team}}",
   "intruso.rule.champ": "Sono stati campioni del mondo",
   "intruso.rule.non_champ": "Non sono mai stati campioni del mondo",
-  "intruso.rule.nationality": "Sono della stessa nazionalità ({{nat}})",
+  "intruso.rule.winner": "Hanno vinto almeno un Gran Premio",
+  "intruso.rule.non_winner": "Non hanno mai vinto un Gran Premio",
+  "intruso.rule.poleman": "Hanno ottenuto almeno una pole position",
+  "intruso.rule.non_poleman": "Non hanno mai ottenuto una pole position",
+  "intruso.rule.podium": "Sono saliti sul podio almeno una volta",
+  "intruso.rule.non_podium": "Non sono mai saliti sul podio",
   "intruso.rule.none": "Nessuna regola disponibile",
 
   "bingo.eyebrow": "Griglia Bingo",
@@ -303,9 +313,9 @@ const it: Translations = {
   "careerpath.found": "Lo hai trovato:",
   "careerpath.answer_was": "Il pilota era:",
 
-  "seo.home.title": "Box Daily Box — Minigiochi giornalieri di Formula 1 | 6 puzzle gratis",
+  "seo.home.title": "Box Daily Box — Minigiochi giornalieri di Formula 1 | 8 puzzle gratis",
   "seo.home.description":
-    "Sei minigiochi giornalieri di Formula 1: indovina i piloti, completa la top 10, trova l'intruso e altro ancora. Classifica globale gratuita, senza registrazione.",
+    "Otto minigiochi giornalieri di Formula 1: indovina i piloti, completa la top 10, trova l'intruso e altro ancora. Classifica globale gratuita, senza registrazione.",
   "seo.contact.title": "Contatti | Box Daily Box",
   "seo.contact.description": "Hai un problema tecnico o un'idea per Box Daily Box? Scrivici.",
   "seo.game.career-path.title": "Career Path — Indovina il pilota dalla sua carriera | Box Daily Box",
@@ -424,6 +434,8 @@ const it: Translations = {
   "friends.request_sent": "Richiesta inviata",
   "friends.request_accepted": "Ora siete amici!",
   "friends.remove": "Rimuovi amico",
+  "friends.online": "Online",
+  "friends.offline": "Offline",
   "friends.remove_confirm": "Rimuovere questo amico?",
   "friends.list_empty_short": "Nessun amico ancora",
 
@@ -459,6 +471,63 @@ const it: Translations = {
   "duel.go_home": "Torna alla home",
   "duel.share_link": "Condividi link",
   "duel.link_copied": "Link copiato negli appunti",
+
+  "settings.trigger_label": "Suono e vibrazione",
+  "settings.sound": "Suono",
+  "settings.haptics": "Vibrazione",
+  "settings.on": "Attivo",
+  "settings.off": "Disattivo",
+
+  "footer.terms": "Termini e Condizioni",
+  "footer.privacy": "Informativa sulla Privacy",
+  "legal.updated": "Ultimo aggiornamento: {{date}}",
+
+  "ranking.streak_title": "Striscia vincente di {{count}} giorni",
+
+  "monthly.daily_title": "Per giorno",
+  "monthly.weekly_title": "Per settimana",
+  "monthly.week_tooltip": "Settimana {{n}}: {{points}} pt",
+  "monthly.by_difficulty": "Per difficoltà",
+  "monthly.by_game": "Per gioco",
+
+  "seo.terms.title": "Termini e Condizioni | Box Daily Box",
+  "seo.terms.description":
+    "Termini e condizioni d'uso di Box Daily Box, piattaforma gratuita di minigiochi giornalieri di Formula 1.",
+  "seo.privacy.title": "Informativa sulla Privacy | Box Daily Box",
+  "seo.privacy.description":
+    "Come Box Daily Box tratta i tuoi dati personali: cosa raccoglie, perché e quali sono i tuoi diritti.",
+
+  "friends.need_to_play": "Gioca prima una sfida per sbloccare Amici.",
+
+  "duel.error_start": "Impossibile caricare la sfida. Riprova dalla home.",
+  "duel.leave_button": "Abbandona",
+  "duel.leave_title": "Abbandonare la sfida?",
+  "duel.leave_msg": "Se esci ora, abbandoni la sfida e il tuo avversario vince. Non si può annullare.",
+  "duel.leave_confirm": "Sì, abbandona e perdi",
+  "duel.leave_cancel": "Continua a giocare",
+  "duel.accept_while_playing_title": "Accettare la sfida?",
+  "duel.accept_while_playing_msg":
+    "Sei nel mezzo di una partita. Se accetti questa sfida, perdi la partita attuale e il suo tentativo. Non si può annullare.",
+  "duel.accept_while_playing_confirm": "Sì, accetta e perdi la mia partita",
+  "duel.accept_while_playing_cancel": "Continua a giocare",
+  "duel.reason_nobody_played": "Nessuno dei due ha completato la sfida in tempo.",
+  "duel.reason_opponent_absent": "Il tuo avversario non ha mai giocato.",
+  "duel.reason_you_absent": "Non hai mai giocato.",
+  "duel.reason_opponent_forfeit": "Il tuo avversario ha abbandonato la sfida.",
+  "duel.reason_you_forfeit": "Hai abbandonato la sfida.",
+
+  "teamradio.eyebrow": "Team Radio",
+  "teamradio.hint": "Questo è un vero messaggio radio di scuderia. Indovina in quale Gran Premio è stato detto.",
+  "teamradio.said_by": "Detto alla radio di: {{driver}}",
+  "teamradio.select": "Seleziona un Gran Premio",
+  "teamradio.confirm": "Conferma",
+  "teamradio.answer_was": "Era:",
+  "teamradio.correct": "Corretto",
+  "game.team-radio.name": "Team Radio",
+  "game.team-radio.tagline": "Leggi una radio di scuderia iconica della F1 e indovina in quale Gran Premio è stata detta.",
+  "seo.game.team-radio.title": "Team Radio — Indovina il Gran Premio dalla radio di scuderia | Box Daily Box",
+  "seo.game.team-radio.description":
+    "Leggi un messaggio radio di scuderia iconico della F1 e indovina in quale Gran Premio è stato detto, tra 6 opzioni. Puzzle giornaliero gratis.",
 };
 
 export default it;

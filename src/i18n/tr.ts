@@ -45,7 +45,6 @@ const tr: Translations = {
   "shell.time_limit": "Süre sınırı: {{seconds}} saniye",
   "shell.no_time_limit": "Süre sınırı yok",
   "shell.untimed": "Süresiz",
-  "shell.untimed_hint": "Az sabit puan, saat yok",
   "shell.fails_left": "{{total}} denemeden {{count}} kaldı",
   "shell.start": "Başla",
   "shell.surrender": "Pes et",
@@ -104,6 +103,12 @@ const tr: Translations = {
   "footer.line2": "Her gün gece yarısı yeni bir meydan okuma.",
   "footer.info": "Nasıl oynanır",
   "footer.contact": "İletişim",
+  "footer.support": "Projeyi destekle",
+  "support.title": "Projeyi destekle",
+  "support.body": "Box Daily Box ücretsizdi ve ücretsiz kalacak. Beğendiysen gönüllü bir katkı bırakabilirsin — bu, oyun içinde herhangi bir avantaj sağlamaz, sadece projeye destek olmanın bir yoludur.",
+  "support.disclaimer": "Özel içeriğe, ekstra denemeye ya da öncelikli sıralamaya erişim sağlamaz.",
+  "support.cafecito": "Cafecito (Arjantin)",
+  "support.kofi": "Ko-fi (uluslararası)",
 
   // ─── Profile (IdentityModal) ────────────────────────────────────────
   "profile.title": "Profilin",
@@ -259,7 +264,12 @@ const tr: Translations = {
   "intruso.rule.team": "{{team}} için yarıştılar",
   "intruso.rule.champ": "Dünya şampiyonu oldular",
   "intruso.rule.non_champ": "Hiç dünya şampiyonu olmadılar",
-  "intruso.rule.nationality": "Aynı uyruğa sahipler ({{nat}})",
+  "intruso.rule.winner": "En az bir Grand Prix kazandılar",
+  "intruso.rule.non_winner": "Hiç Grand Prix kazanmadılar",
+  "intruso.rule.poleman": "En az bir pole pozisyonu aldılar",
+  "intruso.rule.non_poleman": "Hiç pole pozisyonu almadılar",
+  "intruso.rule.podium": "En az bir kez podyuma çıktılar",
+  "intruso.rule.non_podium": "Hiç podyuma çıkmadılar",
   "intruso.rule.none": "Kural yok",
 
   // ─── ParrillaBingo extra ──────────────────────────────────────────────
@@ -318,9 +328,9 @@ const tr: Translations = {
   "careerpath.found": "Buldun:",
   "careerpath.answer_was": "Pilot şuydu:",
 
-  "seo.home.title": "Box Daily Box — Günlük Formula 1 Mini Oyunları | 6 Ücretsiz Bulmaca",
+  "seo.home.title": "Box Daily Box — Günlük Formula 1 Mini Oyunları | 8 Ücretsiz Bulmaca",
   "seo.home.description":
-    "Altı günlük Formula 1 mini oyunu: pilotları tahmin edin, top 10'u tamamlayın, arayı bulan kişiyi bulun ve daha fazlası. Ücretsiz küresel sıralama, kayıt gerekmez.",
+    "Sekiz günlük Formula 1 mini oyunu: pilotları tahmin edin, top 10'u tamamlayın, arayı bulan kişiyi bulun ve daha fazlası. Ücretsiz küresel sıralama, kayıt gerekmez.",
   "seo.contact.title": "İletişim | Box Daily Box",
   "seo.contact.description": "Box Daily Box ile ilgili teknik bir sorun ya da fikrin mi var? Bizimle iletişime geçin.",
   "seo.game.career-path.title": "Career Path — Kariyerinden pilotu tahmin et | Box Daily Box",
@@ -439,6 +449,8 @@ const tr: Translations = {
   "friends.request_sent": "İstek gönderildi",
   "friends.request_accepted": "Artık arkadaşsınız!",
   "friends.remove": "Arkadaşı kaldır",
+  "friends.online": "Çevrimiçi",
+  "friends.offline": "Çevrimdışı",
   "friends.remove_confirm": "Bu arkadaşı kaldırmak ister misiniz?",
   "friends.list_empty_short": "Henüz arkadaş yok",
 
@@ -474,6 +486,63 @@ const tr: Translations = {
   "duel.go_home": "Ana sayfaya dön",
   "duel.share_link": "Bağlantıyı paylaş",
   "duel.link_copied": "Bağlantı panoya kopyalandı",
+
+  "settings.trigger_label": "Ses ve titreşim",
+  "settings.sound": "Ses",
+  "settings.haptics": "Titreşim",
+  "settings.on": "Açık",
+  "settings.off": "Kapalı",
+
+  "footer.terms": "Şartlar ve Koşullar",
+  "footer.privacy": "Gizlilik Politikası",
+  "legal.updated": "Son güncelleme: {{date}}",
+
+  "ranking.streak_title": "{{count}} günlük galibiyet serisi",
+
+  "monthly.daily_title": "Güne göre",
+  "monthly.weekly_title": "Haftaya göre",
+  "monthly.week_tooltip": "Hafta {{n}}: {{points}} puan",
+  "monthly.by_difficulty": "Zorluğa göre",
+  "monthly.by_game": "Oyuna göre",
+
+  "seo.terms.title": "Şartlar ve Koşullar | Box Daily Box",
+  "seo.terms.description":
+    "Box Daily Box kullanım şartları ve koşulları, ücretsiz günlük Formula 1 mini oyun platformu.",
+  "seo.privacy.title": "Gizlilik Politikası | Box Daily Box",
+  "seo.privacy.description":
+    "Box Daily Box kişisel verilerinizi nasıl işler: neyi toplar, neden toplar ve haklarınız nelerdir.",
+
+  "friends.need_to_play": "Arkadaşlar bölümünü açmak için önce bir meydan okuma oyna.",
+
+  "duel.error_start": "Düello yüklenemedi. Ana sayfadan tekrar dene.",
+  "duel.leave_button": "Ayrıl",
+  "duel.leave_title": "Düellodan ayrılınsın mı?",
+  "duel.leave_msg": "Şimdi ayrılırsan düelloyu kaybedersin ve rakibin kazanır. Bu geri alınamaz.",
+  "duel.leave_confirm": "Evet, ayrıl ve kaybet",
+  "duel.leave_cancel": "Oynamaya devam et",
+  "duel.accept_while_playing_title": "Düello kabul edilsin mi?",
+  "duel.accept_while_playing_msg":
+    "Şu anda bir oyunun ortasındasın. Bu düelloyu kabul edersen, mevcut oyununu ve denemesini kaybedersin. Bu geri alınamaz.",
+  "duel.accept_while_playing_confirm": "Evet, kabul et ve oyunumu kaybet",
+  "duel.accept_while_playing_cancel": "Oynamaya devam et",
+  "duel.reason_nobody_played": "İkisi de meydan okumayı zamanında tamamlamadı.",
+  "duel.reason_opponent_absent": "Rakibin hiç oynamadı.",
+  "duel.reason_you_absent": "Hiç oynamadın.",
+  "duel.reason_opponent_forfeit": "Rakibin düellodan ayrıldı.",
+  "duel.reason_you_forfeit": "Düellodan ayrıldın.",
+
+  "teamradio.eyebrow": "Team Radio",
+  "teamradio.hint": "Bu gerçek bir takım telsiz mesajı. Hangi Grand Prix'te söylendiğini tahmin et.",
+  "teamradio.said_by": "Telsizde söylendi: {{driver}}",
+  "teamradio.select": "Bir Grand Prix seç",
+  "teamradio.confirm": "Onayla",
+  "teamradio.answer_was": "Doğru cevap:",
+  "teamradio.correct": "Doğru",
+  "game.team-radio.name": "Team Radio",
+  "game.team-radio.tagline": "İkonik bir F1 takım telsiz mesajını oku ve hangi Grand Prix'te söylendiğini tahmin et.",
+  "seo.game.team-radio.title": "Team Radio — Takım telsizinden Grand Prix'i tahmin et | Box Daily Box",
+  "seo.game.team-radio.description":
+    "İkonik bir F1 takım telsiz mesajını oku ve 6 seçenek arasından hangi Grand Prix'te söylendiğini tahmin et. Ücretsiz günlük bulmaca.",
 };
 
 export default tr;

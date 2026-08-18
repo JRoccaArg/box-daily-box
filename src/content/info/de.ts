@@ -4,9 +4,10 @@ import type { InfoContent } from "./types";
 const content: InfoContent = {
   title: "So wird gespielt",
   subtitle:
-    "Box Daily Box bietet sechs tägliche Formel-1-Minispiele. Jedes wird einmal pro Tag gespielt, mit einer neuen Herausforderung um Mitternacht. Hier erklären wir die Regeln jedes Spiels, wie die Punktzahl berechnet wird, wie die Rangliste funktioniert und die weiteren Funktionen der Plattform.",
+    "Box Daily Box bietet acht tägliche Formel-1-Minispiele. Jedes wird einmal pro Tag gespielt, mit einer neuen Herausforderung um Mitternacht. Hier erklären wir die Regeln jedes Spiels, wie die Punktzahl berechnet wird, wie die Rangliste funktioniert und die weiteren Funktionen der Plattform.",
+  dataAsOfNote: "Die in den Spielen verwendeten Fahrer-, Team- und Ergebnisdaten reichen bis zur Saison 2025.",
 
-  gamesHeading: "Die 6 Spiele",
+  gamesHeading: "Die 8 Spiele",
   gamesIntro:
     "Alle Spiele verwenden echte Formel-1-Daten: Fahrer, Teams, Nationalitäten und historische Ergebnisse. Die Tagesherausforderung ist für alle Spieler weltweit gleich.",
   gameDetail: {
@@ -22,6 +23,10 @@ const content: InfoContent = {
       "Dir wird ein historischer Grand Prix gezeigt, und du musst die Top 10 dieses Rennens vervollständigen: welcher Fahrer auf welchem Platz landete. Es gibt eine Autovervollständigung, um schneller unter den Fahrern zu suchen.",
     "top10-standings":
       "Ähnlich wie das vorherige, aber mit der kumulierten Fahrerwertung einer Saison (zufällig aus einem Zeitraum von 1 bis 4 Jahren gewählt), nicht eines einzelnen Rennens. Die Hinweise sind die Nationalität jedes Fahrers und die Punkte, die er in diesem Jahr erzielt hat.",
+    "career-path":
+      "Dir wird die Kette der Teams gezeigt, für die ein Formel-1-Fahrer in chronologischer Reihenfolge gefahren ist, dargestellt mit dem Logo jedes Teams. Du musst erraten, um welchen Fahrer es sich handelt, indem du seinen Namen eingibst — mit Autovervollständigung für schnelleres Suchen. Du hast bis zu 3 Versuche.",
+    "team-radio":
+      "Dir wird der echte Text einer legendären Formel-1-Teamfunk-Nachricht gezeigt, zusammen mit dem Fahrer, der sie gesagt hat. Du musst erraten, bei welchem Grand Prix sie gesagt wurde, und aus 6 Optionen wählen. Die falschen Optionen sind Rennen aus demselben Jahr oder von derselben Strecke in nahen Jahren — bloßes Raten reicht also nicht, du musst den Kontext wirklich kennen.",
   },
 
   difficultyHeading: "Schwierigkeitsgrade",
@@ -62,7 +67,7 @@ const content: InfoContent = {
     },
     {
       q: "Wie oft am Tag kann ich jede Herausforderung spielen?",
-      a: "Einmal am Tag pro Spiel. Um Mitternacht wird für jedes der 6 Spiele eine neue Herausforderung erzeugt. Duelle mit Freunden sind die Ausnahme: Du kannst sie so oft spielen, wie du möchtest, da sie nicht die tägliche Herausforderung sind.",
+      a: "Einmal am Tag pro Spiel. Um Mitternacht wird für jedes der 8 Spiele eine neue Herausforderung erzeugt. Duelle mit Freunden sind die Ausnahme: Du kannst sie so oft spielen, wie du möchtest, da sie nicht die tägliche Herausforderung sind.",
     },
     {
       q: "Wie wird die Punktzahl berechnet?",
