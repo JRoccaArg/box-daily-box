@@ -10,6 +10,17 @@
 - Sin emojis en código/docs/UI salvo pedido.
 - Respuestas concisas, sin narrar deliberación.
 - Verificación real: dev server + prueba en navegador, no solo typecheck.
+- **ANTES de cualquier `git push` (a cualquier rama), correr `npm run build` completo
+  y que termine sin errores — no alcanza con `typecheck`/`lint`/`npm test`.**
+  `npm run build` corre el prerender SSG (`vite-react-ssg build`, 184 páginas server-side)
+  y es el ÚNICO paso que ejecuta los componentes en un entorno sin DOM (Node, sin
+  `window`/`document`). Ningún otro comando de la lista de abajo lo hace: `npm test`
+  corre en jsdom (`document` sí existe ahí) y Playwright corre en un browser real — por
+  eso un bug de "usa `document`/`window` sin guard" pasa el resto de la suite en verde
+  y solo revienta en CI al hacer build, ya en `develop`/`staging`. Pasó exactamente esto
+  con `Modal.tsx` (`createPortal(..., document.body)` evaluado sin importar `open`,
+  porque el guard `if (!open) return null` quedó adentro del JSX en vez de antes de
+  tocar `document`) — casos así solo los agarra `npm run build`.
 - Documentar cada fix/feature importante en `Box_Daily_Box_Context.md` (historial de sesiones) — NUNCA en archivos trackeados por git (repo público).
 
 ## Proyecto
