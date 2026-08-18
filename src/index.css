@@ -13,6 +13,15 @@
     height: 100%;
   }
 
+  html {
+    /* Reserva el ancho de la scrollbar SIEMPRE, este o no visible. Sin esto,
+       cuando un Modal pone `body.style.overflow = "hidden"` para bloquear el
+       scroll de fondo, la scrollbar desaparece y la pagina se vuelve mas
+       ancha por ese ancho -- todo el contenido "salta" hacia la derecha al
+       abrir el modal, y vuelve a saltar a la izquierda al cerrarlo. */
+    scrollbar-gutter: stable;
+  }
+
   body {
     @apply bg-asphalt text-ink font-display antialiased;
     /* Subtle asphalt grain + a faint diagonal "start straight" gradient.

@@ -16,6 +16,7 @@ const hi: Translations = {
   "home.solved": "हल किया",
   "home.played": "खेला",
   "home.unplayed": "नहीं खेला",
+  "home.new_badge": "नया",
   "home.num.3": "तीन",
   "home.num.4": "चार",
   "home.num.5": "पाँच",

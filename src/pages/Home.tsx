@@ -172,9 +172,12 @@ function GameCard({
         </span>
 
         <div className="min-w-0 flex-1">
-          <h2 className="font-display text-lg font-bold tracking-tight text-white">
-            {t(`game.${game.id}.name`)}
-          </h2>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <h2 className="font-display text-lg font-bold tracking-tight text-white">
+              {t(`game.${game.id}.name`)}
+            </h2>
+            {game.isNew && <NewBadge />}
+          </div>
           <p className="mt-0.5 text-sm leading-snug text-ink-muted">
             {t(`game.${game.id}.tagline`)}
           </p>
@@ -193,6 +196,20 @@ function GameCard({
         </span>
       </div>
     </Link>
+  );
+}
+
+/**
+ * Etiqueta "Nuevo" para juegos recien agregados (`GameDefinition.isNew`).
+ * El pulso de brillo es sutil (box-shadow, no reflow) y respeta
+ * prefers-reduced-motion via la regla global de src/index.css.
+ */
+function NewBadge() {
+  const { t } = useI18n();
+  return (
+    <span className="inline-flex animate-badge-glow items-center rounded-full border border-sector-purple/50 bg-sector-purple/15 px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase leading-none tracking-wider text-sector-purple">
+      {t("home.new_badge")}
+    </span>
   );
 }
 

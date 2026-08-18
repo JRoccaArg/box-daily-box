@@ -21,6 +21,7 @@ const es: Translations = {
   "home.solved": "Resuelto",
   "home.played": "Jugado",
   "home.unplayed": "Sin jugar",
+  "home.new_badge": "Nuevo",
   // Numeros en palabras para el titulo
   "home.num.3": "Tres",
   "home.num.4": "Cuatro",

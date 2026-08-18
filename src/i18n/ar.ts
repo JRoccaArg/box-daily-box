@@ -11,7 +11,7 @@ const ar: Translations = {
   "home.streak": "سلسلة {{count}} {{day}}",
   "home.day_singular": "يوم", "home.day_plural": "أيام",
   "home.play_now": "العب الآن", "home.come_back": "عُد غداً",
-  "home.solved": "تم الحل", "home.played": "تم اللعب", "home.unplayed": "لم يُلعب",
+  "home.solved": "تم الحل", "home.played": "تم اللعب", "home.unplayed": "لم يُلعب", "home.new_badge": "جديد",
   "home.num.3": "ثلاثة", "home.num.4": "أربعة", "home.num.5": "خمسة",
   "home.num.6": "ستة", "home.num.7": "سبعة", "home.num.8": "ثمانية",
 
