@@ -66,7 +66,8 @@ function SupportCard() {
   const { t } = useI18n();
   const linkClass =
     "inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-white/15 " +
-    "bg-transparent px-5 text-[15px] font-medium tracking-tight text-ink transition-colors " +
+    "bg-transparent px-5 text-[15px] font-medium tracking-tight text-ink " +
+    "transition-[background-color,border-color,transform] duration-150 ease-out active:scale-[0.97] active:duration-75 " +
     "hover:border-white/30 hover:bg-white/5";
 
   return (
@@ -148,7 +149,12 @@ function GameCard({
   return (
     <Link
       to={gamePath(locale, game.id)}
-      className="group block rounded-2xl border border-white/10 bg-asphalt-800 p-4 transition-colors hover:border-white/25 hover:bg-asphalt-700 focus-visible:border-racing/50"
+      className={[
+        "group block rounded-2xl border border-white/10 bg-asphalt-800 p-4",
+        "transition-[background-color,border-color,transform,box-shadow] duration-200 ease-out",
+        "hover:border-white/25 hover:bg-asphalt-700 hover:-translate-y-0.5 hover:shadow-panel",
+        "active:scale-[0.99] active:duration-75 focus-visible:border-racing/50",
+      ].join(" ")}
     >
       <div className="flex items-start gap-3">
         <span
@@ -176,7 +182,7 @@ function GameCard({
 
         <ChevronRight
           size={18}
-          className="mt-1 shrink-0 text-ink-faint transition-colors group-hover:text-ink"
+          className="mt-1 shrink-0 text-ink-faint transition-[color,transform] duration-200 ease-out group-hover:translate-x-0.5 group-hover:text-ink"
         />
       </div>
 

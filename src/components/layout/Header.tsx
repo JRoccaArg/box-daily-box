@@ -115,7 +115,7 @@ export function Header() {
           <button
             onClick={() => setProfileOpen(true)}
             aria-label={t("header.profile_label")}
-            className="inline-flex h-9 items-center justify-center rounded-lg border border-white/10 px-3 text-ink transition-colors hover:border-white/25 hover:bg-white/5"
+            className="inline-flex h-9 items-center justify-center rounded-lg border border-white/10 px-3 text-ink transition-[background-color,border-color,transform] duration-150 active:scale-95 hover:border-white/25 hover:bg-white/5"
           >
             <span className="text-lg">👤</span>
           </button>
@@ -128,7 +128,7 @@ export function Header() {
               setStatsOpen(true);
             }}
             aria-label={t("header.stats_label")}
-            className="relative inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/10 px-3 text-sm text-ink transition-colors hover:border-white/25 hover:bg-white/5"
+            className="relative inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/10 px-3 text-sm text-ink transition-[background-color,border-color,transform] duration-150 active:scale-95 hover:border-white/25 hover:bg-white/5"
           >
             <StatIcon size={16} />
             <span className="hidden sm:inline">{t("header.stats")}</span>

@@ -13,10 +13,10 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    "bg-racing text-white hover:bg-racing-400 active:bg-racing-600 shadow-glow disabled:shadow-none",
+    "bg-racing text-white hover:bg-racing-400 hover:-translate-y-px active:bg-racing-600 shadow-glow disabled:shadow-none",
   ghost: "bg-transparent text-ink hover:bg-white/5 active:bg-white/10",
   outline:
-    "bg-transparent text-ink border border-white/15 hover:border-white/30 hover:bg-white/5",
+    "bg-transparent text-ink border border-white/15 hover:border-white/30 hover:bg-white/5 hover:-translate-y-px",
   danger:
     "bg-transparent text-racing-400 border border-racing/40 hover:bg-racing/10 active:bg-racing/20",
 };
@@ -43,8 +43,9 @@ export function Button({
     <button
       className={[
         "inline-flex items-center justify-center gap-2 font-medium tracking-tight",
-        "transition-colors duration-150 select-none",
-        "disabled:opacity-40 disabled:cursor-not-allowed",
+        "transition-[background-color,border-color,transform,box-shadow] duration-150 ease-out select-none",
+        "active:scale-[0.97] active:duration-75 disabled:active:scale-100",
+        "disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0",
         VARIANTS[variant],
         SIZES[size],
         block ? "w-full" : "",

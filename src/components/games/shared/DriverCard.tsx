@@ -15,8 +15,8 @@ type DriverCardProps = {
 };
 
 const RING: Record<Selectable, string> = {
-  idle: "border-white/10 hover:border-white/30 hover:bg-asphalt-600",
-  selected: "border-racing/70 bg-racing/10",
+  idle: "border-white/10 hover:border-white/30 hover:bg-asphalt-600 hover:-translate-y-0.5",
+  selected: "border-racing/70 bg-racing/10 scale-[1.02]",
   correct: "border-sector-green/70 bg-sector-green/10",
   wrong: "border-racing/70 bg-racing/15",
   muted: "border-white/5 opacity-50",
@@ -58,8 +58,8 @@ export function DriverCard({ driver, onClick, state = "idle", disabled, color }:
       disabled={onClick ? disabled : undefined}
       className={[
         "flex w-full flex-col items-center gap-2 rounded-xl border-2 bg-asphalt-700 px-2 py-3",
-        "text-center transition-colors duration-150",
-        onClick ? "disabled:cursor-not-allowed" : "",
+        "text-center transition-[background-color,border-color,transform] duration-150 ease-out",
+        onClick ? "disabled:cursor-not-allowed active:scale-[0.96] active:duration-75" : "",
         RING[state],
       ].join(" ")}
     >

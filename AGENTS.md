@@ -1,4 +1,4 @@
-# Box Daily Box — Instrucciones para Claude Code
+# Box Daily Box — Instrucciones para Codex
 
 > **REPO PÚBLICO.** Este archivo es visible para cualquiera. NO poner aquí info
 > sensible (costos, planes de negocio, datos personales, claves, IPs internas).
