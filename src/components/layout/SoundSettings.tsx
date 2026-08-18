@@ -47,7 +47,7 @@ export function SoundSettings() {
         onClick={() => setOpen((o) => !o)}
         aria-label={t("settings.trigger_label")}
         aria-expanded={open}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-ink-muted transition-colors hover:border-white/25 hover:bg-white/5"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-ink-muted transition-[background-color,border-color,transform] duration-150 active:scale-95 hover:border-white/25 hover:bg-white/5"
       >
         {soundOn ? <Volume size={16} /> : <VolumeOff size={16} />}
       </button>

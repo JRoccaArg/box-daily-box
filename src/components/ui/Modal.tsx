@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 import { Close } from "./Icon";
 
@@ -30,6 +31,7 @@ type ModalProps = {
  */
 export function Modal({ open, onClose, title, children, hideClose = false, size = "md" }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     if (!open) return;
@@ -45,50 +47,60 @@ export function Modal({ open, onClose, title, children, hideClose = false, size 
     };
   }, [open, onClose]);
 
-  if (!open) return null;
-
   return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-    >
-      <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      <div
-        ref={panelRef}
-        className={[
-          "panel relative z-10 m-3 max-h-[calc(100vh-1.5rem)] w-full animate-rise overflow-y-auto p-5 sm:m-0",
-          size === "lg" ? "max-w-md sm:max-w-2xl" : "max-w-md",
-        ].join(" ")}
-      >
-        {(title || !hideClose) && (
-          <div className="mb-4 flex items-start justify-between gap-4">
-            {title ? (
-              <h2 className="font-display text-xl font-bold tracking-tight text-white">
-                {title}
-              </h2>
-            ) : (
-              <span />
+    <AnimatePresence>
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          role="dialog"
+          aria-modal="true"
+          aria-label={title}
+        >
+          <motion.div
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={onClose}
+            aria-hidden="true"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+          />
+          <motion.div
+            ref={panelRef}
+            className={[
+              "panel relative z-10 m-3 max-h-[calc(100vh-1.5rem)] w-full overflow-y-auto p-5 sm:m-0",
+              size === "lg" ? "max-w-md sm:max-w-2xl" : "max-w-md",
+            ].join(" ")}
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 8 }}
+            animate={reduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: 4 }}
+            transition={{ duration: reduceMotion ? 0.1 : 0.18, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {(title || !hideClose) && (
+              <div className="mb-4 flex items-start justify-between gap-4">
+                {title ? (
+                  <h2 className="font-display text-xl font-bold tracking-tight text-white">
+                    {title}
+                  </h2>
+                ) : (
+                  <span />
+                )}
+                {!hideClose && (
+                  <button
+                    onClick={onClose}
+                    aria-label="Cerrar"
+                    className="-mr-1 -mt-1 rounded-lg p-1.5 text-ink-muted transition-[background-color,color,transform] duration-150 active:scale-90 hover:bg-white/5 hover:text-ink"
+                  >
+                    <Close size={20} />
+                  </button>
+                )}
+              </div>
             )}
-            {!hideClose && (
-              <button
-                onClick={onClose}
-                aria-label="Cerrar"
-                className="-mr-1 -mt-1 rounded-lg p-1.5 text-ink-muted transition-colors hover:bg-white/5 hover:text-ink"
-              >
-                <Close size={20} />
-              </button>
-            )}
-          </div>
-        )}
-        {children}
-      </div>
-    </div>,
+            {children}
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>,
     document.body,
   );
 }

@@ -47,9 +47,11 @@ export function SegmentedControl<T extends string | number>({
             aria-checked={selected}
             onClick={() => onChange(opt.value)}
             className={[
-              "min-w-0 rounded-lg border px-4 py-3 text-left transition-colors duration-150",
+              "min-w-0 rounded-lg border px-4 py-3 text-left",
+              "transition-[background-color,border-color,transform] duration-150 ease-out",
+              "active:scale-[0.98] active:duration-75",
               selected
-                ? "border-racing/60 bg-racing/10"
+                ? "border-racing/60 bg-racing/10 scale-[1.01]"
                 : "border-white/10 bg-asphalt-700 hover:border-white/25 hover:bg-asphalt-600",
             ].join(" ")}
           >

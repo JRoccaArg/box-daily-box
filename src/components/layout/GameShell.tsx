@@ -602,9 +602,12 @@ function BackLink() {
   return (
     <Link
       to={homePath(locale)}
-      className="inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
+      className="group inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
     >
-      <ChevronLeft size={16} />
+      <ChevronLeft
+        size={16}
+        className="transition-transform duration-150 ease-out group-hover:-translate-x-0.5"
+      />
       {t("shell.back")}
     </Link>
   );
@@ -636,7 +639,7 @@ function ControlBar({
           type="button"
           onClick={onBackRequest}
           aria-label={t("shell.back_label")}
-          className="shrink-0 rounded-lg p-1 text-ink-muted transition-colors hover:bg-white/5 hover:text-ink"
+          className="shrink-0 rounded-lg p-1 text-ink-muted transition-[background-color,color,transform] duration-150 active:scale-90 hover:bg-white/5 hover:text-ink"
         >
           <ChevronLeft size={18} />
         </button>
@@ -680,7 +683,8 @@ function ResultBanner({ won, onOpen }: { won: boolean; onOpen: () => void }) {
     <button
       onClick={onOpen}
       className={[
-        "w-full rounded-xl border px-4 py-3 text-left transition-colors",
+        "w-full animate-rise rounded-xl border px-4 py-3 text-left",
+        "transition-[background-color,transform] duration-150 ease-out active:scale-[0.99] active:duration-75",
         won
           ? "border-sector-green/30 bg-sector-green/10 hover:bg-sector-green/15"
           : "border-racing/30 bg-racing/10 hover:bg-racing/15",

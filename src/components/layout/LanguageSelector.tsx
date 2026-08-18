@@ -32,7 +32,7 @@ export function LanguageSelector() {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label={t("lang.label")}
-        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/10 px-2.5 text-sm text-ink transition-colors hover:border-white/25 hover:bg-white/5"
+        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/10 px-2.5 text-sm text-ink transition-[background-color,border-color,transform] duration-150 active:scale-95 hover:border-white/25 hover:bg-white/5"
       >
         <span className="text-base">{current.flag}</span>
         <span className="hidden text-xs uppercase tracking-wider text-ink-muted sm:inline">

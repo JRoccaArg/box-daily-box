@@ -67,11 +67,11 @@ export function CareerPath({ difficulty, date, seed, status, onWin, onLose }: Ga
       </p>
 
       {/* Cadena de escuderias */}
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-2 rounded-lg border border-white/10 bg-asphalt-700/50 p-4">
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-3 rounded-lg border border-white/10 bg-asphalt-700/50 p-4">
         {chain.map((teamId, i) => (
-          <div key={`${teamId}-${i}`} className="flex items-center gap-2">
+          <div key={`${teamId}-${i}`} className="flex items-center gap-3">
             <div
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-white/5 p-1.5"
+              className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-white/5 p-2 sm:h-24 sm:w-24"
               title={teamName(teamId)}
             >
               <img
@@ -81,7 +81,7 @@ export function CareerPath({ difficulty, date, seed, status, onWin, onLose }: Ga
               />
             </div>
             {i < chain.length - 1 && (
-              <ChevronRight size={16} className="shrink-0 text-ink-faint rtl:rotate-180" />
+              <ChevronRight size={20} className="shrink-0 text-ink-faint rtl:rotate-180" />
             )}
           </div>
         ))}
