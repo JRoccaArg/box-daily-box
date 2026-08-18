@@ -403,7 +403,7 @@ const es: Translations = {
   "careerpath.answer_was": "El piloto era:",
 
   "game.team-radio.name": "Team Radio",
-  "game.team-radio.tagline": "Escucha (con los ojos) una radio icónica de F1 y adivina en qué Gran Premio se dijo.",
+  "game.team-radio.tagline": "Lee una radio icónica de equipo de F1 y adivina en qué Gran Premio se dijo.",
 
   "lang.label": "Idioma",
 
