@@ -22,8 +22,17 @@ export function ElIntruso({ difficulty, date, seed, status, onWin, onLose }: Gam
   const [selected, setSelected] = useState<string | null>(null);
   const [submittedId, setSubmittedId] = useState<string | null>(null);
 
+  // `revealed` depende SOLO de `status` (la fuente de verdad del shell), no
+  // de `submittedId`. Antes tambien miraba `submittedId !== null`, lo que
+  // bloqueaba la UI apenas se tocaba "Confirmar" AUNQUE onWin/onLose no
+  // hubiera terminado de propagarse al shell (bug raro: la animacion queda
+  // "congelada", el timer sigue corriendo y no se puede ni reintentar ni
+  // cambiar de opcion, porque nada en el shell reflejaba el intento). Con
+  // `status` como unica fuente, en el caso normal (99.9%) no cambia nada
+  // -- finish() es sincronico y status pasa a won/lost en el mismo tick --
+  // pero si algo falla, la UI queda usable en vez de trabada.
   const finished = status !== "playing";
-  const revealed = submittedId !== null || finished;
+  const revealed = finished;
 
   useEffect(() => {
     if (finished && submittedId === null) setSelected(null);
