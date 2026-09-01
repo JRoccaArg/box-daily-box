@@ -1,6 +1,7 @@
 // src/api/db.ts
 import { Pool, QueryResult } from "pg";
 import { backfillStreaks } from "./streak";
+import { awardAchievements } from "./achievements";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -250,8 +251,10 @@ export async function initializeDatabase(): Promise<void> {
       END $$;
     `);
 
-    // Tabla badges: solo guarda badges GANADOS (podio mensual). Un badge por
-    // (usuario, tipo, mes). La UNIQUE hace idempotente la entrega concurrente.
+    // Tabla badges: guarda badges GANADOS. Dos familias conviven acá:
+    //  - PODIO mensual: badge_type monthly_* con reference_month (el mes premiado).
+    //  - LOGROS: badge_type con prefijo ach_ y reference_month NULL (no son de un
+    //    mes, se ganan una vez). Ver src/api/achievements.ts.
     await client.query(`
       CREATE TABLE IF NOT EXISTS badges (
         id BIGSERIAL PRIMARY KEY,
@@ -265,6 +268,50 @@ export async function initializeDatabase(): Promise<void> {
     `);
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_badges_user ON badges(user_id);
+    `);
+
+    // ─── Migración: soporte de badges de LOGROS en la tabla badges ─────
+    // 1. reference_month pasa a ser NULLABLE (los logros no tienen mes).
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE badges ALTER COLUMN reference_month DROP NOT NULL;
+      EXCEPTION WHEN others THEN NULL;
+      END $$;
+    `);
+    // 2. CHECK relajado: acepta los 3 tipos de podio O cualquier badge_type con
+    //    prefijo 'ach_'. Así el catálogo de logros crece sin migrar la DB cada vez.
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE badges DROP CONSTRAINT IF EXISTS badges_badge_type_check;
+      END $$;
+    `);
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE badges ADD CONSTRAINT badges_badge_type_check
+          CHECK (
+            badge_type IN ('monthly_gold', 'monthly_silver', 'monthly_bronze')
+            OR badge_type LIKE 'ach\\_%'
+          );
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$;
+    `);
+    // 3. La UNIQUE de tabla (user_id, badge_type, reference_month) trata NULLs como
+    //    distintos → NO garantizaría "un logro por usuario". Se reemplaza por DOS
+    //    índices únicos PARCIALES: uno para podio (con mes) y otro para logros (sin mes).
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE badges DROP CONSTRAINT IF EXISTS badges_user_id_badge_type_reference_month_key;
+      END $$;
+    `);
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_badges_monthly_unique
+      ON badges (user_id, badge_type, reference_month)
+      WHERE reference_month IS NOT NULL;
+    `);
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_badges_achievement_unique
+      ON badges (user_id, badge_type)
+      WHERE reference_month IS NULL;
     `);
 
     // ─── Sistema de amigos y duelos (Roadmap §4) ─────────────────────
@@ -435,6 +482,20 @@ export async function initializeDatabase(): Promise<void> {
       await backfillStreaks((sql, params) => client.query(sql, params));
       await client.query(
         "INSERT INTO app_meta (key, value) VALUES ('streak_backfilled_v1', now()::text) ON CONFLICT (key) DO NOTHING",
+      );
+    }
+
+    // Backfill RETROACTIVO de logros (una sola vez). Otorga a cada usuario los
+    // logros que ya se merece por su historial completo. Idempotente (ON CONFLICT
+    // DO NOTHING), pero se gatea con marcador para no pagar el scan set-based en
+    // cada arranque a escala. Ver src/api/achievements.ts.
+    const achBackfillDone = await client.query(
+      "SELECT 1 FROM app_meta WHERE key = 'achievements_backfilled_v1'",
+    );
+    if (achBackfillDone.rows.length === 0) {
+      await awardAchievements((sql, params) => client.query(sql, params), null);
+      await client.query(
+        "INSERT INTO app_meta (key, value) VALUES ('achievements_backfilled_v1', now()::text) ON CONFLICT (key) DO NOTHING",
       );
     }
 
