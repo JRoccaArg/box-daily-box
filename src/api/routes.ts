@@ -31,6 +31,7 @@ import {
 } from "./badges";
 import { resolveNow, isStagingDebugEnabled } from "./debugDate";
 import { bumpStreakOnWin, displayStreak, toDateKey } from "./streak";
+import { awardAchievements, getAchievementProgress } from "./achievements";
 
 const SESSION_TTL = 15 * 60 * 1000; // 15 minutos
 
@@ -490,6 +491,23 @@ export async function finishChallenge(
     const totalMonth = Number(statsResult.rows[0]?.total_month ?? 0);
     const rank = Number(statsResult.rows[0]?.ahead ?? 0) + 1;
 
+    // Logros: evaluar DESPUÉS del commit del attempt (best-effort). Se hace fuera
+    // de la transacción a propósito: un error otorgando un logro NUNCA debe
+    // romper el finish de una partida. Solo tiene sentido en una victoria nueva
+    // (no en abandono/derrota, ni en duplicado —ya se evaluó en el 1er finish).
+    let newAchievements: string[] = [];
+    if (finalWon && !flagged && !duplicated) {
+      try {
+        const awarded = await awardAchievements(
+          (sql, params) => query(sql, params as any[]),
+          uid,
+        );
+        newAchievements = awarded.map((a) => a.type);
+      } catch (err) {
+        console.error("awardAchievements error (no bloquea el finish):", err);
+      }
+    }
+
     reply.code(200).send({
       won: finalWon,
       points: finalPoints,
@@ -502,6 +520,9 @@ export async function finishChallenge(
       // IP ya jugó este juego hoy: el usuario jugó y ve su resultado, pero no
       // cuenta para el ranking global.
       ranked: session.ranked,
+      // Logros recién desbloqueados por esta partida (para celebración en el
+      // frontend). Vacío si no se ganó ninguno nuevo.
+      newAchievements,
     });
   } catch (err) {
     console.error("finishChallenge error:", err);
@@ -1099,12 +1120,19 @@ export async function getUserBadges(
       };
     });
 
+    // Progreso de logros (obtenidos + faltantes con % y detalle) para la galería.
+    const achievements = await getAchievementProgress(
+      (sql, params) => query(sql, params as any[]),
+      userId,
+    );
+
     reply.code(200).send({
       userId,
       role: (userRow.rows[0].role as string) || "user",
       owned,
       counts,
       featured: (userRow.rows[0].featured_badges as FeaturedSlot[] | null) ?? null,
+      achievements,
     });
   } catch (err) {
     console.error("getUserBadges error:", err);

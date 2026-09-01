@@ -14,7 +14,7 @@
 |--------|--------|--------|
 | 0 | Aislar Modo Carrera de `develop` | ✅ Ya estaba (revertido antes; `develop` limpio) |
 | 1 | Backend — motor de logros | ✅ **Hecho** (commit `48e1c8c`) |
-| 2 | Backend — endpoints + disparo en finish | ⬜ Pendiente |
+| 2 | Backend — endpoints + disparo en finish | ✅ **Hecho** |
 | 3 | Frontend — íconos SVG + prioridad de display | ⬜ Pendiente |
 | 4 | Frontend — badges visibles en ranking | ⬜ Pendiente |
 | 5 | Frontend — sección "Logros" en Mi Progreso | ⬜ Pendiente |
@@ -116,6 +116,36 @@ Cambios (todos idempotentes, estilo de las migraciones existentes):
 
 ---
 
+## 3b. Backend — endpoints y disparo (Bloque 2 — hecho)
+
+Cambios en `src/api/routes.ts` y `src/api/badges.ts`:
+
+- **Disparo en `finishChallenge`:** tras el commit del attempt, si fue victoria
+  nueva (`finalWon && !flagged && !duplicated`), se llama `awardAchievements(q, uid)`
+  **fuera de la transacción** y en `try/catch` (best-effort): un error otorgando
+  un logro NUNCA rompe el finish. Se hace después del `bumpStreakOnWin` (que sí va
+  dentro de la transacción, junto al INSERT del attempt).
+- **`deriveDisplayBadges` extendida** (`badges.ts`): tras el podio, agrega los
+  logros del usuario **del más difícil al más fácil** (orden de `ACHIEVEMENTS`),
+  como badges únicos (×1), respetando `MAX_FEATURED`. Los badges de logros ya
+  viajaban en el batch del ranking (`computeDisplayBadgesForRanking` no filtra por
+  tipo), así que aparecen sin tocar las queries del ranking.
+- **`validateFeaturedSelection` extendida:** acepta destacar logros (únicos, sin
+  agrupar). `FeaturedSlot.type` se ensanchó a `string`.
+
+**Cambios de contrato de la API (para el frontend, Bloques 4-5):**
+
+- `POST /challenges/:gameId/finish` → agrega `newAchievements: string[]` (tipos de
+  logro recién desbloqueados por esa partida, para celebración en el frontend).
+- `GET /user/:userId/badges` → agrega `achievements: AchievementProgress[]`
+  (los 7 logros con `current`, `target`, `percent`, `unlocked`), para la galería.
+- Las filas del ranking (`GET /ranking/daily|monthly`) ya incluían `currentStreak`
+  (para el color del fueguito) y `displayBadges` (ahora con logros).
+
+Verificación: `test-achievements.ts` pasa a **35 asserts** (suma display por
+prioridad y validación de destacados con logros); `test-badges.ts` 30 (podio
+intacto); typecheck 0, lint 0.
+
 ## 4. Prioridad de exhibición (para Bloques 3-4)
 
 Junto al nombre en el ranking, cuando el jugador tiene más badges que el máximo:
@@ -145,10 +175,6 @@ Escalones propuestos (ajustables): 3-6d base · 7-14d ámbar · 15-29d rojo ·
 
 ## 6. Bloques restantes (con modelo de Claude recomendado)
 
-- **2 — Endpoints + disparo (Opus 4.8 / alto):** llamar `awardAchievements(q, userId)`
-  dentro de la transacción de finish (donde ya se llama `bumpStreakOnWin`); endpoint
-  de progreso (`getAchievementProgress`); incluir badges de logros en la respuesta
-  del ranking; ampliar `validateFeaturedSelection`/`deriveDisplayBadges` a `ach_`.
 - **3 — Íconos + prioridad (Sonnet 5 / medio):** formas SVG en `BadgeIcon.tsx`
   (estilo trazo, sin emojis; bocetos en el artifact "Sala de Trofeos"); extender
   `deriveDisplayBadges`.

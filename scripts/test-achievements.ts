@@ -20,6 +20,7 @@ import {
   DAILY_GAME_IDS,
   isAchievementType,
 } from "../src/api/achievements";
+import { deriveDisplayBadges, validateFeaturedSelection } from "../src/api/badges";
 
 let passed = 0;
 let failed = 0;
@@ -241,6 +242,93 @@ async function reset() {
     "wins_100: 25/100 = 25%",
   );
   assert(prog.length === 7 && prog[0].type === ACHIEVEMENTS[0].type, "progreso respeta el orden del catálogo");
+
+  // ─── Display: prioridad podio → logros (difícil→fácil) ────────────
+  console.log("\n[Display de badges con logros]");
+  // Podio SIEMPRE antes que logros: con oro+plata+bronce se llenan los 3 slots.
+  const podioLleno = deriveDisplayBadges(
+    { monthly_gold: 1, monthly_silver: 1, monthly_bronze: 1, ach_legend_50: 1 },
+    "user",
+    null,
+  );
+  assert(
+    podioLleno.length === 3 && podioLleno.every((b) => b.type.startsWith("monthly_")),
+    "podio llena los 3 slots; el logro no entra (podio tiene prioridad)",
+  );
+  // Con 1 podio + varios logros: primero el podio, luego logros difícil→fácil.
+  const mixto = deriveDisplayBadges(
+    { monthly_gold: 2, ach_wins_100: 1, ach_legend_10: 1 },
+    "user",
+    null,
+  );
+  assert(
+    mixto[0].type === "monthly_gold" && mixto[0].count === 2,
+    "primero el oro agrupado (×2)",
+  );
+  assert(
+    mixto[1].type === "ach_legend_10" && mixto[2].type === "ach_wins_100",
+    "luego logros por dificultad: legend_10 (más difícil) antes que wins_100",
+  );
+  // Solo logros (sin podio): se muestran igual, difícil→fácil.
+  const soloLogros = deriveDisplayBadges(
+    { ach_complete: 1, ach_legend_50: 1 },
+    "user",
+    null,
+  );
+  assert(
+    soloLogros[0].type === "ach_legend_50" && soloLogros[1].type === "ach_complete",
+    "sin podio: legend_50 (difícil) antes que complete (fácil)",
+  );
+  // Destacar un logro explícitamente.
+  const featuredAch = deriveDisplayBadges(
+    { ach_wins_100: 1, monthly_gold: 3 },
+    "user",
+    [{ type: "ach_wins_100" }],
+  );
+  assert(
+    featuredAch.length === 1 && featuredAch[0].type === "ach_wins_100",
+    "destacado explícito: muestra solo el logro elegido",
+  );
+  // Defensivo: destacar un logro que no se posee → se descarta.
+  const featuredMissing = deriveDisplayBadges(
+    { monthly_gold: 1 },
+    "user",
+    [{ type: "ach_legend_50" }],
+  );
+  assert(
+    featuredMissing.length === 0,
+    "defensivo: descarta un logro destacado que el usuario no posee",
+  );
+
+  // ─── validateFeaturedSelection con logros ─────────────────────────
+  console.log("\n[Validación de destacados con logros]");
+  const ownAch = { ach_wins_100: 1, monthly_gold: 2 };
+  assert(
+    validateFeaturedSelection([{ type: "ach_wins_100" }], ownAch).ok,
+    "acepta un logro poseído como destacado",
+  );
+  assert(
+    !validateFeaturedSelection([{ type: "ach_wins_100", grouped: true }], ownAch).ok,
+    "rechaza agrupar un logro (los logros son únicos)",
+  );
+  assert(
+    !validateFeaturedSelection([{ type: "ach_legend_50" }], ownAch).ok,
+    "rechaza destacar un logro que no se posee",
+  );
+  assert(
+    !validateFeaturedSelection(
+      [{ type: "ach_wins_100" }, { type: "ach_wins_100" }],
+      ownAch,
+    ).ok,
+    "rechaza destacar el mismo logro dos veces",
+  );
+  assert(
+    validateFeaturedSelection(
+      [{ type: "monthly_gold", grouped: true }, { type: "ach_wins_100" }],
+      ownAch,
+    ).ok,
+    "acepta mezcla válida: podio agrupado + logro",
+  );
 
   // ─── Resultado ────────────────────────────────────────────────────
   console.log(`\n${failed === 0 ? "✅" : "❌"} ${passed} OK, ${failed} fallidos`);
