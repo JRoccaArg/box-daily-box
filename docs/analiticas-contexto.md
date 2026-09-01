@@ -74,7 +74,12 @@ y pasos de verificación, está en:
 
 - [x] **Etapa 0** — Rama `feature/analytics` creada (local, a partir de `develop`) + esta
       documentación. (2026-09-01)
-- [ ] Etapa 1 — Vercel Web Analytics + Speed Insights
+- [x] **Etapa 1** — `@vercel/analytics` y `@vercel/speed-insights` instalados y montados en
+      `src/components/layout/Layout.tsx` (sin cookies, siempre activos, no dependen del banner de
+      consentimiento). Verificado: `typecheck`, `build` (SSG en los 14 idiomas) y `lint` en verde.
+      Falta que el usuario active las pestañas "Analytics" y "Speed Insights" en el dashboard de
+      Vercel (un clic cada una) para que empiecen a mostrar datos tras el próximo deploy. (2026-09-01)
+- [ ] Etapa 2 — Consent Mode v2 + banner de consentimiento
 - [ ] Etapa 2 — Consent Mode v2 + banner de consentimiento
 - [ ] Etapa 3 — GA4 condicionado al consentimiento
 - [ ] Etapa 4 — Eventos de producto
