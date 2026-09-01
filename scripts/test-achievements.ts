@@ -299,6 +299,15 @@ async function reset() {
     featuredMissing.length === 0,
     "defensivo: descarta un logro destacado que el usuario no posee",
   );
+  const manualVacio = deriveDisplayBadges(
+    { monthly_gold: 2, ach_legend_50: 1 },
+    "user",
+    [],
+  );
+  assert(
+    manualVacio.length === 0,
+    "selección manual vacía: no muestra badges (null conserva el modo automático)",
+  );
 
   // ─── validateFeaturedSelection con logros ─────────────────────────
   console.log("\n[Validación de destacados con logros]");

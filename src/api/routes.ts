@@ -32,6 +32,11 @@ import {
 import { resolveNow, isStagingDebugEnabled } from "./debugDate";
 import { bumpStreakOnWin, displayStreak, toDateKey } from "./streak";
 import { awardAchievements, getAchievementProgress } from "./achievements";
+import {
+  DebugAchievementInputError,
+  parseDebugAchievementAction,
+  runDebugAchievementAction,
+} from "./debugAchievements";
 
 const SESSION_TTL = 15 * 60 * 1000; // 15 minutos
 
@@ -1062,6 +1067,47 @@ export async function adminSeedDuels(
   }
 }
 
+// ─── POST /admin/debug-achievements (SOLO STAGING) ──────────────────
+
+/**
+ * Simula logros y racha sobre la cuenta propia. Exige las dos barreras:
+ * STAGING_DEBUG del servidor + identityToken del usuario. Las victorias
+ * sintéticas no rankean y se pueden quitar sin tocar partidas reales.
+ */
+export async function adminDebugAchievements(
+  req: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  if (!isStagingDebugEnabled()) {
+    reply.code(404).send({ error: "No encontrado" });
+    return;
+  }
+  try {
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const userId = typeof body.userId === "string" ? body.userId : undefined;
+    const identityToken = typeof body.identityToken === "string" ? body.identityToken : undefined;
+    if (!requireOwnership(reply, identityToken, userId)) return;
+    const action = parseDebugAchievementAction(body);
+    const todayKey = resolveNow(req).toISOString().slice(0, 10);
+    const state = await transaction((client) =>
+      runDebugAchievementAction(
+        (sql, params) => client.query(sql, params as any[]),
+        userId,
+        action,
+        todayKey,
+      ),
+    );
+    reply.code(200).send({ ok: true, ...state });
+  } catch (err) {
+    if (err instanceof DebugAchievementInputError) {
+      reply.code(422).send({ error: err.message });
+      return;
+    }
+    console.error("adminDebugAchievements error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
 // ─── Badges del usuario ──────────────────────────────────────────────
 
 /** Formatea una columna DATE (o string) a 'YYYY-MM' en hora local. */
@@ -1145,7 +1191,9 @@ export async function getUserBadges(
  *
  * Setea la selección de badges destacados que se muestran inline en el ranking.
  * Autorización anti-IDOR: exige identityToken del propio usuario (ownsIdentity).
- * Body: { featured: FeaturedSlot[], identityToken: string }.
+ * Body: { featured: FeaturedSlot[] | null, identityToken: string }.
+ * `null` restaura la selección automática; `[]` oculta todos los badges
+ * elegibles (el badge de rol, si existe, siempre se muestra aparte).
  */
 export async function setFeaturedBadges(
   req: FastifyRequest,
@@ -1172,6 +1220,17 @@ export async function setFeaturedBadges(
     const exists = await query("SELECT 1 FROM users WHERE id = $1", [userId]);
     if (exists.rows.length === 0) {
       reply.code(404).send({ error: "Usuario no encontrado" });
+      return;
+    }
+
+    // null tiene semántica propia: volver al orden automático. No pasa por la
+    // validación de slots porque no contiene ninguna selección manual.
+    if (featured === null) {
+      await query(
+        "UPDATE users SET featured_badges = NULL WHERE id = $1",
+        [userId],
+      );
+      reply.code(200).send({ userId, featured: null });
       return;
     }
 

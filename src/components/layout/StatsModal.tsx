@@ -8,10 +8,11 @@ import { GlobalRanking } from "./GlobalRanking";
 import { IdentityModal } from "./IdentityModal";
 import { BadgeGallery } from "./BadgeGallery";
 import { FriendsTab } from "./FriendsTab";
+import { AchievementGallery } from "./AchievementGallery";
 import { getIdentity } from "@/lib/identity";
 import { NATIONALITIES } from "@/data/nationalities";
 
-export type StatsView = "personal" | "global" | "friends";
+export type StatsView = "personal" | "global" | "friends" | "achievements";
 
 type StatsModalProps = {
   open: boolean;
@@ -69,7 +70,7 @@ export function StatsModal({ open, onClose, initialView }: StatsModalProps) {
           </button>
         </div>
 
-        {/* Tabs personal/global/amigos */}
+        {/* Tabs personal/global/amigos/logros */}
         <div className="mb-4 flex gap-1 rounded-lg border border-white/10 bg-asphalt-800 p-1">
           <ViewTab active={view === "global"} onClick={() => setView("global")}>
             {t("stats.tab_global")}
@@ -80,10 +81,17 @@ export function StatsModal({ open, onClose, initialView }: StatsModalProps) {
           <ViewTab active={view === "friends"} onClick={() => setView("friends")}>
             {t("friends.tab_title")}
           </ViewTab>
+          <ViewTab
+            active={view === "achievements"}
+            onClick={() => setView("achievements")}
+          >
+            {t("stats.tab_achievements")}
+          </ViewTab>
         </div>
 
         {view === "global" && <GlobalRanking refreshKey={summary.won + summary.lost} />}
         {view === "friends" && <FriendsTab />}
+        {view === "achievements" && <AchievementGallery userId={identity.userId} />}
         {view === "personal" && (
           <>
             <BadgeGallery userId={identity.userId} />
@@ -139,7 +147,7 @@ function ViewTab({
     <button
       onClick={onClick}
       className={[
-        "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+        "min-w-0 flex-1 rounded-md px-1.5 py-1.5 text-[11px] font-medium transition-colors sm:px-3 sm:text-xs",
         active ? "bg-asphalt-600 text-white" : "text-ink-faint hover:text-ink",
       ].join(" ")}
     >

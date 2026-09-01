@@ -29,6 +29,9 @@ export default defineConfig({
   webServer: {
     command: "npm run dev",
     url: "http://localhost:5173",
+    // Las pantallas que consultan la API se prueban con rutas interceptadas.
+    // Esta URL habilita el cliente HTTP sin requerir levantar una API real.
+    env: { ...process.env, VITE_API_URL: "http://localhost:5173/api" },
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,
   },

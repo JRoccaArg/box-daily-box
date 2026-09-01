@@ -10,11 +10,30 @@
 // No usa el sistema de i18n de la app a propósito: es una herramienta interna
 // de QA, no contenido user-facing del producto.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { isStagingBuild, getDebugDateOverride, setDebugDateOverride } from "@/lib/debugDate";
-import { apiSeedBadges, apiGrantSelfBadges, apiCloseDebugMonth, apiSeedDuels } from "@/lib/api";
+import {
+  apiSeedBadges,
+  apiGrantSelfBadges,
+  apiCloseDebugMonth,
+  apiSeedDuels,
+  apiDebugAchievements,
+  type AchievementBadgeType,
+  type DebugAchievementCommand,
+  type DebugAchievementState,
+} from "@/lib/api";
 import { dateKey } from "@/lib/seed";
 import { getIdentity } from "@/lib/identity";
+
+const DEBUG_ACHIEVEMENTS: Array<{ type: AchievementBadgeType; label: string }> = [
+  { type: "ach_legend_50", label: "Maestro de Leyenda — 50 en Leyenda" },
+  { type: "ach_wins_500", label: "500 Vueltas — 500 victorias" },
+  { type: "ach_legend_10", label: "Leyenda Viviente — 10 en Leyenda" },
+  { type: "ach_wins_100", label: "Centurión — 100 victorias" },
+  { type: "ach_specialist_50", label: "Especialista — 50 del mismo juego" },
+  { type: "ach_perfect_day", label: "Gran Premio Perfecto — 8 en un día" },
+  { type: "ach_complete", label: "Piloto Completo — ganar los 8 juegos" },
+];
 
 export function DebugDatePanel() {
   if (!isStagingBuild()) return null;
@@ -26,8 +45,17 @@ function DebugDatePanelInner() {
   const [dateInput, setDateInput] = useState(getDebugDateOverride() ?? "");
   const [seeding, setSeeding] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [selectedAchievement, setSelectedAchievement] =
+    useState<AchievementBadgeType>("ach_legend_10");
+  const [streakInput, setStreakInput] = useState("30");
+  const [debugState, setDebugState] = useState<DebugAchievementState | null>(null);
 
   const active = getDebugDateOverride();
+
+  useEffect(() => {
+    if (!open) return;
+    void runAchievementCommand({ action: "status" }, false);
+  }, [open]);
 
   function applyDate() {
     setDebugDateOverride(dateInput || null);
@@ -104,6 +132,45 @@ function DebugDatePanelInner() {
     );
   }
 
+  async function runAchievementCommand(
+    command: DebugAchievementCommand,
+    showSuccess = true,
+  ) {
+    setSeeding(true);
+    setMessage(null);
+    const { userId } = getIdentity();
+    const res = await apiDebugAchievements(userId, command);
+    setSeeding(false);
+    if (!res) {
+      setMessage("Error: el backend no respondió (¿STAGING_DEBUG=true en Railway?)");
+      return;
+    }
+    if ("error" in res) {
+      setMessage(
+        res.error === "No autorizado"
+          ? "Primero jugá al menos un reto para vincular esta cuenta con el servidor."
+          : `Error: ${res.error}`,
+      );
+      return;
+    }
+    setDebugState(res);
+    setStreakInput(String(res.streak.current));
+    if (!showSuccess) return;
+    if (command.action === "apply") setMessage("Escenario aplicado. Abrí Stats → Logros para comprobarlo.");
+    if (command.action === "remove") setMessage("Escenario retirado y logros recalculados.");
+    if (command.action === "set_streak") setMessage(`Racha simulada en ${res.streak.current} días.`);
+    if (command.action === "reset") setMessage("Logros y racha de debug limpiados; tus datos reales se conservaron.");
+  }
+
+  function setExactStreak() {
+    const streak = Number(streakInput);
+    if (!Number.isInteger(streak) || streak < 0 || streak > 9999) {
+      setMessage("La racha debe ser un número entero entre 0 y 9999.");
+      return;
+    }
+    void runAchievementCommand({ action: "set_streak", streak });
+  }
+
   return (
     <div style={{ position: "fixed", bottom: 12, left: 12, zIndex: 9999 }}>
       {!open && (
@@ -133,7 +200,9 @@ function DebugDatePanelInner() {
             border: "1px solid #7c3aed",
             borderRadius: 10,
             padding: 14,
-            width: 260,
+            width: "min(340px, calc(100vw - 24px))",
+            maxHeight: "calc(100vh - 24px)",
+            overflowY: "auto",
             color: "#e4e4e7",
             fontSize: 12,
             boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
@@ -209,6 +278,98 @@ function DebugDatePanelInner() {
             {seeding ? "..." : "Darme badges (mi cuenta)"}
           </button>
 
+          <hr style={{ border: "none", borderTop: "1px solid #3f3f46", margin: "10px 0" }} />
+
+          <label style={{ display: "block", marginBottom: 4, fontWeight: 700 }}>
+            Logros y racha (mi cuenta)
+          </label>
+          <p style={{ color: "#a1a1aa", marginBottom: 7, fontSize: 10, lineHeight: 1.4 }}>
+            Crea victorias reales de prueba, pero sin puntos ni posición en el ranking.
+            Los logros fáciles pueden desbloquearse junto con uno difícil.
+          </p>
+          <select
+            value={selectedAchievement}
+            onChange={(event) => setSelectedAchievement(event.target.value as AchievementBadgeType)}
+            disabled={seeding}
+            style={{
+              width: "100%",
+              padding: 7,
+              borderRadius: 6,
+              border: "1px solid #3f3f46",
+              background: "#27272a",
+              color: "white",
+              marginBottom: 6,
+              fontSize: 11,
+            }}
+          >
+            {DEBUG_ACHIEVEMENTS.map((item) => (
+              <option key={item.type} value={item.type}>
+                {debugState?.activeScenarios.includes(item.type) ? "✓ " : ""}{item.label}
+              </option>
+            ))}
+          </select>
+          <div style={{ display: "flex", gap: 6, marginBottom: 9 }}>
+            <button
+              type="button"
+              disabled={seeding}
+              onClick={() => void runAchievementCommand({ action: "apply", achievementType: selectedAchievement })}
+              style={btnStyle("#16a34a")}
+            >
+              {seeding ? "..." : "Aplicar escenario"}
+            </button>
+            <button
+              type="button"
+              disabled={seeding || !debugState?.activeScenarios.includes(selectedAchievement)}
+              onClick={() => void runAchievementCommand({ action: "remove", achievementType: selectedAchievement })}
+              style={btnStyle("#a16207")}
+            >
+              Quitar escenario
+            </button>
+          </div>
+
+          <label htmlFor="debug-streak" style={{ display: "block", marginBottom: 4 }}>
+            Racha exacta (0–9999 días)
+          </label>
+          <div style={{ display: "flex", gap: 6, marginBottom: 7 }}>
+            <input
+              id="debug-streak"
+              type="number"
+              min={0}
+              max={9999}
+              step={1}
+              value={streakInput}
+              disabled={seeding}
+              onChange={(event) => setStreakInput(event.target.value)}
+              style={{
+                width: 92,
+                padding: 6,
+                borderRadius: 6,
+                border: "1px solid #3f3f46",
+                background: "#27272a",
+                color: "white",
+              }}
+            />
+            <button type="button" disabled={seeding} onClick={setExactStreak} style={btnStyle("#7c3aed")}>
+              Simular racha
+            </button>
+          </div>
+          {debugState && (
+            <p style={{ color: "#a1a1aa", marginBottom: 7, fontSize: 10 }}>
+              Activos: {debugState.activeScenarios.length} escenarios · Racha mostrada: {debugState.streak.current}
+            </p>
+          )}
+          <button
+            type="button"
+            disabled={seeding}
+            onClick={() => void runAchievementCommand({ action: "reset" })}
+            style={{ ...btnStyle("#dc2626"), width: "100%" }}
+          >
+            {seeding ? "..." : "Limpiar logros y racha de debug"}
+          </button>
+          <p style={{ color: "#71717a", marginTop: 5, marginBottom: 0, fontSize: 10, lineHeight: 1.4 }}>
+            Limpia solo las victorias creadas aquí y reconstruye tus logros y racha reales.
+          </p>
+
           <hr style={{ border: "none", borderTop: "1px solid #3f3f46", margin: "8px 0" }} />
 
           <label style={{ display: "block", marginBottom: 4 }}>Datos de prueba (amigos/duelos)</label>
@@ -238,6 +399,7 @@ function btnStyle(bg: string): React.CSSProperties {
     fontSize: 11,
     fontWeight: 600,
     cursor: "pointer",
+    opacity: 1,
     touchAction: "manipulation",
   };
 }

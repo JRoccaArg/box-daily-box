@@ -31,11 +31,22 @@ type FinishResponse = {
   ranked?: boolean;
 };
 
-/** Tipos de badge. Los monthly_* se ganan; admin/superadmin derivan del rol. */
+/** Logros que se guardan como badges únicos (no pertenecen a un mes). */
+export type AchievementBadgeType =
+  | "ach_legend_50"
+  | "ach_wins_500"
+  | "ach_legend_10"
+  | "ach_wins_100"
+  | "ach_specialist_50"
+  | "ach_perfect_day"
+  | "ach_complete";
+
+/** Tipos de badge. Los monthly_* y ach_* se ganan; admin/superadmin derivan del rol. */
 export type BadgeType =
   | "monthly_gold"
   | "monthly_silver"
   | "monthly_bronze"
+  | AchievementBadgeType
   | "admin"
   | "superadmin";
 
@@ -363,9 +374,9 @@ export async function apiGetUserRank(
 // ─── Badges ─────────────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════
 
-/** Un slot de la selección de destacados (solo badges mensuales son elegibles). */
+/** Un slot de la selección de destacados (podio y logros son elegibles). */
 export type FeaturedSlot = {
-  type: "monthly_gold" | "monthly_silver" | "monthly_bronze";
+  type: Exclude<BadgeType, "admin" | "superadmin">;
   grouped?: boolean;
 };
 
@@ -383,6 +394,16 @@ export type UserBadges = {
   owned: OwnedBadge[];
   counts: Record<string, number>;
   featured: FeaturedSlot[] | null;
+  achievements: AchievementProgress[];
+};
+
+export type AchievementProgress = {
+  type: AchievementBadgeType;
+  current: number;
+  rawCurrent: number;
+  target: number;
+  percent: number;
+  unlocked: boolean;
 };
 
 /** GET /user/:userId/badges — colección pública de badges de un usuario. */
@@ -758,4 +779,56 @@ export { isErr as isApiError };
 export function friendlyApiError(error: string, t: (key: string) => string): string {
   if (error === "No autorizado") return t("friends.need_to_play");
   return t("duel.error_generic");
+}
+
+export type DebugAchievementState = {
+  activeScenarios: AchievementBadgeType[];
+  streak: { current: number; best: number; lastWinDate: string | null };
+  achievements: AchievementProgress[];
+};
+
+export type DebugAchievementCommand =
+  | { action: "status" }
+  | { action: "apply" | "remove"; achievementType: AchievementBadgeType }
+  | { action: "set_streak"; streak: number }
+  | { action: "reset" };
+
+/** Controles persistentes de logros/racha, disponibles solo en staging. */
+export async function apiDebugAchievements(
+  userId: string,
+  command: DebugAchievementCommand,
+): Promise<({ ok: true } & DebugAchievementState) | { error: string } | null> {
+  return apiFetch<({ ok: true } & DebugAchievementState) | { error: string }>(
+    "/admin/debug-achievements",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        userId,
+        identityToken: getIdentityToken(),
+        ...command,
+      }),
+    },
+    15_000,
+    true,
+  );
+}
+
+/** Vuelve al modo automático: podio primero y luego logros por dificultad. */
+export async function apiResetFeaturedBadges(
+  userId: string,
+  identityToken?: string | null,
+): Promise<{ userId: string; featured: null } | { error: string } | null> {
+  const token = identityToken ?? getIdentityToken();
+  return apiFetch<{ userId: string; featured: null } | { error: string }>(
+    `/user/${encodeURIComponent(userId)}/badges/featured`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        featured: null,
+        ...(token ? { identityToken: token } : {}),
+      }),
+    },
+    8000,
+    true,
+  );
 }

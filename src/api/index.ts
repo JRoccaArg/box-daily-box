@@ -35,6 +35,7 @@ import {
   adminGrantBadges,
   adminCloseDebugMonth,
   adminSeedDuels,
+  adminDebugAchievements,
   createDuel,
   acceptDuel,
   declineDuel,
@@ -324,6 +325,16 @@ async function start(): Promise<void> {
       config: { rateLimit: { max: 5, timeWindow: "1 minute" } },
     },
     adminSeedDuels as any,
+  );
+
+  // Escenarios realistas de logros + racha exacta para la cuenta propia.
+  app.post(
+    "/admin/debug-achievements",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+    },
+    adminDebugAchievements as any,
   );
 
   // ─── Amigos y Duelos (Roadmap §4) ─────────────────────────────────

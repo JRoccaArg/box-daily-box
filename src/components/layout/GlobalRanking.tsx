@@ -17,6 +17,7 @@ import { Trophy, Flame, UserPlus, Timer as ClockIcon, Users } from "@/components
 import { BadgeIcon } from "@/components/ui/BadgeIcon";
 import { getEffectiveNow } from "@/lib/debugDate";
 import { formatBadgeTooltip } from "@/lib/badgeFormat";
+import { getStreakVisual } from "@/lib/streakVisual";
 import { showToast } from "@/lib/toast";
 import { emit, on, Events } from "@/lib/events";
 
@@ -262,10 +263,13 @@ export function GlobalRanking({ refreshKey }: { refreshKey?: number }) {
                       )}
                       {entry.currentStreak >= 2 && (
                         <span
-                          className="flex shrink-0 items-center gap-0.5 text-sector-yellow"
+                          className={[
+                            "flex shrink-0 items-center gap-0.5",
+                            getStreakVisual(entry.currentStreak).textClass,
+                          ].join(" ")}
                           title={t("ranking.streak_title", { count: entry.currentStreak })}
                         >
-                          <Flame size={13} />
+                          <Flame size={13} className={getStreakVisual(entry.currentStreak).flameClass} />
                           <span className="text-[11px] font-semibold tnum">
                             {entry.currentStreak}
                           </span>

@@ -15,12 +15,12 @@
 | 0 | Aislar Modo Carrera de `develop` | ✅ Ya estaba (revertido antes; `develop` limpio) |
 | 1 | Backend — motor de logros | ✅ **Hecho** (commit `48e1c8c`) |
 | 2 | Backend — endpoints + disparo en finish | ✅ **Hecho** |
-| 3 | Frontend — íconos SVG + prioridad de display | ⬜ Pendiente |
-| 4 | Frontend — badges visibles en ranking | ⬜ Pendiente |
-| 5 | Frontend — sección "Logros" en Mi Progreso | ⬜ Pendiente |
-| 6 | Frontend — fueguito por color (home) | ⬜ Pendiente |
-| 7 | Debug tool (staging) para probar | ⬜ Pendiente |
-| 8 | i18n (14 idiomas) + tests visuales | ⬜ Pendiente |
+| 3 | Frontend — íconos SVG + prioridad de display | ✅ Hecho |
+| 4 | Frontend — badges visibles en ranking | ✅ Hecho |
+| 5 | Frontend — sección "Logros" en Mi Progreso | ✅ Hecho |
+| 6 | Frontend — fueguito por color (home) | ✅ Hecho |
+| 7 | Debug tool (staging) para probar | ✅ Hecho |
+| 8 | i18n (14 idiomas) + tests visuales | ✅ Hecho |
 
 **Dónde se trabaja:** rama `feature/logros`. Por convivencia con otras sesiones
 de Claude en la misma carpeta, se usa un **worktree aislado**:
@@ -163,30 +163,95 @@ hay que **ampliarla para aceptar badges `ach_`**, no solo `monthly_*`.
 
 ## 5. Fueguito de racha por color (Bloque 6)
 
-**El backend ya está**: `src/api/streak.ts` calcula y cachea la racha de cada
-usuario (`users.current_streak` / `last_win_date`, con "death-check" al leer) y
-el ranking ya la expone. Falta SOLO frontend: una función `racha → color`
+El backend calcula y cachea la racha en `src/api/streak.ts`
+(`users.current_streak` / `last_win_date`, con comprobación de vigencia al leer)
+y el ranking ya la expone. El frontend usa una única función `racha → color`
 compartida por home (`Header.tsx`, `StatsModal.tsx`) y ranking (`GlobalRanking.tsx`).
 
-Escalones propuestos (ajustables): 3-6d base · 7-14d ámbar · 15-29d rojo ·
-30-59d azul · 60-99d violeta · 100+d dorado ("más caliente = racha más larga").
+Escalones confirmados: **1-6d amarillo** · **7-14d ámbar** · **15-29d rojo** ·
+**30-59d azul** · **60-99d violeta** · **100+d dorado**. Se aplican de forma
+idéntica en la cabecera, el progreso mensual y el ranking. En violeta y dorado
+el SVG de la llama tiene una oscilación muy leve; se desactiva automáticamente
+si la persona configuró su dispositivo para reducir movimiento.
 
 ---
 
-## 6. Bloques restantes (con modelo de Claude recomendado)
+## 6. Bloques restantes (modelos recomendados)
 
-- **3 — Íconos + prioridad (Sonnet 5 / medio):** formas SVG en `BadgeIcon.tsx`
+### Bloque 7 — herramienta de debug implementada
+
+El panel flotante que ya simulaba la fecha ahora incluye controles de **Logros
+y racha (mi cuenta)**:
+
+- Selector con los 7 escenarios reales: genera intentos ganados suficientes
+  para cumplir el logro elegido. Si ese progreso también merece logros más
+  fáciles, se desbloquean igual que en una partida normal.
+- `Aplicar escenario` y `Quitar escenario`. Los escenarios quedan persistidos
+  en la DB de staging hasta retirarlos o limpiar todo.
+- Campo numérico para fijar la racha exacta entre 0 y 9999 días, útil para
+  comprobar cada color y la animación violeta/dorada del Bloque 6.
+- `Limpiar logros y racha de debug`: elimina solo los intentos sintéticos y
+  reconstruye logros/racha desde las partidas reales, que no se borran.
+
+Seguridad y aislamiento:
+
+- Frontend oculto salvo `VITE_STAGING=true` y endpoint inaccesible salvo
+  `STAGING_DEBUG=true`.
+- El endpoint exige además el `identityToken` de la cuenta actual: no permite
+  modificar otro `userId` desde el panel.
+- Los intentos sintéticos llevan una marca `__debug_achievement__:*`, tienen
+  `ranked=false`, cero puntos y fechas históricas reservadas. Alimentan las
+  métricas personales de logros pero no alteran rankings diarios/mensuales.
+- Endpoint: `POST /admin/debug-achievements`; acciones `status`, `apply`,
+  `remove`, `set_streak` y `reset`.
+- Prueba PGlite: `scripts/test-debug-achievements.ts` cubre persistencia,
+  escenarios acumulativos, eliminación selectiva, racha exacta y limpieza
+  conservando partidas reales.
+
+La columna de Claude conserva la recomendación original. Para Codex recomiendo
+`gpt-5.6-sol` en tareas con bastante razonamiento sobre arquitectura, contratos
+o varias partes del sistema; `gpt-5.6-terra` para implementación equilibrada; y
+`gpt-5.6-luna` para cambios pequeños y bien delimitados. El nivel indicado es
+el parámetro de razonamiento de Codex (`low`, `medium`, `high`, etc.).
+
+| Bloque | Trabajo | Claude Code | Codex | Razonamiento Codex |
+|---|---|---|---|---|
+| 3 | Íconos + prioridad | Sonnet 5 / medio | gpt-5.6-terra | medium |
+| 4 | Badges en ranking | Sonnet 5 / medio | gpt-5.6-terra | medium |
+| 5 | Galería “Logros” | Sonnet 5 / medio-alto | gpt-5.6-sol | high |
+| 6 | Fueguito por color | Sonnet 5 / bajo | gpt-5.6-luna | low |
+| 7 | Debug tool de staging | Sonnet 5 / medio | gpt-5.6-sol | high |
+| 8a | Traducciones i18n | Haiku 4.5 | gpt-5.6-luna | low |
+| 8b | Tests y snapshots | Sonnet 5 | gpt-5.6-terra | high |
+
+Motivo de las elecciones: el bloque 5 debe coordinar API, estados bloqueados,
+progreso y UI; el 7 toca herramientas de prueba y gates de staging, por lo que
+conviene una revisión más cuidadosa; el 6 y las traducciones son tareas acotadas.
+En el bloque 8 separo traducción de tests: son trabajos distintos y se pueden
+validar con criterios diferentes.
+
+- **3 — Íconos + prioridad (Sonnet 5 / medio; gpt-5.6-terra / medium):** formas SVG en `BadgeIcon.tsx`
   (estilo trazo, sin emojis; bocetos en el artifact "Sala de Trofeos"); extender
   `deriveDisplayBadges`.
-- **4 — Badges en ranking (Sonnet 5 / medio):** renderizar badges por fila en
+- **4 — Badges en ranking (Sonnet 5 / medio; gpt-5.6-terra / medium):** renderizar badges por fila en
   `GlobalRanking.tsx` con tooltip (`formatBadgeTooltip`).
-- **5 — Galería "Logros" (Sonnet 5 / medio-alto):** pestaña en `StatsModal.tsx`
+- **5 — Galería "Logros" (Sonnet 5 / medio-alto; gpt-5.6-sol / high):** pestaña en `StatsModal.tsx`
   (junto a "Ranking Global"/"Mi Progreso") con obtenidos vs bloqueados + barra de %.
-- **6 — Fueguito por color (Sonnet 5 / bajo):** §5.
-- **7 — Debug tool staging (Sonnet 5 / medio):** al estilo de `debugDate.ts`
+- **6 — Fueguito por color (Sonnet 5 / bajo; gpt-5.6-luna / low):** §5.
+- **7 — Debug tool staging (Sonnet 5 / medio; gpt-5.6-sol / high):** al estilo de `debugDate.ts`
   (gate `VITE_STAGING`/`STAGING_DEBUG`): otorgar/quitar logro, simular racha/victorias.
-- **8 — i18n + tests (Haiku 4.5 traducciones / Sonnet 5 tests):** claves de nombre,
+- **8 — i18n + tests (Haiku 4.5 traducciones / Sonnet 5 tests; gpt-5.6-luna / low para traducciones y gpt-5.6-terra / high para tests):** claves de nombre,
   descripción y tooltip de cada logro en los 14 idiomas; snapshots visuales.
+
+### Bloque 8 completado
+
+- Las 14 traducciones incluyen los nombres, tooltips y textos de la galería.
+- `scripts/test-achievement-i18n.ts` verifica que esos textos existan y que las
+  variables como `{{count}}`, `{{total}}` y `{{name}}` coincidan con inglés.
+- `tests/visual/achievements.spec.ts` comprueba el flujo de selección y conserva
+  tres capturas de la galería: escritorio, móvil y móvil angosto.
+- La documentación de contexto, decisiones y arquitectura está enlazada como
+  [[contexto]], [[decisiones]] y [[arquitectura]].
 
 ---
 

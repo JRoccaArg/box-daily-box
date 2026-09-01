@@ -13,6 +13,7 @@ import { homePath } from "@/lib/routes";
 import { useMounted } from "@/lib/useMounted";
 import { getEffectiveNow } from "@/lib/debugDate";
 import { usePendingFriendRequestsCount } from "@/lib/friendsPolling";
+import { getStreakVisual } from "@/lib/streakVisual";
 import type { Locale } from "@/i18n";
 import type { StatsView } from "./StatsModal";
 
@@ -66,6 +67,7 @@ export function Header() {
   // visita real: se muestra solo tras montar para no generar mismatch de
   // hidratación (el HTML prerenderizado no incluye esta fecha).
   const mounted = useMounted();
+  const streakVisual = getStreakVisual(summary.currentStreak);
 
   // Escuchar el evento global para abrir el modal de stats desde cualquier
   // lugar de la app (ej: botón "Ver ranking del día" del modal de resultado).
@@ -101,10 +103,13 @@ export function Header() {
 
           {summary.currentStreak > 0 && (
             <span
-              className="inline-flex items-center gap-1 rounded-full border border-sector-yellow/30 bg-sector-yellow/10 px-2.5 py-1 font-mono text-xs font-semibold text-sector-yellow"
+              className={[
+                "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 font-mono text-xs font-semibold",
+                streakVisual.chipClass,
+              ].join(" ")}
               title={t("header.streak_title", { count: summary.currentStreak })}
             >
-              <Flame size={13} />
+              <Flame size={13} className={streakVisual.flameClass} />
               {summary.currentStreak}
             </span>
           )}

@@ -198,7 +198,9 @@ export function deriveDisplayBadges(
 
   const roomLeft = () => out.length - baseAdminCount(role) < MAX_FEATURED;
 
-  if (!featured || !Array.isArray(featured) || featured.length === 0) {
+  // null = modo automático. Un array vacío es una elección manual válida:
+  // el usuario decidió no mostrar ningún badge (admin/superadmin sigue aparte).
+  if (featured === null || !Array.isArray(featured)) {
     // Default por PRIORIDAD:
     //  1) Podio por jerarquía (oro → plata → bronce), agrupado con su contador.
     for (const type of BADGE_HIERARCHY) {
@@ -213,6 +215,8 @@ export function deriveDisplayBadges(
     }
     return out;
   }
+
+  if (featured.length === 0) return out;
 
   // Selección explícita: respetar orden, validar propiedad y capacidad.
   const individualUsed: Record<string, number> = {};
