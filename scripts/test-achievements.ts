@@ -20,7 +20,11 @@ import {
   DAILY_GAME_IDS,
   isAchievementType,
 } from "../src/api/achievements";
-import { deriveDisplayBadges, validateFeaturedSelection } from "../src/api/badges";
+import {
+  deriveDisplayBadges,
+  normalizeReferenceMonths,
+  validateFeaturedSelection,
+} from "../src/api/badges";
 
 let passed = 0;
 let failed = 0;
@@ -337,6 +341,45 @@ async function reset() {
       ownAch,
     ).ok,
     "acepta mezcla válida: podio agrupado + logro",
+  );
+
+  // ─── Regresión: logros sin reference_month no rompen el ranking ───
+  console.log("\n[Regresión: meses nulos en badges de logros]");
+  await reset();
+  await db.query(
+    `INSERT INTO badges (user_id, badge_type, reference_month)
+     VALUES ($1, 'monthly_gold', '2026-08-01'::date),
+            ($1, 'ach_wins_100', NULL)`,
+    [U1],
+  );
+  const aggregated = await db.query(
+    `SELECT badge_type,
+            COALESCE(
+              array_agg(reference_month::text ORDER BY reference_month DESC)
+                FILTER (WHERE reference_month IS NOT NULL),
+              ARRAY[]::text[]
+            ) AS months
+       FROM badges
+      WHERE user_id = $1
+      GROUP BY badge_type
+      ORDER BY badge_type`,
+    [U1],
+  );
+  const monthRows = aggregated.rows as Array<{ badge_type: string; months: unknown }>;
+  const achievementMonths = normalizeReferenceMonths(
+    monthRows.find((row) => row.badge_type === "ach_wins_100")?.months,
+  );
+  const podiumMonths = normalizeReferenceMonths(
+    monthRows.find((row) => row.badge_type === "monthly_gold")?.months,
+  );
+  assert(achievementMonths.length === 0, "un logro con mes NULL produce una lista vacía");
+  assert(
+    podiumMonths.length === 1 && podiumMonths[0] === "2026-08",
+    "un badge mensual conserva el mes para su tooltip",
+  );
+  assert(
+    normalizeReferenceMonths([null, "2026-07-01", 123]).join(",") === "2026-07",
+    "la normalización defensiva ignora valores nulos o inesperados",
   );
 
   // ─── Resultado ────────────────────────────────────────────────────

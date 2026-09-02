@@ -24,6 +24,7 @@ import {
   awardMonthlyPodium,
   MonthNotClosedError,
   deriveDisplayBadges,
+  normalizeReferenceMonths,
   validateFeaturedSelection,
   previousMonthKey,
   type DisplayBadge,
@@ -552,7 +553,11 @@ async function computeDisplayBadgesForRanking(
   const userIds = entries.map((e) => e.userId);
   const res = await query(
     `SELECT user_id, badge_type, COUNT(*)::int AS c,
-            array_agg(reference_month::text ORDER BY reference_month DESC) AS months
+            COALESCE(
+              array_agg(reference_month::text ORDER BY reference_month DESC)
+                FILTER (WHERE reference_month IS NOT NULL),
+              ARRAY[]::text[]
+            ) AS months
        FROM badges
       WHERE user_id = ANY($1::text[])
       GROUP BY user_id, badge_type`,
@@ -565,15 +570,15 @@ async function computeDisplayBadgesForRanking(
     user_id: string;
     badge_type: string;
     c: number;
-    months: string[];
+    months: unknown;
   }>) {
     const rec = counts.get(r.user_id) ?? {};
     rec[r.badge_type] = Number(r.c);
     counts.set(r.user_id, rec);
 
     const monthsRec = monthsByUser.get(r.user_id) ?? {};
-    // reference_month es DATE ('YYYY-MM-01T...'); nos quedamos con 'YYYY-MM'.
-    monthsRec[r.badge_type] = r.months.map((m) => m.substring(0, 7));
+    // Los logros no tienen reference_month; solo los podios alimentan el tooltip.
+    monthsRec[r.badge_type] = normalizeReferenceMonths(r.months);
     monthsByUser.set(r.user_id, monthsRec);
   }
 

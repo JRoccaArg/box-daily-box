@@ -13,6 +13,12 @@ Box Daily Box es una plataforma de minijuegos diarios de Fórmula 1. La rama `fe
 
 El sistema de logros v1 está completo en esta rama. Incluye siete logros, selección manual o automática de hasta tres badges, colores de racha, una herramienta de prueba exclusiva de staging y pruebas automatizadas.
 
+## Incidente de staging del 1 de septiembre de 2026
+
+El backend seguía arrancando y conectándose a PostgreSQL, pero los rankings con datos devolvían 500 después de habilitar los logros. La migración hizo nullable `badges.reference_month` porque los logros no pertenecen a un mes; la agregación del ranking seguía tratándolo siempre como texto y llamaba `substring` sobre `NULL`.
+
+La corrección filtra los meses nulos en PostgreSQL y vuelve defensiva la normalización en TypeScript. Una prueba de regresión mezcla un badge mensual con un logro sin mes. No requiere borrar datos, revertir la migración ni modificar `main`.
+
 La especificación funcional está en [[backend-logros]]. Las decisiones que explican el alcance están en [[decisiones]]. La estructura técnica está en [[arquitectura]].
 
 ## Alcance de logros v1

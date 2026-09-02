@@ -170,6 +170,18 @@ export type DisplayBadge = { type: string; count: number; months?: string[] };
 export type FeaturedSlot = { type: string; grouped?: boolean };
 
 /**
+ * Normaliza las fechas agregadas de badges para el tooltip del ranking.
+ * Los logros guardan `reference_month = NULL`, por lo que esta frontera debe
+ * ignorar nulos y cualquier valor inesperado aunque la consulta SQL ya los filtre.
+ */
+export function normalizeReferenceMonths(months: unknown): string[] {
+  if (!Array.isArray(months)) return [];
+  return months
+    .filter((month): month is string => typeof month === "string")
+    .map((month) => month.substring(0, 7));
+}
+
+/**
  * Deriva los badges a mostrar inline junto al nombre en el ranking.
  *
  *  - admin/superadmin (derivado de `role`) va SIEMPRE primero y NO cuenta contra
