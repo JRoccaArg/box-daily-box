@@ -105,6 +105,13 @@ const sl: Translations = {
   "footer.info": "Kako igrati",
   "footer.contact": "Kontakt",
   "footer.support": "Podpri projekt",
+
+  "consent.title": "Zasebnost in piškotki",
+  "consent.message": "Uporabljamo analitiko, da razumemo, kako poteka igra, in izboljšamo spletno mesto. Lahko jo sprejmete ali zavrnete.",
+  "consent.accept": "Sprejmi",
+  "consent.reject": "Zavrni",
+  "consent.manage": "Upravljanje piškotkov",
+
   "support.title": "Podpri projekt",
   "support.body": "Box Daily Box je in bo ostal brezplačen. Če ti je všeč, lahko pustiš prostovoljni prispevek — ta ne prinaša nobene prednosti v igri, je le način za podporo projektu.",
   "support.disclaimer": "Ne daje dostopa do ekskluzivne vsebine, dodatnih poskusov ali prednostne uvrstitve.",

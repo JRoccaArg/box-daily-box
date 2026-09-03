@@ -105,6 +105,13 @@ const tr: Translations = {
   "footer.info": "Nasıl oynanır",
   "footer.contact": "İletişim",
   "footer.support": "Projeyi destekle",
+
+  "consent.title": "Gizlilik ve çerezler",
+  "consent.message": "Nasıl oynandığını anlamak ve siteyi geliştirmek için analiz araçları kullanıyoruz. Kabul edebilir veya reddedebilirsiniz.",
+  "consent.accept": "Kabul et",
+  "consent.reject": "Reddet",
+  "consent.manage": "Çerezleri yönet",
+
   "support.title": "Projeyi destekle",
   "support.body": "Box Daily Box ücretsizdi ve ücretsiz kalacak. Beğendiysen gönüllü bir katkı bırakabilirsin — bu, oyun içinde herhangi bir avantaj sağlamaz, sadece projeye destek olmanın bir yoludur.",
   "support.disclaimer": "Özel içeriğe, ekstra denemeye ya da öncelikli sıralamaya erişim sağlamaz.",

@@ -94,6 +94,13 @@ const ja: Translations = {
   "footer.info": "遊び方",
   "footer.contact": "お問い合わせ",
   "footer.support": "プロジェクトを支援する",
+
+  "consent.title": "プライバシーと Cookie",
+  "consent.message": "ゲームの遊ばれ方を把握しサイトを改善するために分析ツールを使用します。同意するか拒否するかを選べます。",
+  "consent.accept": "同意する",
+  "consent.reject": "拒否する",
+  "consent.manage": "Cookie を管理",
+
   "support.title": "プロジェクトを支援する",
   "support.body": "Box Daily Boxは今も、これからも無料です。気に入ったら、自由意志で寄付をすることができます——ゲーム内で有利になることはなく、プロジェクトを支える一つの方法です。",
   "support.disclaimer": "限定コンテンツ、追加のチャレンジ回数、優先ランキングは付与されません。",

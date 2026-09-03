@@ -7,6 +7,7 @@
 import { Link } from "react-router-dom";
 import { useI18n } from "@/context";
 import { termsPath, privacyPath, infoPath, contactPath, homePath } from "@/lib/routes";
+import { reopenConsent } from "@/lib/consent";
 
 export function Footer() {
   const { t, locale } = useI18n();
@@ -51,6 +52,16 @@ export function Footer() {
           >
             {t("footer.support")}
           </Link>
+          {/* Reabre el cartel de consentimiento para cambiar la eleccion. Es un
+              boton (accion en la pagina), no una ruta; se estiliza igual que
+              los links para que la barra se vea uniforme. */}
+          <button
+            type="button"
+            onClick={reopenConsent}
+            className="text-ink-faint underline-offset-2 transition-colors hover:text-ink hover:underline"
+          >
+            {t("consent.manage")}
+          </button>
         </nav>
       </div>
     </footer>
