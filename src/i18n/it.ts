@@ -100,6 +100,13 @@ const it: Translations = {
   "footer.info": "Come si gioca",
   "footer.contact": "Contatti",
   "footer.support": "Sostieni il progetto",
+
+  "consent.title": "Privacy e cookie",
+  "consent.message": "Usiamo strumenti di analisi per capire come si gioca e migliorare il sito. Puoi accettarli o rifiutarli.",
+  "consent.accept": "Accetta",
+  "consent.reject": "Rifiuta",
+  "consent.manage": "Gestisci i cookie",
+
   "support.title": "Sostieni il progetto",
   "support.body": "Box Daily Box è e resterà gratuito. Se ti piace, puoi lasciare un contributo volontario — non dà alcun vantaggio nel gioco, è solo un modo per sostenere il progetto.",
   "support.disclaimer": "Non dà accesso a contenuti esclusivi, tentativi extra o classifiche preferenziali.",

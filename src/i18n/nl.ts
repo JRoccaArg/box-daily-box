@@ -67,6 +67,13 @@ const nl: Translations = {
   "footer.info": "Hoe te spelen",
   "footer.contact": "Contact",
   "footer.support": "Project steunen",
+
+  "consent.title": "Privacy en cookies",
+  "consent.message": "We gebruiken analyse om te begrijpen hoe er gespeeld wordt en de site te verbeteren. Je kunt dit accepteren of weigeren.",
+  "consent.accept": "Accepteren",
+  "consent.reject": "Weigeren",
+  "consent.manage": "Cookies beheren",
+
   "support.title": "Project steunen",
   "support.body": "Box Daily Box is en blijft gratis. Als je het leuk vindt, kun je een vrijwillige bijdrage achterlaten — dat geeft geen enkel voordeel in het spel, het is gewoon een manier om het project te steunen.",
   "support.disclaimer": "Het geeft geen toegang tot exclusieve content, extra pogingen of voorkeursranking.",

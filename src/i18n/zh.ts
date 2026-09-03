@@ -94,6 +94,13 @@ const zh: Translations = {
   "footer.info": "游戏玩法",
   "footer.contact": "联系我们",
   "footer.support": "支持本项目",
+
+  "consent.title": "隐私与 Cookie",
+  "consent.message": "我们使用分析工具来了解游戏的使用情况并改进网站。您可以接受或拒绝。",
+  "consent.accept": "接受",
+  "consent.reject": "拒绝",
+  "consent.manage": "管理 Cookie",
+
   "support.title": "支持本项目",
   "support.body": "Box Daily Box 现在免费，以后也将一直免费。如果你喜欢，可以自愿捐助——这不会给你在游戏中带来任何优势，只是支持项目的一种方式。",
   "support.disclaimer": "不提供专属内容、额外尝试次数或优先排名。",
