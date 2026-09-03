@@ -8,6 +8,30 @@
 
 ---
 
+## ✅ INTEGRADO EN `develop` (2026-09-03)
+
+Los 9 bloques (0-8) están completos y **fusionados en `develop`** (commit
+`8b28f87`, push a origin), junto con la iniciativa paralela de analíticas
+(GA4 + banner de consentimiento RGPD) que se desarrolló en simultáneo en otra
+sesión. El trabajo venía repartido en dos ramas divergentes
+(`feature/logros` con el sistema completo de logros, `develop` con analíticas)
+y se reconciliaron sin conflictos de merge.
+
+**Antes de fusionar se corrigió un bug real** encontrado en una rama suelta sin
+integrar (`fix/staging-null-badge-months`, commit `31dbb0d`): el ranking podía
+romperse (500) al calcular el tooltip de un usuario con badges de logro, porque
+`reference_month` es `NULL` para logros y el código asumía que siempre era
+string. Arreglado con `normalizeReferenceMonths()` en `badges.ts` antes de
+fusionar a `develop` — sin este fix, `develop` habría quedado con el crash
+latente en cuanto alguien ganara un logro.
+
+**Verificación post-integración** (worktree `box-daily-box-logros`, con
+`npm install` para traer las dependencias nuevas de analíticas):
+typecheck 0, lint 0, **toda la suite de tests** (~30 scripts, miles de asserts,
+incluidos los 7 tests propios de logros) en verde, y `npm run build` completo
+(14 idiomas, SSG) exit 0. No se corrió `test:visual` (Playwright, pesado) por
+no ser necesario para validar la integración de lógica.
+
 ## 🔍 AUDITORÍA DE SEGURIDAD Y ROBUSTEZ (2026-09-03)
 
 Auditoría manual pre-staging del sistema de logros/badges completo: revisión de
