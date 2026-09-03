@@ -39,7 +39,7 @@ export function ConsentBanner() {
       className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-asphalt-800/95 backdrop-blur-sm animate-rise"
     >
       <div className="mx-auto flex max-w-4xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:gap-5 sm:py-3.5">
-        <p className="flex-1 text-xs leading-relaxed text-ink-faint sm:text-[13px]">
+        <p className="flex-1 text-xs leading-relaxed text-ink sm:text-[13px]">
           {t("consent.message")}{" "}
           <Link
             to={privacyPath(locale)}
