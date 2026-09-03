@@ -121,6 +121,24 @@ function CompleteShield(p: ShapeProps) {
   );
 }
 
+/**
+ * Círculo simple — fallback para un `type` que no está en `SHAPE`/`COLOR`.
+ * Alcanzable en la práctica (no es solo teórico): los badges son solo-agrega
+ * y nunca se revocan, así que un despliegue escalonado (backend con un logro
+ * nuevo, frontend todavía viejo) o un rollback del backend después de que
+ * alguien ya ganó un logro retirado puede dejar en la DB un badge_type que
+ * este bundle no reconoce. Sin este fallback, `SHAPE[type]` da `undefined` y
+ * React tira toda la fila (o toda la página, sin un error boundary arriba).
+ */
+function UnknownBadge(p: ShapeProps) {
+  return (
+    <svg {...shapeBase(p)}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 16v.01M12 8v4.5" />
+    </svg>
+  );
+}
+
 const SHAPE: Record<BadgeType, (p: ShapeProps) => React.JSX.Element> = {
   monthly_gold: ShieldCrown,
   monthly_silver: CircleMedal,
@@ -167,10 +185,13 @@ type BadgeIconProps = {
 
 /** Ícono de badge (sin emojis, estilo F1) con color y contador opcional. */
 export function BadgeIcon({ type, count = 1, size = 18, title, className }: BadgeIconProps) {
-  const Shape = SHAPE[type];
+  // `type` viaja desde la API como string; un badge_type que este bundle no
+  // conoce (ver UnknownBadge arriba) no debe romper el render.
+  const Shape = SHAPE[type] ?? UnknownBadge;
+  const color = COLOR[type] ?? "text-ink-faint";
   return (
     <span
-      className={["relative inline-flex shrink-0", COLOR[type], className ?? ""].join(" ")}
+      className={["relative inline-flex shrink-0", color, className ?? ""].join(" ")}
       title={title}
     >
       <Shape size={size} />

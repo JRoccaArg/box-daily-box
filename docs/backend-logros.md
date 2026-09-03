@@ -8,7 +8,116 @@
 
 ---
 
-## 0. Estado actual (última actualización: 2026-09-01)
+## 🔍 AUDITORÍA DE SEGURIDAD Y ROBUSTEZ (2026-09-03)
+
+Auditoría manual pre-staging del sistema de logros/badges completo: revisión de
+código + pruebas activas contra la lógica real (PGlite) y contra el render real
+de React. No se usó el skill `/security-review` automatizado (necesita que la
+carpeta de trabajo de la sesión sea un repo git; esta sesión corre fijada en una
+copia sin git). Se hizo el equivalente a mano.
+
+### Hallazgo ALTO — corregido: badge_type desconocido crasheaba la UI
+
+**Dónde:** `BadgeIcon.tsx` (`SHAPE[type]`/`COLOR[type]`) y `AchievementGallery.tsx`
+(`TONE[item.type]`). Ninguno tenía fallback para un `type` no reconocido.
+
+**Por qué es alcanzable en la práctica (no solo teórico):** el diseño de badges
+es explícitamente **solo-agrega, nunca revoca** (ver `badges.ts`). Combinado con
+que el catálogo de logros está **duplicado en 3 lugares sin una fuente única**
+(el `ACHIEVEMENTS` del servidor, el `SHAPE`+`COLOR` de `BadgeIcon.tsx`, y el
+`TONE` de `AchievementGallery.tsx`), dos escenarios reales lo disparan:
+1. **Deploy escalonado:** el backend agrega un 8vo logro y ya empieza a
+   otorgarlo; el bundle del frontend todavía no se redesplegó → un badge
+   `ach_desconocido` aparece en el ranking público antes que el frontend lo
+   conozca.
+2. **Rollback:** se retira un logro del catálogo del backend después de que
+   algún jugador YA lo ganó → esa fila de `badges` queda para siempre (nunca se
+   borra) con un tipo que el frontend actual ya no reconoce.
+
+**Impacto confirmado empíricamente** (con `react-dom/server`, no solo lectura de
+código): `SHAPE[type]` da `undefined`, `<Shape .../>` hace que React explote con
+"Element type is invalid". **No hay ningún error boundary en toda la app**, así
+que esto no rompe solo la fila de ESE usuario: tira abajo el ranking completo
+(la pantalla más vista del sitio) para TODOS los que lo estén mirando.
+
+**Fix aplicado:** fallback defensivo (`SHAPE[type] ?? UnknownBadge`,
+`COLOR[type] ?? "text-ink-faint"`, `TONE[item.type] ?? DEFAULT_TONE`) — un tipo
+desconocido ahora degrada a un ícono gris neutro en vez de crashear. Verificado
+antes/después con un render real (`react-dom/server`) que reproduce el crash y
+confirma el arreglo. Test de regresión permanente:
+`scripts/test-badge-icon-fallback.tsx` (5 asserts, sumado a `npm test`).
+
+### Hallazgos revisados y descartados (no vulnerables)
+
+- **Inyección SQL / `badge_type` arbitrario en la tabla `badges`:** ningún
+  endpoint permite que un string del cliente llegue a un `INSERT INTO badges`.
+  Los 3 sitios que insertan (`achievements.ts`, `badges.ts`,
+  `adminGrantBadges`) siempre usan constantes del servidor (`ACHIEVEMENTS`,
+  `RANK_TO_BADGE`), nunca input directo. `validateFeaturedSelection` solo
+  escribe en `users.featured_badges` (JSONB), nunca en `badges`.
+- **CHECK constraint `LIKE 'ach\_%'` sin `ESCAPE` explícito:** Postgres usa `\`
+  como escape por defecto en `LIKE`; se comprobó (Bloque 1) que el CHECK
+  rechaza tipos inválidos y acepta los reales.
+- **IDOR en el endpoint de debug de logros** (`POST /admin/debug-achievements`):
+  exige `STAGING_DEBUG` del servidor Y `identityToken` firmado (HMAC,
+  verificado con `timingSafeEqual`) que coincida con el `userId` — no se puede
+  otorgar logros a la cuenta de otro. Sólido.
+- **Prototype pollution vía `type: "__proto__"`** en `deriveDisplayBadges`/
+  `validateFeaturedSelection`: el chequeo de tipo válido (`isAchievementType`/
+  `isMonthlyBadgeType`) siempre corre ANTES de cualquier lookup en el objeto de
+  conteos, así que un `type` no-catalogado nunca llega a indexar el objeto.
+  Confirmado también con fuzzing (nulls, arrays gigantes, strings gigantes,
+  `grouped` no-booleano, objetos anidados): nada hace `throw`.
+- **`i18n.translate()` con clave faltante:** tiene fallback en cadena
+  (`dict[key] ?? DICTIONARIES.en[key] ?? key`), nunca lanza. Los tooltips no
+  son una superficie de crash.
+- **Concurrencia — doble award del mismo logro:** se corrió una carrera real
+  (`Promise.all` de dos `awardAchievements(uid)` simultáneos) contra la MISMA
+  condición límite. La fila en `badges` **nunca se duplica** (el índice único
+  parcial lo garantiza a nivel de motor de base de datos, no solo en el código
+  de la app). *Matiz:* en la prueba con PGlite, ambas llamadas reportaron el
+  logro como "nuevo" en su valor de retorno (aunque solo 1 fila quedó en la
+  tabla) — no se pudo confirmar con un Postgres real multi-conexión si esto
+  también ocurre ahí o es un artefacto de que PGlite serializa todo en una sola
+  conexión. Impacto real HOY: **ninguno**, porque `newAchievements` (el campo
+  que llevaría este dato al frontend) todavía no lo consume ninguna UI — no
+  hay celebración de logros implementada. Queda anotado para quien construya
+  esa UI: no asumir que `newAchievements` es estrictamente "una vez" bajo
+  concurrencia; si hace falta, deduplicar del lado del cliente.
+- **Servidor:** `bodyLimit` 16KB, CORS con allowlist de orígenes, rate-limit
+  global 100/min + límites específicos por ruta (`/user/:userId/badges` 60/min,
+  `.../featured` 20/min, `/admin/debug-achievements` 30/min) — aplican
+  uniformemente a las rutas nuevas, nada que ajustar.
+
+### Hallazgo BAJO, pre-existente, fuera del sistema de logros (informativo)
+
+`POST /admin/grant-badges` (badges de PODIO, código previo a esta sesión) exige
+`STAGING_DEBUG` pero **no** `identityToken` — cualquiera en staging podría
+otorgar oro/plata/bronce a un `userId` ajeno si lo conoce. Solo staging, y los
+`userId` anónimos son UUIDs de 122 bits (no adivinables) según su propio
+comentario. No se tocó: es código de podio pre-existente, no del sistema de
+logros que se pidió auditar. Se deja documentado por si se quiere alinear con
+el patrón de `ownsIdentity` que sí usa `/admin/debug-achievements`.
+
+### Hallazgo adyacente corregido: test huérfano fuera de `npm test`
+
+`scripts/test-ranking-inclusive.mjs` (15 tests del ranking, ninguno relacionado
+a logros) existe y pasa, pero se cayó de la orquestación de `npm test` en algún
+punto del historial de merges — CI lo estaba saltando en silencio. Repuesto en
+`package.json` en su posición original. No es parte del sistema de logros, pero
+afecta directamente "queda todo probado antes de staging", así que se corrigió.
+
+### Veredicto
+
+**Listo para staging.** El único hallazgo de severidad alta encontrado quedó
+corregido y con test de regresión permanente. Nada más de lo revisado —
+inyección, IDOR, prototype pollution, concurrencia, límites de servidor,
+i18n— resultó explotable. `npm test` completo (todos los scripts salvo
+Playwright) y `npm run build` corren limpios tras los cambios.
+
+---
+
+## 0. Estado actual (última actualización: 2026-09-03)
 
 | Bloque | Qué es | Estado |
 |--------|--------|--------|

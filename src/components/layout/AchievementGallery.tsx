@@ -56,6 +56,18 @@ const TONE: Record<
   },
 };
 
+/**
+ * Fallback para un logro que el backend devuelve pero este bundle todavía no
+ * conoce (deploy escalonado: backend agregó un logro nuevo al catálogo antes
+ * de que el frontend se actualice). Sin esto, `TONE[item.type]` es `undefined`
+ * y `tone.border` tira toda la galería abajo.
+ */
+const DEFAULT_TONE = {
+  border: "border-t-ink-faint",
+  iconBg: "bg-white/10",
+  progress: "bg-ink-faint",
+};
+
 type AchievementGalleryProps = { userId: string };
 
 export function AchievementGallery({ userId }: AchievementGalleryProps) {
@@ -266,7 +278,7 @@ export function AchievementGallery({ userId }: AchievementGalleryProps) {
 
       <div className="space-y-2.5">
         {data.achievements.map((item) => {
-          const tone = TONE[item.type];
+          const tone = TONE[item.type] ?? DEFAULT_TONE;
           const selected = isSelected(item.type);
           const disabled = !item.unlocked || (!selected && !automatic && atCap);
           const tooltip = formatBadgeTooltip(item.type, undefined, t);
