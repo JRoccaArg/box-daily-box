@@ -125,5 +125,16 @@ y pasos de verificación, está en:
       identidad manualmente vía localStorage para poder iniciar partidas) los 3 eventos, en orden,
       con los parámetros correctos, tanto en Vercel (debug log) como en `dataLayer` (GA). typecheck,
       lint y build en verde. (2026-09-03)
-- [ ] Etapa 5 — Política de privacidad (es/en)
+- [x] **Etapa 5** — Política de privacidad actualizada (`src/content/legal/es.ts` vinculante +
+      `en.ts`). Se reescribió para reflejar la realidad: el texto anterior afirmaba que NO se
+      usaban analíticas ni banner. Cambios: Sección 1 (qué datos: se agregó lo que tratan las
+      analíticas), Sección 2 (finalidad + base legal: interés legítimo para Vercel sin cookies,
+      consentimiento para GA), Sección 3 (reescrita: describe Vercel sin cookies siempre-activo vs
+      GA con cookies solo-con-consentimiento, y el link "Gestionar cookies"), Sección 4 (GA añadido
+      como encargado; Vercel ahora menciona su analítica), Sección 9 (analítica sale de la lista de
+      "futuro"; publicidad/pagas siguen como futuras). Fecha propia `PRIVACY_UPDATED = 2026-09-02`
+      (los Términos NO se tocaron, siguen en 2026-08-15). Decisiones del usuario: describir solo lo
+      que ya existe (sin pre-anunciar ads), y mantener es+en con fallback a inglés (no traducir la
+      política a los 14). Verificado el render de `/es/privacy`, `/en/privacy` y `/es/terms` (fecha
+      de Términos intacta). typecheck, lint y build en verde. (2026-09-02)
 - [ ] Etapa 6 — QA y merge a `develop`

@@ -7,6 +7,10 @@
 import type { LegalContent } from "./types";
 
 const LAST_UPDATED = "2026-08-15";
+// Privacy Policy has its own date: bumped when analytics (Vercel + Google
+// Analytics) and the consent banner were introduced, without touching the
+// Terms date, which did not change.
+const PRIVACY_UPDATED = "2026-09-02";
 const CONTACT_EMAIL = "boxdailybox@gmail.com";
 const OPERATOR = "Juan Cruz Rocca";
 
@@ -163,7 +167,7 @@ const content: LegalContent = {
 
   privacy: {
     title: "Privacy Policy",
-    lastUpdated: LAST_UPDATED,
+    lastUpdated: PRIVACY_UPDATED,
     intro: [
       `This Privacy Policy explains what personal data Box Daily Box processes, for what purpose, and on what legal basis. The data controller is ${OPERATOR}, based in Argentina. You can contact him at ${CONTACT_EMAIL}.`,
     ],
@@ -190,6 +194,9 @@ const content: LegalContent = {
             p: "If you use the friends and duels features, we store the relationships you create yourself (who you add as a friend or challenge). If you have friends added, we also store the last time you had the Service open, so we can show you and your friends who is online at that moment. That information is shown only as \"online\" or \"offline\": the exact time and a connection history are never shown.",
           },
           {
+            p: "To understand how the site is used and improve it, we use web analytics tools (see section 3). Through them we process: the pages you visit, game events (which game you start, complete, or abandon, at what difficulty and with what result), your device and browser type, and an approximate geographic location (country or region) derived from your IP address. Vercel Web Analytics works in aggregate and without cookies, without identifying you as an individual. Google Analytics uses cookies and is only activated if you have given your consent.",
+          },
+          {
             p: "We neither request nor store your password: authentication is performed by Google. We also do not process special categories of sensitive data.",
           },
         ],
@@ -203,6 +210,7 @@ const content: LegalContent = {
               "To calculate and display rankings and to prevent cheating and abusive use of multiple accounts (legitimate interest in maintaining a fair ranking; the IP is used solely for this purpose).",
               "To link your progress to your account if you sign in with Google (based on your consent when choosing to sign in).",
               "To show you and your friends who has the Service open right now (performance of the friends feature you activate).",
+              "To analyze in aggregate how the site is used and improve it. Vercel's cookieless analytics relies on our legitimate interest in maintaining and improving the Service, without identifying you. Google Analytics, which does use cookies, relies solely on your consent and is not activated until you grant it.",
             ],
           },
           {
@@ -214,10 +222,19 @@ const content: LegalContent = {
         heading: "3. Cookies and local storage",
         blocks: [
           {
-            p: "The Service uses only technical and necessary storage in your browser: to remember your identity, your language, and your progress. We use a technical identity cookie (bdb_uid) and the browser's local and session storage.",
+            p: "The Service uses technical and necessary storage in your browser to remember your identity, your language, and your progress. We use a technical identity cookie (bdb_uid) and the browser's local and session storage. This storage is essential for the game to work, so it does not require your consent.",
           },
           {
-            p: "We currently do NOT use advertising cookies or third-party tracking technologies. That is why the Service does not display a cookie consent banner. If advertising or third-party analytics is introduced in the future, your consent will be requested where the law requires it.",
+            p: "In addition, we use two web analytics tools to understand how the site is used:",
+          },
+          {
+            list: [
+              "Vercel Web Analytics: measures in aggregate and anonymously (visits, country, device). It does not use cookies or identify you as an individual, so it runs at all times, without requiring your consent.",
+              "Google Analytics: measures usage in more detail and DOES use cookies. That is why it is only activated if you accept cookies in the banner shown the first time you visit. If you reject or ignore it, Google Analytics is neither loaded nor stores any cookie.",
+            ],
+          },
+          {
+            p: "You can change your choice at any time from the \"Manage cookies\" link in the footer. We do NOT use advertising cookies. If advertising is introduced in the future, your consent will be requested where the law requires it.",
           },
         ],
       },
@@ -230,8 +247,9 @@ const content: LegalContent = {
           {
             list: [
               "Google (authentication via Google OAuth), if you choose to sign in.",
+              "Google (Google Analytics, to analyze site usage), only if you accept the analytics cookies.",
               "Railway (server and database hosting).",
-              "Vercel (website hosting).",
+              "Vercel (website hosting and its cookieless web analytics).",
             ],
           },
           {
@@ -294,7 +312,7 @@ const content: LegalContent = {
         heading: "9. Changes to this Policy",
         blocks: [
           {
-            p: "We may update this Policy to reflect changes in the Service or in the law. In particular, if advertising, third-party analytics, or paid features are introduced in the future, this Policy will be updated to describe that processing, and your consent will be requested where applicable. The current version will always be on this page, with its last-updated date.",
+            p: "We may update this Policy to reflect changes in the Service or in the law. In particular, if advertising or paid features are introduced in the future, this Policy will be updated to describe that processing, and your consent will be requested where applicable. The current version will always be on this page, with its last-updated date.",
           },
         ],
       },
