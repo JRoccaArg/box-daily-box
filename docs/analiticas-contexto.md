@@ -105,6 +105,25 @@ y pasos de verificación, está en:
       Processing Amendment, y pegar el Measurement ID (`G-XXXXXXXXXX`) como variable de entorno
       `VITE_GA4_MEASUREMENT_ID` en Vercel (Settings → Environment Variables). Hasta entonces el
       código queda "dormido" sin efecto. (2026-09-02)
-- [ ] Etapa 4 — Eventos de producto
+- [x] **Etapa 4** — Eventos de producto en los 8 minijuegos diarios. Nuevo `src/lib/analytics.ts`:
+      `trackEvent(name, props)` como punto único — Vercel Analytics recibe todo siempre (no usa
+      cookies, sin gating), Google Analytics solo recibe el evento si `getConsent() === "granted"`.
+      Ningún componente de juego llama a `gtag`/`track` directamente. Instrumentado en
+      `GameShell.tsx` (los 3 choke points reales, cubren los 8 juegos por igual sin tocar cada
+      componente):
+      - `game_started` (en `startGameSession`): gameId, difficulty, untimed, timeLimit. La
+        dificultad ya viaja acá — no hay evento `difficulty_chosen` separado (se fija recién al
+        arrancar, no al tocar el selector).
+      - `game_completed` (en `finish`): gameId, outcome (won/lost — cubre victoria, derrota,
+        rendirse y timeout, todos funnelean a `finish`), difficulty, points, timeSeconds.
+      - `game_abandoned` (en `persistAbandon`): gameId, difficulty. Cubre los 3 caminos de
+        abandono (confirmar salida, cerrar pestaña, navegar afuera).
+      **Fuera de alcance de esta etapa** (decisión explícita): Duelo (modo de juego separado con
+      su propio ciclo de vida en `DuelPage.tsx`, no pasa por `GameShell`) y "compartir resultado"
+      (la funcionalidad no existe en el código — no hay nada que instrumentar). Verificado jugando
+      de verdad en el navegador (dev server, sin backend disponible: se sorteó completando la
+      identidad manualmente vía localStorage para poder iniciar partidas) los 3 eventos, en orden,
+      con los parámetros correctos, tanto en Vercel (debug log) como en `dataLayer` (GA). typecheck,
+      lint y build en verde. (2026-09-03)
 - [ ] Etapa 5 — Política de privacidad (es/en)
 - [ ] Etapa 6 — QA y merge a `develop`
