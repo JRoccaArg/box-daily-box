@@ -6,6 +6,7 @@ import { Footer } from "./Footer";
 import { DebugDatePanel } from "@/components/dev/DebugDatePanel";
 import { DuelBanner } from "./DuelBanner";
 import { ToastContainer } from "./ToastContainer";
+import { ConsentBanner } from "./ConsentBanner";
 
 /** Marco de pagina: header pegajoso + contenedor centrado + footer. */
 export function Layout({ children }: { children: ReactNode }) {
@@ -18,6 +19,8 @@ export function Layout({ children }: { children: ReactNode }) {
       {/* Sin cookies: no dependen del banner de consentimiento (etapa 2). */}
       <Analytics />
       <SpeedInsights />
+      {/* Cartel de consentimiento RGPD (gatea Google Analytics, etapa 3). */}
+      <ConsentBanner />
       {/* Apila DuelBanner (persistente mientras haya invitacion) y los
           toasts (transitorios) sin que se tapen entre si: cada uno se
           dimensiona a si mismo, este contenedor solo fija la posicion. */}

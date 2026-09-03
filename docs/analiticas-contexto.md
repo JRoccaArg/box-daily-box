@@ -80,7 +80,16 @@ y pasos de verificación, está en:
       Falta que el usuario active las pestañas "Analytics" y "Speed Insights" en el dashboard de
       Vercel (un clic cada una) para que empiecen a mostrar datos tras el próximo deploy. (2026-09-01)
 - [ ] Etapa 2 — Consent Mode v2 + banner de consentimiento
-- [ ] Etapa 2 — Consent Mode v2 + banner de consentimiento
+- [x] **Etapa 2** — Banner de consentimiento (RGPD) + Google Consent Mode v2. Nuevos:
+      `src/lib/consent.ts` (estado + Consent Mode, default `denied`) y
+      `src/components/layout/ConsentBanner.tsx` (barra inferior discreta, hidratación-segura,
+      botones Aceptar/Rechazar de igual peso, link a la política). Montado en `Layout.tsx`; link
+      "Gestionar cookies" agregado al `Footer.tsx`. Claves `consent.*` (title, message, accept,
+      reject, manage) en los 14 idiomas. Vercel queda siempre activa (decisión del usuario: lo
+      sin-cookies no espera el consentimiento). Verificado en navegador: aceptar → `granted` +
+      `analytics_storage: granted`; rechazar → `denied`; reabrir desde el footer; persiste al
+      recargar; el banner NO queda en el HTML estático (sin mismatch de hidratación). `typecheck`,
+      `lint`, paridad i18n (43/43) y `build` en verde. (2026-09-02)
 - [ ] Etapa 3 — GA4 condicionado al consentimiento
 - [ ] Etapa 4 — Eventos de producto
 - [ ] Etapa 5 — Política de privacidad (es/en)
