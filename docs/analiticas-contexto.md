@@ -92,7 +92,19 @@ y pasos de verificación, está en:
       color tenue original. `typecheck`, `lint`, paridad i18n (43/43) y `build` en verde. Etapas
       0-2 integradas a `develop` (merge no-ff, junto con el trabajo de "logros" que avanzó en
       paralelo). (2026-09-02)
-- [ ] Etapa 3 — GA4 condicionado al consentimiento
+- [x] **Etapa 3** — Google Analytics 4 condicionado al consentimiento. GA se carga de forma
+      diferida (`loadGoogleAnalytics()` en `src/lib/consent.ts`) SOLO cuando: (a) hay un
+      `VITE_GA4_MEASUREMENT_ID` configurado, (b) estamos en producción (`import.meta.env.PROD`, no
+      en localhost — decisión del usuario), y (c) el consentimiento está en `granted`. Si el
+      usuario rechaza o ignora el cartel, GA nunca se inyecta ni guarda cookies. Al aceptar se
+      dispara `gtag('js') + gtag('config', ID)`. GA4 anonimiza la IP por defecto. Env var nueva en
+      `.env.example` y tipada en `src/vite-env.d.ts`. Verificado con un build de producción real +
+      preview + ID de prueba: antes de aceptar GA no carga; al aceptar se inyecta el script;
+      visitante que ya aceptó carga GA solo al recargar; rechazo → GA jamás carga. typecheck, lint
+      y build en verde. **PENDIENTE DEL USUARIO:** crear la propiedad GA4, aceptar el Data
+      Processing Amendment, y pegar el Measurement ID (`G-XXXXXXXXXX`) como variable de entorno
+      `VITE_GA4_MEASUREMENT_ID` en Vercel (Settings → Environment Variables). Hasta entonces el
+      código queda "dormido" sin efecto. (2026-09-02)
 - [ ] Etapa 4 — Eventos de producto
 - [ ] Etapa 5 — Política de privacidad (es/en)
 - [ ] Etapa 6 — QA y merge a `develop`

@@ -113,6 +113,37 @@ function updateConsentMode(value: ConsentValue): void {
   gtag("consent", "update", {
     analytics_storage: value === "granted" ? "granted" : "denied",
   });
+  // Recien con el consentimiento dado cargamos GA (y guarda cookies).
+  if (value === "granted") loadGoogleAnalytics();
+}
+
+// ─── Google Analytics 4 (carga diferida y condicionada) ──────────────────
+
+/** ID de medicion (G-XXXXXXXXXX). Se inyecta en build desde la env var. Si
+ *  queda vacio, GA nunca se carga: el codigo queda "dormido". */
+const GA_ID = import.meta.env.VITE_GA4_MEASUREMENT_ID;
+
+let gaLoaded = false;
+
+/** Inyecta el script de GA4 y lo configura. Solo corre si:
+ *  - hay un Measurement ID configurado, y
+ *  - estamos en produccion (no en localhost/dev, para no ensuciar los datos).
+ *  Idempotente: carga el script una sola vez. Se llama recien cuando el
+ *  consentimiento esta "granted" (ver updateConsentMode), asi GA nunca guarda
+ *  cookies sin permiso. GA4 anonimiza la IP por defecto. */
+function loadGoogleAnalytics(): void {
+  if (gaLoaded) return;
+  if (!GA_ID || !import.meta.env.PROD) return;
+  if (typeof document === "undefined") return;
+  gaLoaded = true;
+
+  const script = document.createElement("script");
+  script.async = true;
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+  document.head.appendChild(script);
+
+  gtag("js", new Date());
+  gtag("config", GA_ID);
 }
 
 // Fija los defaults ni bien se importa este modulo en el cliente. Con SSG este
