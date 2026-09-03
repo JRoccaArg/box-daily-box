@@ -155,12 +155,24 @@ y pasos de verificación, está en:
 
       Al correr Playwright en Windows local contra las capturas base (generadas en Linux, ver
       commit `98f2712`), aparecen diffs de ~2% de píxeles en TODA la página (título, botones,
-      íconos), consistentes en absolutamente todos los tests — un problema conocido de
-      renderizado de fuentes/emojis entre sistemas operativos, no relacionado con este trabajo
-      (confirmado visualmente: el cartel ya NO aparece en ninguna captura "actual"; los diffs no
-      se concentran donde estaría el banner). El CI del proyecto corre en `ubuntu-latest`
-      (`.github/workflows/ci.yml`), el mismo entorno que generó las capturas base — es la
-      comparación válida, no la corrida local en Windows. No se ejecutó `--update-snapshots`
-      localmente para no contaminar las capturas Linux con renders de Windows. La falla de
-      `achievements.spec.ts` pertenece a la feature "logros" (fuera de este alcance). Verificación
-      real: push a `develop` + revisión del run de GitHub Actions (Linux). (2026-09-03)
+      íconos). Inicialmente se atribuyó a diferencias de renderizado de fuentes entre Windows
+      (local) y Linux (CI, `ubuntu-latest`) — hipótesis parcialmente incorrecta: el CI real
+      (push a `develop`) confirmó una causa **real y propia de este cambio**: el nuevo link
+      "Gestionar cookies" agregado al footer pasa a una línea extra en viewports angostos
+      (mobile-narrow) y en algunas pantallas de configuración de desktop con texto largo, corriendo
+      el resto del contenido ~22px hacia abajo (`Expected 1163px, received 1185px` en los logs de
+      CI) — un cambio de layout esperado, no un bug, pero que sí requería regenerar capturas.
+
+      Se regeneraron correctamente disparando el workflow manual `update-snapshots.yml` (ya
+      existente en el repo, corre en `ubuntu-latest`, el mismo entorno que `ci.yml`) contra
+      `develop`, descargando el artifact resultante y reemplazando únicamente las 20 capturas que
+      efectivamente cambiaron (home + 8 juegos, mobile-narrow + algunas config de desktop) — no se
+      tocó ninguna otra. Nunca se ejecutó `--update-snapshots` en Windows local (hubiera
+      contaminado las capturas Linux con renders incorrectos). `achievements.spec.ts`
+      (feature "logros", fuera de este alcance) no apareció entre las capturas afectadas.
+
+      **Verificación real, no local:** tras subir las capturas, el run de CI en GitHub Actions
+      (`ubuntu-latest`, run [33764586665](https://github.com/JRoccaArg/box-daily-box/actions/runs/33764586665))
+      quedó **completamente verde**: `lint`, `build` y `npm test` entero (toda la suite de lógica +
+      paridad i18n + los 60+ tests visuales en 3 viewports, achievements incluido) sin excepciones.
+      (2026-09-03)
