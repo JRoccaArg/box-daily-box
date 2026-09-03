@@ -137,4 +137,30 @@ y pasos de verificación, está en:
       que ya existe (sin pre-anunciar ads), y mantener es+en con fallback a inglés (no traducir la
       política a los 14). Verificado el render de `/es/privacy`, `/en/privacy` y `/es/terms` (fecha
       de Términos intacta). typecheck, lint y build en verde. (2026-09-02)
-- [ ] Etapa 6 — QA y merge a `develop`
+- [x] **Etapa 6** — QA final. Suite completa de lógica (`npm run test` sin el visual):
+      **todos los scripts de test pasaron** (identity-token, migration, sync-frontend,
+      attempts-flow, country, user-rank, migration-scenarios, login-flow, import-attempts,
+      finish-blocked, ranked-by-ip, ranking-inclusive, session-token, game-registry, friends-anon,
+      verify-solution, scoring, idor-protection, badges, achievements, streak, audio-preferences,
+      duels, friends, career-path, teamradio-data, teamradio, i18n-parity 43/43) — más de 1000
+      asserts, 0 fallos, incluye los tests de la feature "logros" que se integró en paralelo.
+      `typecheck`, `lint` y `build` (SSG 14 idiomas) en verde.
+
+      **Tests visuales (Playwright):** se detectó que el cartel de consentimiento aparecía en las
+      capturas de un navegador "limpio" (sin decisión de cookies guardada), tapando parte del
+      contenido. Fix: `tests/visual/fixtures.ts` ahora precarga `bdb_consent=denied` en
+      `localStorage` antes de cada test (mismo mecanismo que ya usaba para fecha e identidad fijas),
+      así el cartel nunca aparece en los snapshots de juegos/home — decisión tomada con el usuario
+      para no atar los snapshots de los 8 juegos al diseño del banner.
+
+      Al correr Playwright en Windows local contra las capturas base (generadas en Linux, ver
+      commit `98f2712`), aparecen diffs de ~2% de píxeles en TODA la página (título, botones,
+      íconos), consistentes en absolutamente todos los tests — un problema conocido de
+      renderizado de fuentes/emojis entre sistemas operativos, no relacionado con este trabajo
+      (confirmado visualmente: el cartel ya NO aparece en ninguna captura "actual"; los diffs no
+      se concentran donde estaría el banner). El CI del proyecto corre en `ubuntu-latest`
+      (`.github/workflows/ci.yml`), el mismo entorno que generó las capturas base — es la
+      comparación válida, no la corrida local en Windows. No se ejecutó `--update-snapshots`
+      localmente para no contaminar las capturas Linux con renders de Windows. La falla de
+      `achievements.spec.ts` pertenece a la feature "logros" (fuera de este alcance). Verificación
+      real: push a `develop` + revisión del run de GitHub Actions (Linux). (2026-09-03)
