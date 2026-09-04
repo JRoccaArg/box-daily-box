@@ -11,7 +11,7 @@ const LAST_UPDATED = "2026-08-15";
 // Fecha propia de la Política de Privacidad: se actualizó al introducir las
 // analíticas (Vercel + Google Analytics) y el banner de consentimiento, sin
 // tocar la fecha de los Términos, que no cambiaron.
-const PRIVACY_UPDATED = "2026-09-03";
+const PRIVACY_UPDATED = "2026-09-04";
 const CONTACT_EMAIL = "boxdailybox@gmail.com";
 const OPERATOR = "Juan Cruz Rocca";
 
@@ -195,7 +195,7 @@ const content: LegalContent = {
             p: "Si usás las funciones de amigos y duelos, guardamos las relaciones que vos mismo creás (a quién agregás como amigo o desafiás). Si tenés amigos agregados, también guardamos la última vez que tuviste el Servicio abierto, para poder mostrarte a vos y a tus amigos quién está conectado en ese momento. Esa información se muestra únicamente como \"conectado\" o \"desconectado\": nunca se muestra la hora exacta ni un historial de conexiones.",
           },
           {
-            p: "Para entender cómo se usa el sitio y mejorarlo, usamos herramientas de analítica web (ver sección 3). A través de ellas se tratan: las páginas que visitás, eventos de juego (qué juego iniciás, completás o abandonás, con qué dificultad y resultado), el tipo de dispositivo y navegador, y una ubicación geográfica aproximada (país o región) derivada de tu dirección IP. Vercel Web Analytics funciona de forma agregada y sin cookies, sin identificarte como persona. Google Analytics usa cookies y solo se activa si diste tu consentimiento.",
+            p: "Para entender cómo se usa el sitio y mejorarlo, usamos herramientas de analítica web (ver sección 3). A través de ellas se tratan: las páginas que visitás, eventos de juego (qué juego iniciás, completás o abandonás, con qué dificultad y resultado), el tipo de dispositivo y navegador, y una ubicación geográfica aproximada derivada de tu dirección IP: país o región en el caso de Vercel Web Analytics, y hasta el nivel de ciudad en el caso de Google Analytics. En ningún caso se trata de tu ubicación exacta ni de datos de GPS. Vercel Web Analytics funciona de forma agregada y sin cookies, sin identificarte como persona. Google Analytics usa cookies y solo se activa si diste tu consentimiento.",
           },
           {
             p: "No solicitamos ni almacenamos tu contraseña: la autenticación la realiza Google. Tampoco tratamos categorías de datos sensibles.",

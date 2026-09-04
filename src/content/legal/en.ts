@@ -10,7 +10,7 @@ const LAST_UPDATED = "2026-08-15";
 // Privacy Policy has its own date: bumped when analytics (Vercel + Google
 // Analytics) and the consent banner were introduced, without touching the
 // Terms date, which did not change.
-const PRIVACY_UPDATED = "2026-09-03";
+const PRIVACY_UPDATED = "2026-09-04";
 const CONTACT_EMAIL = "boxdailybox@gmail.com";
 const OPERATOR = "Juan Cruz Rocca";
 
@@ -194,7 +194,7 @@ const content: LegalContent = {
             p: "If you use the friends and duels features, we store the relationships you create yourself (who you add as a friend or challenge). If you have friends added, we also store the last time you had the Service open, so we can show you and your friends who is online at that moment. That information is shown only as \"online\" or \"offline\": the exact time and a connection history are never shown.",
           },
           {
-            p: "To understand how the site is used and improve it, we use web analytics tools (see section 3). Through them we process: the pages you visit, game events (which game you start, complete, or abandon, at what difficulty and with what result), your device and browser type, and an approximate geographic location (country or region) derived from your IP address. Vercel Web Analytics works in aggregate and without cookies, without identifying you as an individual. Google Analytics uses cookies and is only activated if you have given your consent.",
+            p: "To understand how the site is used and improve it, we use web analytics tools (see section 3). Through them we process: the pages you visit, game events (which game you start, complete, or abandon, at what difficulty and with what result), your device and browser type, and an approximate geographic location derived from your IP address: country or region in the case of Vercel Web Analytics, and down to city level in the case of Google Analytics. In no case is this your exact location or GPS data. Vercel Web Analytics works in aggregate and without cookies, without identifying you as an individual. Google Analytics uses cookies and is only activated if you have given your consent.",
           },
           {
             p: "We neither request nor store your password: authentication is performed by Google. We also do not process special categories of sensitive data.",
