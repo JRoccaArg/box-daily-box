@@ -11,7 +11,7 @@ const LAST_UPDATED = "2026-08-15";
 // Fecha propia de la Política de Privacidad: se actualizó al introducir las
 // analíticas (Vercel + Google Analytics) y el banner de consentimiento, sin
 // tocar la fecha de los Términos, que no cambiaron.
-const PRIVACY_UPDATED = "2026-09-02";
+const PRIVACY_UPDATED = "2026-09-03";
 const CONTACT_EMAIL = "boxdailybox@gmail.com";
 const OPERATOR = "Juan Cruz Rocca";
 
@@ -223,7 +223,7 @@ const content: LegalContent = {
         heading: "3. Cookies y almacenamiento local",
         blocks: [
           {
-            p: "El Servicio usa almacenamiento técnico y necesario en tu navegador para recordar tu identidad, tu idioma y tu progreso. Utilizamos una cookie técnica de identidad (bdb_uid) y el almacenamiento local y de sesión del navegador. Este almacenamiento es imprescindible para que el juego funcione, por lo que no requiere tu consentimiento.",
+            p: "El Servicio usa almacenamiento técnico y necesario en tu navegador para recordar tu identidad, tu idioma y tu progreso. Utilizamos dos cookies técnicas: bdb_uid (tu identificador de jugador) y bdb_tok (la credencial firmada que prueba que esa identidad es tuya, para que nadie más pueda jugar ni modificar datos en tu nombre), además del almacenamiento local y de sesión del navegador. Este almacenamiento es imprescindible para que el juego funcione y para su seguridad, por lo que no requiere tu consentimiento.",
           },
           {
             p: "Además, usamos dos herramientas de analítica web para entender cómo se usa el sitio:",
@@ -265,7 +265,13 @@ const content: LegalContent = {
         heading: "5. Cuánto tiempo conservamos los datos",
         blocks: [
           {
-            p: "Conservamos tus datos mientras tu identidad o cuenta siga activa y sea necesario para prestar el Servicio. Podés solicitar la eliminación de tus datos en cualquier momento escribiéndonos.",
+            p: "Conservamos tus datos mientras tu identidad o cuenta siga activa y sea necesario para prestar el Servicio (historial de partidas, puntajes, logros y racha, que son la base del juego y de los rankings).",
+          },
+          {
+            p: "Tu dirección IP se conserva asociada a cada intento durante un máximo de 12 meses, plazo tras el cual se elimina o se anonimiza. Solo se usa para prevenir el uso abusivo de múltiples cuentas.",
+          },
+          {
+            p: "Podés borrar tu cuenta y todos tus datos vos mismo y en cualquier momento, desde \"Tu perfil\" en la aplicación. El borrado es inmediato y definitivo: se eliminan tu historial de partidas, tus logros, tus badges, tus amistades y tus duelos. Si preferís, también podés pedírnoslo por correo.",
           },
         ],
       },
@@ -285,7 +291,7 @@ const content: LegalContent = {
             ],
           },
           {
-            p: "Para ejercer estos derechos, escribinos a:",
+            p: "El derecho de supresión podés ejercerlo por vos mismo, sin esperar respuesta de nadie: entrá a \"Tu perfil\" en la aplicación y usá \"Borrar mi cuenta\". Para los demás derechos, o si preferís que lo hagamos nosotros, escribinos a:",
           },
           { email: CONTACT_EMAIL },
           {

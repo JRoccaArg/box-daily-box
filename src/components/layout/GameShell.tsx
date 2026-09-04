@@ -11,6 +11,7 @@ import { emit, Events } from "@/lib/events";
 import { getEffectiveNow } from "@/lib/debugDate";
 import { setGameplayActive } from "@/lib/gameplayState";
 import { trackEvent } from "@/lib/analytics";
+import { announceAchievements } from "@/lib/achievements";
 import { playGameResultFeedback, playTickFeedback } from "@/lib/audio";
 import { DuelChallengeModal } from "@/components/layout/DuelChallengeModal";
 import { IdentityModal } from "@/components/layout/IdentityModal";
@@ -166,13 +167,16 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
             if (res && res.ranked === false) {
               setNotRanked(true);
             }
+            // Logros desbloqueados por esta partida. El server ya los otorgó;
+            // sin esto el jugador nunca se enteraba (ver src/lib/achievements.ts).
+            announceAchievements(res?.newAchievements, t);
           })
           .catch(() => {});
       }
 
       window.setTimeout(() => setResultOpen(true), 650);
     },
-    [game.id, record, date, buildMeta, refreshStats, maxTimeOption],
+    [game.id, record, date, buildMeta, refreshStats, maxTimeOption, t],
   );
 
   // -----------------------------------------------------------------

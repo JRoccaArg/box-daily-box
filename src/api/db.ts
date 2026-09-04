@@ -2,9 +2,14 @@
 import { Pool, QueryResult } from "pg";
 import { backfillStreaks } from "./streak";
 import { awardAchievements } from "./achievements";
+import { requireEnv } from "./secrets";
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  // Mismo criterio que el resto de la config obligatoria (ver secrets.ts): sin
+  // base de datos no hay servicio, así que un deploy sin `DATABASE_URL` debe
+  // fallar en el arranque y no recién al primer intento de conexión, cuando el
+  // síntoma que ve el usuario es un 503 genérico.
+  connectionString: requireEnv("DATABASE_URL"),
   // Máximo de conexiones concurrentes. Railway free/hobby tiene límites bajos;
   // un pool acotado evita agotar conexiones bajo carga o ataque.
   max: 10,
@@ -522,6 +527,31 @@ export async function cleanupExpiredSessions(): Promise<number> {
   const res = await pool.query(
     "DELETE FROM sessions WHERE expires_at < $1",
     [cutoff],
+  );
+  return res.rowCount ?? 0;
+}
+
+/**
+ * Anonimiza la IP de los intentos con más de 12 meses.
+ *
+ * La IP se guarda con un único fin: detectar varias cuentas jugando el mismo
+ * reto desde el mismo origen (`ranked`). Ese control solo mira el DÍA en curso,
+ * así que una IP de hace un año no aporta nada y solo es un dato personal
+ * acumulado sin propósito — algo que el RGPD (minimización y limitación del
+ * plazo de conservación) y la Ley 25.326 no admiten.
+ *
+ * Se pone a NULL en vez de borrar la fila: el historial de partidas del jugador
+ * y los rankings históricos se conservan intactos.
+ *
+ * Esto es lo que hace CIERTA la frase de la Política de Privacidad ("tu
+ * dirección IP se conserva un máximo de 12 meses"). Si se toca este plazo, hay
+ * que actualizar `src/content/legal/es.ts` y `en.ts` en el mismo cambio.
+ */
+export async function purgeOldIpAddresses(): Promise<number> {
+  const res = await pool.query(
+    `UPDATE attempts SET ip_address = NULL
+     WHERE ip_address IS NOT NULL
+       AND created_at < now() - INTERVAL '12 months'`,
   );
   return res.rowCount ?? 0;
 }

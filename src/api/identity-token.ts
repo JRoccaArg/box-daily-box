@@ -14,17 +14,28 @@
 //  4. El server verifica que el token es válido Y que su userId coincide con
 //     el userId de la operación.
 //
-// Nota: esto NO impide que alguien pida un token para un userId que "adivinó",
-// pero los userId anónimos son UUID v4 (122 bits aleatorios), imposibles de
-// adivinar. Para cuentas Google, el userId nunca se expone públicamente en el
-// ranking (solo el display_name), así que tampoco es adivinable.
+// IMPORTANTE (auditoría 2026-09): el userId SÍ es público — `/ranking/monthly`
+// y `/ranking/daily` lo devuelven para cada jugador (el frontend lo usa para
+// resaltarte y para el botón "agregar amigo"). Por eso el userId NO puede
+// tratarse como un secreto: la única prueba de identidad es este token, y
+// `startChallenge` debe exigirlo para todo userId que ya exista (antes lo
+// emitía a demanda para cualquier userId recibido, lo que permitía tomar
+// control de la cuenta de cualquiera que apareciera en el ranking).
+//
+// VENCIMIENTO: los tokens valen `TOKEN_TTL_MS` (1 año) desde su emisión y se
+// RENUEVAN solos en cada operación donde el portador prueba la propiedad. Un
+// jugador activo (esto es un juego diario) nunca lo nota; un token filtrado
+// deja de servir eventualmente.
 
 import { createHmac, timingSafeEqual } from "crypto";
 import { TOKEN_SECRET } from "./secrets";
 
+/** Vida del token de identidad: 1 año desde `iat`, con renovación automática. */
+export const TOKEN_TTL_MS = 365 * 24 * 60 * 60 * 1000;
+
 type IdentityPayload = {
   userId: string;
-  // Timestamp de emisión (para poder expirar/rotar en el futuro si hace falta).
+  /** Timestamp de emisión. Se usa para expirar/rotar el token. */
   iat: number;
 };
 
@@ -60,6 +71,10 @@ export function verifyIdentityToken(token: unknown): string | null {
   try {
     const payload = JSON.parse(Buffer.from(data, "base64").toString()) as IdentityPayload;
     if (typeof payload.userId !== "string") return null;
+    // Vencimiento. Un token sin `iat` (o con uno no numérico) es de un formato
+    // que ya no emitimos: se rechaza en vez de tratarse como eterno.
+    if (typeof payload.iat !== "number" || !Number.isFinite(payload.iat)) return null;
+    if (Date.now() - payload.iat > TOKEN_TTL_MS) return null;
     return payload.userId;
   } catch {
     return null;

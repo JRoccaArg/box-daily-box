@@ -41,6 +41,27 @@ import {
 
 const SESSION_TTL = 15 * 60 * 1000; // 15 minutos
 
+/**
+ * Tolerancia (segundos) sobre el tiempo elegido antes de considerar que un
+ * envío llegó FUERA DE TIEMPO.
+ *
+ * Por qué existe: el cronómetro de la pantalla es solo un dibujo del cliente.
+ * Antes, el server verificaba que la solución fuera correcta pero NUNCA cuánto
+ * había tardado, y la sesión vive 15 minutos: alguien podía elegir "45
+ * segundos", tomarse 10 minutos para buscar la respuesta y enviarla igual. El
+ * server la contaba como VICTORIA (solo perdía el bonus de velocidad), y los
+ * logros se cuentan por victorias, no por puntos.
+ *
+ * Por qué 20s y no 0: hay jugadores con internet malo (universidades,
+ * colegios, redes móviles saturadas) donde el POST del finish puede demorar
+ * varios segundos. Preferimos dejar pasar un margen generoso antes que anular
+ * la partida legítima de alguien con mala conexión.
+ *
+ * NO existe un tiempo MÍNIMO a propósito (decisión de producto): si alguien
+ * responde muy rápido, se lo premia, no se lo castiga.
+ */
+const TIME_LIMIT_TOLERANCE_SECONDS = 20;
+
 // Opciones de tiempo disponibles por juego (segundos). El backend las usa para:
 // 1. Validar que el timeLimit enviado por el cliente es una opción legítima.
 // 2. Calcular el multiplicador de riesgo: maxTimeOption / chosenTimeLimit.
@@ -196,6 +217,31 @@ export async function startChallenge(
       }
     }
     const uid = safeUserId || `anon-${randomUUID()}`;
+
+    // ─── PRUEBA DE PROPIEDAD (anti robo de cuenta) ────────────────────
+    // El userId es PÚBLICO: `/ranking/monthly` y `/ranking/daily` lo devuelven
+    // para cada jugador. Antes, este endpoint emitía un identityToken para
+    // CUALQUIER userId recibido, sin verificar nada. Eso permitía dos ataques
+    // encadenados a partir del ranking:
+    //   1. Pedir el identityToken de otro jugador y tomar control de su cuenta
+    //      (leer su historial, cambiarle el nombre, sus badges, sus amigos).
+    //   2. Arrancar y terminar retos en su nombre con `solution: null`,
+    //      registrándole derrotas en los 8 juegos del día, rompiéndole la racha
+    //      y congelándole el progreso de logros.
+    // Ahora: si la cuenta YA existe, el cliente debe probar que es suya. Una
+    // cuenta que todavía no existe no tiene nada que proteger — se crea y se le
+    // emite su primer token.
+    if (safeUserId) {
+      const known = await query("SELECT 1 FROM users WHERE id = $1", [uid]);
+      if (known.rows.length > 0 && !ownsIdentity(identityToken, uid)) {
+        reply.code(403).send({
+          error: "No autorizado para jugar como este usuario",
+          code: "IDENTITY_REQUIRED",
+        });
+        return;
+      }
+    }
+
     const clientIp = req.ip || "unknown";
     // Solo aplicamos el bloqueo por IP si tenemos una IP real. Si es "unknown"
     // (proxy raro, etc.), no bloqueamos: es preferible permitir a bloquear
@@ -382,21 +428,7 @@ export async function finishChallenge(
       return;
     }
 
-    // ─── VERIFICACIÓN REAL ───
-    // Si es abandono/timeout (sin solution), el resultado es perdido sin verificar.
-    // Si hay solution, se verifica normalmente server-side.
-    const verifyResult = isAbandon
-      ? { won: false, detail: "Abandono o tiempo agotado" }
-      : verifyChallenge(
-          gameId,
-          session.difficulty,
-          session.today,
-          solution as any,
-        );
-
     const timeSeconds = Math.round((now - session.startedAt) / 1000);
-    // Sin tiempo mínimo: si la verificación server dice que es correcto, es válido.
-    const flagged = false;
 
     // `null` explícito = modo "Sin Tiempo" (puntaje fijo). `undefined` solo
     // puede darse en tokens viejos (pre-deploy) sin este campo: se trata como
@@ -408,6 +440,32 @@ export async function finishChallenge(
         : session.timeLimit;
     const gameOptions = GAME_TIME_OPTIONS[gameId] ?? [];
     const maxTimeOption = gameOptions.length > 0 ? Math.max(...gameOptions) : sessionTimeLimit;
+
+    // ─── LÍMITE DE TIEMPO SERVER-SIDE ───
+    // El `timeLimit` está FIRMADO en el sessionToken, así que el cliente no lo
+    // puede inflar. Si el envío llegó pasado ese límite (más la tolerancia por
+    // latencia), es derrota: no alcanza con perder el bonus de velocidad,
+    // porque una victoria fuera de tiempo igual sumaría para racha y logros.
+    // El modo "Sin Tiempo" está exento por definición.
+    const overtime =
+      !untimed && timeSeconds > sessionTimeLimit + TIME_LIMIT_TOLERANCE_SECONDS;
+
+    // ─── VERIFICACIÓN REAL ───
+    // Si es abandono/timeout (sin solution), el resultado es perdido sin verificar.
+    // Si hay solution, se verifica normalmente server-side.
+    const verifyResult = overtime
+      ? { won: false, detail: `Fuera de tiempo (${timeSeconds}s > ${sessionTimeLimit}s)` }
+      : isAbandon
+        ? { won: false, detail: "Abandono o tiempo agotado" }
+        : verifyChallenge(
+            gameId,
+            session.difficulty,
+            session.today,
+            solution as any,
+          );
+
+    // Sin tiempo mínimo a propósito: responder rápido se premia, no se castiga.
+    const flagged = false;
     const points = computeScore({
       won: verifyResult.won,
       difficulty: session.difficulty,
@@ -501,8 +559,13 @@ export async function finishChallenge(
     // de la transacción a propósito: un error otorgando un logro NUNCA debe
     // romper el finish de una partida. Solo tiene sentido en una victoria nueva
     // (no en abandono/derrota, ni en duplicado —ya se evaluó en el 1er finish).
+    // `session.ranked` en la condición: desde que los logros exigen `ranked`,
+    // una victoria no rankeada no puede desbloquear nada, así que evaluarla
+    // serían 7 queries garantizadas a cero. No es solo un caso raro: le pasa a
+    // TODA persona que comparte IP (familia, oficina, red móvil) en cada
+    // partida que gana.
     let newAchievements: string[] = [];
-    if (finalWon && !flagged && !duplicated) {
+    if (finalWon && !flagged && !duplicated && session.ranked) {
       try {
         const awarded = await awardAchievements(
           (sql, params) => query(sql, params as any[]),
@@ -751,13 +814,12 @@ export async function adminDebug(
   reply: FastifyReply,
 ): Promise<void> {
   try {
-    // El secreto va en un HEADER, no en la query string: así no queda
-    // registrado en logs de acceso, historial del navegador ni referers.
-    // Se acepta query.secret como fallback por compatibilidad, pero el header
-    // es lo recomendado.
+    // El secreto va SOLO en un HEADER, nunca en la query string: todo lo que
+    // viaja en la URL queda registrado en logs de acceso, historial del
+    // navegador y referers. El fallback por `?secret=` se eliminó en la
+    // auditoría 2026-09 (llamar con curl y `-H "X-Admin-Secret: ..."`).
     const headerSecret = req.headers["x-admin-secret"];
-    const { secret: querySecret } = req.query as { secret?: string };
-    const provided = typeof headerSecret === "string" ? headerSecret : (querySecret ?? "");
+    const provided = typeof headerSecret === "string" ? headerSecret : "";
 
     // Comparación timing-safe para evitar timing attacks sobre el secreto.
     const a = Buffer.from(String(provided));
@@ -1267,6 +1329,51 @@ export async function setFeaturedBadges(
   }
 }
 
+/**
+ * POST /user/:userId/delete
+ *
+ * Borra la cuenta y TODOS los datos asociados. Es el ejercicio del derecho de
+ * supresión (art. 17 RGPD / art. 16 Ley 25.326) sin depender de un email: un
+ * jugador anónimo no tiene casilla desde la cual pedirlo, así que exigirle que
+ * escriba un mail no era un canal real para él.
+ *
+ * Autorización: identityToken del propio usuario (mismo criterio anti-IDOR que
+ * el resto de las operaciones sensibles). No hay borrado de cuentas ajenas.
+ *
+ * Qué se borra: la fila de `users`. El resto cae por `ON DELETE CASCADE`
+ * declarado en db.ts — attempts, badges (podio y logros), google_accounts,
+ * friendships y friend_requests. Los duelos donde era CREADOR caen por CASCADE;
+ * donde era RIVAL, `opponent_id` queda NULL (ON DELETE SET NULL) y
+ * `settleExpiredDuels` los cierra solo. `sessions` NO tiene clave foránea, así
+ * que se borra explícitamente antes.
+ */
+export async function deleteAccount(
+  req: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  try {
+    const { userId } = req.params as { userId?: string };
+    const { identityToken } = (req.body ?? {}) as { identityToken?: string };
+    if (!requireOwnership(reply, identityToken, userId)) return;
+
+    const deleted = await transaction(async (client) => {
+      // sessions no tiene FK a users: hay que limpiarla a mano.
+      await client.query("DELETE FROM sessions WHERE user_id = $1", [userId]);
+      const res = await client.query("DELETE FROM users WHERE id = $1", [userId]);
+      return (res.rowCount ?? 0) > 0;
+    });
+
+    if (!deleted) {
+      reply.code(404).send({ error: "Usuario no encontrado" });
+      return;
+    }
+    reply.code(200).send({ ok: true, userId });
+  } catch (err) {
+    console.error("deleteAccount error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // ─── Perfil del usuario ────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════
@@ -1553,7 +1660,7 @@ export async function getUserAttempts(
       return;
     }
 
-    const { identityToken } = req.query as { identityToken?: string };
+    const identityToken = readIdentityToken(req);
     if (!ownsIdentity(identityToken, userId)) {
       reply.code(403).send({ error: "No autorizado para leer estos datos" });
       return;
@@ -1627,7 +1734,7 @@ export async function getUserRank(
       return;
     }
 
-    const { identityToken } = req.query as { identityToken?: string };
+    const identityToken = readIdentityToken(req);
     if (!ownsIdentity(identityToken, userId)) {
       reply.code(403).send({ error: "No autorizado para leer estos datos" });
       return;
@@ -1773,6 +1880,32 @@ function orderedPair(a: string, b: string): [string, string] {
 }
 
 /** Verifica identityToken del usuario que actúa; responde 403 si no. Devuelve true si ok. */
+/**
+ * Lee el identityToken de una request GET.
+ *
+ * Preferimos el HEADER `X-Identity-Token` sobre la query string por la misma
+ * razón por la que `/admin/debug` usa un header para su secreto: todo lo que
+ * viaja en la URL queda escrito en los logs de acceso del servidor, en el
+ * historial del navegador y en cualquier proxy intermedio — y este token es una
+ * credencial que da acceso completo a la cuenta.
+ *
+ * La query string se sigue aceptando SOLO como compatibilidad temporal, para
+ * que un frontend cacheado de antes de este cambio no deje al usuario sin
+ * acceso a su historial. Se puede quitar tras un ciclo de deploy.
+ */
+function readIdentityToken(req: FastifyRequest): string | undefined {
+  // `req.headers ?? {}`: en Fastify real siempre existe, pero los tests
+  // construyen requests mínimos sin `headers`. Sin este guard, la ausencia del
+  // objeto tiraba un TypeError que el handler convertía en 500 — o sea, un
+  // request sin token respondía "error interno" en vez de 403.
+  const header = (req.headers ?? {})["x-identity-token"];
+  if (typeof header === "string" && header.length > 0) return header;
+  const q = (req.query ?? {}) as { identityToken?: unknown };
+  return typeof q.identityToken === "string" && q.identityToken.length > 0
+    ? q.identityToken
+    : undefined;
+}
+
 function requireOwnership(
   reply: FastifyReply,
   identityToken: string | undefined,
@@ -2174,13 +2307,21 @@ async function finishDuelChallenge(
   const { session, solution, isAbandon } = args;
   const duelId = session.duelId!;
 
-  const verifyResult = isAbandon
-    ? { won: false, detail: "Abandono o tiempo agotado" }
-    : verifyChallenge(session.gameId, session.difficulty, session.today, solution as any, session.duelSeed);
-
   const now = Date.now();
   const timeSeconds = Math.round((now - session.startedAt) / 1000);
   const sessionTimeLimit = session.timeLimit ?? TIME_LIMITS[session.gameId] ?? 180;
+
+  // Mismo límite de tiempo server-side que el reto diario (ver
+  // TIME_LIMIT_TOLERANCE_SECONDS). Un duelo siempre tiene tiempo numérico
+  // (startDuelChallenge nunca deja `timeLimit` en null), así que no hay modo
+  // "Sin Tiempo" que exceptuar acá.
+  const overtime = timeSeconds > sessionTimeLimit + TIME_LIMIT_TOLERANCE_SECONDS;
+
+  const verifyResult = overtime
+    ? { won: false, detail: `Fuera de tiempo (${timeSeconds}s > ${sessionTimeLimit}s)` }
+    : isAbandon
+      ? { won: false, detail: "Abandono o tiempo agotado" }
+      : verifyChallenge(session.gameId, session.difficulty, session.today, solution as any, session.duelSeed);
   const gameOptions = GAME_TIME_OPTIONS[session.gameId] ?? [];
   const maxTimeOption = gameOptions.length > 0 ? Math.max(...gameOptions) : sessionTimeLimit;
   const points = computeScore({
@@ -2617,7 +2758,8 @@ export async function forfeitDuel(req: FastifyRequest, reply: FastifyReply): Pro
 export async function getDuel(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     const { id } = req.params as { id: string };
-    const { userId, identityToken } = req.query as { userId?: string; identityToken?: string };
+    const { userId } = req.query as { userId?: string };
+    const identityToken = readIdentityToken(req);
     if (!isCodeFormat(id, DUEL_ID_LEN)) {
       reply.code(422).send({ error: "duelId inválido" });
       return;
@@ -2708,7 +2850,8 @@ async function touchLastSeen(userId: string): Promise<void> {
 /** GET /duels/pending — invitaciones pendientes dirigidas a mí (banner in-app). */
 export async function getPendingDuels(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
-    const { userId, identityToken } = req.query as { userId?: string; identityToken?: string };
+    const { userId } = req.query as { userId?: string };
+    const identityToken = readIdentityToken(req);
     if (!requireOwnership(reply, identityToken, userId)) return;
     await touchLastSeen(userId);
     await sweepExpiredDuels(userId);
@@ -2745,7 +2888,8 @@ export async function getPendingDuels(req: FastifyRequest, reply: FastifyReply):
 /** GET /me/friend-code — mi código de amigo (lo genera si no existe). */
 export async function getMyFriendCode(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
-    const { userId, identityToken } = req.query as { userId?: string; identityToken?: string };
+    const { userId } = req.query as { userId?: string };
+    const identityToken = readIdentityToken(req);
     if (!requireOwnership(reply, identityToken, userId)) return;
     const code = await ensureFriendCode(userId);
     reply.code(200).send({ code });
@@ -2914,7 +3058,8 @@ export async function respondFriendRequest(req: FastifyRequest, reply: FastifyRe
 /** GET /friends — lista de amigos actuales. */
 export async function getFriends(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
-    const { userId, identityToken } = req.query as { userId?: string; identityToken?: string };
+    const { userId } = req.query as { userId?: string };
+    const identityToken = readIdentityToken(req);
     if (!requireOwnership(reply, identityToken, userId)) return;
     // `online` se calcula en el SERVER y sale como booleano: el timestamp
     // crudo de last_seen nunca se expone, así un amigo no puede deducir tus
@@ -2946,7 +3091,8 @@ export async function getFriends(req: FastifyRequest, reply: FastifyReply): Prom
 /** GET /friends/requests — solicitudes pendientes RECIBIDAS. */
 export async function getFriendRequests(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
-    const { userId, identityToken } = req.query as { userId?: string; identityToken?: string };
+    const { userId } = req.query as { userId?: string };
+    const identityToken = readIdentityToken(req);
     if (!requireOwnership(reply, identityToken, userId)) return;
     const res = await query(
       `SELECT r.id, r.from_user, u.display_name, u.country_code, r.created_at
@@ -2972,7 +3118,8 @@ export async function getFriendRequests(req: FastifyRequest, reply: FastifyReply
 /** GET /friends/requests/outgoing — solicitudes pendientes ENVIADAS por mi (aun sin responder). */
 export async function getOutgoingFriendRequests(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
-    const { userId, identityToken } = req.query as { userId?: string; identityToken?: string };
+    const { userId } = req.query as { userId?: string };
+    const identityToken = readIdentityToken(req);
     if (!requireOwnership(reply, identityToken, userId)) return;
     const res = await query(
       `SELECT r.id, r.to_user, u.display_name, u.country_code, r.created_at

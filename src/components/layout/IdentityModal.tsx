@@ -10,8 +10,14 @@ import {
   isIdentityComplete,
   getIdentityToken,
   setIdentityToken,
+  clearIdentity,
 } from "@/lib/identity";
-import { apiGetUserProfile, apiUpdateUserProfile, apiCheckUsernameAvailable } from "@/lib/api";
+import {
+  apiGetUserProfile,
+  apiUpdateUserProfile,
+  apiCheckUsernameAvailable,
+  apiDeleteAccount,
+} from "@/lib/api";
 import { detectCountryCode } from "@/lib/geoip";
 import { loginWithGoogle, isLoggedIn, logout, getUserEmail } from "@/lib/auth";
 import { NATIONALITIES } from "@/data/nationalities";
@@ -43,6 +49,39 @@ export function IdentityModal({ open, onClose }: IdentityModalProps) {
   const [nameStatus, setNameStatus] = useState<
     "idle" | "checking" | "available" | "taken"
   >("idle");
+  /** Confirmación en dos pasos del borrado de cuenta (acción irreversible). */
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  /**
+   * Borra la cuenta en el server y limpia TODO el estado local.
+   *
+   * Se recarga la página en vez de navegar: es la forma más simple de
+   * garantizar que ningún componente montado siga usando la identidad vieja
+   * (rankings, amigos, duelos, stats). Al volver a cargar, `getIdentity()`
+   * no encuentra nada y genera una identidad anónima nueva desde cero.
+   */
+  async function handleDeleteAccount(): Promise<void> {
+    setDeleting(true);
+    setError(null);
+    const result = await apiDeleteAccount(identity.userId);
+    if (!result || "error" in result) {
+      setDeleting(false);
+      setError(t("profile.delete_error"));
+      return;
+    }
+    try {
+      window.localStorage.clear();
+      window.sessionStorage.clear();
+    } catch {
+      // Modo privado / storage bloqueado: la cuenta ya se borró en el server,
+      // que es lo que importa para el derecho de supresión.
+    }
+    // Imprescindible además del clear(): las cookies bdb_uid/bdb_tok no viven
+    // en localStorage y restaurarían la identidad borrada en la próxima carga.
+    clearIdentity();
+    window.location.replace("/");
+  }
 
   /** Nombre del mes siguiente. */
   function nextMonthName(): string {
@@ -324,6 +363,49 @@ export function IdentityModal({ open, onClose }: IdentityModalProps) {
       <p className="mt-3 text-center text-[11px] text-ink-faint">
         {isLoggedIn() ? t("profile.logged_hint") : t("profile.login_hint")}
       </p>
+
+      {/* ─── Borrado de cuenta (derecho de supresión) ─────────────────
+          Va último y en tono apagado: es una salida legal necesaria, no una
+          acción que queramos invitar a usar. Confirmación en dos pasos porque
+          es irreversible y no hay forma de recuperar los datos después. */}
+      <div className="mt-6 border-t border-white/10 pt-4">
+        {!confirmingDelete ? (
+          <button
+            type="button"
+            onClick={() => {
+              setError(null);
+              setConfirmingDelete(true);
+            }}
+            className="w-full text-center text-[11px] text-ink-faint underline-offset-2 transition-colors hover:text-racing-400 hover:underline"
+          >
+            {t("profile.delete_account")}
+          </button>
+        ) : (
+          <div className="rounded-lg border border-racing/30 bg-racing/5 p-3">
+            <p className="text-xs leading-relaxed text-ink-muted">
+              {t("profile.delete_warning")}
+            </p>
+            <div className="mt-3 flex flex-col gap-2">
+              <Button
+                variant="primary"
+                block
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+              >
+                {deleting ? t("profile.deleting") : t("profile.delete_confirm")}
+              </Button>
+              <Button
+                variant="ghost"
+                block
+                onClick={() => setConfirmingDelete(false)}
+                disabled={deleting}
+              >
+                {t("profile.cancel")}
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
     </Modal>
   );
 }

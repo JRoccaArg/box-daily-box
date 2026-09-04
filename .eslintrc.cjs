@@ -24,9 +24,12 @@ module.exports = {
       files: ["src/api/**/*.ts"],
       rules: { "no-console": "off" },
     },
-    // Scripts de utilidad (smoke tests, migraciones) también
+    // Scripts de utilidad (smoke tests, migraciones) también.
+    // Incluye .tsx a propósito: los tests que renderizan componentes
+    // (test-badge-icon-fallback.tsx) quedaban fuera del override y hacían
+    // fallar `npm run lint` por sus console.log, aunque son scripts de test.
     {
-      files: ["scripts/**/*.ts"],
+      files: ["scripts/**/*.ts", "scripts/**/*.tsx"],
       rules: { "no-console": "off" },
     },
   ],

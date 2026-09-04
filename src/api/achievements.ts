@@ -15,11 +15,22 @@
 //  - RETROACTIVO: los logros se calculan desde TODO el historial de `attempts`.
 //    Un jugador que ya cumplió una condición recibe el badge al primer barrido
 //    (ver backfill en db.ts). El mismo motor, con `userId`, corre en cada finish.
-//  - Qué victoria CUENTA: `won AND NOT flagged AND duel_id IS NULL` — la misma
-//    definición que la racha (streak.ts). Los duelos no cuentan; las partidas
-//    flaggeadas tampoco. NO se exige `ranked` (a diferencia del podio): un logro
-//    es un mérito PERSONAL, no una posición en el ranking global, así que una
-//    victoria real cuenta aunque otra cuenta de la misma IP haya jugado ese día.
+//  - Qué victoria CUENTA: `won AND NOT flagged AND ranked AND duel_id IS NULL`.
+//    Los duelos no cuentan; las partidas flaggeadas tampoco.
+//
+//    Sobre `ranked` (decisión de negocio del usuario, auditoría 2026-09):
+//    SÍ se exige, igual que el podio mensual. `ranked = false` significa que
+//    otra cuenta distinta ya jugó ESE juego ESE día desde la MISMA IP. La
+//    versión anterior de este motor NO lo exigía, con el argumento de que un
+//    logro es un mérito personal; se cambió deliberadamente para endurecer el
+//    anti-multicuenta, aceptando el costo conocido: dos personas de la misma
+//    casa, oficina o red móvil (CGNAT) compiten por el único cupo rankeable
+//    del día, así que la segunda no suma para logros aunque haya jugado limpio.
+//
+//    IMPORTANTE: esta condición debe mantenerse IDÉNTICA en `WIN_FILTER` (que
+//    alimenta el otorgamiento) y en `getAchievementProgress` (que alimenta las
+//    barras de la galería). Si divergen, el jugador ve "50/50 · 100%" y el
+//    logro no aparece nunca — el bug más confuso posible en este sistema.
 
 /** Ejecutor de queries mínimo, compatible con `pg` (Pool/Client) y con PGlite. */
 export type QueryFn = (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
@@ -48,10 +59,27 @@ export const DAILY_GAME_IDS = [
 // registro (solo [a-z0-9-]), no entrada de usuario: interpolarlos es seguro.
 const DAILY_SQL = `ARRAY[${DAILY_GAME_IDS.map((g) => `'${g}'`).join(", ")}]`;
 
-/** Victoria que cuenta para un logro (misma definición que la racha). */
-const WIN_FILTER = "won AND NOT flagged AND duel_id IS NULL";
+/**
+ * Victoria que cuenta para un logro. Se exige `ranked` (ver cabecera del
+ * archivo): un intento que no entró al ranking global tampoco suma para logros.
+ * Único punto de verdad — lo usan tanto `qualifierSelect` (otorgamiento) como
+ * `getAchievementProgress` (barras de progreso).
+ */
+const WIN_FILTER = "won AND NOT flagged AND ranked AND duel_id IS NULL";
 
-/** Métrica de la que depende un logro (cómo se mide el progreso). */
+/**
+ * Métrica de la que depende un logro (cómo se mide el progreso).
+ *
+ * Nota deliberada sobre el alcance de cada familia:
+ *  - Las métricas de VOLUMEN (`totalWins`, `legendWins`, `maxSingleGame`) NO
+ *    filtran por `DAILY_GAME_IDS`: cuentan toda victoria del reto diario, aunque
+ *    sea de un juego que más adelante se retire del sitio. Si filtraran, retirar
+ *    un juego le BAJARÍA el progreso a jugadores que ya lo habían ganado.
+ *  - Las métricas de COMPLETITUD (`distinctDailyGames`, `bestDayDistinct`) SÍ
+ *    filtran por `DAILY_GAME_IDS`, porque su significado es "el catálogo de HOY"
+ *    ("ganaste los N juegos disponibles").
+ * La diferencia es intencional, no una inconsistencia.
+ */
 export type AchievementMetric =
   | "totalWins" // victorias totales
   | "legendWins" // victorias en dificultad "leyenda"

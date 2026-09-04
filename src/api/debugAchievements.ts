@@ -1,6 +1,12 @@
 // Escenarios de logros SOLO para staging. Las victorias sintéticas quedan
-// marcadas en attempts.ip_address, no rankean y pueden limpiarse sin tocar las
-// partidas reales del usuario.
+// marcadas en attempts.ip_address y pueden limpiarse sin tocar las partidas
+// reales del usuario.
+//
+// `ranked = true` (auditoría 2026-09): antes se insertaban con `ranked = false`
+// para no tocar ningún ranking, pero desde que los logros EXIGEN `ranked`
+// (ver achievements.ts) esos intentos dejarían de otorgar nada y el panel de
+// staging no probaría nada. No distorsionan ranking real porque van con
+// `points = 0` y en fechas de 1980-1999, que ningún mes vivo consulta.
 
 import {
   ACHIEVEMENTS,
@@ -51,7 +57,7 @@ async function insertScenario(q: QueryFn, userId: string, type: AchievementType)
     const start = type === "ach_legend_10" ? "1980-01-01" : "1983-01-01";
     await q(
       `INSERT INTO attempts ${commonColumns}
-       SELECT $1, 'pittexto', $2::date + g::int, 'leyenda', true, 30, 0, false, false, $3
+       SELECT $1, 'pittexto', $2::date + g::int, 'leyenda', true, 30, 0, false, true, $3
        FROM generate_series(0, $4::int - 1) AS g
        ON CONFLICT (user_id, game_id, date_key) WHERE duel_id IS NULL DO NOTHING`,
       [userId, start, marker(type), count],
@@ -67,7 +73,7 @@ async function insertScenario(q: QueryFn, userId: string, type: AchievementType)
        SELECT $1,
               (${DAILY_SQL})[1 + (g::int % ${DAILY_GAME_IDS.length})],
               $2::date + g::int,
-              'medio', true, 30, 0, false, false, $3
+              'medio', true, 30, 0, false, true, $3
        FROM generate_series(0, $4::int - 1) AS g
        ON CONFLICT (user_id, game_id, date_key) WHERE duel_id IS NULL DO NOTHING`,
       [userId, start, marker(type), count],
@@ -79,7 +85,7 @@ async function insertScenario(q: QueryFn, userId: string, type: AchievementType)
     await q(
       `INSERT INTO attempts ${commonColumns}
        SELECT $1, 'polewordle', '1993-01-01'::date + g::int,
-              'medio', true, 30, 0, false, false, $2
+              'medio', true, 30, 0, false, true, $2
        FROM generate_series(0, 49) AS g
        ON CONFLICT (user_id, game_id, date_key) WHERE duel_id IS NULL DO NOTHING`,
       [userId, marker(type)],
@@ -90,7 +96,7 @@ async function insertScenario(q: QueryFn, userId: string, type: AchievementType)
   if (type === "ach_perfect_day") {
     await q(
       `INSERT INTO attempts ${commonColumns}
-       SELECT $1, game_id, '1996-06-15'::date, 'medio', true, 30, 0, false, false, $2
+       SELECT $1, game_id, '1996-06-15'::date, 'medio', true, 30, 0, false, true, $2
        FROM unnest(${DAILY_SQL}) AS game_id
        ON CONFLICT (user_id, game_id, date_key) WHERE duel_id IS NULL DO NOTHING`,
       [userId, marker(type)],
@@ -103,7 +109,7 @@ async function insertScenario(q: QueryFn, userId: string, type: AchievementType)
   await q(
     `INSERT INTO attempts ${commonColumns}
      SELECT $1, game_id, '1999-01-01'::date + (ordinality::int - 1),
-            'medio', true, 30, 0, false, false, $2
+            'medio', true, 30, 0, false, true, $2
      FROM unnest(${DAILY_SQL}) WITH ORDINALITY AS games(game_id, ordinality)
      ON CONFLICT (user_id, game_id, date_key) WHERE duel_id IS NULL DO NOTHING`,
     [userId, marker(type)],

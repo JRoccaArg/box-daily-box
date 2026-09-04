@@ -79,16 +79,33 @@ async function win(
   uid: string,
   gameId: string,
   n: number,
-  opts: { difficulty?: string; flagged?: boolean; duel?: boolean; date?: string } = {},
+  opts: {
+    difficulty?: string;
+    flagged?: boolean;
+    duel?: boolean;
+    date?: string;
+    /** false = el intento no entró al ranking global (otra cuenta de la misma
+     *  IP ya jugó ese juego ese día). Desde la auditoría 2026-09 NO cuenta
+     *  para logros. */
+    ranked?: boolean;
+  } = {},
 ) {
   for (let i = 0; i < n; i++) {
     // Fecha única por inserción salvo que se fije `date` (para día-perfecto).
     const dk = opts.date ?? `2020-01-${String((idSeq % 27) + 1).padStart(2, "0")}`;
     idSeq++;
     await db.query(
-      `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, flagged, duel_id)
-       VALUES ($1,$2,$3::date,$4,true,$5,$6)`,
-      [uid, gameId, dk, opts.difficulty ?? "medio", opts.flagged ?? false, opts.duel ? "d1" : null],
+      `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, flagged, ranked, duel_id)
+       VALUES ($1,$2,$3::date,$4,true,$5,$6,$7)`,
+      [
+        uid,
+        gameId,
+        dk,
+        opts.difficulty ?? "medio",
+        opts.flagged ?? false,
+        opts.ranked ?? true,
+        opts.duel ? "d1" : null,
+      ],
     );
   }
 }
@@ -210,6 +227,42 @@ async function reset() {
   assert(
     (await ownedTypes(U1)).length === 0,
     "120 victorias flaggeadas/duelo → 0 logros (no cuentan)",
+  );
+
+  // ─── Filtro: intentos NO rankeados no cuentan ─────────────────────
+  // Regla de negocio (decisión del usuario, auditoría 2026-09): un intento con
+  // ranked=false (otra cuenta de la misma IP ya jugó ese juego ese día) no suma
+  // para logros, igual que no suma para el podio mensual.
+  console.log("\n[Filtro: ranked]");
+  await reset();
+  await win(U1, "pittexto", 120, { difficulty: "leyenda", ranked: false });
+  await awardAchievements(q, U1);
+  assert(
+    (await ownedTypes(U1)).length === 0,
+    "120 victorias NO rankeadas → 0 logros (no cuentan)",
+  );
+  // Y el progreso tiene que contar lo MISMO que el otorgamiento: si divergieran,
+  // el jugador vería la barra al 100% y el logro no aparecería nunca.
+  const unrankedProgress = await getAchievementProgress(q, U1);
+  assert(
+    unrankedProgress.every((item) => item.rawCurrent === 0 && !item.unlocked),
+    "el progreso ignora los intentos no rankeados (coherente con el otorgamiento)",
+  );
+
+  // Mezcla: solo las rankeadas suman.
+  await reset();
+  await win(U1, "pittexto", 60, { difficulty: "leyenda", ranked: false });
+  await win(U1, "pittexto", 10, { difficulty: "leyenda", ranked: true });
+  await awardAchievements(q, U1);
+  const mixed = await ownedTypes(U1);
+  assert(
+    mixed.includes("ach_legend_10") && !mixed.includes("ach_legend_50"),
+    "60 no rankeadas + 10 rankeadas → solo el logro de 10 en Leyenda",
+  );
+  const mixedProgress = await getAchievementProgress(q, U1);
+  assert(
+    mixedProgress.find((p) => p.type === "ach_legend_50")?.rawCurrent === 10,
+    "el progreso de Leyenda cuenta 10 (las 60 no rankeadas quedan afuera)",
   );
 
   // ─── Idempotencia + retroactivo (modo todos) ──────────────────────

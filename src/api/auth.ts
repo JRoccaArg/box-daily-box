@@ -23,18 +23,19 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import { query, transaction } from "./db";
 import { sanitizeDisplayName, isValidDateKey } from "./validate";
 import { signIdentityToken } from "./identity-token";
+import { requireEnv } from "./secrets";
+import { awardAchievements } from "./achievements";
 import { verifyChallenge } from "./verify";
 import { computeScore } from "../lib/scoring";
 import type { Difficulty } from "../types";
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-
-if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-  console.warn(
-    "⚠️  GOOGLE_CLIENT_ID/SECRET no configurados. OAuth deshabilitado.",
-  );
-}
+// Mismo criterio que TOKEN_SECRET/ADMIN_SECRET (ver secrets.ts): si faltan, el
+// proceso aborta el arranque. Antes esto solo emitía un console.warn y seguía:
+// el servidor quedaba "sano" (/health respondía OK) mientras cada intento de
+// login devolvía 503, así que un deploy mal configurado se veía verde con el
+// inicio de sesión roto para todos los usuarios.
+const GOOGLE_CLIENT_ID = requireEnv("GOOGLE_CLIENT_ID");
+const GOOGLE_CLIENT_SECRET = requireEnv("GOOGLE_CLIENT_SECRET");
 
 // ─── Tipos ─────────────────────────────────────────────────────────
 
@@ -66,8 +67,8 @@ async function exchangeCodeForToken(
   try {
     const params = new URLSearchParams({
       code,
-      client_id: GOOGLE_CLIENT_ID!,
-      client_secret: GOOGLE_CLIENT_SECRET!,
+      client_id: GOOGLE_CLIENT_ID,
+      client_secret: GOOGLE_CLIENT_SECRET,
       redirect_uri: redirectUri,
       grant_type: "authorization_code",
     });
@@ -132,11 +133,6 @@ export async function googleAuthCallback(
   req: FastifyRequest,
   reply: FastifyReply,
 ): Promise<void> {
-  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-    reply.code(503).send({ error: "OAuth no configurado" });
-    return;
-  }
-
   try {
     const { code, redirectUri, currentUserId, localAttempts, clientDateKey } = req.body as {
       code?: string;
@@ -287,6 +283,28 @@ export async function googleAuthCallback(
       );
     }
 
+    // 4.b Re-evaluar LOGROS para la cuenta destino.
+    //
+    // Es imprescindible hacerlo acá y no solo en el finish de una partida: al
+    // loguearse, la cuenta puede GANAR victorias de golpe por dos caminos
+    // (`migrateAnonymousAttempts`, que le pasa el historial del userId anónimo,
+    // e `importLocalAttempts`, que sube los intentos del día guardados en el
+    // navegador). Sin esto, un jugador que cruza el umbral gracias a la fusión
+    // se queda sin su logro hasta que gane OTRA partida más — con la barra de
+    // progreso marcando 100% y el logro sin aparecer.
+    //
+    // Best-effort: un error otorgando logros nunca debe romper el login.
+    let newAchievements: string[] = [];
+    try {
+      const awarded = await awardAchievements(
+        (sql, params) => query(sql, params as any[]),
+        userId,
+      );
+      newAchievements = awarded.map((a) => a.type);
+    } catch (err) {
+      console.error("awardAchievements en login (no bloquea):", err);
+    }
+
     // 5. Devolver identidad completa del usuario
     const userRow = await query(
       "SELECT id, display_name, country_code FROM users WHERE id = $1",
@@ -307,6 +325,9 @@ export async function googleAuthCallback(
       isNewLink,
       migratedCount,
       importedCount,
+      // Logros desbloqueados por la fusión/importación de este login (para
+      // celebrarlos en el frontend, igual que los del finish de una partida).
+      newAchievements,
       // Emitir identityToken: Google probó la identidad, así que le damos
       // el token que prueba posesión del userId para futuras operaciones.
       identityToken: signIdentityToken(user.id),
