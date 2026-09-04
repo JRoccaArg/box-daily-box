@@ -537,6 +537,19 @@ const ja: Translations = {
   "seo.game.team-radio.title": "Team Radio — チーム無線からグランプリを当てよう | Box Daily Box",
   "seo.game.team-radio.description":
     "F1の象徴的なチーム無線メッセージを読み、6つの選択肢からどのグランプリで発言されたか当てよう。無料の毎日パズル。",
+
+  // ─── Evento puntual: puntos dobles del GP de Monza 2026 ─────────────
+  // Temporal. Se borra junto con src/lib/gpEvent.ts cuando pase el evento.
+  "gpEvent.eyebrow": "GPウィークエンド",
+  "gpEvent.circuit": "モンツァ",
+  "gpEvent.active_title": "ポイント2倍",
+  "gpEvent.soon_title": "まもなくポイント2倍",
+  "gpEvent.active_sub": "今日のチャレンジはすべてポイントが2倍。",
+  "gpEvent.soon_sub": "土曜と日曜は、すべてのチャレンジがポイント2倍。",
+  "gpEvent.ends_in": "終了まで",
+  "gpEvent.starts_in": "開始まで",
+  "gpEvent.aria_active": "{{circuit}}グランプリの週末: 今日のチャレンジはポイントが{{multiplier}}倍になります。",
+  "gpEvent.aria_soon": "{{circuit}}グランプリの週末: 土曜と日曜はチャレンジのポイントが{{multiplier}}倍になります。",
 };
 
 export default ja;

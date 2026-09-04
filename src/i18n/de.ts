@@ -489,6 +489,19 @@ const de: Translations = {
   "seo.game.team-radio.title": "Team Radio — Errate den Grand Prix anhand des Team-Funkspruchs | Box Daily Box",
   "seo.game.team-radio.description":
     "Lies einen legendären F1-Team-Funkspruch und rate aus 6 Optionen, bei welchem Grand Prix er gesagt wurde. Kostenloses Tagesrätsel.",
+
+  // ─── Evento puntual: puntos dobles del GP de Monza 2026 ─────────────
+  // Temporal. Se borra junto con src/lib/gpEvent.ts cuando pase el evento.
+  "gpEvent.eyebrow": "GP-Wochenende",
+  "gpEvent.circuit": "Monza",
+  "gpEvent.active_title": "Doppelte Punkte",
+  "gpEvent.soon_title": "Doppelte Punkte kommen",
+  "gpEvent.active_sub": "Heute zählt jede Aufgabe doppelt.",
+  "gpEvent.soon_sub": "Am Samstag und Sonntag zählt jede Aufgabe doppelt.",
+  "gpEvent.ends_in": "Endet in",
+  "gpEvent.starts_in": "Beginnt in",
+  "gpEvent.aria_active": "Grand-Prix-Wochenende in {{circuit}}: Heute geben die Aufgaben {{multiplier}}-mal so viele Punkte.",
+  "gpEvent.aria_soon": "Grand-Prix-Wochenende in {{circuit}}: Am Samstag und Sonntag geben die Aufgaben {{multiplier}}-mal so viele Punkte.",
 };
 
 export default de;

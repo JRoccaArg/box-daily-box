@@ -570,6 +570,19 @@ const hi: Translations = {
   "seo.game.team-radio.title": "Team Radio — टीम रेडियो से ग्रां प्री का अंदाज़ा लगाएं | Box Daily Box",
   "seo.game.team-radio.description":
     "F1 की एक मशहूर टीम रेडियो मैसेज पढ़ें और 6 विकल्पों में से अंदाज़ा लगाएं कि यह किस ग्रां प्री में कहा गया था। रोज़ाना मुफ्त पज़ल।",
+
+  // ─── Evento puntual: puntos dobles del GP de Monza 2026 ─────────────
+  // Temporal. Se borra junto con src/lib/gpEvent.ts cuando pase el evento.
+  "gpEvent.eyebrow": "जीपी वीकेंड",
+  "gpEvent.circuit": "मोंज़ा",
+  "gpEvent.active_title": "दोगुने अंक",
+  "gpEvent.soon_title": "दोगुने अंक आ रहे हैं",
+  "gpEvent.active_sub": "आज हर चुनौती के अंक दोगुने हैं।",
+  "gpEvent.soon_sub": "शनिवार और रविवार को हर चुनौती के अंक दोगुने हैं।",
+  "gpEvent.ends_in": "समाप्त होने में",
+  "gpEvent.starts_in": "शुरू होने में",
+  "gpEvent.aria_active": "{{circuit}} ग्रां प्री वीकेंड: आज चुनौतियाँ {{multiplier}} गुना अंक देती हैं।",
+  "gpEvent.aria_soon": "{{circuit}} ग्रां प्री वीकेंड: शनिवार और रविवार को चुनौतियाँ {{multiplier}} गुना अंक देंगी।",
 };
 
 export default hi;

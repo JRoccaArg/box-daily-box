@@ -571,6 +571,19 @@ const it: Translations = {
   "seo.game.team-radio.title": "Team Radio — Indovina il Gran Premio dalla radio di scuderia | Box Daily Box",
   "seo.game.team-radio.description":
     "Leggi un messaggio radio di scuderia iconico della F1 e indovina in quale Gran Premio è stato detto, tra 6 opzioni. Puzzle giornaliero gratis.",
+
+  // ─── Evento puntual: puntos dobles del GP de Monza 2026 ─────────────
+  // Temporal. Se borra junto con src/lib/gpEvent.ts cuando pase el evento.
+  "gpEvent.eyebrow": "Weekend di GP",
+  "gpEvent.circuit": "Monza",
+  "gpEvent.active_title": "Punti doppi",
+  "gpEvent.soon_title": "Arrivano i punti doppi",
+  "gpEvent.active_sub": "Oggi tutte le sfide valgono il doppio.",
+  "gpEvent.soon_sub": "Sabato e domenica tutte le sfide valgono il doppio.",
+  "gpEvent.ends_in": "Finisce tra",
+  "gpEvent.starts_in": "Inizia tra",
+  "gpEvent.aria_active": "Weekend del Gran Premio di {{circuit}}: oggi le sfide danno {{multiplier}} volte i punti.",
+  "gpEvent.aria_soon": "Weekend del Gran Premio di {{circuit}}: sabato e domenica le sfide daranno {{multiplier}} volte i punti.",
 };
 
 export default it;

@@ -590,6 +590,19 @@ const en: Translations = {
   "duel.go_home": "Back to home",
   "duel.share_link": "Share link",
   "duel.link_copied": "Link copied to clipboard",
+
+  // ─── Evento puntual: puntos dobles del GP de Monza 2026 ─────────────
+  // Temporal. Se borra junto con src/lib/gpEvent.ts cuando pase el evento.
+  "gpEvent.eyebrow": "GP weekend",
+  "gpEvent.circuit": "Monza",
+  "gpEvent.active_title": "Double points",
+  "gpEvent.soon_title": "Double points incoming",
+  "gpEvent.active_sub": "Every challenge today is worth twice as much.",
+  "gpEvent.soon_sub": "Saturday and Sunday, every challenge is worth twice as much.",
+  "gpEvent.ends_in": "Ends in",
+  "gpEvent.starts_in": "Starts in",
+  "gpEvent.aria_active": "{{circuit}} Grand Prix weekend: today's challenges award {{multiplier}} times the points.",
+  "gpEvent.aria_soon": "{{circuit}} Grand Prix weekend: on Saturday and Sunday challenges will award {{multiplier}} times the points.",
 };
 
 export default en;

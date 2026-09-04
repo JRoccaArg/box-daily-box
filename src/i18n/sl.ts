@@ -585,6 +585,19 @@ const sl: Translations = {
   "seo.game.team-radio.title": "Team Radio — ugani Veliko nagrado po ekipni radijski zvezi | Box Daily Box",
   "seo.game.team-radio.description":
     "Preberi ikonično sporočilo ekipne radijske zveze F1 in izmed 6 možnosti ugani, na kateri Veliki nagradi je bilo izrečeno. Brezplačna dnevna uganka.",
+
+  // ─── Evento puntual: puntos dobles del GP de Monza 2026 ─────────────
+  // Temporal. Se borra junto con src/lib/gpEvent.ts cuando pase el evento.
+  "gpEvent.eyebrow": "Vikend VN",
+  "gpEvent.circuit": "Monza",
+  "gpEvent.active_title": "Dvojne točke",
+  "gpEvent.soon_title": "Prihajajo dvojne točke",
+  "gpEvent.active_sub": "Danes je vsak izziv vreden dvojno.",
+  "gpEvent.soon_sub": "V soboto in nedeljo je vsak izziv vreden dvojno.",
+  "gpEvent.ends_in": "Konec čez",
+  "gpEvent.starts_in": "Začetek čez",
+  "gpEvent.aria_active": "Vikend Velike nagrade {{circuit}}: današnji izzivi prinesejo {{multiplier}}-krat več točk.",
+  "gpEvent.aria_soon": "Vikend Velike nagrade {{circuit}}: v soboto in nedeljo bodo izzivi prinesli {{multiplier}}-krat več točk.",
 };
 
 export default sl;

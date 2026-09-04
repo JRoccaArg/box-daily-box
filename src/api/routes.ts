@@ -8,6 +8,7 @@ import { randomUUID, createHmac, timingSafeEqual, randomInt } from "crypto";
 import { query, transaction } from "./db";
 import { verifyChallenge } from "./verify";
 import { computeScore } from "../lib/scoring";
+import { gpEventMultiplier } from "../lib/gpEvent";
 import type { Difficulty } from "../types";
 import {
   isValidUserId,
@@ -466,7 +467,7 @@ export async function finishChallenge(
 
     // Sin tiempo mínimo a propósito: responder rápido se premia, no se castiga.
     const flagged = false;
-    const points = computeScore({
+    const basePoints = computeScore({
       won: verifyResult.won,
       difficulty: session.difficulty,
       timeSeconds,
@@ -474,6 +475,16 @@ export async function finishChallenge(
       maxTimeOption,
       untimed,
     });
+
+    // ─── EVENTO PUNTUAL: PUNTOS DOBLES DE GP (src/lib/gpEvent.ts) ───────
+    // La ventana se evalúa contra `resolveNow(req)` — el reloj del SERVIDOR en
+    // el instante en que se acreditan los puntos — y NO contra `session.today`.
+    // Es deliberado: `session.today` acepta el `clientDateKey` del navegador si
+    // cae a ±1 día del UTC del server (ver startChallenge), así que un cliente
+    // modificado podría declararse en sábado un viernes y cobrar el x2 fuera de
+    // la ventana. El reloj del server no es negociable, y además hace que el
+    // evento empiece en el mismo instante para todos los husos horarios.
+    const points = basePoints * gpEventMultiplier(resolveNow(req));
 
     const uid = session.uid;
     const clientIp = req.ip || "unknown";
@@ -2324,6 +2335,12 @@ async function finishDuelChallenge(
       : verifyChallenge(session.gameId, session.difficulty, session.today, solution as any, session.duelSeed);
   const gameOptions = GAME_TIME_OPTIONS[session.gameId] ?? [];
   const maxTimeOption = gameOptions.length > 0 ? Math.max(...gameOptions) : sessionTimeLimit;
+  // A PROPÓSITO sin el x2 del evento de GP (src/lib/gpEvent.ts): los duelos se
+  // guardan con `ranked: false` y no suman al ranking mensual, así que doblarlos
+  // no premiaría nada — pero sí serían el único camino REPETIBLE del sistema (un
+  // jugador puede disputar muchos duelos del mismo juego el mismo día, mientras
+  // que el reto diario está limitado a uno por juego). Dejarlo en 1x mantiene el
+  // techo del evento acotado a exactamente el doble de un día normal.
   const points = computeScore({
     won: verifyResult.won,
     difficulty: session.difficulty,

@@ -48,3 +48,17 @@ El servidor marca los intentos sintéticos, les da cero puntos y los deja fuera 
 La prueba de i18n valida las 14 traducciones y sus variables dinámicas. La prueba visual abre la galería con datos fijos y compara la ventana de estadísticas en escritorio, móvil y móvil angosto.
 
 Este enfoque detecta textos faltantes, errores al guardar la selección y cambios no deseados de diseño.
+
+## 2026-09-04: El evento de puntos dobles mide su ventana con el reloj del servidor
+
+El evento puntual del GP de Monza (`src/lib/gpEvent.ts`) multiplica por dos los puntos durante 48 horas. La ventana se expresa en instantes absolutos (`Date.UTC`) y el backend la evalúa contra su propio reloj en el momento de acreditar los puntos.
+
+No se usa `session.today` aunque esté firmado en el `sessionToken`. Ese campo acepta la fecha local del navegador cuando cae a un día de distancia del UTC del servidor, para que el reto diario respete el huso horario del jugador. Usarlo para el multiplicador habría permitido declararse en sábado un viernes y cobrar el doble fuera del evento.
+
+Como efecto buscado, el evento empieza en el mismo instante en todo el mundo: la medianoche UTC, cuando cambia de día el servidor.
+
+## 2026-09-04: El multiplicador del evento solo alcanza al reto diario
+
+Los duelos quedan en puntaje simple. No suman al ranking mensual porque se guardan con `ranked` en falso, y son el único camino repetible del sistema: una persona puede disputar varios duelos del mismo juego el mismo día, mientras que el reto diario admite uno por juego. Dejarlos fuera mantiene el techo del evento en exactamente el doble de un día normal.
+
+La importación de intentos locales al iniciar sesión también queda en puntaje simple. Ese endpoint inserta el intento con la fecha que manda el cliente, de la que solo se valida el formato, así que multiplicar ahí habría duplicado el valor de un camino que permite registrar partidas fechadas en días pasados. Es coherente con el criterio que ya regía: un intento importado tampoco recibe bonus de velocidad.

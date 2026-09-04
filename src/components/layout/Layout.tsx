@@ -7,11 +7,16 @@ import { DebugDatePanel } from "@/components/dev/DebugDatePanel";
 import { DuelBanner } from "./DuelBanner";
 import { ToastContainer } from "./ToastContainer";
 import { ConsentBanner } from "./ConsentBanner";
+import { GpEventBanner } from "./GpEventBanner";
 
 /** Marco de pagina: header pegajoso + contenedor centrado + footer. */
 export function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-full flex-col">
+      {/* Evento puntual (GP de Monza 2026). Va ARRIBA del header y no es
+          sticky: se lee al entrar y despues deja la pantalla libre. Se
+          renderiza solo dentro de su ventana — ver src/lib/gpEvent.ts. */}
+      <GpEventBanner />
       <Header />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:py-8">{children}</main>
       <Footer />

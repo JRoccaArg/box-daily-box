@@ -475,6 +475,19 @@ const nl: Translations = {
   "seo.game.team-radio.title": "Team Radio — Raad de Grand Prix aan de hand van de teamradio | Box Daily Box",
   "seo.game.team-radio.description":
     "Lees een iconisch F1-teamradiobericht en raad uit 6 opties bij welke Grand Prix het werd gezegd. Gratis dagelijkse puzzel.",
+
+  // ─── Evento puntual: puntos dobles del GP de Monza 2026 ─────────────
+  // Temporal. Se borra junto con src/lib/gpEvent.ts cuando pase el evento.
+  "gpEvent.eyebrow": "GP-weekend",
+  "gpEvent.circuit": "Monza",
+  "gpEvent.active_title": "Dubbele punten",
+  "gpEvent.soon_title": "Dubbele punten komen eraan",
+  "gpEvent.active_sub": "Vandaag telt elke uitdaging dubbel.",
+  "gpEvent.soon_sub": "Zaterdag en zondag telt elke uitdaging dubbel.",
+  "gpEvent.ends_in": "Eindigt over",
+  "gpEvent.starts_in": "Begint over",
+  "gpEvent.aria_active": "Grand Prix-weekend van {{circuit}}: vandaag leveren de uitdagingen {{multiplier}} keer zoveel punten op.",
+  "gpEvent.aria_soon": "Grand Prix-weekend van {{circuit}}: op zaterdag en zondag leveren de uitdagingen {{multiplier}} keer zoveel punten op.",
 };
 
 export default nl;

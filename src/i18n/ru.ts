@@ -488,6 +488,19 @@ const ru: Translations = {
   "seo.game.team-radio.title": "Team Radio — угадайте Гран-при по командной радиосвязи | Box Daily Box",
   "seo.game.team-radio.description":
     "Прочитайте культовое сообщение командной радиосвязи F1 и угадайте, на каком Гран-при это было сказано, из 6 вариантов. Бесплатная ежедневная головоломка.",
+
+  // ─── Evento puntual: puntos dobles del GP de Monza 2026 ─────────────
+  // Temporal. Se borra junto con src/lib/gpEvent.ts cuando pase el evento.
+  "gpEvent.eyebrow": "Уик-энд Гран-при",
+  "gpEvent.circuit": "Монца",
+  "gpEvent.active_title": "Двойные очки",
+  "gpEvent.soon_title": "Скоро двойные очки",
+  "gpEvent.active_sub": "Сегодня каждое задание приносит вдвое больше очков.",
+  "gpEvent.soon_sub": "В субботу и воскресенье каждое задание приносит вдвое больше очков.",
+  "gpEvent.ends_in": "Закончится через",
+  "gpEvent.starts_in": "Начнётся через",
+  "gpEvent.aria_active": "Уик-энд Гран-при {{circuit}}: сегодня задания дают в {{multiplier}} раза больше очков.",
+  "gpEvent.aria_soon": "Уик-энд Гран-при {{circuit}}: в субботу и воскресенье задания будут давать в {{multiplier}} раза больше очков.",
 };
 
 export default ru;

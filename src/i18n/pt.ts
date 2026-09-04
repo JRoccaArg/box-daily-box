@@ -571,6 +571,19 @@ const pt: Translations = {
   "seo.game.team-radio.title": "Team Radio — Adivinhe o Grande Prêmio pelo rádio de equipe | Box Daily Box",
   "seo.game.team-radio.description":
     "Leia uma mensagem icônica de rádio de equipe da F1 e adivinhe em qual Grande Prêmio foi dita, entre 6 opções. Puzzle diário grátis.",
+
+  // ─── Evento puntual: puntos dobles del GP de Monza 2026 ─────────────
+  // Temporal. Se borra junto con src/lib/gpEvent.ts cuando pase el evento.
+  "gpEvent.eyebrow": "Fim de semana de GP",
+  "gpEvent.circuit": "Monza",
+  "gpEvent.active_title": "Pontos em dobro",
+  "gpEvent.soon_title": "Chegam os pontos em dobro",
+  "gpEvent.active_sub": "Todos os desafios de hoje valem o dobro.",
+  "gpEvent.soon_sub": "Sábado e domingo, todos os desafios valem o dobro.",
+  "gpEvent.ends_in": "Termina em",
+  "gpEvent.starts_in": "Começa em",
+  "gpEvent.aria_active": "Fim de semana do Grande Prêmio de {{circuit}}: hoje os desafios dão {{multiplier}} vezes os pontos.",
+  "gpEvent.aria_soon": "Fim de semana do Grande Prêmio de {{circuit}}: no sábado e no domingo os desafios darão {{multiplier}} vezes os pontos.",
 };
 
 export default pt;

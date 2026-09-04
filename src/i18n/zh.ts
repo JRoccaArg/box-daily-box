@@ -527,6 +527,19 @@ const zh: Translations = {
   "seo.game.team-radio.title": "Team Radio — 通过车队无线电猜大奖赛 | Box Daily Box",
   "seo.game.team-radio.description":
     "阅读一段经典的F1车队无线电通讯，从6个选项中猜出这是在哪场大奖赛上说的。每日免费解谜游戏。",
+
+  // ─── Evento puntual: puntos dobles del GP de Monza 2026 ─────────────
+  // Temporal. Se borra junto con src/lib/gpEvent.ts cuando pase el evento.
+  "gpEvent.eyebrow": "大奖赛周末",
+  "gpEvent.circuit": "蒙扎",
+  "gpEvent.active_title": "双倍积分",
+  "gpEvent.soon_title": "双倍积分即将开始",
+  "gpEvent.active_sub": "今天所有挑战的积分翻倍。",
+  "gpEvent.soon_sub": "周六和周日，所有挑战的积分翻倍。",
+  "gpEvent.ends_in": "结束倒计时",
+  "gpEvent.starts_in": "开始倒计时",
+  "gpEvent.aria_active": "{{circuit}}大奖赛周末：今天的挑战可获得{{multiplier}}倍积分。",
+  "gpEvent.aria_soon": "{{circuit}}大奖赛周末：周六和周日的挑战将获得{{multiplier}}倍积分。",
 };
 
 export default zh;

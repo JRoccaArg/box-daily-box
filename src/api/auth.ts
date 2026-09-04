@@ -556,6 +556,22 @@ async function importLocalAttempts(
     // (puntaje fijo) en vez de recalcular como si hubiera tenido cronometro.
     const untimed = att.untimed === true;
     const timeLimit = IMPORT_TIME_LIMITS[gameId] ?? 300;
+    // A PROPÓSITO sin el x2 del evento de puntos dobles (src/lib/gpEvent.ts).
+    //
+    // El `date_key` con el que se inserta el intento es `dateKeyStr`, que viene
+    // del cliente (`clientDateKey`) y solo se valida como FORMATO: no se exige
+    // que sea hoy. Eso permite registrar un intento fechado en cualquier día
+    // pasado (hay que resolver de verdad el puzzle de ese día, porque
+    // `verifyChallenge` lo regenera a partir de la fecha, pero es alcanzable).
+    // Es una propiedad preexistente de este endpoint; multiplicar acá le daría
+    // el doble de valor a ese camino durante 48 h, así que el evento
+    // sencillamente no lo toca.
+    //
+    // Consecuencia asumida: quien jugó deslogueado durante el evento y después
+    // se loguea, cobra puntos simples por esos intentos. Es coherente con cómo
+    // ya se puntúa una importación — tampoco recibe bonus de velocidad (ver el
+    // `timeSeconds: timeLimit` de abajo): los intentos importados se puntúan
+    // siempre de forma conservadora.
     const points = computeScore({
       won,
       difficulty: difficulty as Difficulty,

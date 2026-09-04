@@ -471,6 +471,19 @@ const ar: Translations = {
   "seo.game.team-radio.title": "Team Radio — خمّن الجائزة الكبرى من رسالة الفريق اللاسلكية | Box Daily Box",
   "seo.game.team-radio.description":
     "اقرأ رسالة لاسلكية شهيرة بين فريق وسائقه في فورمولا 1 وخمّن في أي جائزة كبرى قيلت، من بين 6 خيارات. لغز يومي مجاني.",
+
+  // ─── Evento puntual: puntos dobles del GP de Monza 2026 ─────────────
+  // Temporal. Se borra junto con src/lib/gpEvent.ts cuando pase el evento.
+  "gpEvent.eyebrow": "عطلة نهاية أسبوع الجائزة الكبرى",
+  "gpEvent.circuit": "مونزا",
+  "gpEvent.active_title": "نقاط مضاعفة",
+  "gpEvent.soon_title": "النقاط المضاعفة قادمة",
+  "gpEvent.active_sub": "اليوم كل تحدٍّ يمنح ضعف النقاط.",
+  "gpEvent.soon_sub": "السبت والأحد، كل تحدٍّ يمنح ضعف النقاط.",
+  "gpEvent.ends_in": "ينتهي خلال",
+  "gpEvent.starts_in": "يبدأ خلال",
+  "gpEvent.aria_active": "عطلة نهاية أسبوع سباق جائزة {{circuit}} الكبرى: تمنح التحديات اليوم {{multiplier}} أضعاف النقاط.",
+  "gpEvent.aria_soon": "عطلة نهاية أسبوع سباق جائزة {{circuit}} الكبرى: يوم السبت والأحد ستمنح التحديات {{multiplier}} أضعاف النقاط.",
 };
 
 export default ar;
