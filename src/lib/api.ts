@@ -6,7 +6,7 @@
  * usan para ranking global, no para bloquear gameplay.
  */
 
-import { getIdentity, setIdentityToken, getIdentityToken } from "./identity";
+import { getIdentity, setIdentityToken, getIdentityToken, resetIdentity } from "./identity";
 import { dateKey } from "./seed";
 import { getDebugDateOverride } from "./debugDate";
 
@@ -29,13 +29,27 @@ type FinishResponse = {
   duplicated: boolean;
   /** Si el resultado entró al ranking (false si otra cuenta de la IP ya jugó). */
   ranked?: boolean;
+  /** Logros desbloqueados por ESTA partida. Los consume `announceAchievements`
+   *  (src/lib/achievements.ts) para celebrarlos; vacío si no hubo ninguno. */
+  newAchievements?: string[];
 };
 
-/** Tipos de badge. Los monthly_* se ganan; admin/superadmin derivan del rol. */
+/** Logros que se guardan como badges únicos (no pertenecen a un mes). */
+export type AchievementBadgeType =
+  | "ach_legend_50"
+  | "ach_wins_500"
+  | "ach_legend_10"
+  | "ach_wins_100"
+  | "ach_specialist_50"
+  | "ach_perfect_day"
+  | "ach_complete";
+
+/** Tipos de badge. Los monthly_* y ach_* se ganan; admin/superadmin derivan del rol. */
 export type BadgeType =
   | "monthly_gold"
   | "monthly_silver"
   | "monthly_bronze"
+  | AchievementBadgeType
   | "admin"
   | "superadmin";
 
@@ -123,6 +137,19 @@ async function apiFetch<T>(
   }
 }
 
+/**
+ * Header de autenticación para los GET de datos propios.
+ *
+ * El identityToken NUNCA debe viajar en la URL: la query string queda escrita
+ * en los logs de acceso del servidor, en el historial del navegador y en
+ * cualquier proxy intermedio, y este token es una credencial que da acceso
+ * completo a la cuenta. Mismo criterio que el `X-Admin-Secret` del backend.
+ */
+function identityHeaders(): Record<string, string> {
+  const token = getIdentityToken();
+  return token ? { "X-Identity-Token": token } : {};
+}
+
 // ─── Endpoints ──────────────────────────────────────────────────────
 
 /** Resultado del intento de iniciar un reto. */
@@ -152,15 +179,44 @@ export async function apiStartChallenge(
   // activo, `dateKey()` da exactamente lo mismo que el reloj real.
   const clientDateKey = dateKey();
 
-  const data = await apiFetch<StartResponse>(
-    `/challenges/${gameId}/start`,
-    {
-      method: "POST",
-      body: JSON.stringify({ difficulty, userId, displayName, countryCode, clientDateKey, timeLimit }),
-    },
-  );
+  // El server EXIGE el identityToken si el userId ya existe: es lo que impide
+  // que un tercero, leyendo tu userId del ranking público, arranque retos en tu
+  // nombre (registrándote derrotas) o se haga emitir un token de tu cuenta.
+  const send = (uid: string, token: string | null) =>
+    apiFetch<StartResponse & { code?: string }>(
+      `/challenges/${gameId}/start`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          difficulty,
+          userId: uid,
+          displayName,
+          countryCode,
+          clientDateKey,
+          timeLimit,
+          ...(token ? { identityToken: token } : {}),
+        }),
+      },
+      8000,
+      // Necesitamos VER el 403 con `code: IDENTITY_REQUIRED` en vez de recibir
+      // null, para poder recuperarnos abajo.
+      true,
+    );
 
-  if (!data) return { ok: false };
+  let data = await send(userId, getIdentityToken());
+
+  // Token perdido de las tres capas: la cuenta existe pero no podemos probar
+  // que es nuestra. Arrancamos identidad nueva y reintentamos UNA vez, para
+  // no dejar al jugador sin poder jugar. Su historial anterior sigue en el
+  // server y lo recupera entrando con Google.
+  if (data?.code === "IDENTITY_REQUIRED") {
+    const fresh = resetIdentity();
+    data = await send(fresh.userId, null);
+  }
+
+  // Un 4xx (p. ej. 409 "ya jugaste hoy") llega como body sin sessionToken:
+  // sin este guard devolveríamos `ok: true` con el token en undefined.
+  if (!data || typeof data.sessionToken !== "string") return { ok: false };
   if (data.identityToken) {
     setIdentityToken(data.identityToken);
   }
@@ -321,10 +377,9 @@ export async function apiGetUserAttempts(
   } else {
     params.set("date", opts.date ?? dateKey());
   }
-  const token = getIdentityToken();
-  if (token) params.set("identityToken", token);
   return apiFetch<UserAttemptsResponse>(
     `/user/${encodeURIComponent(userId)}/attempts?${params.toString()}`,
+    { headers: identityHeaders() },
   );
 }
 
@@ -352,10 +407,9 @@ export async function apiGetUserRank(
 ): Promise<UserRank | null> {
   const params = new URLSearchParams();
   params.set("date", date ?? dateKey());
-  const token = getIdentityToken();
-  if (token) params.set("identityToken", token);
   return apiFetch<UserRank>(
     `/user/${encodeURIComponent(userId)}/rank?${params.toString()}`,
+    { headers: identityHeaders() },
   );
 }
 
@@ -363,9 +417,9 @@ export async function apiGetUserRank(
 // ─── Badges ─────────────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════
 
-/** Un slot de la selección de destacados (solo badges mensuales son elegibles). */
+/** Un slot de la selección de destacados (podio y logros son elegibles). */
 export type FeaturedSlot = {
-  type: "monthly_gold" | "monthly_silver" | "monthly_bronze";
+  type: Exclude<BadgeType, "admin" | "superadmin">;
   grouped?: boolean;
 };
 
@@ -383,6 +437,16 @@ export type UserBadges = {
   owned: OwnedBadge[];
   counts: Record<string, number>;
   featured: FeaturedSlot[] | null;
+  achievements: AchievementProgress[];
+};
+
+export type AchievementProgress = {
+  type: AchievementBadgeType;
+  current: number;
+  rawCurrent: number;
+  target: number;
+  percent: number;
+  unlocked: boolean;
 };
 
 /** GET /user/:userId/badges — colección pública de badges de un usuario. */
@@ -397,6 +461,29 @@ export async function apiGetUserBadges(
  * Manda el identityToken guardado localmente (anti-IDOR server-side).
  * Devuelve el body de errores 4xx (ej. selección inválida) para mostrarlos.
  */
+/**
+ * POST /user/:userId/delete — borra la cuenta y todos sus datos.
+ *
+ * Es el ejercicio del derecho de supresión desde la propia app. Existe porque
+ * pedirlo "por email" no era un canal real para un jugador anónimo: nunca nos
+ * dio una casilla desde la cual escribir, así que no tenía forma de probar que
+ * la cuenta es suya. El identityToken sí lo prueba.
+ */
+export async function apiDeleteAccount(
+  userId: string,
+): Promise<{ ok: true } | { error: string } | null> {
+  const token = getIdentityToken();
+  return apiFetch<{ ok: true } | { error: string }>(
+    `/user/${encodeURIComponent(userId)}/delete`,
+    {
+      method: "POST",
+      body: JSON.stringify({ ...(token ? { identityToken: token } : {}) }),
+    },
+    8000,
+    true, // preservar 4xx (no autorizado / no encontrado) para avisar al usuario
+  );
+}
+
 export async function apiSetFeaturedBadges(
   userId: string,
   featured: FeaturedSlot[],
@@ -663,23 +750,23 @@ export async function apiForfeitDuel(
 
 export async function apiGetDuel(duelId: string): Promise<DuelState | null> {
   const { userId } = getIdentity();
-  const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
-  return apiFetch<DuelState>(`/duels/${encodeURIComponent(duelId)}?${params.toString()}`);
+  const params = new URLSearchParams({ userId });
+  return apiFetch<DuelState>(`/duels/${encodeURIComponent(duelId)}?${params.toString()}`, { headers: identityHeaders() });
 }
 
 export async function apiGetPendingDuels(): Promise<PendingDuel[]> {
   const { userId } = getIdentity();
   if (!userId) return [];
-  const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
-  const res = await apiFetch<{ duels: PendingDuel[] }>(`/duels/pending?${params.toString()}`);
+  const params = new URLSearchParams({ userId });
+  const res = await apiFetch<{ duels: PendingDuel[] }>(`/duels/pending?${params.toString()}`, { headers: identityHeaders() });
   return res?.duels ?? [];
 }
 
 export async function apiGetMyFriendCode(): Promise<string | null> {
   const { userId } = getIdentity();
   if (!userId) return null;
-  const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
-  const res = await apiFetch<{ code: string }>(`/me/friend-code?${params.toString()}`);
+  const params = new URLSearchParams({ userId });
+  const res = await apiFetch<{ code: string }>(`/me/friend-code?${params.toString()}`, { headers: identityHeaders() });
   return res?.code ?? null;
 }
 
@@ -722,16 +809,16 @@ export async function apiRemoveFriend(friendUserId: string): Promise<{ ok: boole
 export async function apiListFriends(): Promise<Friend[]> {
   const { userId } = getIdentity();
   if (!userId) return [];
-  const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
-  const res = await apiFetch<{ friends: Friend[] }>(`/friends?${params.toString()}`);
+  const params = new URLSearchParams({ userId });
+  const res = await apiFetch<{ friends: Friend[] }>(`/friends?${params.toString()}`, { headers: identityHeaders() });
   return res?.friends ?? [];
 }
 
 export async function apiListFriendRequests(): Promise<FriendRequest[]> {
   const { userId } = getIdentity();
   if (!userId) return [];
-  const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
-  const res = await apiFetch<{ requests: FriendRequest[] }>(`/friends/requests?${params.toString()}`);
+  const params = new URLSearchParams({ userId });
+  const res = await apiFetch<{ requests: FriendRequest[] }>(`/friends/requests?${params.toString()}`, { headers: identityHeaders() });
   return res?.requests ?? [];
 }
 
@@ -739,8 +826,8 @@ export async function apiListFriendRequests(): Promise<FriendRequest[]> {
 export async function apiListOutgoingFriendRequests(): Promise<OutgoingFriendRequest[]> {
   const { userId } = getIdentity();
   if (!userId) return [];
-  const params = new URLSearchParams({ userId, identityToken: getIdentityToken() ?? "" });
-  const res = await apiFetch<{ requests: OutgoingFriendRequest[] }>(`/friends/requests/outgoing?${params.toString()}`);
+  const params = new URLSearchParams({ userId });
+  const res = await apiFetch<{ requests: OutgoingFriendRequest[] }>(`/friends/requests/outgoing?${params.toString()}`, { headers: identityHeaders() });
   return res?.requests ?? [];
 }
 
@@ -758,4 +845,60 @@ export { isErr as isApiError };
 export function friendlyApiError(error: string, t: (key: string) => string): string {
   if (error === "No autorizado") return t("friends.need_to_play");
   return t("duel.error_generic");
+}
+
+export type DebugAchievementState = {
+  activeScenarios: AchievementBadgeType[];
+  streak: { current: number; best: number; lastWinDate: string | null };
+  achievements: AchievementProgress[];
+  /** Logros recien otorgados por esta llamada (solo en "apply"). Mismo shape
+   *  que `newAchievements` del finish real: se pasa tal cual a
+   *  `announceAchievements` para probar el toast real sin jugar. */
+  justAwarded: AchievementBadgeType[];
+};
+
+export type DebugAchievementCommand =
+  | { action: "status" }
+  | { action: "apply" | "remove"; achievementType: AchievementBadgeType }
+  | { action: "set_streak"; streak: number }
+  | { action: "reset" };
+
+/** Controles persistentes de logros/racha, disponibles solo en staging. */
+export async function apiDebugAchievements(
+  userId: string,
+  command: DebugAchievementCommand,
+): Promise<({ ok: true } & DebugAchievementState) | { error: string } | null> {
+  return apiFetch<({ ok: true } & DebugAchievementState) | { error: string }>(
+    "/admin/debug-achievements",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        userId,
+        identityToken: getIdentityToken(),
+        ...command,
+      }),
+    },
+    15_000,
+    true,
+  );
+}
+
+/** Vuelve al modo automático: podio primero y luego logros por dificultad. */
+export async function apiResetFeaturedBadges(
+  userId: string,
+  identityToken?: string | null,
+): Promise<{ userId: string; featured: null } | { error: string } | null> {
+  const token = identityToken ?? getIdentityToken();
+  return apiFetch<{ userId: string; featured: null } | { error: string }>(
+    `/user/${encodeURIComponent(userId)}/badges/featured`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        featured: null,
+        ...(token ? { identityToken: token } : {}),
+      }),
+    },
+    8000,
+    true,
+  );
 }

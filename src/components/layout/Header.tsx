@@ -13,6 +13,8 @@ import { homePath } from "@/lib/routes";
 import { useMounted } from "@/lib/useMounted";
 import { getEffectiveNow } from "@/lib/debugDate";
 import { usePendingFriendRequestsCount } from "@/lib/friendsPolling";
+import { useUnseenAchievementsCount } from "@/lib/achievements";
+import { getStreakVisual } from "@/lib/streakVisual";
 import type { Locale } from "@/i18n";
 import type { StatsView } from "./StatsModal";
 
@@ -61,11 +63,20 @@ export function Header() {
   const [profileOpen, setProfileOpen] = useState(false);
   const { pathname } = useLocation();
   const pendingRequests = usePendingFriendRequestsCount();
+  const unseenAchievements = useUnseenAchievementsCount();
+  // Un solo globito numérico en el botón de Stats, mismo patrón que ya
+  // existía solo para amigos: suma las dos cosas que "necesitan mirada" (una
+  // solicitud pendiente es accionable; un logro no visto es solo un aviso,
+  // pero ambos se resuelven abriendo el mismo panel). El detalle de CUÁL de
+  // las dos pestañas tiene contenido nuevo se ve al abrir el modal (punto en
+  // la pestaña "Logros", ver StatsModal.tsx).
+  const statsBadgeCount = pendingRequests + unseenAchievements;
 
   // La fecha de "hoy" difiere entre el momento del prerender (build) y la
   // visita real: se muestra solo tras montar para no generar mismatch de
   // hidratación (el HTML prerenderizado no incluye esta fecha).
   const mounted = useMounted();
+  const streakVisual = getStreakVisual(summary.currentStreak);
 
   // Escuchar el evento global para abrir el modal de stats desde cualquier
   // lugar de la app (ej: botón "Ver ranking del día" del modal de resultado).
@@ -101,10 +112,13 @@ export function Header() {
 
           {summary.currentStreak > 0 && (
             <span
-              className="inline-flex items-center gap-1 rounded-full border border-sector-yellow/30 bg-sector-yellow/10 px-2.5 py-1 font-mono text-xs font-semibold text-sector-yellow"
+              className={[
+                "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 font-mono text-xs font-semibold",
+                streakVisual.chipClass,
+              ].join(" ")}
               title={t("header.streak_title", { count: summary.currentStreak })}
             >
-              <Flame size={13} />
+              <Flame size={13} className={streakVisual.flameClass} />
               {summary.currentStreak}
             </span>
           )}
@@ -122,9 +136,17 @@ export function Header() {
 
           <button
             onClick={() => {
-              // Si hay solicitudes de amistad sin responder, saltar directo
-              // a esa pestaña (es lo que el globito esta avisando).
-              setStatsInitialView(pendingRequests > 0 ? "friends" : undefined);
+              // Prioridad al saltar de pestaña: una solicitud de amistad es
+              // ACCIONABLE (alguien espera una respuesta); un logro no visto
+              // es solo un aviso. Si hay de las dos, gana amigos — el logro
+              // sigue con su punto en la pestaña hasta que se lo mire.
+              setStatsInitialView(
+                pendingRequests > 0
+                  ? "friends"
+                  : unseenAchievements > 0
+                    ? "achievements"
+                    : undefined,
+              );
               setStatsOpen(true);
             }}
             aria-label={t("header.stats_label")}
@@ -132,12 +154,18 @@ export function Header() {
           >
             <StatIcon size={16} />
             <span className="hidden sm:inline">{t("header.stats")}</span>
-            {pendingRequests > 0 && (
+            {statsBadgeCount > 0 && (
               <span
                 className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-racing px-1 font-mono text-[10px] font-bold leading-none text-white"
-                aria-label={t("header.pending_requests", { count: pendingRequests })}
+                aria-label={
+                  pendingRequests > 0 && unseenAchievements > 0
+                    ? t("header.notifications_badge", { count: statsBadgeCount })
+                    : pendingRequests > 0
+                      ? t("header.pending_requests", { count: pendingRequests })
+                      : t("header.unseen_achievements", { count: unseenAchievements })
+                }
               >
-                {pendingRequests}
+                {statsBadgeCount}
               </span>
             )}
           </button>

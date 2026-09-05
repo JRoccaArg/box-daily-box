@@ -12,6 +12,8 @@
 //    siempre deliberadas) se hacen a mano en la DB.
 //  - Un mes solo se premia si está CERRADO (anterior al mes actual del server).
 
+import { ACHIEVEMENTS, isAchievementType } from "./achievements";
+
 /** Ejecutor de queries mínimo, compatible con `pg` (Pool/Client) y con PGlite. */
 export type QueryFn = (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
 
@@ -162,8 +164,22 @@ export async function awardMonthlyPodium(
  */
 export type DisplayBadge = { type: string; count: number; months?: string[] };
 
-/** Un slot de la selección de destacados del usuario. */
-export type FeaturedSlot = { type: MonthlyBadgeType; grouped?: boolean };
+/** Un slot de la selección de destacados del usuario. `type` puede ser un badge
+ *  de podio (monthly_*) o un logro (ach_*). `grouped` (contador ×N) solo aplica a
+ *  podio; los logros son únicos (siempre individuales). */
+export type FeaturedSlot = { type: string; grouped?: boolean };
+
+/**
+ * Normaliza las fechas agregadas de badges para el tooltip del ranking.
+ * Los logros guardan `reference_month = NULL`, por lo que esta frontera debe
+ * ignorar nulos y cualquier valor inesperado aunque la consulta SQL ya los filtre.
+ */
+export function normalizeReferenceMonths(months: unknown): string[] {
+  if (!Array.isArray(months)) return [];
+  return months
+    .filter((month): month is string => typeof month === "string")
+    .map((month) => month.substring(0, 7));
+}
 
 /**
  * Deriva los badges a mostrar inline junto al nombre en el ranking.
@@ -192,21 +208,42 @@ export function deriveDisplayBadges(
   if (role === "superadmin") out.push({ type: "superadmin", count: 1 });
   else if (role === "admin") out.push({ type: "admin", count: 1 });
 
-  if (!featured || !Array.isArray(featured) || featured.length === 0) {
-    // Default: tipos de mayor jerarquía agrupados con su contador, hasta el límite.
+  const roomLeft = () => out.length - baseAdminCount(role) < MAX_FEATURED;
+
+  // null = modo automático. Un array vacío es una elección manual válida:
+  // el usuario decidió no mostrar ningún badge (admin/superadmin sigue aparte).
+  if (featured === null || !Array.isArray(featured)) {
+    // Default por PRIORIDAD:
+    //  1) Podio por jerarquía (oro → plata → bronce), agrupado con su contador.
     for (const type of BADGE_HIERARCHY) {
-      if (out.length - baseAdminCount(role) >= MAX_FEATURED) break;
+      if (!roomLeft()) return out;
       const c = ownedCounts[type] ?? 0;
       if (c > 0) out.push({ type, count: c, months: monthsByType[type] ?? [] });
+    }
+    //  2) Logros, del más difícil al más fácil (orden del catálogo). Únicos (×1).
+    for (const a of ACHIEVEMENTS) {
+      if (!roomLeft()) return out;
+      if ((ownedCounts[a.type] ?? 0) > 0) out.push({ type: a.type, count: 1 });
     }
     return out;
   }
 
+  if (featured.length === 0) return out;
+
   // Selección explícita: respetar orden, validar propiedad y capacidad.
   const individualUsed: Record<string, number> = {};
   for (const slot of featured) {
-    if (out.length - baseAdminCount(role) >= MAX_FEATURED) break;
-    if (!slot || !isMonthlyBadgeType(slot.type)) continue;
+    if (!roomLeft()) break;
+    if (!slot) continue;
+    // Logro destacado: único, siempre individual (sin contador ni meses).
+    if (isAchievementType(slot.type)) {
+      if ((ownedCounts[slot.type] ?? 0) <= 0) continue;
+      if ((individualUsed[slot.type] ?? 0) >= 1) continue; // 1 solo por logro
+      individualUsed[slot.type] = 1;
+      out.push({ type: slot.type, count: 1 });
+      continue;
+    }
+    if (!isMonthlyBadgeType(slot.type)) continue;
     const owned = ownedCounts[slot.type] ?? 0;
     if (owned <= 0) continue;
     const months = monthsByType[slot.type] ?? [];
@@ -250,11 +287,28 @@ export function validateFeaturedSelection(
       return { ok: false, error: "Slot inválido" };
     }
     const { type, grouped } = raw as { type?: unknown; grouped?: unknown };
-    if (!isMonthlyBadgeType(type)) {
-      return { ok: false, error: "Tipo de badge inválido o no elegible" };
-    }
     if (grouped !== undefined && typeof grouped !== "boolean") {
       return { ok: false, error: "grouped debe ser booleano" };
+    }
+
+    // Logro destacado: único (×1), no admite agrupado.
+    if (isAchievementType(type)) {
+      if (grouped) {
+        return { ok: false, error: "Un logro no se puede agrupar" };
+      }
+      if ((ownedCounts[type] ?? 0) <= 0) {
+        return { ok: false, error: "No poseés ese logro" };
+      }
+      if ((individualUsed[type] ?? 0) >= 1) {
+        return { ok: false, error: "No poseés esa cantidad de ese logro" };
+      }
+      individualUsed[type] = 1;
+      value.push({ type });
+      continue;
+    }
+
+    if (!isMonthlyBadgeType(type)) {
+      return { ok: false, error: "Tipo de badge inválido o no elegible" };
     }
     const owned = ownedCounts[type] ?? 0;
     if (owned <= 0) return { ok: false, error: "No poseés ese badge" };

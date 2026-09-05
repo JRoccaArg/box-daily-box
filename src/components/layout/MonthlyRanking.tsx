@@ -5,6 +5,7 @@ import { gameById } from "@/components/games/registry";
 import { useI18n } from "@/context";
 import { Trophy, Flame } from "@/components/ui/Icon";
 import { getEffectiveNow } from "@/lib/debugDate";
+import { getStreakVisual } from "@/lib/streakVisual";
 import type { Difficulty } from "@/types";
 
 const DIFF_ACCENT: Record<Difficulty, string> = {
@@ -59,6 +60,7 @@ export function MonthlyRanking({
 
   const diffs: Difficulty[] = ["facil", "medio", "dificil", "leyenda"];
   const hasStreak = currentStreak > 0;
+  const streakVisual = getStreakVisual(currentStreak);
 
   return (
     <section className="rounded-xl border border-white/10 bg-gradient-to-b from-asphalt-700 to-asphalt-800 p-4">
@@ -86,12 +88,12 @@ export function MonthlyRanking({
           <div className="flex items-end gap-1.5">
             <Flame
               size={26}
-              className={hasStreak ? "text-sector-yellow" : "text-ink-faint"}
+              className={hasStreak ? streakVisual.flameClass : "text-ink-faint"}
             />
             <span
               className={[
                 "tnum font-display text-4xl leading-none",
-                hasStreak ? "text-white" : "text-ink-faint",
+                hasStreak ? streakVisual.textClass : "text-ink-faint",
               ].join(" ")}
             >
               {currentStreak}

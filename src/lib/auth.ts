@@ -41,6 +41,10 @@ export type AuthResult = {
   importedCount?: number;
   /** Token de identidad emitido por el server (prueba posesión del userId). */
   identityToken?: string;
+  /** Logros desbloqueados por la fusión/importación de este login. El server
+   *  re-evalúa los logros al loguear porque la cuenta puede cruzar un umbral
+   *  de golpe al absorber el historial anónimo. */
+  newAchievements?: string[];
 };
 
 const AUTH_STATUS_KEY = "auth:status";

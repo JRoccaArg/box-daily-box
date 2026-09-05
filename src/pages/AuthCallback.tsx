@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { handleGoogleCallback } from "@/lib/auth";
+import { announceAchievements } from "@/lib/achievements";
 import { useI18n } from "@/context";
 
 export function AuthCallback(): JSX.Element {
@@ -43,6 +44,10 @@ export function AuthCallback(): JSX.Element {
         window.setTimeout(() => navigate("/"), 2500);
         return;
       }
+      // Logros que se desbloquearon al fusionar/importar el historial en esta
+      // cuenta. El toast vive en un store global, así que sobrevive al
+      // navigate de abajo (Layout no se desmonta en navegación client-side).
+      announceAchievements(result.newAchievements, t);
       // Éxito: redirigir a home.
       navigate("/", { replace: true });
     })();

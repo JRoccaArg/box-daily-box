@@ -43,25 +43,45 @@ function getCookieMaxAge(): number {
   return Math.max(secondsLeft, 60); // Mínimo 60 segundos para evitar cookie ya expirada.
 }
 
-function setCookie(userId: string): void {
+function writeCookie(name: string, value: string): void {
   try {
     const maxAge = getCookieMaxAge();
-    document.cookie = `${COOKIE_NAME}=${userId};path=/;max-age=${maxAge};SameSite=Lax`;
+    // `Secure` solo en HTTPS: en el dev server (http://localhost) el navegador
+    // descartaría la cookie y romperíamos la persistencia en desarrollo.
+    const secure = location.protocol === "https:" ? ";Secure" : "";
+    document.cookie =
+      `${name}=${encodeURIComponent(value)};path=/;max-age=${maxAge};SameSite=Lax${secure}`;
   } catch {
     // SSR o entorno sin document — ignorar.
   }
 }
 
-function getCookie(): string | null {
+function readCookie(name: string): string | null {
   try {
     const match = document.cookie
       .split(";")
       .map((c) => c.trim())
-      .find((c) => c.startsWith(`${COOKIE_NAME}=`));
-    return match ? match.substring(COOKIE_NAME.length + 1) : null;
+      .find((c) => c.startsWith(`${name}=`));
+    return match ? decodeURIComponent(match.substring(name.length + 1)) : null;
   } catch {
     return null;
   }
+}
+
+function deleteCookie(name: string): void {
+  try {
+    document.cookie = `${name}=;path=/;max-age=0;SameSite=Lax`;
+  } catch {
+    // SSR o entorno sin document — ignorar.
+  }
+}
+
+function setCookie(userId: string): void {
+  writeCookie(COOKIE_NAME, userId);
+}
+
+function getCookie(): string | null {
+  return readCookie(COOKIE_NAME);
 }
 
 // ─── sessionStorage helpers ──────────────────────────────────────────
@@ -148,6 +168,50 @@ export function getIdentity(): UserIdentity {
   return fresh;
 }
 
+/**
+ * Descarta la identidad actual y arranca una nueva (userId nuevo, sin token),
+ * conservando nombre y país para no obligar a reconfigurarlos.
+ *
+ * Se usa en un solo caso: el server respondió `IDENTITY_REQUIRED`, es decir
+ * "ese userId pertenece a una cuenta y no probaste que sea tuya". Pasa cuando
+ * el token se perdió de las tres capas a la vez. Sin esto, el jugador quedaría
+ * trabado sin poder jugar; con esto sigue jugando bajo una identidad nueva, y
+ * puede recuperar su historial anterior entrando con Google si lo tenía
+ * vinculado.
+ */
+export function resetIdentity(): UserIdentity {
+  const previous = storage.get<UserIdentity | null>(IDENTITY_KEY, null);
+  clearIdentityToken();
+  const fresh: UserIdentity = {
+    userId: generateId(),
+    displayName: previous?.displayName ?? "",
+    countryCode: previous?.countryCode ?? null,
+  };
+  storage.set(IDENTITY_KEY, fresh);
+  setCookie(fresh.userId);
+  setSessionBackup(fresh.userId);
+  return fresh;
+}
+
+/**
+ * Borra por completo la identidad local: userId y token, en las TRES capas.
+ *
+ * `localStorage.clear()` por sí solo no alcanza — las cookies `bdb_uid` y
+ * `bdb_tok` sobrevivirían y en la próxima carga `getIdentity()` restauraría el
+ * userId de una cuenta que ya no existe en el server. Se usa al borrar la
+ * cuenta (derecho de supresión).
+ */
+export function clearIdentity(): void {
+  storage.remove(IDENTITY_KEY);
+  clearIdentityToken();
+  deleteCookie(COOKIE_NAME);
+  try {
+    sessionStorage.removeItem(COOKIE_NAME);
+  } catch {
+    // Entorno sin sessionStorage — ignorar.
+  }
+}
+
 /** Actualiza el nombre y/o pais. */
 export function updateIdentity(
   patch: Partial<Pick<UserIdentity, "displayName" | "countryCode">>,
@@ -165,22 +229,76 @@ export function isIdentityComplete(): boolean {
 }
 
 // ─── Identity Token ──────────────────────────────────────────────────
-// Token firmado por el server que prueba la posesión del userId. Se usa
-// para autorizar modificaciones de perfil. Se guarda aparte de la identidad.
+// Token firmado por el server que prueba la posesión del userId.
+//
+// TRIPLE PERSISTENCIA (auditoría 2026-09), igual que el userId. Antes vivía
+// SOLO en localStorage, y eso creaba un estado imposible de sostener: si
+// localStorage no está disponible (navegación privada de Safari, cuota llena,
+// políticas corporativas), `storage` cae a un Map en memoria que se borra al
+// recargar — pero `document.cookie` sigue funcionando. Resultado: al recargar,
+// el usuario recuperaba su userId desde la cookie y perdía el token.
+//
+// Eso antes no se notaba porque `POST /challenges/:id/start` le regalaba un
+// token nuevo a cualquiera que mandara un userId (el agujero de robo de cuenta
+// que se cerró en esta misma auditoría). Ahora que el server EXIGE el token
+// para jugar con una cuenta existente, el token tiene que sobrevivir a lo
+// mismo que sobrevive el userId, o dejaríamos al dueño afuera de su cuenta.
 
 const IDENTITY_TOKEN_KEY = "identity_token";
+const TOKEN_COOKIE_NAME = "bdb_tok";
 
-/** Guarda el identityToken emitido por el server. */
+/** Guarda el identityToken emitido por el server, en las tres capas. */
 export function setIdentityToken(token: string): void {
   storage.set(IDENTITY_TOKEN_KEY, token);
+  writeCookie(TOKEN_COOKIE_NAME, token);
+  try {
+    sessionStorage.setItem(TOKEN_COOKIE_NAME, token);
+  } catch {
+    // Entorno sin sessionStorage — ignorar.
+  }
 }
 
-/** Lee el identityToken guardado, o null si no hay. */
+/**
+ * Lee el identityToken guardado, o null si no hay.
+ *
+ * Busca en localStorage → cookie → sessionStorage y, si lo encuentra en una
+ * capa secundaria, RE-SINCRONIZA las otras. Eso además migra solo a los
+ * usuarios que ya tenían un token de antes de este cambio (lo tienen en
+ * localStorage y se les copia a cookie/sessionStorage en la primera visita).
+ */
 export function getIdentityToken(): string | null {
-  return storage.get<string | null>(IDENTITY_TOKEN_KEY, null);
+  const saved = storage.get<string | null>(IDENTITY_TOKEN_KEY, null);
+  if (saved) {
+    setIdentityToken(saved);
+    return saved;
+  }
+
+  const fromCookie = readCookie(TOKEN_COOKIE_NAME);
+  if (fromCookie) {
+    setIdentityToken(fromCookie);
+    return fromCookie;
+  }
+
+  try {
+    const fromSession = sessionStorage.getItem(TOKEN_COOKIE_NAME);
+    if (fromSession) {
+      setIdentityToken(fromSession);
+      return fromSession;
+    }
+  } catch {
+    // Entorno sin sessionStorage — ignorar.
+  }
+
+  return null;
 }
 
-/** Borra el identityToken (ej: al cerrar sesión). */
+/** Borra el identityToken de las tres capas (ej: al cerrar sesión). */
 export function clearIdentityToken(): void {
   storage.remove(IDENTITY_TOKEN_KEY);
+  deleteCookie(TOKEN_COOKIE_NAME);
+  try {
+    sessionStorage.removeItem(TOKEN_COOKIE_NAME);
+  } catch {
+    // Entorno sin sessionStorage — ignorar.
+  }
 }

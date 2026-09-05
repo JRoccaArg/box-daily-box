@@ -8,10 +8,12 @@ import { GlobalRanking } from "./GlobalRanking";
 import { IdentityModal } from "./IdentityModal";
 import { BadgeGallery } from "./BadgeGallery";
 import { FriendsTab } from "./FriendsTab";
+import { AchievementGallery } from "./AchievementGallery";
+import { getUnseenAchievements, clearUnseenAchievements } from "@/lib/achievements";
 import { getIdentity } from "@/lib/identity";
 import { NATIONALITIES } from "@/data/nationalities";
 
-export type StatsView = "personal" | "global" | "friends";
+export type StatsView = "personal" | "global" | "friends" | "achievements";
 
 type StatsModalProps = {
   open: boolean;
@@ -40,11 +42,26 @@ export function StatsModal({ open, onClose, initialView }: StatsModalProps) {
     wasOpenRef.current = open;
   }, [open, initialView]);
 
+  // Al ENTRAR a la pestaña Logros se apaga el globito (mismo momento en que
+  // el jugador efectivamente "vio" lo que tenía pendiente). Se dispara tanto
+  // si el usuario toca la pestaña a mano como si llegó ahí por el salto
+  // automático del botón Stats (ambos caminos cambian `view`).
+  useEffect(() => {
+    if (view === "achievements") clearUnseenAchievements();
+  }, [view]);
+
   const total = summary.won + summary.lost;
   const winRate = total > 0 ? Math.round((summary.won / total) * 100) : 0;
 
   const identity = getIdentity();
   const natData = identity.countryCode ? NATIONALITIES[identity.countryCode] : null;
+  // Lectura directa (sin hook propio): `Modal` ya se auto-anula durante el
+  // prerender SSG (`typeof document === "undefined"`, ver Modal.tsx), así que
+  // este componente nunca produce HTML server-side y no hay hidratación que
+  // pueda desalinearse. Se re-lee en cada render; como StatsModal es hijo de
+  // Header (que sí re-renderiza al cambiar el globito, vía
+  // useUnseenAchievementsCount), el punto queda al día sin lógica extra.
+  const hasUnseenAchievements = getUnseenAchievements().length > 0;
 
   return (
     <>
@@ -69,7 +86,7 @@ export function StatsModal({ open, onClose, initialView }: StatsModalProps) {
           </button>
         </div>
 
-        {/* Tabs personal/global/amigos */}
+        {/* Tabs personal/global/amigos/logros */}
         <div className="mb-4 flex gap-1 rounded-lg border border-white/10 bg-asphalt-800 p-1">
           <ViewTab active={view === "global"} onClick={() => setView("global")}>
             {t("stats.tab_global")}
@@ -80,10 +97,19 @@ export function StatsModal({ open, onClose, initialView }: StatsModalProps) {
           <ViewTab active={view === "friends"} onClick={() => setView("friends")}>
             {t("friends.tab_title")}
           </ViewTab>
+          <ViewTab
+            active={view === "achievements"}
+            onClick={() => setView("achievements")}
+            dot={hasUnseenAchievements}
+            dotLabel={t("header.unseen_achievements_dot")}
+          >
+            {t("stats.tab_achievements")}
+          </ViewTab>
         </div>
 
         {view === "global" && <GlobalRanking refreshKey={summary.won + summary.lost} />}
         {view === "friends" && <FriendsTab />}
+        {view === "achievements" && <AchievementGallery userId={identity.userId} />}
         {view === "personal" && (
           <>
             <BadgeGallery userId={identity.userId} />
@@ -130,20 +156,33 @@ function ViewTab({
   active,
   onClick,
   children,
+  dot = false,
+  dotLabel,
 }: {
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
+  /** Punto rojo estilo iOS (contenido nuevo sin ver en esta pestaña). */
+  dot?: boolean;
+  /** Descripción accesible del punto — obligatoria cuando `dot` puede ser true. */
+  dotLabel?: string;
 }) {
   return (
     <button
       onClick={onClick}
       className={[
-        "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+        "relative min-w-0 flex-1 rounded-md px-1.5 py-1.5 text-[11px] font-medium transition-colors sm:px-3 sm:text-xs",
         active ? "bg-asphalt-600 text-white" : "text-ink-faint hover:text-ink",
       ].join(" ")}
     >
       {children}
+      {dot && (
+        <span
+          className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-racing"
+          role="img"
+          aria-label={dotLabel}
+        />
+      )}
     </button>
   );
 }

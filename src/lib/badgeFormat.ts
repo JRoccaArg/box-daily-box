@@ -23,6 +23,12 @@ const PODIUM_PREFIX: Record<"monthly_gold" | "monthly_silver" | "monthly_bronze"
   monthly_bronze: "bronze",
 };
 
+function isPodiumBadge(
+  type: BadgeType,
+): type is "monthly_gold" | "monthly_silver" | "monthly_bronze" {
+  return type === "monthly_gold" || type === "monthly_silver" || type === "monthly_bronze";
+}
+
 /**
  * Descripción completa del badge para el tooltip: "Ganador de Junio 2026"
  * (oro), "Segundo puesto en Junio 2026" (plata), "Tercer puesto en Junio
@@ -36,6 +42,8 @@ export function formatBadgeTooltip(
 ): string {
   if (type === "admin") return t("badge.tooltip_admin");
   if (type === "superadmin") return t("badge.tooltip_superadmin");
+  if (type.startsWith("ach_")) return t(`badge.tooltip_${type}`);
+  if (!isPodiumBadge(type)) return t(`badge.${type}`);
   if (!months || months.length === 0) return t(`badge.${type}`);
   const prefix = PODIUM_PREFIX[type];
   if (months.length === 1) {

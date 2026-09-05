@@ -15,7 +15,12 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
-import { initializeDatabase, cleanupExpiredSessions, transaction } from "./db";
+import {
+  initializeDatabase,
+  cleanupExpiredSessions,
+  purgeOldIpAddresses,
+  transaction,
+} from "./db";
 import { awardMonthlyPodium, previousMonthKey } from "./badges";
 import {
   startChallenge,
@@ -27,6 +32,7 @@ import {
   updateUserProfile,
   getUserAttempts,
   getUserRank,
+  deleteAccount,
   checkUsernameAvailable,
   adminCloseMonth,
   getUserBadges,
@@ -35,6 +41,7 @@ import {
   adminGrantBadges,
   adminCloseDebugMonth,
   adminSeedDuels,
+  adminDebugAchievements,
   createDuel,
   acceptDuel,
   declineDuel,
@@ -117,6 +124,12 @@ async function start(): Promise<void> {
   await app.register(cors, {
     origin: ALLOWED_ORIGINS,
     methods: ["GET", "POST"],
+    // `X-Identity-Token`: los GET autenticados (historial, ranking propio,
+    // amigos) mandan el token de identidad por header y ya no por query string,
+    // para que no quede escrito en los logs de acceso ni en el historial del
+    // navegador. Al declarar `allowedHeaders` explícitamente hay que listarlo,
+    // o el navegador bloquea el preflight.
+    allowedHeaders: ["Content-Type", "X-Identity-Token"],
     credentials: false, // no usamos cookies
     maxAge: 86400,
   });
@@ -246,6 +259,17 @@ async function start(): Promise<void> {
     getUserRank as any,
   );
 
+  // Borrado de cuenta (derecho de supresión). Rate limit bajo: es una acción
+  // rara y destructiva, no hay motivo legítimo para repetirla muchas veces.
+  app.post(
+    "/user/:userId/delete",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 5, timeWindow: "1 minute" } },
+    },
+    deleteAccount as any,
+  );
+
   app.get(
     "/username-available",
     {
@@ -326,6 +350,16 @@ async function start(): Promise<void> {
     adminSeedDuels as any,
   );
 
+  // Escenarios realistas de logros + racha exacta para la cuenta propia.
+  app.post(
+    "/admin/debug-achievements",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+    },
+    adminDebugAchievements as any,
+  );
+
   // ─── Amigos y Duelos (Roadmap §4) ─────────────────────────────────
   // Duelos: crear (10/min, sensible), aceptar/rechazar/cancelar (20/min),
   // leer estado + pendientes (60/min, polling frecuente).
@@ -362,6 +396,19 @@ async function start(): Promise<void> {
           })
           .catch(() => {});
       }, 60 * 60 * 1000); // cada hora
+
+      // Anonimizacion de IPs con mas de 12 meses. Es lo que cumple el plazo de
+      // conservacion que promete la Politica de Privacidad; sin este barrido,
+      // esa frase seria falsa. Al arranque y una vez por dia (el barrido toca
+      // pocas filas y no hay urgencia horaria).
+      purgeOldIpAddresses().catch(() => {});
+      setInterval(() => {
+        purgeOldIpAddresses()
+          .then((n) => {
+            if (n > 0) console.log(`🧹 ${n} IPs anonimizadas por antiguedad`);
+          })
+          .catch(() => {});
+      }, 24 * 60 * 60 * 1000); // cada dia
 
       // Cierre automático del podio mensual (badges), sin intervención manual.
       // Corre al arrancar + cada hora; SIEMPRE usa el reloj real del server

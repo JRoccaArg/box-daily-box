@@ -28,6 +28,11 @@ export const test = base.extend<Record<string, never>>({
         // @ts-expect-error -- override global Date for deterministic daily puzzles
         window.Date = FixedDate;
         window.localStorage.setItem("boxbox:v1:identity", JSON.stringify(identity));
+        // El consentimiento de cookies ya "decidido" (rechazado) evita que el
+        // banner tape la UI en los snapshots. El valor no importa para los
+        // tests visuales (GA no corre en dev de todos modos) — solo que el
+        // banner no aparezca en un navegador limpio.
+        window.localStorage.setItem("bdb_consent", "denied");
       },
       { iso: FIXED_DATE_ISO, identity: FIXED_IDENTITY },
     );

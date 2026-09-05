@@ -8,6 +8,10 @@
 import type { LegalContent } from "./types";
 
 const LAST_UPDATED = "2026-08-15";
+// Fecha propia de la Política de Privacidad: se actualizó al introducir las
+// analíticas (Vercel + Google Analytics) y el banner de consentimiento, sin
+// tocar la fecha de los Términos, que no cambiaron.
+const PRIVACY_UPDATED = "2026-09-04";
 const CONTACT_EMAIL = "boxdailybox@gmail.com";
 const OPERATOR = "Juan Cruz Rocca";
 
@@ -164,7 +168,7 @@ const content: LegalContent = {
 
   privacy: {
     title: "Política de Privacidad",
-    lastUpdated: LAST_UPDATED,
+    lastUpdated: PRIVACY_UPDATED,
     intro: [
       `Esta Política de Privacidad explica qué datos personales trata Box Daily Box, con qué finalidad y bajo qué base legal. El responsable del tratamiento es ${OPERATOR}, con domicilio en la República Argentina. Podés contactarlo en ${CONTACT_EMAIL}.`,
     ],
@@ -191,6 +195,9 @@ const content: LegalContent = {
             p: "Si usás las funciones de amigos y duelos, guardamos las relaciones que vos mismo creás (a quién agregás como amigo o desafiás). Si tenés amigos agregados, también guardamos la última vez que tuviste el Servicio abierto, para poder mostrarte a vos y a tus amigos quién está conectado en ese momento. Esa información se muestra únicamente como \"conectado\" o \"desconectado\": nunca se muestra la hora exacta ni un historial de conexiones.",
           },
           {
+            p: "Para entender cómo se usa el sitio y mejorarlo, usamos herramientas de analítica web (ver sección 3). A través de ellas se tratan: las páginas que visitás, eventos de juego (qué juego iniciás, completás o abandonás, con qué dificultad y resultado), el tipo de dispositivo y navegador, y una ubicación geográfica aproximada derivada de tu dirección IP: país o región en el caso de Vercel Web Analytics, y hasta el nivel de ciudad en el caso de Google Analytics. En ningún caso se trata de tu ubicación exacta ni de datos de GPS. Vercel Web Analytics funciona de forma agregada y sin cookies, sin identificarte como persona. Google Analytics usa cookies y solo se activa si diste tu consentimiento.",
+          },
+          {
             p: "No solicitamos ni almacenamos tu contraseña: la autenticación la realiza Google. Tampoco tratamos categorías de datos sensibles.",
           },
         ],
@@ -204,6 +211,7 @@ const content: LegalContent = {
               "Para calcular y mostrar los rankings y para prevenir trampas y el uso abusivo de múltiples cuentas (interés legítimo en mantener un ranking justo; la IP se usa con este único fin).",
               "Para vincular tu progreso a tu cuenta si iniciás sesión con Google (con base en tu consentimiento al elegir iniciar sesión).",
               "Para mostrarte, a vos y a tus amigos, quién tiene el Servicio abierto en este momento (ejecución de la funcionalidad de amigos que vos activás).",
+              "Para analizar de forma agregada cómo se usa el sitio y mejorarlo. La analítica sin cookies de Vercel se basa en nuestro interés legítimo en mantener y mejorar el Servicio, sin identificarte. La analítica de Google Analytics, que sí usa cookies, se basa exclusivamente en tu consentimiento y no se activa hasta que lo otorgás.",
             ],
           },
           {
@@ -215,10 +223,19 @@ const content: LegalContent = {
         heading: "3. Cookies y almacenamiento local",
         blocks: [
           {
-            p: "El Servicio usa únicamente almacenamiento técnico y necesario en tu navegador: para recordar tu identidad, tu idioma y tu progreso. Utilizamos una cookie técnica de identidad (bdb_uid) y el almacenamiento local y de sesión del navegador.",
+            p: "El Servicio usa almacenamiento técnico y necesario en tu navegador para recordar tu identidad, tu idioma y tu progreso. Utilizamos dos cookies técnicas: bdb_uid (tu identificador de jugador) y bdb_tok (la credencial firmada que prueba que esa identidad es tuya, para que nadie más pueda jugar ni modificar datos en tu nombre), además del almacenamiento local y de sesión del navegador. Este almacenamiento es imprescindible para que el juego funcione y para su seguridad, por lo que no requiere tu consentimiento.",
           },
           {
-            p: "Actualmente NO usamos cookies de publicidad ni tecnologías de rastreo de terceros. Por eso el Servicio no muestra un banner de consentimiento de cookies. Si en el futuro se introduce publicidad o analítica de terceros, se solicitará tu consentimiento cuando la ley lo requiera.",
+            p: "Además, usamos dos herramientas de analítica web para entender cómo se usa el sitio:",
+          },
+          {
+            list: [
+              "Vercel Web Analytics: mide de forma agregada y anónima (visitas, país, dispositivo). No usa cookies ni te identifica como persona, por lo que funciona siempre, sin necesitar tu consentimiento.",
+              "Google Analytics: mide el uso con más detalle y SÍ usa cookies. Por eso solo se activa si aceptás las cookies en el cartel que aparece la primera vez que entrás. Si lo rechazás o lo ignorás, Google Analytics no se carga ni guarda ninguna cookie.",
+            ],
+          },
+          {
+            p: "Podés cambiar tu elección en cualquier momento desde el enlace \"Gestionar cookies\" en el pie de página. NO usamos cookies de publicidad. Si en el futuro se introduce publicidad, se solicitará tu consentimiento cuando la ley lo requiera.",
           },
         ],
       },
@@ -231,8 +248,9 @@ const content: LegalContent = {
           {
             list: [
               "Google (autenticación mediante Google OAuth), si elegís iniciar sesión.",
+              "Google (Google Analytics, para analizar el uso del sitio), únicamente si aceptás las cookies de analítica.",
               "Railway (alojamiento del servidor y la base de datos).",
-              "Vercel (alojamiento del sitio web).",
+              "Vercel (alojamiento del sitio web y su analítica web sin cookies).",
             ],
           },
           {
@@ -247,7 +265,13 @@ const content: LegalContent = {
         heading: "5. Cuánto tiempo conservamos los datos",
         blocks: [
           {
-            p: "Conservamos tus datos mientras tu identidad o cuenta siga activa y sea necesario para prestar el Servicio. Podés solicitar la eliminación de tus datos en cualquier momento escribiéndonos.",
+            p: "Conservamos tus datos mientras tu identidad o cuenta siga activa y sea necesario para prestar el Servicio (historial de partidas, puntajes, logros y racha, que son la base del juego y de los rankings).",
+          },
+          {
+            p: "Tu dirección IP se conserva asociada a cada intento durante un máximo de 12 meses, plazo tras el cual se elimina o se anonimiza. Solo se usa para prevenir el uso abusivo de múltiples cuentas.",
+          },
+          {
+            p: "Podés borrar tu cuenta y todos tus datos vos mismo y en cualquier momento, desde \"Tu perfil\" en la aplicación. El borrado es inmediato y definitivo: se eliminan tu historial de partidas, tus logros, tus badges, tus amistades y tus duelos. Si preferís, también podés pedírnoslo por correo.",
           },
         ],
       },
@@ -267,7 +291,7 @@ const content: LegalContent = {
             ],
           },
           {
-            p: "Para ejercer estos derechos, escribinos a:",
+            p: "El derecho de supresión podés ejercerlo por vos mismo, sin esperar respuesta de nadie: entrá a \"Tu perfil\" en la aplicación y usá \"Borrar mi cuenta\". Para los demás derechos, o si preferís que lo hagamos nosotros, escribinos a:",
           },
           { email: CONTACT_EMAIL },
           {
@@ -295,7 +319,7 @@ const content: LegalContent = {
         heading: "9. Cambios en esta Política",
         blocks: [
           {
-            p: "Podemos actualizar esta Política para reflejar cambios en el Servicio o en la ley. En particular, si en el futuro se introduce publicidad, analítica de terceros o funciones pagas, esta Política se actualizará para describir esos tratamientos y se solicitará tu consentimiento cuando corresponda. La versión vigente estará siempre en esta página, con su fecha de última actualización.",
+            p: "Podemos actualizar esta Política para reflejar cambios en el Servicio o en la ley. En particular, si en el futuro se introduce publicidad o funciones pagas, esta Política se actualizará para describir esos tratamientos y se solicitará tu consentimiento cuando corresponda. La versión vigente estará siempre en esta página, con su fecha de última actualización.",
           },
         ],
       },

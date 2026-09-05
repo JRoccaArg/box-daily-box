@@ -69,6 +69,8 @@ function idsFromSwitchCases(src, fnName) {
   return [...slice.matchAll(/case\s+"([a-z0-9-]+)"\s*:/g)].map((m) => m[1]);
 }
 
+const achievementsSrc = read("src/api/achievements.ts");
+
 const lists = [
   { name: "VALID_GAMES (routes.ts)", ids: idsFromArrayLiteral(routesSrc, "VALID_GAMES") },
   { name: "GAME_TIME_OPTIONS (routes.ts)", ids: idsFromObjectKeys(routesSrc, "GAME_TIME_OPTIONS") },
@@ -76,9 +78,16 @@ const lists = [
   { name: "verifyChallenge switch (verify.ts)", ids: idsFromSwitchCases(verifySrc, "verifyChallenge") },
   { name: "VALID_GAME_IDS (auth.ts)", ids: idsFromArrayLiteral(authSrc, "VALID_GAME_IDS") },
   { name: "IMPORT_TIME_LIMITS (auth.ts)", ids: idsFromObjectKeys(authSrc, "IMPORT_TIME_LIMITS") },
+  // DAILY_GAME_IDS alimenta los logros de COMPLETITUD ("Gran Premio Perfecto"
+  // = ganar los N juegos en un día; "Piloto Completo" = ganarlos todos alguna
+  // vez). El umbral de esos logros es `DAILY_GAME_IDS.length`, así que si se
+  // agrega un juego 9 y esta lista queda en 8, ambos logros se siguen
+  // otorgando con 8 de 9 juegos — se vuelven más fáciles en silencio. Y si un
+  // juego falta acá, ganarlo nunca cuenta para completitud.
+  { name: "DAILY_GAME_IDS (achievements.ts)", ids: idsFromArrayLiteral(achievementsSrc, "DAILY_GAME_IDS") },
 ];
 
-console.log("▶ Completitud: cada juego del registry debe estar en las 6 listas backend\n");
+console.log("▶ Completitud: cada juego del registry debe estar en las 7 listas backend\n");
 
 for (const { name, ids } of lists) {
   assert(ids !== null, `${name}: se pudo extraer la lista (regex encontro la variable)`);

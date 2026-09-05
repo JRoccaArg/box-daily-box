@@ -76,6 +76,13 @@ export default {
           "0%, 100%": { boxShadow: "0 0 0 0 rgba(176, 38, 255, 0.45)" },
           "50%": { boxShadow: "0 0 0 4px rgba(176, 38, 255, 0)" },
         },
+        // Una oscilación contenida, como una llama en el tablero: solo para
+        // rachas violeta/dorada, sin distraer del contenido del ranking.
+        "flame-live": {
+          "0%, 100%": { transform: "translateY(0) rotate(-1deg) scaleY(1)" },
+          "45%": { transform: "translateY(-1px) rotate(2deg) scaleY(1.04)" },
+          "70%": { transform: "translateY(0) rotate(-2deg) scaleY(0.98)" },
+        },
       },
       animation: {
         "flip-in": "flip-in 0.45s ease forwards",
@@ -86,6 +93,7 @@ export default {
         "toast-out": "toast-out 0.25s ease-in forwards",
         "radio-wave": "radio-wave 1s ease-in-out infinite",
         "badge-glow": "badge-glow 2.4s ease-in-out infinite",
+        "flame-live": "flame-live 1.8s ease-in-out infinite",
       },
     },
   },

@@ -10,6 +10,8 @@ import { updateServerPoints, saveSolution } from "@/lib/stats";
 import { emit, Events } from "@/lib/events";
 import { getEffectiveNow } from "@/lib/debugDate";
 import { setGameplayActive } from "@/lib/gameplayState";
+import { trackEvent } from "@/lib/analytics";
+import { announceAchievements } from "@/lib/achievements";
 import { playGameResultFeedback, playTickFeedback } from "@/lib/audio";
 import { DuelChallengeModal } from "@/components/layout/DuelChallengeModal";
 import { IdentityModal } from "@/components/layout/IdentityModal";
@@ -136,16 +138,22 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
       // Guardar la solution para poder re-verificarla en el server si el
       // usuario se loguea más tarde (importación de intentos locales).
       saveSolution(game.id, solution ?? null, date);
-      setPointsEarned(
-        computeScore({
-          won: outcome === "won",
-          difficulty: scoreRef.current.difficulty,
-          timeSeconds: typeof meta.timeSeconds === "number" ? meta.timeSeconds : null,
-          timeLimit: scoreRef.current.timeLimit,
-          maxTimeOption,
-          untimed: scoreRef.current.untimed,
-        }),
-      );
+      const points = computeScore({
+        won: outcome === "won",
+        difficulty: scoreRef.current.difficulty,
+        timeSeconds: typeof meta.timeSeconds === "number" ? meta.timeSeconds : null,
+        timeLimit: scoreRef.current.timeLimit,
+        maxTimeOption,
+        untimed: scoreRef.current.untimed,
+      });
+      setPointsEarned(points);
+      trackEvent("game_completed", {
+        gameId: game.id,
+        outcome,
+        difficulty: scoreRef.current.difficulty,
+        points,
+        ...(typeof meta.timeSeconds === "number" ? { timeSeconds: meta.timeSeconds } : {}),
+      });
 
       const token = sessionTokenRef.current;
       if (token) {
@@ -159,13 +167,16 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
             if (res && res.ranked === false) {
               setNotRanked(true);
             }
+            // Logros desbloqueados por esta partida. El server ya los otorgó;
+            // sin esto el jugador nunca se enteraba (ver src/lib/achievements.ts).
+            announceAchievements(res?.newAchievements, t);
           })
           .catch(() => {});
       }
 
       window.setTimeout(() => setResultOpen(true), 650);
     },
-    [game.id, record, date, buildMeta, refreshStats, maxTimeOption],
+    [game.id, record, date, buildMeta, refreshStats, maxTimeOption, t],
   );
 
   // -----------------------------------------------------------------
@@ -197,7 +208,9 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
     if (finishedRef.current) return;
     finishedRef.current = true;
     abandonRef.current.active = false;
-    record(game.id, "lost", buildMeta(), date);
+    const meta = buildMeta();
+    record(game.id, "lost", meta, date);
+    trackEvent("game_abandoned", { gameId: game.id, difficulty: String(meta.difficulty) });
 
     const token = sessionTokenRef.current;
     if (token) {
@@ -272,6 +285,12 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
     resetTimer(timeLimit);
     setStatus("playing");
     setPhase("playing");
+    trackEvent("game_started", {
+      gameId: game.id,
+      difficulty,
+      untimed,
+      ...(timeLimit != null ? { timeLimit } : {}),
+    });
 
     // Reintenta si el backend estaba frio (Railway) o hubo un blip de red:
     // sin sessionToken, ni `finish()` ni `persistAbandon()` pueden reportar

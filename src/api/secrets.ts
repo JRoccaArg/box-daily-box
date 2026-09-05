@@ -11,7 +11,15 @@
 // visible en los logs de Railway a uno que degrada en silencio a un secreto
 // público conocido (permitiría forjar tokens de sesión o el acceso admin).
 
-function requireEnv(name: string): string {
+/**
+ * Lee una variable de entorno OBLIGATORIA, o aborta el arranque.
+ *
+ * Exportada para que el resto del backend use el mismo criterio en vez de
+ * inventar el suyo: preferimos un deploy que falla de forma ruidosa en los
+ * logs de Railway a uno que arranca "sano" y degrada en silencio (`/health`
+ * responde OK mientras una funcionalidad entera está rota para los usuarios).
+ */
+export function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) {
     console.error(`❌ FATAL: ${name} no configurado. Definilo en Railway variables.`);
