@@ -88,6 +88,9 @@ const zh: Translations = {
   "header.stats_label": "查看统计",
   "header.stats": "统计",
   "header.pending_requests": "{{count}} 个待处理的好友请求",
+  "header.unseen_achievements": "{{count}} 个未查看的新成就",
+  "header.notifications_badge": "{{count}} 条待处理通知",
+  "header.unseen_achievements_dot": "未查看的新成就",
 
   "footer.line1": "Box Box Daily · 粉丝项目，与一级方程式无官方关联。",
   "footer.line2": "每天午夜更新新挑战。",

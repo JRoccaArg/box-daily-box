@@ -97,6 +97,9 @@ const en: Translations = {
   "header.stats_label": "View statistics",
   "header.stats": "Stats",
   "header.pending_requests": "{{count}} pending friend requests",
+  "header.unseen_achievements": "{{count}} new achievements to see",
+  "header.notifications_badge": "{{count}} pending notifications",
+  "header.unseen_achievements_dot": "New achievement to see",
 
   // ─── Sound/haptics settings ─────────────────────────────────────────
   "settings.trigger_label": "Sound and vibration",

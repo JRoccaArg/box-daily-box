@@ -93,6 +93,9 @@ const fr: Translations = {
   "header.stats_label": "Voir les statistiques",
   "header.stats": "Stats",
   "header.pending_requests": "{{count}} demandes d'ami en attente",
+  "header.unseen_achievements": "{{count}} nouveaux succès à voir",
+  "header.notifications_badge": "{{count}} notifications en attente",
+  "header.unseen_achievements_dot": "Nouveau succès à voir",
 
   "footer.line1":
     "Box Box Daily · Projet de fans, sans affiliation officielle avec la Formule 1.",

@@ -97,6 +97,9 @@ const tr: Translations = {
   "header.stats_label": "İstatistikleri gör",
   "header.stats": "İstatistikler",
   "header.pending_requests": "{{count}} bekleyen arkadaşlık isteği",
+  "header.unseen_achievements": "görülecek {{count}} yeni başarı",
+  "header.notifications_badge": "{{count}} bekleyen bildirim",
+  "header.unseen_achievements_dot": "Görülecek yeni başarı",
 
   // ─── Footer ─────────────────────────────────────────────────────────
   "footer.line1":

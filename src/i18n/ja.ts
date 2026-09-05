@@ -88,6 +88,9 @@ const ja: Translations = {
   "header.stats_label": "統計を見る",
   "header.stats": "統計",
   "header.pending_requests": "保留中のフレンドリクエスト {{count}} 件",
+  "header.unseen_achievements": "未確認の新しい実績が{{count}}件",
+  "header.notifications_badge": "保留中の通知 {{count}} 件",
+  "header.unseen_achievements_dot": "未確認の新しい実績",
 
   "footer.line1": "Box Box Daily · ファンプロジェクト。F1との公式提携はありません。",
   "footer.line2": "毎日午前0時に新しいチャレンジ。",

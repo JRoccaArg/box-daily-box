@@ -75,6 +75,9 @@ const ru: Translations = {
   "header.home_label": "Box Daily Box - главная", "header.streak_title": "Серия {{count}} дней",
   "header.profile_label": "Редактировать профиль", "header.stats_label": "Статистика", "header.stats": "Стат.",
   "header.pending_requests": "{{count}} ожидающих запросов в друзья",
+  "header.unseen_achievements": "{{count}} новых достижений",
+  "header.notifications_badge": "{{count}} ожидающих уведомлений",
+  "header.unseen_achievements_dot": "Новое достижение",
 
   "footer.line1": "Box Box Daily · Фан-проект, без официальной связи с Формулой 1.",
   "footer.line2": "Новое испытание каждый день в полночь.",

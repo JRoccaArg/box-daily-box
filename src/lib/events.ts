@@ -41,4 +41,8 @@ export const Events = {
    *  globito de notificaciones y cualquier lista de amigos montada, sin
    *  esperar al proximo poll. */
   FRIENDS_CHANGED: "friends:changed",
+  /** Cambio en el conjunto de logros "no vistos" (uno nuevo se otorga, o la
+   *  pestaña Logros se abre y lo vacía): refresca el globito del botón Stats
+   *  sin polling, ver src/lib/achievements.ts. */
+  ACHIEVEMENTS_CHANGED: "achievements:changed",
 } as const;

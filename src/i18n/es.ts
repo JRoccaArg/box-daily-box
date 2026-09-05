@@ -107,6 +107,9 @@ const es: Translations = {
   "header.stats_label": "Ver estadisticas",
   "header.stats": "Stats",
   "header.pending_requests": "{{count}} solicitudes de amistad pendientes",
+  "header.unseen_achievements": "{{count}} logros nuevos sin ver",
+  "header.notifications_badge": "{{count}} notificaciones pendientes",
+  "header.unseen_achievements_dot": "Logro nuevo sin ver",
 
   // ─── Configuración de sonido/vibración ───────────────────────────────
   "settings.trigger_label": "Sonido y vibración",

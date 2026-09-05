@@ -75,6 +75,9 @@ const de: Translations = {
   "header.home_label": "Box Daily Box - Start", "header.streak_title": "{{count}}-Tage-Serie",
   "header.profile_label": "Profil bearbeiten", "header.stats_label": "Statistiken ansehen", "header.stats": "Stats",
   "header.pending_requests": "{{count}} ausstehende Freundschaftsanfragen",
+  "header.unseen_achievements": "{{count}} neue Erfolge zu sehen",
+  "header.notifications_badge": "{{count}} ausstehende Benachrichtigungen",
+  "header.unseen_achievements_dot": "Neuer Erfolg zu sehen",
 
   "footer.line1": "Box Box Daily · Fanprojekt, ohne offizielle Verbindung zur Formel 1.",
   "footer.line2": "Jeden Tag um Mitternacht eine neue Herausforderung.",

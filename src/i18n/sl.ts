@@ -97,6 +97,9 @@ const sl: Translations = {
   "header.stats_label": "Poglej statistiko",
   "header.stats": "Statistika",
   "header.pending_requests": "{{count}} čakajočih prijateljskih zahtev",
+  "header.unseen_achievements": "{{count}} novih dosežkov za ogled",
+  "header.notifications_badge": "{{count}} čakajočih obvestil",
+  "header.unseen_achievements_dot": "Nov dosežek za ogled",
 
   // ─── Footer ─────────────────────────────────────────────────────────
   "footer.line1":

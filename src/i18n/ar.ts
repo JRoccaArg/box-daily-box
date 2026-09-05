@@ -61,6 +61,9 @@ const ar: Translations = {
   "header.home_label": "Box Daily Box - الرئيسية", "header.streak_title": "سلسلة {{count}} أيام",
   "header.profile_label": "تعديل الملف الشخصي", "header.stats_label": "عرض الإحصائيات", "header.stats": "إحصائيات",
   "header.pending_requests": "{{count}} طلبات صداقة معلقة",
+  "header.unseen_achievements": "{{count}} إنجازات جديدة لم تُشاهد بعد",
+  "header.notifications_badge": "{{count}} إشعارات معلقة",
+  "header.unseen_achievements_dot": "إنجاز جديد لم يُشاهد بعد",
 
   "footer.line1": "Box Box Daily · مشروع معجبين، بدون ارتباط رسمي بالفورمولا 1.",
   "footer.line2": "تحدٍ جديد كل يوم عند منتصف الليل.",

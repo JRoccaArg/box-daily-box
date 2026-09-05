@@ -61,6 +61,9 @@ const nl: Translations = {
   "header.home_label": "Box Daily Box - home", "header.streak_title": "{{count}}-daagse reeks",
   "header.profile_label": "Profiel bewerken", "header.stats_label": "Statistieken bekijken", "header.stats": "Stats",
   "header.pending_requests": "{{count}} openstaande vriendschapsverzoeken",
+  "header.unseen_achievements": "{{count}} nieuwe prestaties om te bekijken",
+  "header.notifications_badge": "{{count}} openstaande meldingen",
+  "header.unseen_achievements_dot": "Nieuwe prestatie om te bekijken",
 
   "footer.line1": "Box Box Daily · Fanproject, geen officiële band met Formule 1.",
   "footer.line2": "Elke dag om middernacht een nieuwe uitdaging.",

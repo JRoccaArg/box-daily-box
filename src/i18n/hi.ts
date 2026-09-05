@@ -93,6 +93,9 @@ const hi: Translations = {
   "header.stats_label": "आँकड़े देखें",
   "header.stats": "Stats",
   "header.pending_requests": "{{count}} लंबित मित्र अनुरोध",
+  "header.unseen_achievements": "{{count}} नई उपलब्धियाँ देखने के लिए",
+  "header.notifications_badge": "{{count}} लंबित सूचनाएँ",
+  "header.unseen_achievements_dot": "देखने के लिए नई उपलब्धि",
 
   "footer.line1":
     "Box Box Daily · प्रशंसक परियोजना, फ़ॉर्मूला 1 से कोई आधिकारिक संबंध नहीं।",
