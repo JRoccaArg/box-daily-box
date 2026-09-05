@@ -7,10 +7,14 @@
 // (el componente es chico; lo importante es que NUNCA se muestra ni pega al
 // backend real fuera de staging).
 //
-// No usa el sistema de i18n de la app a propósito: es una herramienta interna
-// de QA, no contenido user-facing del producto.
+// No usa el sistema de i18n de la app a propósito (sus propios textos son
+// herramienta interna de QA, no contenido user-facing) — ÚNICA excepción:
+// `useI18n()` se usa exclusivamente para pasarle `t` a `announceAchievements`,
+// porque el toast de logro que dispara este panel es el mismo componente
+// user-facing real (mismo texto, mismo idioma activo) que ve un jugador. Ese
+// es justamente el punto: probar la notificación de verdad, no una simulación.
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { isStagingBuild, getDebugDateOverride, setDebugDateOverride } from "@/lib/debugDate";
 import {
   apiSeedBadges,
@@ -24,6 +28,8 @@ import {
 } from "@/lib/api";
 import { dateKey } from "@/lib/seed";
 import { getIdentity } from "@/lib/identity";
+import { announceAchievements } from "@/lib/achievements";
+import { useI18n } from "@/context";
 
 const DEBUG_ACHIEVEMENTS: Array<{ type: AchievementBadgeType; label: string }> = [
   { type: "ach_legend_50", label: "Maestro de Leyenda — 50 en Leyenda" },
@@ -41,6 +47,8 @@ export function DebugDatePanel() {
 }
 
 function DebugDatePanelInner() {
+  // Único uso de i18n en este panel: ver el comentario de cabecera del archivo.
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [dateInput, setDateInput] = useState(getDebugDateOverride() ?? "");
   const [seeding, setSeeding] = useState(false);
@@ -52,10 +60,57 @@ function DebugDatePanelInner() {
 
   const active = getDebugDateOverride();
 
+  // useCallback (con `t` como dependencia real: llama a announceAchievements)
+  // para que el useEffect de abajo pueda declararlo como dependencia sin
+  // reejecutarse en cada render — solo cambia de identidad si cambia el
+  // idioma activo, que es cuando `t` en sí cambia (ver I18nProvider.tsx).
+  const runAchievementCommand = useCallback(
+    async (command: DebugAchievementCommand, showSuccess = true) => {
+      setSeeding(true);
+      setMessage(null);
+      const { userId } = getIdentity();
+      const res = await apiDebugAchievements(userId, command);
+      setSeeding(false);
+      if (!res) {
+        setMessage("Error: el backend no respondió (¿STAGING_DEBUG=true en Railway?)");
+        return;
+      }
+      if ("error" in res) {
+        setMessage(
+          res.error === "No autorizado"
+            ? "Primero jugá al menos un reto para vincular esta cuenta con el servidor."
+            : `Error: ${res.error}`,
+        );
+        return;
+      }
+      setDebugState(res);
+      setStreakInput(String(res.streak.current));
+      // Dispara el toast REAL (mismo código que finishChallenge/login) si esta
+      // llamada otorgó algo genuinamente nuevo. Si el logro ya estaba activo
+      // (reaplicar el mismo escenario dos veces), `justAwarded` viene vacío —
+      // mismo comportamiento que produccion: un logro solo se anuncia la
+      // primera vez. Para repetir la animación a voluntad está "Repetir
+      // animación" más abajo, que no depende del estado en la base.
+      if (res.justAwarded.length > 0) announceAchievements(res.justAwarded, t);
+      if (!showSuccess) return;
+      if (command.action === "apply") {
+        setMessage(
+          res.justAwarded.length > 0
+            ? "Escenario aplicado: deberías ver el toast de celebración arriba a la derecha."
+            : "Escenario ya estaba activo (sin toast — igual que en producción, un logro solo avisa la primera vez). Usá \"Repetir animación\" para volver a verlo.",
+        );
+      }
+      if (command.action === "remove") setMessage("Escenario retirado y logros recalculados.");
+      if (command.action === "set_streak") setMessage(`Racha simulada en ${res.streak.current} días.`);
+      if (command.action === "reset") setMessage("Logros y racha de debug limpiados; tus datos reales se conservaron.");
+    },
+    [t],
+  );
+
   useEffect(() => {
     if (!open) return;
     void runAchievementCommand({ action: "status" }, false);
-  }, [open]);
+  }, [open, runAchievementCommand]);
 
   function applyDate() {
     setDebugDateOverride(dateInput || null);
@@ -132,34 +187,15 @@ function DebugDatePanelInner() {
     );
   }
 
-  async function runAchievementCommand(
-    command: DebugAchievementCommand,
-    showSuccess = true,
-  ) {
-    setSeeding(true);
-    setMessage(null);
-    const { userId } = getIdentity();
-    const res = await apiDebugAchievements(userId, command);
-    setSeeding(false);
-    if (!res) {
-      setMessage("Error: el backend no respondió (¿STAGING_DEBUG=true en Railway?)");
-      return;
-    }
-    if ("error" in res) {
-      setMessage(
-        res.error === "No autorizado"
-          ? "Primero jugá al menos un reto para vincular esta cuenta con el servidor."
-          : `Error: ${res.error}`,
-      );
-      return;
-    }
-    setDebugState(res);
-    setStreakInput(String(res.streak.current));
-    if (!showSuccess) return;
-    if (command.action === "apply") setMessage("Escenario aplicado. Abrí Stats → Logros para comprobarlo.");
-    if (command.action === "remove") setMessage("Escenario retirado y logros recalculados.");
-    if (command.action === "set_streak") setMessage(`Racha simulada en ${res.streak.current} días.`);
-    if (command.action === "reset") setMessage("Logros y racha de debug limpiados; tus datos reales se conservaron.");
+  /**
+   * Repite el toast+animación de "logro desbloqueado" sin tocar el backend
+   * ni el estado real (no otorga ni quita nada). A diferencia del toast que
+   * dispara "Aplicar escenario" (que solo suena la primera vez que el logro
+   * se otorga de verdad), esto se puede apretar las veces que hagan falta
+   * para ajustar/mostrar la animación.
+   */
+  function replayAchievementToast() {
+    announceAchievements([selectedAchievement], t);
   }
 
   function setExactStreak() {
@@ -324,6 +360,16 @@ function DebugDatePanelInner() {
               style={btnStyle("#a16207")}
             >
               Quitar escenario
+            </button>
+          </div>
+          <div style={{ marginBottom: 9 }}>
+            <button
+              type="button"
+              onClick={replayAchievementToast}
+              style={{ ...btnStyle("#7c3aed"), width: "100%" }}
+              title="Dispara el toast de celebración sin tocar la base de datos. Se puede repetir las veces que hagan falta."
+            >
+              🔁 Repetir animación (sin tocar la base)
             </button>
           </div>
 

@@ -89,6 +89,27 @@ async function run() {
   ]);
   assert((debugRows.rows[0] as { c: number }).c === 10, "crea exactamente 10 victorias sintéticas marcadas");
 
+  // `justAwarded` alimenta el toast de celebración en el panel de staging
+  // (ver DebugDatePanel.tsx): tiene que reflejar EXACTAMENTE lo que se otorgó
+  // de nuevo en esta llamada, ni más ni menos.
+  assert(
+    state.justAwarded.includes("ach_legend_10"),
+    "aplicar un escenario nuevo reporta el logro en justAwarded (dispara el toast)",
+  );
+
+  // Re-aplicar el MISMO escenario no debe reportar nada nuevo: el logro ya
+  // estaba activo, así que un jugador real tampoco vería un segundo toast.
+  state = await runDebugAchievementAction(
+    q,
+    USER,
+    { action: "apply", achievementType: "ach_legend_10" },
+    "2026-09-01",
+  );
+  assert(
+    state.justAwarded.length === 0,
+    "reaplicar el mismo escenario no reporta nada en justAwarded (sin toast duplicado)",
+  );
+
   state = await runDebugAchievementAction(
     q,
     USER,
@@ -97,6 +118,7 @@ async function run() {
   );
   assert(!progress(state, "ach_legend_10").unlocked, "quitar escenario recalcula y vuelve a bloquear el logro");
   assert(state.activeScenarios.length === 0, "quitar escenario borra su marca activa");
+  assert(state.justAwarded.length === 0, "quitar escenario nunca reporta justAwarded (no es un logro nuevo)");
 
   state = await runDebugAchievementAction(
     q,
@@ -135,6 +157,7 @@ async function run() {
 
   state = await runDebugAchievementAction(q, USER, { action: "reset" }, "2026-09-01");
   assert(state.activeScenarios.length === 0, "Limpiar elimina todos los escenarios de debug");
+  assert(state.justAwarded.length === 0, "Limpiar nunca reporta justAwarded, aunque reconstruya badges");
   assert(state.streak.current === 2 && state.streak.best === 2, "Limpiar reconstruye la racha desde victorias reales");
   const realRows = await q("SELECT COUNT(*)::int AS c FROM attempts WHERE ip_address = 'real'");
   assert((realRows.rows[0] as { c: number }).c === 2, "Limpiar conserva las partidas reales");
@@ -142,6 +165,44 @@ async function run() {
     `${DEBUG_ACHIEVEMENT_PREFIX}%`,
   ]);
   assert((debugRows.rows[0] as { c: number }).c === 0, "no quedan victorias sintéticas tras limpiar");
+
+  // justAwarded con DOS escenarios coexistiendo: rebuildAchievements borra
+  // TODOS los ach_* y reinserta TODOS los que califican en cada llamada, así
+  // que aplicar el segundo escenario reinserta también el primero (ya activo)
+  // — justAwarded tiene que filtrar eso y reportar solo lo genuinamente nuevo.
+  state = await runDebugAchievementAction(
+    q,
+    USER,
+    { action: "apply", achievementType: "ach_legend_10" },
+    "2026-09-01",
+  );
+  assert(
+    state.justAwarded.length === 1 && state.justAwarded[0] === "ach_legend_10",
+    "primer escenario: justAwarded trae solo ach_legend_10",
+  );
+
+  // ach_specialist_50 (50 victorias en polewordle únicamente) es deliberado:
+  // ach_wins_100 hubiera sido mala elección acá, porque su generador rota
+  // por los 8 juegos diarios y de rebote también desbloquea "Piloto
+  // Completo" (efecto colateral REAL de esa combinación, no un bug de
+  // justAwarded — se detectó con este mismo test). ach_specialist_50 no
+  // cruza ningún otro umbral: 50 victorias en un solo juego, 60 en total
+  // entre los dos escenarios (no llega a los 100 de ach_wins_100), 2 juegos
+  // distintos (no los 8 de ach_complete).
+  state = await runDebugAchievementAction(
+    q,
+    USER,
+    { action: "apply", achievementType: "ach_specialist_50" },
+    "2026-09-01",
+  );
+  assert(
+    state.justAwarded.length === 1 && state.justAwarded[0] === "ach_specialist_50",
+    "segundo escenario con el primero ya activo: justAwarded trae SOLO el nuevo, no reincluye ach_legend_10",
+  );
+  assert(
+    state.activeScenarios.includes("ach_legend_10") && state.activeScenarios.includes("ach_specialist_50"),
+    "los dos escenarios quedan activos a la vez",
+  );
 
   console.log(`\n═══ RESULTADO: ${passed} passed, ${failed} failed ═══`);
   process.exit(failed > 0 ? 1 : 0);

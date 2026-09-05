@@ -34,6 +34,15 @@ export type DebugAchievementState = {
   activeScenarios: AchievementType[];
   streak: { current: number; best: number; lastWinDate: string | null };
   achievements: AchievementProgress[];
+  /**
+   * Logros GENUINAMENTE nuevos otorgados por esta llamada (mismo shape que
+   * `newAchievements` en `finishChallenge`/login) — solo se llena en
+   * "apply", vacío en cualquier otra acción. Existe para que el frontend
+   * pueda reusar `announceAchievements` (toast + animación reales) y probar
+   * la notificación tal cual la ve un jugador, sin tener que ganar el logro
+   * jugando de verdad. Ver src/components/dev/DebugDatePanel.tsx.
+   */
+  justAwarded: AchievementType[];
 };
 
 export class DebugAchievementInputError extends Error {}
@@ -116,6 +125,29 @@ async function insertScenario(q: QueryFn, userId: string, type: AchievementType)
   );
 }
 
+/**
+ * Tipos de logro que el usuario tiene activos AHORA MISMO. Se usa para medir
+ * "qué cambió" alrededor de `rebuildAchievements`, porque esa función borra
+ * TODOS los `ach_*` y los re-inserta desde cero en cada llamada — el
+ * `RETURNING` de `awardAchievements` (que en producción SÍ significa "recién
+ * otorgado", porque ahí nunca se borra nada antes de re-evaluar) acá reporta
+ * como "insertado" cualquier logro que ya estaba activo antes de esta acción,
+ * porque literalmente se lo volvió a insertar. Comparar el conjunto de ANTES
+ * contra el de DESPUÉS es la única forma correcta de saber qué es realmente
+ * nuevo desde la perspectiva del jugador.
+ */
+async function getActiveAchievementTypes(q: QueryFn, userId: string): Promise<Set<AchievementType>> {
+  const rows = await q(
+    "SELECT badge_type FROM badges WHERE user_id = $1 AND badge_type LIKE 'ach\\_%' ESCAPE '\\'",
+    [userId],
+  );
+  return new Set(
+    rows.rows
+      .map((row) => (row as { badge_type: unknown }).badge_type)
+      .filter(isAchievementType),
+  );
+}
+
 async function rebuildAchievements(q: QueryFn, userId: string): Promise<void> {
   await q("DELETE FROM badges WHERE user_id = $1 AND badge_type LIKE 'ach\\_%' ESCAPE '\\'", [userId]);
   await awardAchievements(q, userId);
@@ -152,7 +184,7 @@ async function rebuildRealStreak(q: QueryFn, userId: string): Promise<void> {
   );
 }
 
-async function getState(q: QueryFn, userId: string): Promise<DebugAchievementState> {
+async function getState(q: QueryFn, userId: string): Promise<Omit<DebugAchievementState, "justAwarded">> {
   const [scenarioRows, userRows, achievements] = await Promise.all([
     q(
       `SELECT DISTINCT REPLACE(ip_address, $2, '') AS type
@@ -209,10 +241,21 @@ export async function runDebugAchievementAction(
   action: DebugAchievementAction,
   todayKey: string,
 ): Promise<DebugAchievementState> {
+  // Solo "apply" reporta `justAwarded` (para el toast de celebración): es la
+  // única acción donde "recién otorgado" significa algo desde la perspectiva
+  // del jugador. Se mide con un snapshot ANTES/DESPUÉS (ver
+  // getActiveAchievementTypes) y no con el RETURNING de awardAchievements,
+  // porque rebuildAchievements borra TODOS los ach_* y los reinserta desde
+  // cero en cada acción — sin el snapshot, reaplicar el MISMO escenario dos
+  // veces seguidas dispararía el toast las dos veces.
+  let justAwarded: AchievementType[] = [];
   if (action.action === "apply") {
+    const before = await getActiveAchievementTypes(q, userId);
     await q("DELETE FROM attempts WHERE user_id = $1 AND ip_address = $2", [userId, marker(action.achievementType)]);
     await insertScenario(q, userId, action.achievementType);
     await rebuildAchievements(q, userId);
+    const after = await getActiveAchievementTypes(q, userId);
+    justAwarded = [...after].filter((type) => !before.has(type));
   } else if (action.action === "remove") {
     await q("DELETE FROM attempts WHERE user_id = $1 AND ip_address = $2", [userId, marker(action.achievementType)]);
     await rebuildAchievements(q, userId);
@@ -233,5 +276,6 @@ export async function runDebugAchievementAction(
     await rebuildAchievements(q, userId);
     await rebuildRealStreak(q, userId);
   }
-  return getState(q, userId);
+  const state = await getState(q, userId);
+  return { ...state, justAwarded };
 }

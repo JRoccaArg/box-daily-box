@@ -851,6 +851,10 @@ export type DebugAchievementState = {
   activeScenarios: AchievementBadgeType[];
   streak: { current: number; best: number; lastWinDate: string | null };
   achievements: AchievementProgress[];
+  /** Logros recien otorgados por esta llamada (solo en "apply"). Mismo shape
+   *  que `newAchievements` del finish real: se pasa tal cual a
+   *  `announceAchievements` para probar el toast real sin jugar. */
+  justAwarded: AchievementBadgeType[];
 };
 
 export type DebugAchievementCommand =
