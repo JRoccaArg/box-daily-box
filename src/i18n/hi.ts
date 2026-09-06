@@ -72,6 +72,9 @@ const hi: Translations = {
   "result.view_ranking": "आज की रैंकिंग देखें",
   "result.go_home": "होम पर वापस",
   "result.come_back": "नई चुनौती के लिए कल वापस आएँ",
+  "result.share": "शेयर करें",
+  "share.copied": "परिणाम कॉपी हो गया!",
+  "share.error": "शेयर नहीं कर सके",
 
   "leave.title": "बाहर निकलें और चुनौती हारें?",
   "leave.msg":

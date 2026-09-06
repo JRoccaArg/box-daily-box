@@ -51,7 +51,15 @@ const KEY_CLASS: Record<Cell, string> = {
   empty: "bg-asphalt-600 text-ink hover:bg-asphalt-500",
 };
 
-export function PoleWordle({ difficulty, date, seed, status, onWin, onLose }: GameProps) {
+/** Emojis para la grilla de compartir (no revelan la palabra, solo el camino). */
+const CELL_EMOJI: Record<Cell, string> = {
+  correct: "🟩",
+  present: "🟨",
+  absent: "⬛",
+  empty: "⬜",
+};
+
+export function PoleWordle({ difficulty, date, seed, status, onWin, onLose, onShareReady }: GameProps) {
   const { t } = useI18n();
   const target = useMemo(() => {
     const base = getDriverPoolAtLeast(difficulty, 10);
@@ -128,6 +136,14 @@ export function PoleWordle({ difficulty, date, seed, status, onWin, onLose }: Ga
     },
     [current.length, len, locked, submit],
   );
+
+  // Al terminar, entregar la grilla de compartir: una fila de emojis por
+  // intento (🟩 correcto, 🟨 presente, ⬛ ausente). No revela la palabra.
+  useEffect(() => {
+    if (!onShareReady || status === "playing") return;
+    const rows = guesses.map((g) => scoreGuess(g, answer).map((c) => CELL_EMOJI[c]).join(""));
+    onShareReady({ rows });
+  }, [status, guesses, answer, onShareReady]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

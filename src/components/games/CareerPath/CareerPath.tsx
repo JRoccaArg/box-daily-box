@@ -5,7 +5,7 @@
 // autocompletado que PitTexto — copiado inline, no compartido, ver Etapa 2
 // del plan). MAX_GUESSES intentos; se pierde si se agotan sin acertar.
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameProps, Driver } from "@/types";
 import { findDriversByText, fullName, nationality, countryName, teamName } from "@/data";
 import { buildCareerPathTarget, targetChain, getCareerPathPool } from "./careerpath.logic";
@@ -15,7 +15,7 @@ import { ChevronRight } from "@/components/ui/Icon";
 
 const MAX_GUESSES = 3;
 
-export function CareerPath({ difficulty, date, seed, status, onWin, onLose }: GameProps) {
+export function CareerPath({ difficulty, date, seed, status, onWin, onLose, onShareReady }: GameProps) {
   const { t } = useI18n();
   const target = useMemo(() => buildCareerPathTarget(difficulty, date, seed), [difficulty, date, seed]);
   const chain = useMemo(() => targetChain(target), [target]);
@@ -27,6 +27,12 @@ export function CareerPath({ difficulty, date, seed, status, onWin, onLose }: Ga
 
   const solved = guesses.some((g) => g.id === target.id);
   const finished = status !== "playing" || solved || guesses.length >= MAX_GUESSES;
+
+  // Grilla de compartir: un emoji por intento (🟥 fallo, 🟩 acierto).
+  useEffect(() => {
+    if (!onShareReady || status === "playing") return;
+    onShareReady({ rows: guesses.map((g) => (g.id === target.id ? "🟩" : "🟥")) });
+  }, [status, guesses, target.id, onShareReady]);
 
   const guessedIds = new Set(guesses.map((g) => g.id));
   const suggestions = useMemo(() => {

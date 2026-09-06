@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameProps } from "@/types";
 import type { Driver } from "@/types";
 import { findDriversByText, fullName, nationality, countryName } from "@/data";
@@ -11,7 +11,7 @@ import { Check, Close } from "@/components/ui/Icon";
 
 const MAX_GUESSES = 8;
 
-export function PitTexto({ difficulty, date, seed, status, onWin, onLose }: GameProps) {
+export function PitTexto({ difficulty, date, seed, status, onWin, onLose, onShareReady }: GameProps) {
   const { t } = useI18n();
   const target = useMemo(() => buildTarget(difficulty, date, seed), [difficulty, date, seed]);
   const pool = useMemo(() => getDriverPoolAtLeast(difficulty, 15), [difficulty]);
@@ -22,6 +22,13 @@ export function PitTexto({ difficulty, date, seed, status, onWin, onLose }: Game
 
   const solved = guesses.some((g) => g.id === target.id);
   const finished = status !== "playing" || solved || guesses.length >= MAX_GUESSES;
+
+  // Grilla de compartir: un emoji por intento (🟥 fallo, 🟩 acierto). Refleja
+  // en cuántos intentos lo sacaste sin revelar quién era el piloto.
+  useEffect(() => {
+    if (!onShareReady || status === "playing") return;
+    onShareReady({ rows: guesses.map((g) => (g.id === target.id ? "🟩" : "🟥")) });
+  }, [status, guesses, target.id, onShareReady]);
 
   const guessedIds = new Set(guesses.map((g) => g.id));
   const suggestions = useMemo(() => {

@@ -1,6 +1,6 @@
 // src/components/games/GPResultado/GPResultado.tsx
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameProps } from "@/types";
 import { buildGPChallenge } from "./gpresultado.logic";
 import type { GPSolution } from "./gpresultado.logic";
@@ -43,7 +43,7 @@ function teamColor(team: string): string {
 /** Fallos permitidos en modo "Sin Tiempo" antes de perder (no hay otro limite de intentos). */
 const MAX_FAILS = 3;
 
-export function GPResultado({ difficulty, date, seed, status, untimed, onWin, onLose }: GameProps) {
+export function GPResultado({ difficulty, date, seed, status, untimed, onWin, onLose, onShareReady }: GameProps) {
   const { t } = useI18n();
   const [fails, setFails] = useState(0);
 
@@ -68,6 +68,17 @@ export function GPResultado({ difficulty, date, seed, status, untimed, onWin, on
 
   const revealedCount = revealed.filter(Boolean).length;
   const finished = status !== "playing";
+
+  // Grilla de compartir: una marca por posición del top 10, 🟩 acertada / ⬜
+  // no. Partida en filas de 5 para que no quede una fila larguísima. No revela
+  // qué piloto va en cada posición.
+  useEffect(() => {
+    if (!onShareReady || status === "playing") return;
+    const marks = revealed.map((r) => (r ? "🟩" : "⬜"));
+    const grid: string[] = [];
+    for (let i = 0; i < marks.length; i += 5) grid.push(marks.slice(i, i + 5).join(""));
+    onShareReady({ rows: grid });
+  }, [status, revealed, onShareReady]);
 
   // Nombres ya usados (acertados).
   const usedNames = useMemo(() => {

@@ -1,6 +1,6 @@
 // src/components/games/Top10Standings/Top10Standings.tsx
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameProps } from "@/types";
 import { buildChallenge, allStandingsDriverNames, searchStandingsDrivers } from "./top10standings.logic";
 import type { Top10StandingsSolution } from "./top10standings.logic";
@@ -12,7 +12,7 @@ import { Check } from "@/components/ui/Icon";
 /** Fallos permitidos en modo "Sin Tiempo" antes de perder (no hay otro limite de intentos). */
 const MAX_FAILS = 3;
 
-export function Top10Standings({ difficulty, date, seed, status, untimed, onWin, onLose }: GameProps) {
+export function Top10Standings({ difficulty, date, seed, status, untimed, onWin, onLose, onShareReady }: GameProps) {
   const { t } = useI18n();
   const [fails, setFails] = useState(0);
 
@@ -37,6 +37,16 @@ export function Top10Standings({ difficulty, date, seed, status, untimed, onWin,
 
   const revealedCount = revealed.filter(Boolean).length;
   const finished = status !== "playing";
+
+  // Grilla de compartir: una marca por posición del top 10, 🟩 acertada / ⬜
+  // no. Partida en filas de 5. No revela qué piloto va en cada posición.
+  useEffect(() => {
+    if (!onShareReady || status === "playing") return;
+    const marks = revealed.map((r) => (r ? "🟩" : "⬜"));
+    const grid: string[] = [];
+    for (let i = 0; i < marks.length; i += 5) grid.push(marks.slice(i, i + 5).join(""));
+    onShareReady({ rows: grid });
+  }, [status, revealed, onShareReady]);
 
   // Nombres ya usados (acertados).
   const usedNames = useMemo(() => {

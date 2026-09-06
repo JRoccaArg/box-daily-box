@@ -60,6 +60,9 @@ const de: Translations = {
   "result.view_ranking": "Heutige Rangliste",
   "result.go_home": "Zurück zur Startseite",
   "result.come_back": "Komm morgen für eine neue Herausforderung wieder",
+  "result.share": "Teilen",
+  "share.copied": "Ergebnis kopiert!",
+  "share.error": "Teilen nicht möglich",
 
   "leave.title": "Verlassen und Herausforderung aufgeben?",
   "leave.msg": "Wenn du jetzt gehst, zählt diese Herausforderung als verloren und du kannst sie erst morgen wieder spielen. Deine Serie wird unterbrochen.",

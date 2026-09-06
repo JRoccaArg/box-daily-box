@@ -68,6 +68,9 @@ const zh: Translations = {
   "result.view_ranking": "查看今日排名",
   "result.go_home": "返回首页",
   "result.come_back": "明天回来迎接新挑战",
+  "result.share": "分享",
+  "share.copied": "结果已复制！",
+  "share.error": "无法分享",
 
   "leave.title": "退出并放弃挑战？",
   "leave.msg": "如果现在退出，此挑战将计为失败，明天才能再玩。连胜将中断。",

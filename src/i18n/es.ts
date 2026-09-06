@@ -82,6 +82,9 @@ const es: Translations = {
   "result.view_ranking": "Ver ranking del día",
   "result.go_home": "Volver al inicio",
   "result.come_back": "Vuelve manana para un nuevo reto",
+  "result.share": "Compartir",
+  "share.copied": "¡Resultado copiado!",
+  "share.error": "No se pudo compartir",
 
   // Abandono
   "leave.title": "¿Salir y perder el reto?",

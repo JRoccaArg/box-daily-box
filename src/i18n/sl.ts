@@ -75,6 +75,9 @@ const sl: Translations = {
   "result.view_ranking": "Poglej današnjo lestvico",
   "result.go_home": "Nazaj domov",
   "result.come_back": "Jutri se vrni za nov izziv",
+  "result.share": "Deli",
+  "share.copied": "Rezultat kopiran!",
+  "share.error": "Deljenje ni uspelo",
 
   "leave.title": "Zapusti in izgubi izziv?",
   "leave.msg":

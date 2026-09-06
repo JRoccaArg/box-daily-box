@@ -75,6 +75,9 @@ const tr: Translations = {
   "result.view_ranking": "Bugünün sıralamasını gör",
   "result.go_home": "Ana sayfaya dön",
   "result.come_back": "Yeni bir meydan okuma için yarın tekrar gel",
+  "result.share": "Paylaş",
+  "share.copied": "Sonuç kopyalandı!",
+  "share.error": "Paylaşılamadı",
 
   "leave.title": "Ayrıl ve meydan okumayı kaybet?",
   "leave.msg":

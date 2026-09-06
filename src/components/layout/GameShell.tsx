@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import type { Difficulty, GameDefinition, GameStatus } from "@/types";
+import type { Difficulty, GameDefinition, GameStatus, ShareGrid } from "@/types";
 import { useStats } from "@/context/StatsContext";
 import { useI18n } from "@/context";
 import { computeScore } from "@/lib/scoring";
 import { apiStartChallenge, apiFinishChallenge } from "@/lib/api";
 import { isIdentityComplete } from "@/lib/identity";
 import { updateServerPoints, saveSolution } from "@/lib/stats";
+import { buildShareText, shareResult } from "@/lib/share";
 import { emit, Events } from "@/lib/events";
 import { getEffectiveNow } from "@/lib/debugDate";
 import { setGameplayActive } from "@/lib/gameplayState";
@@ -29,6 +30,7 @@ import {
   Lock,
   Timer as TimerIcon,
   Swords,
+  Share2,
 } from "@/components/ui/Icon";
 
 type Phase = "config" | "playing" | "finished";
@@ -76,6 +78,11 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
   const [status, setStatus] = useState<GameStatus>("idle");
   const [resultOpen, setResultOpen] = useState(false);
   const [pointsEarned, setPointsEarned] = useState(0);
+  // Tiempo final (segundos) y grilla de compartir, para el mensaje "estilo
+  // Wordle" del boton Compartir. `shareGrid` la entrega cada juego via
+  // `onShareReady`; null = formato uniforme sin grilla.
+  const [finishSeconds, setFinishSeconds] = useState<number | null>(null);
+  const [shareGrid, setShareGrid] = useState<ShareGrid | null>(null);
   // Modal de confirmacion para abandonar (al tocar "Volver" mientras juega).
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   // Modal de identidad (si el usuario no configuró nombre/pais).
@@ -147,6 +154,13 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
         untimed: scoreRef.current.untimed,
       });
       setPointsEarned(points);
+      // Tiempo final para el mensaje de compartir. En modo "Sin Tiempo" no hay
+      // cronometro que mostrar.
+      setFinishSeconds(
+        scoreRef.current.untimed || typeof meta.timeSeconds !== "number"
+          ? null
+          : meta.timeSeconds,
+      );
       trackEvent("game_completed", {
         gameId: game.id,
         outcome,
@@ -331,6 +345,24 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
     [finish],
   );
 
+  const onShare = useCallback(() => {
+    const dateLabel = new Intl.DateTimeFormat(locale, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(date);
+    const text = buildShareText({
+      gameName: t(`game.${game.id}.name`),
+      dateLabel,
+      won: status === "won",
+      timeSeconds: finishSeconds,
+      points: pointsEarned,
+      grid: shareGrid,
+    });
+    void shareResult(text, t);
+    trackEvent("result_shared", { gameId: game.id, outcome: status });
+  }, [locale, date, t, game.id, status, finishSeconds, pointsEarned, shareGrid]);
+
   // -----------------------------------------------------------------
   // Vista: reto ya jugado hoy (bloqueado hasta manana).
   // -----------------------------------------------------------------
@@ -500,6 +532,7 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
           status={status}
           onWin={onWin}
           onLose={onLose}
+          onShareReady={setShareGrid}
         />
       </div>
 
@@ -570,6 +603,12 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
           )}
 
           <div className="mt-5 flex flex-col gap-2">
+            <Button block onClick={onShare}>
+              <span className="inline-flex items-center justify-center gap-2">
+                <Share2 size={17} />
+                {t("result.share")}
+              </span>
+            </Button>
             <Button
               variant="outline"
               block

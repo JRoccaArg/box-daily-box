@@ -72,6 +72,9 @@ const fr: Translations = {
   "result.view_ranking": "Voir le classement du jour",
   "result.go_home": "Retour à l'accueil",
   "result.come_back": "Revenez demain pour un nouveau défi",
+  "result.share": "Partager",
+  "share.copied": "Résultat copié !",
+  "share.error": "Impossible de partager",
 
   "leave.title": "Quitter et perdre le défi ?",
   "leave.msg":

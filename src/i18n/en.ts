@@ -75,6 +75,9 @@ const en: Translations = {
   "result.view_ranking": "View today's ranking",
   "result.go_home": "Back to home",
   "result.come_back": "Come back tomorrow for a new challenge",
+  "result.share": "Share",
+  "share.copied": "Result copied!",
+  "share.error": "Couldn't share",
 
   "leave.title": "Leave and lose the challenge?",
   "leave.msg":

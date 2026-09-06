@@ -47,6 +47,9 @@ const nl: Translations = {
   "result.not_ranked": "Een andere speler heeft deze uitdaging vandaag al vanaf jouw verbinding gespeeld, dus je resultaat telt niet mee voor de wereldranglijst. Het is wel opgeslagen in je geschiedenis.",
   "result.view_board": "Bord bekijken", "result.view_ranking": "Ranglijst van vandaag",
   "result.go_home": "Terug naar home", "result.come_back": "Kom morgen terug voor een nieuwe uitdaging",
+  "result.share": "Delen",
+  "share.copied": "Resultaat gekopieerd!",
+  "share.error": "Delen mislukt",
 
   "leave.title": "Verlaten en uitdaging opgeven?",
   "leave.msg": "Als je nu vertrekt, telt deze uitdaging als verloren en kun je hem pas morgen opnieuw spelen. Je reeks wordt onderbroken.",

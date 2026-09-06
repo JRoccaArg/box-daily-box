@@ -72,6 +72,9 @@ const it: Translations = {
   "result.view_ranking": "Vedi classifica del giorno",
   "result.go_home": "Torna alla home",
   "result.come_back": "Torna domani per una nuova sfida",
+  "result.share": "Condividi",
+  "share.copied": "Risultato copiato!",
+  "share.error": "Impossibile condividere",
 
   "leave.title": "Uscire e perdere la sfida?",
   "leave.msg":

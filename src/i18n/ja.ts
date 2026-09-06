@@ -68,6 +68,9 @@ const ja: Translations = {
   "result.view_ranking": "今日のランキングを見る",
   "result.go_home": "ホームに戻る",
   "result.come_back": "明日また新しいチャレンジが待っています",
+  "result.share": "シェア",
+  "share.copied": "結果をコピーしました！",
+  "share.error": "共有できませんでした",
 
   "leave.title": "退出してチャレンジを放棄しますか？",
   "leave.msg": "今退出すると、このチャレンジは失敗扱いとなり、明日まで再プレイできません。連続記録が途切れます。",

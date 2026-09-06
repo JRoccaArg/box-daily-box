@@ -92,6 +92,17 @@ export const DIFFICULTY_LABEL: Record<Difficulty, string> = {
 /** Resultado de una partida diaria de un juego. */
 export type GameStatus = "idle" | "playing" | "won" | "lost";
 
+/**
+ * Grilla "estilo Wordle" que un juego entrega al terminar para poder
+ * compartir el resultado sin revelar la respuesta. Cada string de `rows` es
+ * una fila de emojis (ej. PoleWordle: ["🟩🟨⬛⬛⬛", ...]). El GameShell la
+ * inserta en el mensaje de compartir. Un juego que no la provea cae al
+ * formato uniforme (solo encabezado + tiempo + puntaje).
+ */
+export type ShareGrid = {
+  rows: string[];
+};
+
 /** Props que recibe TODO juego desde el GameShell. Contrato estable. */
 export type GameProps = {
   /** Dificultad elegida por el usuario. */
@@ -119,6 +130,13 @@ export type GameProps = {
   onWin: (solution?: Record<string, unknown>) => void;
   /** Llamar cuando el usuario pierde. Pasar solution para registro server. */
   onLose: (solution?: Record<string, unknown>) => void;
+  /**
+   * Opcional. El juego llama esto al terminar para entregar su grilla de
+   * "compartir" (emojis que reflejan el camino, sin spoiler). El GameShell la
+   * usa en el boton Compartir del modal de resultado. Un juego que no la
+   * implemente cae al formato uniforme. Pasar null para limpiar.
+   */
+  onShareReady?: (grid: ShareGrid | null) => void;
 };
 
 /** Opciones de cronometro que admite un juego. */

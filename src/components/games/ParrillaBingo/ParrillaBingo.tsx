@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import type { GameProps, Driver } from "@/types";
 import { findDriversByText, fullName, nationality, countryName, team } from "@/data";
 import { buildBingo, completeGrid } from "./bingo.logic";
@@ -16,7 +16,7 @@ const MAX_FAILS = 5;
  * Parrilla Bingo: grilla 3x3 donde cada celda es la interseccion de una
  * restriccion de fila (escuderia) y una de columna (nacionalidad o campeon).
  */
-export function ParrillaBingo({ difficulty, date, seed, status, untimed, onWin, onLose }: GameProps) {
+export function ParrillaBingo({ difficulty, date, seed, status, untimed, onWin, onLose, onShareReady }: GameProps) {
   const { t } = useI18n();
   const puzzle = useMemo(() => buildBingo(difficulty, date, seed), [difficulty, date, seed]);
   const { rows, cols, pool } = puzzle;
@@ -28,6 +28,19 @@ export function ParrillaBingo({ difficulty, date, seed, status, untimed, onWin, 
   const [fails, setFails] = useState(0);
 
   const finished = status !== "playing";
+
+  // Grilla de compartir: la parrilla con 🟩 en las casillas que completaste y
+  // ⬜ en las vacías. No revela QUÉ piloto va en cada una, solo tu progreso.
+  useEffect(() => {
+    if (!onShareReady || status === "playing") return;
+    const grid: string[] = [];
+    for (let r = 0; r < rows.length; r++) {
+      let line = "";
+      for (let c = 0; c < cols.length; c++) line += cells[r * cols.length + c] ? "🟩" : "⬜";
+      grid.push(line);
+    }
+    onShareReady({ rows: grid });
+  }, [status, cells, rows.length, cols.length, onShareReady]);
 
   const registerFail = () => {
     if (!untimed || finished) return;
