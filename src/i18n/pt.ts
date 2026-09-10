@@ -575,10 +575,10 @@ const pt: Translations = {
   "seo.game.team-radio.description":
     "Leia uma mensagem icônica de rádio de equipe da F1 e adivinhe em qual Grande Prêmio foi dita, entre 6 opções. Puzzle diário grátis.",
 
-  // ─── Evento puntual: puntos dobles del GP de Monza 2026 ─────────────
+  // ─── Evento puntual: puntos dobles del GP de Madring 2026 ───────────
   // Temporal. Se borra junto con src/lib/gpEvent.ts cuando pase el evento.
   "gpEvent.eyebrow": "Fim de semana de GP",
-  "gpEvent.circuit": "Monza",
+  "gpEvent.circuit": "Madring",
   "gpEvent.active_title": "Pontos em dobro",
   "gpEvent.soon_title": "Chegam os pontos em dobro",
   "gpEvent.active_sub": "Todos os desafios de hoje valem o dobro.",

@@ -479,10 +479,10 @@ const nl: Translations = {
   "seo.game.team-radio.description":
     "Lees een iconisch F1-teamradiobericht en raad uit 6 opties bij welke Grand Prix het werd gezegd. Gratis dagelijkse puzzel.",
 
-  // ─── Evento puntual: puntos dobles del GP de Monza 2026 ─────────────
+  // ─── Evento puntual: puntos dobles del GP de Madring 2026 ───────────
   // Temporal. Se borra junto con src/lib/gpEvent.ts cuando pase el evento.
   "gpEvent.eyebrow": "GP-weekend",
-  "gpEvent.circuit": "Monza",
+  "gpEvent.circuit": "Madring",
   "gpEvent.active_title": "Dubbele punten",
   "gpEvent.soon_title": "Dubbele punten komen eraan",
   "gpEvent.active_sub": "Vandaag telt elke uitdaging dubbel.",

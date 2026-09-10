@@ -1,6 +1,6 @@
 // src/components/layout/GpEventBanner.tsx
 //
-// Cartel del EVENTO PUNTUAL de puntos dobles del GP de Monza 2026.
+// Cartel del EVENTO PUNTUAL de puntos dobles del GP de Madring 2026.
 // Ver src/lib/gpEvent.ts para la ventana y el porqué de cada decisión.
 //
 // Es SOLO presentación: no otorga ni calcula nada. Los puntos dobles los aplica
@@ -112,13 +112,13 @@ export function GpEventBanner() {
       />
 
       <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-2.5 sm:gap-4 sm:py-3">
-        {/* Tricolore de Monza: la firma visual del evento. */}
+        {/* Bandera de España: la firma visual del evento de Madring. */}
         <span
           aria-hidden="true"
           className="h-9 w-[3px] shrink-0 rounded-full sm:h-10"
           style={{
             backgroundImage:
-              "linear-gradient(to bottom, #009246 0%, #009246 33.33%, #F1F2F1 33.33%, #F1F2F1 66.66%, #CE2B37 66.66%, #CE2B37 100%)",
+              "linear-gradient(to bottom, #AA151B 0%, #AA151B 25%, #F1BF00 25%, #F1BF00 75%, #AA151B 75%, #AA151B 100%)",
           }}
         />
 
@@ -131,7 +131,7 @@ export function GpEventBanner() {
               </span>
             )}
             {/* El circuito va PRIMERO: en pantallas angostas el `truncate`
-                recorta la cola, y lo que no se puede perder es "Monza" (el
+                recorta la cola, y lo que no se puede perder es "Madring" (el
                 dato distintivo), no la etiqueta generica del evento. */}
             <span className="truncate font-mono text-[10px] uppercase tracking-[0.2em] text-ink-muted sm:text-[11px]">
               <span className="text-ink">{t("gpEvent.circuit")}</span>

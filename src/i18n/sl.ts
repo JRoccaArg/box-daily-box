@@ -589,10 +589,10 @@ const sl: Translations = {
   "seo.game.team-radio.description":
     "Preberi ikonično sporočilo ekipne radijske zveze F1 in izmed 6 možnosti ugani, na kateri Veliki nagradi je bilo izrečeno. Brezplačna dnevna uganka.",
 
-  // ─── Evento puntual: puntos dobles del GP de Monza 2026 ─────────────
+  // ─── Evento puntual: puntos dobles del GP de Madring 2026 ───────────
   // Temporal. Se borra junto con src/lib/gpEvent.ts cuando pase el evento.
   "gpEvent.eyebrow": "Vikend VN",
-  "gpEvent.circuit": "Monza",
+  "gpEvent.circuit": "Madring",
   "gpEvent.active_title": "Dvojne točke",
   "gpEvent.soon_title": "Prihajajo dvojne točke",
   "gpEvent.active_sub": "Danes je vsak izziv vreden dvojno.",

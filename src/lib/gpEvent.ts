@@ -1,6 +1,6 @@
 // src/lib/gpEvent.ts
 //
-// EVENTO PUNTUAL Y ÚNICO — GP de Monza 2026, puntos dobles por 48 horas.
+// EVENTO PUNTUAL Y ÚNICO — GP de Madring 2026, puntos dobles por 72 horas.
 //
 // Esto NO es todavía el "calendario de eventos" automatizado: es UN evento
 // hardcodeado, con fecha fija, pensado para vivir poco y borrarse fácil.
@@ -35,12 +35,13 @@
 export const GP_EVENT_MULTIPLIER = 2;
 
 /**
- * Inicio: sábado 5 de septiembre de 2026, 00:00 UTC (el cambio de día del
- * servidor). Fin: lunes 7 de septiembre, 00:00 UTC — 48 horas exactas.
- * El fin es EXCLUSIVO: a las 00:00:00.000 del lunes el evento ya terminó.
+ * Inicio: viernes 11 de septiembre de 2026, 00:00 UTC (el cambio de día del
+ * servidor). Fin: lunes 14 de septiembre, 00:00 UTC — 72 horas exactas.
+ * El fin es EXCLUSIVO: a las 00:00:00.000 del 14 el evento ya terminó; de ese
+ * modo queda incluido hasta el último milisegundo del día 13.
  */
-export const GP_EVENT_START_MS = Date.UTC(2026, 8, 5, 0, 0, 0, 0);
-export const GP_EVENT_END_MS = Date.UTC(2026, 8, 7, 0, 0, 0, 0);
+export const GP_EVENT_START_MS = Date.UTC(2026, 8, 11, 0, 0, 0, 0);
+export const GP_EVENT_END_MS = Date.UTC(2026, 8, 14, 0, 0, 0, 0);
 
 /**
  * Cuánto antes del inicio se muestra el cartel en modo "cuenta regresiva".
@@ -64,7 +65,7 @@ export function gpEventPhase(now: Date): GpEventPhase {
   return "off";
 }
 
-/** true solo dentro de la ventana de 48 h. */
+/** true solo dentro de la ventana de 72 h. */
 export function isGpEventActive(now: Date): boolean {
   return gpEventPhase(now) === "active";
 }

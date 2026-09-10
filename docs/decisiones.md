@@ -51,7 +51,7 @@ Este enfoque detecta textos faltantes, errores al guardar la selección y cambio
 
 ## 2026-09-04: El evento de puntos dobles mide su ventana con el reloj del servidor
 
-El evento puntual del GP de Monza (`src/lib/gpEvent.ts`) multiplica por dos los puntos durante 48 horas. La ventana se expresa en instantes absolutos (`Date.UTC`) y el backend la evalúa contra su propio reloj en el momento de acreditar los puntos.
+El evento puntual del GP de Madring (`src/lib/gpEvent.ts`) multiplica por dos los puntos durante 72 horas, desde el 11 hasta finalizar el 13 de septiembre de 2026. La ventana se expresa en instantes absolutos (`Date.UTC`) y el backend la evalúa contra su propio reloj en el momento de acreditar los puntos.
 
 No se usa `session.today` aunque esté firmado en el `sessionToken`. Ese campo acepta la fecha local del navegador cuando cae a un día de distancia del UTC del servidor, para que el reto diario respete el huso horario del jugador. Usarlo para el multiplicador habría permitido declararse en sábado un viernes y cobrar el doble fuera del evento.
 

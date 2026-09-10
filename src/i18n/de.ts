@@ -493,10 +493,10 @@ const de: Translations = {
   "seo.game.team-radio.description":
     "Lies einen legendären F1-Team-Funkspruch und rate aus 6 Optionen, bei welchem Grand Prix er gesagt wurde. Kostenloses Tagesrätsel.",
 
-  // ─── Evento puntual: puntos dobles del GP de Monza 2026 ─────────────
+  // ─── Evento puntual: puntos dobles del GP de Madring 2026 ───────────
   // Temporal. Se borra junto con src/lib/gpEvent.ts cuando pase el evento.
   "gpEvent.eyebrow": "GP-Wochenende",
-  "gpEvent.circuit": "Monza",
+  "gpEvent.circuit": "Madring",
   "gpEvent.active_title": "Doppelte Punkte",
   "gpEvent.soon_title": "Doppelte Punkte kommen",
   "gpEvent.active_sub": "Heute zählt jede Aufgabe doppelt.",

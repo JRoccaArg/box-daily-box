@@ -614,10 +614,10 @@ const es: Translations = {
   "duel.share_link": "Compartir link",
   "duel.link_copied": "Link copiado al portapapeles",
 
-  // ─── Evento puntual: puntos dobles del GP de Monza 2026 ─────────────
+  // ─── Evento puntual: puntos dobles del GP de Madring 2026 ───────────
   // Temporal. Se borra junto con src/lib/gpEvent.ts cuando pase el evento.
   "gpEvent.eyebrow": "Fin de semana de GP",
-  "gpEvent.circuit": "Monza",
+  "gpEvent.circuit": "Madring",
   "gpEvent.active_title": "Puntos dobles",
   "gpEvent.soon_title": "Llegan los puntos dobles",
   "gpEvent.active_sub": "Todos los retos de hoy valen el doble.",

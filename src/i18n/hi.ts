@@ -574,10 +574,10 @@ const hi: Translations = {
   "seo.game.team-radio.description":
     "F1 की एक मशहूर टीम रेडियो मैसेज पढ़ें और 6 विकल्पों में से अंदाज़ा लगाएं कि यह किस ग्रां प्री में कहा गया था। रोज़ाना मुफ्त पज़ल।",
 
-  // ─── Evento puntual: puntos dobles del GP de Monza 2026 ─────────────
+  // ─── Evento puntual: puntos dobles del GP de Madring 2026 ───────────
   // Temporal. Se borra junto con src/lib/gpEvent.ts cuando pase el evento.
   "gpEvent.eyebrow": "जीपी वीकेंड",
-  "gpEvent.circuit": "मोंज़ा",
+  "gpEvent.circuit": "Madring",
   "gpEvent.active_title": "दोगुने अंक",
   "gpEvent.soon_title": "दोगुने अंक आ रहे हैं",
   "gpEvent.active_sub": "आज हर चुनौती के अंक दोगुने हैं।",

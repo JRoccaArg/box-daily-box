@@ -13,7 +13,7 @@ import { GpEventBanner } from "./GpEventBanner";
 export function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-full flex-col">
-      {/* Evento puntual (GP de Monza 2026). Va ARRIBA del header y no es
+      {/* Evento puntual (GP de Madring 2026). Va ARRIBA del header y no es
           sticky: se lee al entrar y despues deja la pantalla libre. Se
           renderiza solo dentro de su ventana — ver src/lib/gpEvent.ts. */}
       <GpEventBanner />

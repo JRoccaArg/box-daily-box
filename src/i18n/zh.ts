@@ -531,10 +531,10 @@ const zh: Translations = {
   "seo.game.team-radio.description":
     "阅读一段经典的F1车队无线电通讯，从6个选项中猜出这是在哪场大奖赛上说的。每日免费解谜游戏。",
 
-  // ─── Evento puntual: puntos dobles del GP de Monza 2026 ─────────────
+  // ─── Evento puntual: puntos dobles del GP de Madring 2026 ───────────
   // Temporal. Se borra junto con src/lib/gpEvent.ts cuando pase el evento.
   "gpEvent.eyebrow": "大奖赛周末",
-  "gpEvent.circuit": "蒙扎",
+  "gpEvent.circuit": "Madring",
   "gpEvent.active_title": "双倍积分",
   "gpEvent.soon_title": "双倍积分即将开始",
   "gpEvent.active_sub": "今天所有挑战的积分翻倍。",

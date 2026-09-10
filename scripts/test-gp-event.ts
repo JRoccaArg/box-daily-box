@@ -8,7 +8,7 @@
  * del evento y contamina el ranking mensual.
  *
  * Cubre:
- *   - La ventana dura EXACTAMENTE 48 h.
+ *   - La ventana dura EXACTAMENTE 72 h.
  *   - Inicio inclusivo, fin exclusivo (nada de un segundo de propina).
  *   - Fuera de la ventana el multiplicador es 1, adentro es 2.
  *   - La ventana es un INSTANTE ABSOLUTO: el mismo momento da el mismo
@@ -38,8 +38,8 @@ const SECOND = 1000;
 const HOUR = 60 * 60 * 1000;
 
 function testWindowLength() {
-  console.log("\n▶ La ventana dura exactamente 48 horas");
-  assert(GP_EVENT_END_MS - GP_EVENT_START_MS === 48 * HOUR, "duracion == 48 h");
+  console.log("\n▶ La ventana dura exactamente 72 horas");
+  assert(GP_EVENT_END_MS - GP_EVENT_START_MS === 72 * HOUR, "duracion == 72 h");
   assert(GP_EVENT_START_MS < GP_EVENT_END_MS, "el inicio es anterior al fin");
 }
 
@@ -77,25 +77,25 @@ function testPhases() {
 
 function testAbsoluteInstant() {
   console.log("\n▶ La ventana es un instante absoluto (independiente del huso)");
-  // El inicio es medianoche UTC del sabado 05/09/2026. El MISMO instante,
+  // El inicio es medianoche UTC del viernes 11/09/2026. El MISMO instante,
   // expresado desde husos distintos, tiene que dar el mismo veredicto: es lo
   // que garantiza que el evento empiece a la vez para todo el mundo.
-  const startUtc = new Date("2026-09-05T00:00:00.000Z");
-  const startInBuenosAires = new Date("2026-09-04T21:00:00.000-03:00"); // mismo instante
-  const startInTokyo = new Date("2026-09-05T09:00:00.000+09:00");       // mismo instante
-  assert(startUtc.getTime() === GP_EVENT_START_MS, "el inicio es medianoche UTC del 05/09/2026");
+  const startUtc = new Date("2026-09-11T00:00:00.000Z");
+  const startInBuenosAires = new Date("2026-09-10T21:00:00.000-03:00"); // mismo instante
+  const startInTokyo = new Date("2026-09-11T09:00:00.000+09:00");       // mismo instante
+  assert(startUtc.getTime() === GP_EVENT_START_MS, "el inicio es medianoche UTC del 11/09/2026");
   assert(startInBuenosAires.getTime() === startUtc.getTime(), "premisa: mismo instante (AR)");
   assert(startInTokyo.getTime() === startUtc.getTime(), "premisa: mismo instante (JP)");
   assert(isGpEventActive(startInBuenosAires), "activo visto desde Argentina");
   assert(isGpEventActive(startInTokyo), "activo visto desde Japon");
 
   // Un segundo antes, tambien desde cualquier huso, sigue sin estar activo.
-  assert(!isGpEventActive(new Date("2026-09-04T20:59:59.000-03:00")), "1 s antes desde Argentina: NO activo");
-  assert(!isGpEventActive(new Date("2026-09-05T08:59:59.000+09:00")), "1 s antes desde Japon: NO activo");
+  assert(!isGpEventActive(new Date("2026-09-10T20:59:59.000-03:00")), "1 s antes desde Argentina: NO activo");
+  assert(!isGpEventActive(new Date("2026-09-11T08:59:59.000+09:00")), "1 s antes desde Japon: NO activo");
 
-  // El fin cae en la medianoche UTC del lunes 07/09.
-  assert(new Date("2026-09-07T00:00:00.000Z").getTime() === GP_EVENT_END_MS,
-    "el fin es medianoche UTC del 07/09/2026");
+  // El fin cae en la medianoche UTC del lunes 14/09; el día 13 queda completo.
+  assert(new Date("2026-09-14T00:00:00.000Z").getTime() === GP_EVENT_END_MS,
+    "el fin es medianoche UTC del 14/09/2026");
 }
 
 function testVisualTestsUnaffected() {
@@ -116,15 +116,15 @@ function testCountdown() {
   console.log("\n▶ Cuenta regresiva hacia el proximo hito");
   assert(gpEventMsUntilNextMilestone(at(GP_EVENT_START_MS - HOUR)) === HOUR,
     "antes del evento: cuenta hasta el inicio");
-  assert(gpEventMsUntilNextMilestone(at(GP_EVENT_START_MS)) === 48 * HOUR,
-    "en el inicio: cuenta las 48 h hasta el fin");
+  assert(gpEventMsUntilNextMilestone(at(GP_EVENT_START_MS)) === 72 * HOUR,
+    "en el inicio: cuenta las 72 h hasta el fin");
   assert(gpEventMsUntilNextMilestone(at(GP_EVENT_END_MS - HOUR)) === HOUR,
     "ultima hora: cuenta hasta el fin");
   assert(gpEventMsUntilNextMilestone(at(GP_EVENT_END_MS)) === 0, "terminado: 0");
   assert(gpEventMsUntilNextMilestone(at(GP_EVENT_END_MS + 99 * HOUR)) === 0, "muy terminado: 0");
 }
 
-console.log("═══ Test del evento de puntos dobles (GP de Monza 2026) ═══");
+console.log("═══ Test del evento de puntos dobles (GP de Madring 2026) ═══");
 testWindowLength();
 testBoundaries();
 testMultiplier();

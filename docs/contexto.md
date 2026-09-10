@@ -13,6 +13,10 @@ Box Daily Box es una plataforma de minijuegos diarios de Fórmula 1. La rama `fe
 
 El sistema de logros v1 está completo en esta rama. Incluye siete logros, selección manual o automática de hasta tres badges, colores de racha, una herramienta de prueba exclusiva de staging y pruebas automatizadas.
 
+## Evento temporal de Madring — 11 al 13 de septiembre de 2026
+
+El evento puntual de puntos dobles que se usó para Monza se reprogramó para Madring. Se activa con el reloj del servidor el 11/09/2026 a las 00:00 UTC y finaliza de forma exclusiva el 14/09/2026 a las 00:00 UTC, de modo que cubre completos los días 11, 12 y 13. El banner conserva el aviso previo de 24 horas y usa los colores de la bandera española. La decisión técnica y el alcance están registrados en [[decisiones]].
+
 ## Incidente de staging del 1 de septiembre de 2026
 
 El backend seguía arrancando y conectándose a PostgreSQL, pero los rankings con datos devolvían 500 después de habilitar los logros. La migración hizo nullable `badges.reference_month` porque los logros no pertenecen a un mes; la agregación del ranking seguía tratándolo siempre como texto y llamaba `substring` sobre `NULL`.

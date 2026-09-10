@@ -590,10 +590,10 @@ const tr: Translations = {
   "seo.game.team-radio.description":
     "İkonik bir F1 takım telsiz mesajını oku ve 6 seçenek arasından hangi Grand Prix'te söylendiğini tahmin et. Ücretsiz günlük bulmaca.",
 
-  // ─── Evento puntual: puntos dobles del GP de Monza 2026 ─────────────
+  // ─── Evento puntual: puntos dobles del GP de Madring 2026 ───────────
   // Temporal. Se borra junto con src/lib/gpEvent.ts cuando pase el evento.
   "gpEvent.eyebrow": "GP hafta sonu",
-  "gpEvent.circuit": "Monza",
+  "gpEvent.circuit": "Madring",
   "gpEvent.active_title": "Çift puan",
   "gpEvent.soon_title": "Çift puan geliyor",
   "gpEvent.active_sub": "Bugün her görev iki katı değerinde.",
