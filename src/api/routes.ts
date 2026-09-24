@@ -39,6 +39,7 @@ import {
   parseDebugAchievementAction,
   runDebugAchievementAction,
 } from "./debugAchievements";
+import { creditReferralLives, getLivesState, LIVES_USABLE_PER_DAY } from "./lives";
 
 const SESSION_TTL = 15 * 60 * 1000; // 15 minutos
 
@@ -134,6 +135,14 @@ type SessionPayload = {
    *  pueda inyectar un duelId/seed ajeno: se leen del token, no del body. */
   duelId?: string;
   duelSeed?: string;
+  /**
+   * Código del referidor, si la partida arrancó desde un link de desafío.
+   * Firmado por la misma razón que `duelId`: se fija al EMPEZAR y no se puede
+   * cambiar al terminar. Sin esto, un cliente podría jugar normalmente y recién
+   * al enviar el resultado declarar "me refirió X", eligiendo a quién regalarle
+   * una vida sin haber abierto ningún link.
+   */
+  refCode?: string;
 };
 
 function signToken(payload: SessionPayload): string {
@@ -169,7 +178,7 @@ export async function startChallenge(
 ): Promise<void> {
   try {
     const { gameId } = req.params as { gameId: string };
-    const { difficulty, userId, displayName, countryCode, clientDateKey, timeLimit: rawTimeLimit, duelId, identityToken } = req.body as {
+    const { difficulty, userId, displayName, countryCode, clientDateKey, timeLimit: rawTimeLimit, duelId, identityToken, refCode } = req.body as {
       difficulty: Difficulty;
       userId?: string;
       displayName?: string;
@@ -179,6 +188,8 @@ export async function startChallenge(
       timeLimit?: number | null;
       duelId?: string;
       identityToken?: string;
+      /** Código del link de desafío por el que llegó, si llegó por uno. */
+      refCode?: string;
     };
 
     // ─── Rama DUELO (Roadmap §4) ───────────────────────────────────────
@@ -338,8 +349,15 @@ export async function startChallenge(
     const expiresAt = startedAt + SESSION_TTL;
     const sessionId = randomUUID();
 
+    // Código del link de desafío. Solo se valida el FORMATO acá y se firma; a
+    // quién corresponde se resuelve recién al acreditar (ver lives.ts). Un
+    // código inexistente no es un error para el jugador: la partida es válida
+    // igual, simplemente después no acredita ninguna vida.
+    const safeRefCode = isCodeFormat(refCode, REFERRAL_CODE_LEN) ? (refCode as string) : undefined;
+
     const payload: SessionPayload = {
       sessionId, uid, gameId, difficulty, today, startedAt, timeLimit, ranked,
+      ...(safeRefCode ? { refCode: safeRefCode } : {}),
     };
     const sessionToken = signToken(payload);
 
@@ -588,6 +606,43 @@ export async function finishChallenge(
       }
     }
 
+    // ─── VIDAS EXTRA POR REFERIDO (src/api/lives.ts) ───────────────────
+    // Se evalúa DESPUÉS del commit del attempt y en su propia transacción, por
+    // la misma razón que los logros: acreditar una vida nunca puede hacer
+    // rollback de una partida ya jugada ni devolver un 500 por algo accesorio.
+    //
+    // Corre también cuando el jugador PERDIÓ o abandonó: la regla vigente es
+    // que alcanza con que el reto quede cerrado (decisión explícita del dueño
+    // del producto; ver la nota de seguridad en lives.ts). Lo que sí se excluye
+    // es `duplicated`, porque ahí no hubo partida nueva: el intento ya existía
+    // y su referido ya se evaluó en el primer finish.
+    let lifeEarned = false;
+    if (!duplicated) {
+      try {
+        // `dateKey` sale del reloj del SERVIDOR y NO de `session.today`, por la
+        // misma razón que el multiplicador del evento de GP (ver más arriba):
+        // `session.today` acepta la fecha del navegador si cae a ±1 día del UTC
+        // del server. Como el límite "una vida por persona por día" se apoya en
+        // esa fecha, un cliente modificado podría declararse en tres días
+        // distintos y cobrar tres veces la misma vida del mismo amigo. El reloj
+        // del server no es negociable.
+        const creditDateKey = resolveNow(req).toISOString().substring(0, 10);
+        const credit = await transaction((client) =>
+          creditReferralLives((sql, params) => client.query(sql, params), {
+            referralCode: session.refCode ?? null,
+            referredUserId: uid,
+            referredIp: clientIp,
+            gameId,
+            dateKey: creditDateKey,
+            playedSeconds: timeSeconds,
+          }),
+        );
+        lifeEarned = credit.credited;
+      } catch (err) {
+        console.error("creditReferralLives error (no bloquea el finish):", err);
+      }
+    }
+
     reply.code(200).send({
       won: finalWon,
       points: finalPoints,
@@ -596,6 +651,9 @@ export async function finishChallenge(
       rank,
       flagged,
       duplicated,
+      // Si esta partida acreditó una vida extra a ambos lados del link de
+      // desafío. El saldo completo se consulta en GET /me/lives.
+      lifeEarned,
       // Si el attempt entró al ranking. false cuando otra cuenta de la misma
       // IP ya jugó este juego hoy: el usuario jugó y ve su resultado, pero no
       // cuenta para el ranking global.
@@ -1821,6 +1879,9 @@ export async function getUserRank(
 /** Alfabeto sin ambigüedad (sin I, L, O, 0, 1) para códigos legibles/dictables. */
 const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const FRIEND_CODE_LEN = 6;
+/** Largo del código del link de desafío. Mismo alfabeto/largo que el de amigo,
+ *  pero es un código distinto y con otro propósito (ver la migración en db.ts). */
+const REFERRAL_CODE_LEN = 6;
 const DUEL_ID_LEN = 8;
 /** TTL de un duelo pendiente (esperando aceptación): 60s, "en vivo". */
 const DUEL_PENDING_TTL_MS = 60 * 1000;
@@ -3175,6 +3236,87 @@ export async function removeFriend(req: FastifyRequest, reply: FastifyReply): Pr
     reply.code(200).send({ ok: true });
   } catch (err) {
     console.error("removeFriend error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// ─── Vidas extra por referido (Etapa 2) ─────────────────────────────
+// ════════════════════════════════════════════════════════════════════
+// La lógica vive en src/api/lives.ts (inyectable, testeada contra PGlite).
+// Acá quedan solo los handlers HTTP: autorización y forma de la respuesta.
+
+/**
+ * Devuelve el referral_code del usuario, generándolo (único) la primera vez.
+ *
+ * Es casi igual a `ensureFriendCode`, y está duplicado a propósito: unificarlos
+ * exigiría un helper que reciba el nombre de la columna e interpole SQL, que es
+ * justo lo que no queremos en un archivo donde todo lo demás usa parámetros.
+ * Dieciocho líneas repetidas cuestan menos que abrir esa puerta.
+ */
+async function ensureReferralCode(userId: string): Promise<string> {
+  await query("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING", [userId]);
+  const cur = await query("SELECT referral_code FROM users WHERE id = $1", [userId]);
+  const existing = cur.rows[0]?.referral_code as string | null | undefined;
+  if (existing) return existing;
+
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const code = randomCode(REFERRAL_CODE_LEN);
+    try {
+      const res = await query(
+        "UPDATE users SET referral_code = $1 WHERE id = $2 AND referral_code IS NULL RETURNING referral_code",
+        [code, userId],
+      );
+      if (res.rows.length > 0) return res.rows[0].referral_code as string;
+      // Otro request lo seteó concurrentemente: re-leer y usar ese.
+      const reread = await query("SELECT referral_code FROM users WHERE id = $1", [userId]);
+      if (reread.rows[0]?.referral_code) return reread.rows[0].referral_code as string;
+    } catch (err: any) {
+      if (err.code === "23505") continue; // código ya usado por otro: reintentar
+      throw err;
+    }
+  }
+  throw new Error("No se pudo generar referral_code único");
+}
+
+/** GET /me/referral-code — código propio para armar el link de desafío. */
+export async function getMyReferralCode(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { userId } = (req.query ?? {}) as { userId?: string };
+    const identityToken = readIdentityToken(req);
+    if (!requireOwnership(reply, identityToken, userId)) return;
+    const code = await ensureReferralCode(userId);
+    reply.code(200).send({ code });
+  } catch (err) {
+    console.error("getMyReferralCode error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/**
+ * GET /me/lives — saldo de vidas extra y si hoy queda una para gastar.
+ *
+ * Exige prueba de propiedad aunque solo lea: el saldo es parte del estado
+ * privado de la cuenta y revelarlo dejaría medir, desde el ranking, cuántos
+ * referidos tiene cada jugador.
+ */
+export async function getMyLives(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { userId } = (req.query ?? {}) as { userId?: string };
+    const identityToken = readIdentityToken(req);
+    if (!requireOwnership(reply, identityToken, userId)) return;
+
+    const today = resolveNow(req).toISOString().substring(0, 10);
+    const state = await getLivesState((sql, params) => query(sql, params as any[]), userId, today);
+
+    reply.code(200).send({
+      balance: state.balance,
+      usableToday: state.usableToday,
+      usedToday: state.usedToday,
+      usesPerDay: LIVES_USABLE_PER_DAY,
+    });
+  } catch (err) {
+    console.error("getMyLives error:", err);
     reply.code(500).send({ error: "Error interno" });
   }
 }

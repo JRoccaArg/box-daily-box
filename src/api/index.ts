@@ -56,6 +56,8 @@ import {
   getFriends,
   getFriendRequests,
   getOutgoingFriendRequests,
+  getMyLives,
+  getMyReferralCode,
   removeFriend,
   sweepExpiredDuels,
 } from "./routes";
@@ -381,6 +383,12 @@ async function start(): Promise<void> {
   app.get("/friends", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getFriends as any);
   app.get("/friends/requests", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getFriendRequests as any);
   app.get("/friends/requests/outgoing", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getOutgoingFriendRequests as any);
+
+  // Vidas extra: saldo propio y código del link de desafío. Ambas son lecturas
+  // del propio usuario (identityToken obligatorio), mismo límite que el resto
+  // de las lecturas de cuenta.
+  app.get("/me/lives", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getMyLives as any);
+  app.get("/me/referral-code", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getMyReferralCode as any);
 
   // ─── Inicializar BD en background ─────────────────────────────────
   initializeDatabase()

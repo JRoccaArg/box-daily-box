@@ -443,6 +443,92 @@ export async function initializeDatabase(): Promise<void> {
       WHERE status IN ('pending', 'active');
     `);
 
+    // ─── Vidas extra por referido (ver src/api/lives.ts) ─────────────
+    // Saldo de vidas. No vence y no tiene tope; el límite real es de USO
+    // (1 por día), y eso lo marca `last_life_used_date`. Guardar el saldo como
+    // columna en vez de derivarlo contando `referrals` es deliberado: al
+    // gastarse, una vida no borra la fila del referido que la originó, así que
+    // el conteo y el saldo son dos cosas distintas.
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS extra_lives_balance INT NOT NULL DEFAULT 0;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
+    `);
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS last_life_used_date DATE;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
+    `);
+    // El saldo nunca puede quedar negativo. `consumeLife` ya lo garantiza con su
+    // WHERE, pero esto lo vuelve un invariante de la BASE: si algún día un
+    // camino nuevo descuenta vidas sin ese cuidado, falla acá en vez de dejar a
+    // un usuario en -1 (que además rompería `usableToday`).
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE users ADD CONSTRAINT users_lives_non_negative
+          CHECK (extra_lives_balance >= 0);
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$;
+    `);
+
+    // Código público del link de desafío. Es SEPARADO de `friend_code` a
+    // propósito: el de referido va escrito en cada resultado que el usuario
+    // comparte (potencialmente en redes públicas), mientras que el de amigo
+    // sirve para que alguien te mande una solicitud. Reusar uno solo
+    // convertiría cada resultado compartido en una invitación abierta a que
+    // cualquier desconocido te agregue.
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_code TEXT;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
+    `);
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_users_referral_code
+      ON users (referral_code)
+      WHERE referral_code IS NOT NULL;
+    `);
+
+    // Referidos acreditados. Una fila = "esta conexión le dio una vida a este
+    // usuario este día". La IP va HASHEADA (ver hashIp en lives.ts): alcanza
+    // para comparar y evita acumular un dato personal legible.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS referrals (
+        id BIGSERIAL PRIMARY KEY,
+        referrer_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        referred_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        referred_ip_hash TEXT,
+        game_id TEXT NOT NULL,
+        date_key DATE NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        CHECK (referrer_id <> referred_user_id)
+      );
+    `);
+    // Respaldo REAL del cooldown "una vida por persona por día": si dos finishes
+    // simultáneos pasan juntos la verificación previa, el índice deja entrar
+    // solo a uno. Son dos índices porque son dos formas de ser "la misma
+    // persona": la misma conexión, o la misma cuenta.
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_referrals_unique_ip_day
+      ON referrals (referrer_id, referred_ip_hash, date_key)
+      WHERE referred_ip_hash IS NOT NULL;
+    `);
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_referrals_unique_user_day
+      ON referrals (referrer_id, referred_user_id, date_key);
+    `);
+    // Conteos del cortacircuitos diario, por cada lado de la acreditación.
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_referrals_referrer_day
+      ON referrals (referrer_id, date_key);
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_referrals_referred_day
+      ON referrals (referred_user_id, date_key);
+    `);
+
     // Tabla sessions
     await client.query(`
       CREATE TABLE IF NOT EXISTS sessions (
@@ -553,7 +639,19 @@ export async function purgeOldIpAddresses(): Promise<number> {
      WHERE ip_address IS NOT NULL
        AND created_at < now() - INTERVAL '12 months'`,
   );
-  return res.rowCount ?? 0;
+
+  // Misma regla para la huella de IP de `referrals`. Aunque ahí la IP ya se
+  // guarda hasheada, sigue siendo un identificador de conexión, y su único uso
+  // (el cooldown entre referidos) mira días recientes: una huella de hace un
+  // año no decide nada. El resto de la fila se conserva, así que el historial
+  // de "quién refirió a quién" queda intacto.
+  const refs = await pool.query(
+    `UPDATE referrals SET referred_ip_hash = NULL
+     WHERE referred_ip_hash IS NOT NULL
+       AND created_at < now() - INTERVAL '12 months'`,
+  );
+
+  return (res.rowCount ?? 0) + (refs.rowCount ?? 0);
 }
 
 export async function transaction<T>(
