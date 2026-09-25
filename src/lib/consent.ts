@@ -83,11 +83,25 @@ export function onConsentChanged(fn: () => void): () => void {
 
 let consentModeReady = false;
 
-function gtag(...args: unknown[]): void {
+// `_args` (con guion bajo) mantiene la firma tipada para los llamadores: el
+// cuerpo empuja `arguments` (no el array), asi que el parametro no se usa —
+// TS lo exime por el guion bajo, ESLint necesita el disable explicito.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function gtag(..._args: unknown[]): void {
   // GA lee de window.dataLayer; empujamos ahi aunque GA todavia no haya
   // cargado (etapa 3). Cuando cargue, procesa estos comandos en orden.
   window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push(args);
+  // CRITICO: hay que empujar el OBJETO `arguments` crudo, NO un array. El
+  // gtag.js de Google identifica los comandos por `[object Arguments]`; un
+  // array literal (`push(args)`) lo acepta para `event`/`config` pero DESCARTA
+  // EN SILENCIO los comandos `consent`. Con el bug anterior, el `consent
+  // update` al aceptar cookies nunca llegaba a Google: quedaba en el estado
+  // implicito (denegado) y GA4 retenia el 100% de los hits — el dashboard en 0
+  // pese a que el sitio cargaba GA y guardaba el consentimiento localmente.
+  // Confirmado en produccion (2026-09): con `push(arguments)` el estado pasa a
+  // `analytics_storage: granted` y los hits empiezan a fluir.
+  // eslint-disable-next-line prefer-rest-params
+  window.dataLayer.push(arguments);
 }
 
 /** Fija los valores por defecto de Consent Mode (todo denegado) una sola vez,
