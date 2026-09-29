@@ -111,7 +111,15 @@ export type PlayRow = {
   won: boolean | null;
   points: number | null;
   timeSeconds: number | null;
+  /**
+   * Resultado del dueño cuando ESTA persona empezó a jugar (la foto contra la
+   * que compite). null en filas anteriores a esa columna: usar el desafío.
+   */
+  owner: OwnerResult | null;
 };
+
+/** El resultado de quien compartió, tal como se compara. */
+export type OwnerResult = { won: boolean; points: number; timeSeconds: number | null };
 
 type RawChallenge = {
   id: string;
@@ -151,6 +159,9 @@ type RawPlay = {
   won: boolean | null;
   points: number | string | null;
   time_seconds: number | null;
+  owner_won: boolean | null;
+  owner_points: number | string | null;
+  owner_time_seconds: number | null;
 };
 
 function mapPlay(r: RawPlay): PlayRow {
@@ -161,7 +172,26 @@ function mapPlay(r: RawPlay): PlayRow {
     won: r.won === null ? null : Boolean(r.won),
     points: r.points === null ? null : Number(r.points),
     timeSeconds: r.time_seconds === null ? null : Number(r.time_seconds),
+    owner:
+      r.owner_won === null || r.owner_won === undefined
+        ? null
+        : {
+            won: Boolean(r.owner_won),
+            points: Number(r.owner_points ?? 0),
+            timeSeconds: r.owner_time_seconds === null ? null : Number(r.owner_time_seconds),
+          },
   };
+}
+
+/**
+ * Contra qué resultado del dueño se compara esta partida: la foto tomada al
+ * empezar, o el desafío actual si la partida es anterior a la foto (o todavía
+ * no empezó).
+ */
+export function opponentOf(play: PlayRow | null, challenge: ChallengeRow): OwnerResult {
+  return (
+    play?.owner ?? { won: challenge.won, points: challenge.points, timeSeconds: challenge.timeSeconds }
+  );
 }
 
 // ─── Crear el desafío (quien comparte) ───────────────────────────────
@@ -278,7 +308,8 @@ export async function getPlay(
   userId: string,
 ): Promise<PlayRow | null> {
   const r = await q(
-    `SELECT seed, counts_as_daily, finished_at, won, points, time_seconds
+    `SELECT seed, counts_as_daily, finished_at, won, points, time_seconds,
+            owner_won, owner_points, owner_time_seconds
        FROM challenge_plays WHERE challenge_id = $1 AND user_id = $2`,
     [challengeId, userId],
   );
@@ -334,11 +365,20 @@ export async function startChallengePlay(
   const countsAsDaily = !(await hasDailyAttempt(q, userId, challenge.gameId, todayKey));
   const seed = newChallengeSeed();
   const ins = await q(
-    `INSERT INTO challenge_plays (challenge_id, user_id, seed, counts_as_daily)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO challenge_plays
+       (challenge_id, user_id, seed, counts_as_daily, owner_won, owner_points, owner_time_seconds)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT DO NOTHING
      RETURNING seed`,
-    [challenge.id, userId, seed, countsAsDaily],
+    [
+      challenge.id,
+      userId,
+      seed,
+      countsAsDaily,
+      challenge.won,
+      challenge.points,
+      challenge.timeSeconds,
+    ],
   );
   if (ins.rows[0]) return { kind: "ok", seed, countsAsDaily, resumed: false };
 

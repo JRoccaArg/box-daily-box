@@ -22,6 +22,7 @@ import {
   apiGetSharedChallenge,
   apiStartSharedChallenge,
   type ChallengeOutcome,
+  type OwnerResult,
   type SharedChallenge,
   type SharedChallengeViewer,
 } from "@/lib/api";
@@ -40,6 +41,7 @@ import { challengeSharePath, homePath } from "@/lib/routes";
 import { gameById } from "@/components/games/registry";
 import { useTimer } from "@/hooks/useTimer";
 import { IdentityModal } from "@/components/layout/IdentityModal";
+import { emit, Events } from "@/lib/events";
 import { Panel } from "@/components/ui/Panel";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -64,6 +66,12 @@ type MyResult = {
   outcome: ChallengeOutcome;
   countedAsDaily: boolean;
   ranked: boolean;
+  /**
+   * Resultado del dueño contra el que se jugó. Puede diferir del que muestra
+   * hoy el desafío: si el dueño ganó después su segunda oportunidad, el link
+   * cambia, pero esta comparación no.
+   */
+  opponent?: OwnerResult;
 };
 
 /** Misma regla que el server (compareOutcome en src/api/challenges.ts). Solo
@@ -362,6 +370,7 @@ function ChallengeResult({ challenge, mine }: { challenge: SharedChallenge; mine
   const { t, locale } = useI18n();
   const navigate = useNavigate();
   const name = ownerName(challenge, t);
+  const theirs = mine.opponent ?? challenge;
   const title =
     mine.outcome === "won"
       ? t("challenge.outcome_won", { name })
@@ -395,9 +404,9 @@ function ChallengeResult({ challenge, mine }: { challenge: SharedChallenge; mine
         />
         <ResultRow
           label={name}
-          won={challenge.won}
-          timeSeconds={challenge.untimed ? null : challenge.timeSeconds}
-          points={challenge.points}
+          won={theirs.won}
+          timeSeconds={challenge.untimed ? null : theirs.timeSeconds}
+          points={theirs.points}
           highlight={mine.outcome === "lost"}
         />
       </div>
@@ -510,6 +519,8 @@ function ChallengePlayScreen({
             refreshStats();
           }
           announceAchievements(res.newAchievements, t);
+          // Si esta partida le dio una vida, refrescar donde se muestren.
+          if (res.lifeEarned) emit(Events.LIVES_CHANGED);
           onDone({
             won: res.won,
             points: res.points,
@@ -517,6 +528,7 @@ function ChallengePlayScreen({
             outcome: res.outcome,
             countedAsDaily: res.countedAsDaily,
             ranked: res.ranked,
+            opponent: res.opponent,
           });
         })
         .catch(() => onDone(fallback));

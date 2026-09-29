@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
 import type { GameDefinition, DailyGameResult } from "@/types";
+import type { LivesInfo } from "@/lib/api";
+import { useLives } from "@/hooks/useLives";
 import { GAMES } from "@/components/games/registry";
 import { useStats } from "@/context/StatsContext";
 import { useI18n } from "@/context";
 import { Panel } from "@/components/ui/Panel";
-import { Check, Flag as FlagIcon, ChevronRight, Flame, Trophy } from "@/components/ui/Icon";
+import { Check, Flag as FlagIcon, ChevronRight, Flame, Heart, Trophy } from "@/components/ui/Icon";
 import { RankBadge } from "@/components/layout/RankBadge";
 import { Seo } from "@/components/layout/Seo";
 import { gamePath } from "@/lib/routes";
@@ -16,6 +18,7 @@ import { CAFECITO_URL, KOFI_URL } from "@/lib/support";
 export function Home() {
   const { resultFor, summary } = useStats();
   const { locale, t } = useI18n();
+  const { lives } = useLives();
 
   const results = GAMES.map((g) => ({ game: g, result: resultFor(g.id) }));
   const done = results.filter((r) => r.result).length;
@@ -48,7 +51,7 @@ export function Home() {
 
       <div className="grid gap-3 sm:grid-cols-2">
         {results.map(({ game, result }) => (
-          <GameCard key={game.id} game={game} result={result} />
+          <GameCard key={game.id} game={game} result={result} lives={lives} />
         ))}
       </div>
 
@@ -138,13 +141,19 @@ function Hero({ done, total, streak }: { done: number; total: number; streak: nu
 function GameCard({
   game,
   result,
+  lives,
 }: {
   game: GameDefinition;
   result: DailyGameResult | null;
+  lives: LivesInfo | null;
 }) {
   const { t, locale } = useI18n();
   const won = result?.status === "won";
   const lost = result?.status === "lost";
+  // Perdido hoy y con una vida para gastar (o una segunda oportunidad de este
+  // juego a medio jugar): la tarjeta lo avisa en vez de "volvé mañana".
+  const canUseLife =
+    lost && lives !== null && (lives.usableToday || lives.pendingGameId === game.id);
 
   return (
     <Link
@@ -191,9 +200,16 @@ function GameCard({
 
       <div className="mt-3 flex items-center justify-between border-t border-white/5 pt-3">
         <StatusTag won={won} lost={lost} />
-        <span className="font-mono text-[11px] uppercase tracking-wider text-ink-faint">
-          {result ? t("home.come_back") : t("home.play_now")}
-        </span>
+        {canUseLife ? (
+          <span className="inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-sector-purple">
+            <Heart size={12} />
+            {t("lives.card_hint")}
+          </span>
+        ) : (
+          <span className="font-mono text-[11px] uppercase tracking-wider text-ink-faint">
+            {result ? t("home.come_back") : t("home.play_now")}
+          </span>
+        )}
       </div>
     </Link>
   );

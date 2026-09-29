@@ -25,6 +25,7 @@ import { sanitizeDisplayName, isValidDateKey } from "./validate";
 import { signIdentityToken } from "./identity-token";
 import { requireEnv } from "./secrets";
 import { awardAchievements } from "./achievements";
+import { mergeAnonymousExtras } from "./accountMerge";
 import { verifyChallenge } from "./verify";
 import { computeScore } from "../lib/scoring";
 import type { Difficulty } from "../types";
@@ -430,6 +431,11 @@ async function migrateAnonymousAttempts(
     );
     await client.query("UPDATE duels SET creator_id = $1 WHERE creator_id = $2", [toUserId, fromUserId]);
     await client.query("UPDATE duels SET opponent_id = $1 WHERE opponent_id = $2", [toUserId, fromUserId]);
+
+    //    c) Vidas, desafíos por link, referidos y segundas oportunidades: sin
+    //       esto el borrado de abajo se los lleva por CASCADE (se perdían las
+    //       vidas y dejaban de abrir los links ya compartidos).
+    await mergeAnonymousExtras((sql, params) => client.query(sql, params), fromUserId, toUserId);
 
     // 3. Borrar el usuario anónimo. Sus sesiones quedan huérfanas pero se
     //    limpian por expiración (cleanupExpiredSessions). Attempts ya migrados,

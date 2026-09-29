@@ -118,6 +118,9 @@ async function schema() {
       time_seconds INT,
       started_at TIMESTAMPTZ DEFAULT now(),
       finished_at TIMESTAMPTZ,
+      owner_won BOOLEAN,
+      owner_points INT,
+      owner_time_seconds INT,
       PRIMARY KEY (challenge_id, user_id)
     );
   `);

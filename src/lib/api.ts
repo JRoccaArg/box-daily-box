@@ -32,6 +32,8 @@ type FinishResponse = {
   /** Logros desbloqueados por ESTA partida. Los consume `announceAchievements`
    *  (src/lib/achievements.ts) para celebrarlos; vacío si no hubo ninguno. */
   newAchievements?: string[];
+  /** true si fue una segunda oportunidad pagada con una vida. */
+  secondChance?: boolean;
 };
 
 /** Logros que se guardan como badges únicos (no pertenecen a un mes). */
@@ -923,11 +925,21 @@ export type SharedChallenge = {
 
 export type ChallengeOutcome = "won" | "lost" | "tied";
 
+/** Resultado del dueño de un desafío, tal como se compara. */
+export type OwnerResult = { won: boolean; points: number; timeSeconds: number | null };
+
 /** Situación de quien mira (solo si el server pudo verificar su identidad). */
 export type SharedChallengeViewer = {
   isOwner: boolean;
   inProgress: boolean;
-  play: { won: boolean; points: number; timeSeconds: number | null; outcome: ChallengeOutcome } | null;
+  play: {
+    won: boolean;
+    points: number;
+    timeSeconds: number | null;
+    outcome: ChallengeOutcome;
+    /** Resultado del dueño contra el que jugó (puede no ser el que muestra hoy el link). */
+    opponent?: OwnerResult;
+  } | null;
   /** Si al jugarlo pasaría (o pasó) a ser su reto oficial del día de ese juego. */
   willCountAsDaily: boolean;
 };
@@ -1048,6 +1060,7 @@ export type SharedFinishResponse = {
   lifeEarned: boolean;
   newAchievements?: string[];
   outcome: ChallengeOutcome;
+  opponent?: OwnerResult;
 };
 
 /** Cierra la partida del desafío (mismo endpoint que el reto diario). */
@@ -1062,4 +1075,105 @@ export async function apiFinishSharedChallenge(
     body: JSON.stringify({ sessionToken, solution, userId }),
     keepalive: true,
   });
+}
+
+// ─── Vidas extra y segunda oportunidad (Etapas 2 y 4) ───────────────
+
+/** Estado de vidas del jugador (backend: GET /me/lives). */
+export type LivesInfo = {
+  /** Vidas acumuladas (no vencen). */
+  balance: number;
+  /** Hay saldo y todavía no se usó la vida del día. */
+  usableToday: boolean;
+  /** Ya se usó la vida del día. */
+  usedToday: boolean;
+  /** Juego con una segunda oportunidad empezada y sin terminar, o null. */
+  pendingGameId: string | null;
+};
+
+/** Vidas del jugador. null si no hay backend o todavía no tiene identidad probada. */
+export async function apiGetLives(): Promise<LivesInfo | null> {
+  if (!API_URL) return null;
+  if (!getIdentityToken()) return null;
+  const { userId } = getIdentity();
+  const params = new URLSearchParams({ userId, dateKey: dateKey() });
+  const res = await apiFetch<Partial<LivesInfo>>(`/me/lives?${params.toString()}`, {
+    headers: identityHeaders(),
+  });
+  if (!res || typeof res.balance !== "number") return null;
+  return {
+    balance: res.balance,
+    usableToday: Boolean(res.usableToday),
+    usedToday: Boolean(res.usedToday),
+    pendingGameId: typeof res.pendingGameId === "string" ? res.pendingGameId : null,
+  };
+}
+
+export type SecondChanceStart =
+  | {
+      ok: true;
+      sessionToken: string;
+      serverNow: number;
+      /** Epoch ms del arranque original (al retomar, el reloj no vuelve a cero). */
+      startedAt: number;
+      /** Semilla del reto nuevo: con ella se DIBUJA el reto en el cliente. */
+      seed: string;
+      difficulty: string;
+      /** Segundos; null = "Sin Tiempo". Los fija el server (los de la partida perdida). */
+      timeLimit: number | null;
+      ranked: boolean;
+      resumed: boolean;
+    }
+  | { ok: false; code?: "LIFE_USED_TODAY" | "NO_ATTEMPT" | "NOT_LOST" | "NO_LIVES" };
+
+/**
+ * Gasta la vida del día y arranca la segunda oportunidad del reto perdido de
+ * `gameId` (o retoma la ya arrancada, sin gastar otra).
+ */
+export async function apiStartSecondChance(gameId: string): Promise<SecondChanceStart> {
+  if (!API_URL) return { ok: false };
+  const token = getIdentityToken();
+  if (!token) return { ok: false };
+  const { userId } = getIdentity();
+  type Resp = {
+    puzzle?: { seed?: string; difficulty?: string };
+    sessionToken?: string;
+    serverNow?: number;
+    startedAt?: number;
+    timeLimit?: number | null;
+    ranked?: boolean;
+    resumed?: boolean;
+    code?: string;
+  };
+  const data = await apiFetch<Resp>(
+    `/challenges/${gameId}/second-chance`,
+    {
+      method: "POST",
+      body: JSON.stringify({ userId, identityToken: token, clientDateKey: dateKey() }),
+    },
+    8000,
+    true,
+  );
+  if (!data) return { ok: false };
+  if (
+    typeof data.sessionToken !== "string" ||
+    typeof data.puzzle?.seed !== "string" ||
+    typeof data.puzzle?.difficulty !== "string"
+  ) {
+    const known = ["LIFE_USED_TODAY", "NO_ATTEMPT", "NOT_LOST", "NO_LIVES"] as const;
+    const code = known.find((c) => c === data.code);
+    return code ? { ok: false, code } : { ok: false };
+  }
+  const serverNow = typeof data.serverNow === "number" ? data.serverNow : Date.now();
+  return {
+    ok: true,
+    sessionToken: data.sessionToken,
+    serverNow,
+    startedAt: typeof data.startedAt === "number" ? data.startedAt : serverNow,
+    seed: data.puzzle.seed,
+    difficulty: data.puzzle.difficulty,
+    timeLimit: typeof data.timeLimit === "number" ? data.timeLimit : null,
+    ranked: Boolean(data.ranked),
+    resumed: Boolean(data.resumed),
+  };
 }

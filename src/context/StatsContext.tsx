@@ -5,6 +5,7 @@ import {
   getResult,
   getPlayedStatus,
   recordResult as persistResult,
+  replaceResult as persistReplace,
   syncFromServer,
   monthStartKey,
 } from "@/lib/stats";
@@ -27,6 +28,16 @@ type StatsContextValue = {
   playedStatus: (gameId: string, date?: Date) => "won" | "lost" | null;
   /** Registra resultado y refresca agregados. Idempotente por dia. */
   record: (
+    gameId: string,
+    status: Extract<GameStatus, "won" | "lost">,
+    meta?: DailyGameResult["meta"],
+    date?: Date,
+  ) => void;
+  /**
+   * REEMPLAZA el resultado del día (segunda oportunidad pagada con una vida).
+   * `record` en cambio respeta el primer resultado.
+   */
+  replace: (
     gameId: string,
     status: Extract<GameStatus, "won" | "lost">,
     meta?: DailyGameResult["meta"],
@@ -65,6 +76,11 @@ export function StatsProvider({ children }: { children: ReactNode }) {
 
   const record = useCallback<StatsContextValue["record"]>((gameId, status, meta, date) => {
     persistResult(gameId, status, meta, date);
+    setVersion((v) => v + 1);
+  }, []);
+
+  const replace = useCallback<StatsContextValue["replace"]>((gameId, status, meta, date) => {
+    persistReplace(gameId, status, meta, date);
     setVersion((v) => v + 1);
   }, []);
 
@@ -133,9 +149,10 @@ export function StatsProvider({ children }: { children: ReactNode }) {
       resultFor,
       playedStatus,
       record,
+      replace,
       refreshStats,
     }),
-    [summary, resultFor, playedStatus, record, refreshStats],
+    [summary, resultFor, playedStatus, record, replace, refreshStats],
   );
 
   return <StatsContext.Provider value={value}>{children}</StatsContext.Provider>;

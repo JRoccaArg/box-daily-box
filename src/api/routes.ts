@@ -47,11 +47,18 @@ import {
   getPlay,
   hasDailyAttempt,
   isChallengeId,
+  opponentOf,
   recordChallengePlay,
   sanitizeGrid,
   startChallengePlay,
   type ChallengeRow,
 } from "./challenges";
+import {
+  finishSecondChance,
+  otherRankedSecondChanceAtIp,
+  pendingSecondChance,
+  startSecondChance,
+} from "./secondChance";
 
 const SESSION_TTL = 15 * 60 * 1000; // 15 minutos
 
@@ -158,6 +165,12 @@ type SessionPayload = {
   challengeId?: string;
   challengeSeed?: string;
   countsAsDaily?: boolean;
+  /**
+   * Si la sesión es una SEGUNDA OPORTUNIDAD pagada con una vida
+   * (src/api/secondChance.ts): la semilla del reto nuevo. Firmada por la misma
+   * razón que `challengeSeed`.
+   */
+  lifeSeed?: string;
 };
 
 function signToken(payload: SessionPayload): string {
@@ -277,7 +290,11 @@ async function computeRankedByIp(
      LIMIT 1`,
     [clientIp, gameId, today, uid, Date.now()],
   );
-  return ipAttempt.rows.length === 0 && ipSession.rows.length === 0;
+  if (ipAttempt.rows.length > 0 || ipSession.rows.length > 0) return false;
+  // ¿Otra cuenta jugó su SEGUNDA OPORTUNIDAD rankeada desde esta IP? Esa
+  // partida queda guardada con la IP original, así que el chequeo de arriba
+  // no la ve (ver otherRankedSecondChanceAtIp).
+  return !(await otherRankedSecondChanceAtIp(dbq, clientIp, gameId, today, uid));
 }
 
 /**
@@ -489,7 +506,7 @@ function scoreSession(
         session.difficulty,
         session.today,
         solution as any,
-        session.challengeSeed,
+        session.challengeSeed ?? session.lifeSeed,
       ).won;
 
   const basePoints = computeScore({
@@ -583,6 +600,12 @@ export async function finishChallenge(
     // ─── Rama DESAFÍO POR LINK (src/api/challenges.ts) ─────────────────
     if (session.challengeId) {
       await finishSharedChallenge(req, reply, { session, solution, isAbandon, now });
+      return;
+    }
+
+    // ─── Rama SEGUNDA OPORTUNIDAD (src/api/secondChance.ts) ────────────
+    if (session.lifeSeed) {
+      await finishSecondChanceSession(req, reply, { session, solution, isAbandon, now });
       return;
     }
 
@@ -3303,18 +3326,24 @@ export async function removeFriend(req: FastifyRequest, reply: FastifyReply): Pr
  */
 export async function getMyLives(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
-    const { userId } = (req.query ?? {}) as { userId?: string };
+    const { userId, dateKey } = (req.query ?? {}) as { userId?: string; dateKey?: string };
     const identityToken = readIdentityToken(req);
     if (!requireOwnership(reply, identityToken, userId)) return;
 
-    const today = resolveNow(req).toISOString().substring(0, 10);
-    const state = await getLivesState((sql, params) => query(sql, params as any[]), userId, today);
+    // El "día" de las vidas es el del reto (el del jugador, a ±1 día del UTC),
+    // igual que al gastarla: si acá se usara el UTC pelado, a la noche en
+    // América el contador diría "disponible" cuando para el reto ya se usó.
+    const today = resolveChallengeDay(req, dateKey);
+    const state = await getLivesState(dbq, userId, today);
 
     reply.code(200).send({
       balance: state.balance,
       usableToday: state.usableToday,
       usedToday: state.usedToday,
       usesPerDay: LIVES_USABLE_PER_DAY,
+      // Juego con una segunda oportunidad empezada y sin terminar (se retoma
+      // sin gastar otra vida), o null.
+      pendingGameId: await pendingSecondChance(dbq, userId, today, Date.now(), SESSION_TTL),
     });
   } catch (err) {
     console.error("getMyLives error:", err);
@@ -3424,9 +3453,11 @@ export async function getSharedChallenge(req: FastifyRequest, reply: FastifyRepl
                 won: Boolean(play.won),
                 points: play.points ?? 0,
                 timeSeconds: play.timeSeconds,
+                // Contra lo que vio al jugar (el desafío pudo cambiar después).
+                opponent: opponentOf(play, challenge),
                 outcome: compareOutcome(
                   { won: Boolean(play.won), points: play.points ?? 0 },
-                  challenge,
+                  opponentOf(play, challenge),
                 ),
               }
             : null,
@@ -3585,8 +3616,8 @@ async function finishSharedChallenge(
   // Otra sesión de la misma partida ya había cerrado el resultado (se retomó
   // tras cerrar la pestaña): vale el primero, que es el que se devuelve.
   let mine = { won: scored.won, points: scored.points, timeSeconds: scored.timeSeconds };
+  const play = await getPlay(dbq, challenge.id, uid);
   if (!rec.recorded) {
-    const play = await getPlay(dbq, challenge.id, uid);
     mine = {
       won: Boolean(play?.won),
       points: play?.points ?? 0,
@@ -3647,6 +3678,179 @@ async function finishSharedChallenge(
     ranked,
     lifeEarned,
     newAchievements,
-    outcome: compareOutcome(mine, challenge),
+    opponent: opponentOf(play, challenge),
+    outcome: compareOutcome(mine, opponentOf(play, challenge)),
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════
+// ─── Segunda oportunidad (Etapa 4) ──────────────────────────────────
+// ════════════════════════════════════════════════════════════════════
+// La lógica de base vive en src/api/secondChance.ts (inyectable, testeada
+// contra PGlite). Acá quedan la prueba de identidad, la regla de IP, la firma
+// del token y la forma de las respuestas.
+
+/** Códigos de rechazo que el cliente usa para explicar por qué no se pudo. */
+const SECOND_CHANCE_CODES = {
+  used_today: "LIFE_USED_TODAY",
+  no_attempt: "NO_ATTEMPT",
+  not_lost: "NOT_LOST",
+  no_lives: "NO_LIVES",
+} as const;
+
+/**
+ * POST /challenges/:gameId/second-chance — gasta la vida del día y arranca un
+ * reto NUEVO del juego que se perdió hoy (o retoma el ya arrancado).
+ *
+ * Exige prueba de propiedad: gastar una vida es una escritura sobre la cuenta,
+ * y sin esto cualquiera podría quemarle las vidas a otro jugador leyendo su
+ * userId del ranking. Dificultad, tiempo y semilla salen del server (la
+ * partida perdida y `newLifeSeed`), nunca del body.
+ */
+export async function startSecondChanceRoute(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { gameId } = req.params as { gameId: string };
+    const { userId, identityToken, clientDateKey } = (req.body ?? {}) as {
+      userId?: string; identityToken?: string; clientDateKey?: string;
+    };
+    if (!VALID_GAMES.includes(gameId)) {
+      reply.code(422).send({ error: "Juego inválido" });
+      return;
+    }
+    if (!requireOwnership(reply, identityToken, userId)) return;
+
+    const today = resolveChallengeDay(req, clientDateKey);
+    const clientIp = req.ip || "unknown";
+    // La regla de IP evaluada AHORA; startSecondChance la combina con la de la
+    // partida perdida (tienen que permitirlo las dos).
+    const ipAllowsRanking = await computeRankedByIp(clientIp, gameId, today, userId);
+    const nowMs = Date.now();
+    const sessionId = randomUUID();
+
+    const started = await transaction(async (client) => {
+      const r = await startSecondChance((sql, params) => client.query(sql, params), {
+        userId, gameId, dateKey: today, ipAllowsRanking, ip: clientIp, nowMs, sessionTtlMs: SESSION_TTL,
+      });
+      if (r.kind !== "ok") return r;
+      // La sesión vence contando desde el arranque ORIGINAL: retomar no estira
+      // el plazo ni reinicia el reloj.
+      await client.query(
+        `INSERT INTO sessions (id, user_id, game_id, difficulty, date_key, started_at, expires_at, ip_address)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [sessionId, userId, gameId, r.difficulty, today, r.startedAt, r.startedAt + SESSION_TTL, clientIp],
+      );
+      return r;
+    });
+
+    if (started.kind !== "ok") {
+      reply.code(409).send({
+        error: "No se puede usar una vida en este reto",
+        code: SECOND_CHANCE_CODES[started.kind],
+      });
+      return;
+    }
+
+    // `untimed` NULL = partida anterior a esa columna: se juega con el tiempo
+    // máximo del juego (el mismo fallback que un token viejo).
+    const timeLimit = started.untimed
+      ? null
+      : resolveTimeLimit(gameId, started.untimed === null ? undefined : started.timeLimit ?? undefined);
+    const difficulty = started.difficulty as Difficulty;
+    const payload: SessionPayload = {
+      sessionId, uid: userId, gameId, difficulty, today,
+      startedAt: started.startedAt, timeLimit, ranked: started.ranked, lifeSeed: started.seed,
+    };
+
+    reply.code(200).send({
+      // El cliente necesita la semilla para DIBUJAR el reto; la que vale para
+      // verificar es la firmada en el token.
+      puzzle: { gameId, difficulty, dateKey: today, seed: started.seed },
+      sessionToken: signToken(payload),
+      serverNow: nowMs,
+      startedAt: started.startedAt,
+      timeLimit,
+      ranked: started.ranked,
+      resumed: started.resumed,
+    });
+  } catch (err) {
+    console.error("startSecondChance error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/**
+ * Cierre de una segunda oportunidad (rama de finishChallenge). La sesión ya
+ * viene verificada (firma, expiración, no consumida).
+ */
+async function finishSecondChanceSession(
+  req: FastifyRequest,
+  reply: FastifyReply,
+  args: {
+    session: SessionPayload;
+    solution: Record<string, unknown> | null | undefined;
+    isAbandon: boolean;
+    now: number;
+  },
+): Promise<void> {
+  const { session, solution, isAbandon, now } = args;
+  const uid = session.uid;
+  const gameId = session.gameId;
+  const scored = scoreSession(req, session, solution, isAbandon, now);
+
+  const rec = await transaction(async (client) => {
+    await client.query("UPDATE sessions SET consumed = true WHERE id = $1", [session.sessionId]);
+    return finishSecondChance((sql, params) => client.query(sql, params), {
+      userId: uid,
+      gameId,
+      dateKey: session.today,
+      won: scored.won,
+      points: scored.points,
+      timeSeconds: scored.timeSeconds,
+    });
+  });
+
+  // Otra sesión de la misma segunda oportunidad ya la había cerrado (se retomó
+  // tras un corte): vale el primer resultado, que es el que se devuelve.
+  if (!rec.recorded) {
+    const prev = await query(
+      `SELECT won, points, time_seconds, ranked FROM second_chances
+        WHERE user_id = $1 AND date_key = $2::date AND game_id = $3`,
+      [uid, session.today, gameId],
+    );
+    const p = prev.rows[0] as { won?: boolean; points?: number; time_seconds?: number; ranked?: boolean } | undefined;
+    reply.code(200).send({
+      won: Boolean(p?.won),
+      points: Number(p?.points ?? 0),
+      timeSeconds: Number(p?.time_seconds ?? scored.timeSeconds),
+      flagged: false,
+      duplicated: true,
+      ranked: Boolean(p?.ranked),
+      secondChance: true,
+      newAchievements: [],
+    });
+    return;
+  }
+
+  // Logros: una segunda oportunidad ganada cuenta como cualquier victoria
+  // (decisión del dueño del producto), con la misma condición de ranking.
+  let newAchievements: string[] = [];
+  if (scored.won && rec.ranked) {
+    try {
+      const awarded = await awardAchievements(dbq, uid);
+      newAchievements = awarded.map((a) => a.type);
+    } catch (err) {
+      console.error("awardAchievements error (no bloquea el finish):", err);
+    }
+  }
+
+  reply.code(200).send({
+    won: scored.won,
+    points: scored.points,
+    timeSeconds: scored.timeSeconds,
+    flagged: false,
+    duplicated: false,
+    ranked: rec.ranked,
+    secondChance: true,
+    newAchievements,
   });
 }

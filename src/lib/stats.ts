@@ -91,6 +91,37 @@ export function recordResult(
 }
 
 /**
+ * REEMPLAZA el resultado de un juego del día (a diferencia de `recordResult`,
+ * que respeta el primero). Solo para la segunda oportunidad pagada con una
+ * vida: el resultado nuevo pisa al perdido, igual que en el server. Actualiza
+ * `results` y el lock `played`.
+ */
+export function replaceResult(
+  gameId: string,
+  status: Extract<GameStatus, "won" | "lost">,
+  meta?: DailyGameResult["meta"],
+  date: Date = getEffectiveNow(),
+): DailyGameResult {
+  const key = dateKey(date);
+  const result: DailyGameResult = {
+    status,
+    date: key,
+    finishedAt: Date.now(),
+    ...(meta ? { meta } : {}),
+  };
+
+  const results = loadResults();
+  results[key] = { ...(results[key] ?? {}), [gameId]: result };
+  storage.set(RESULTS_KEY, results);
+
+  const played = loadPlayed();
+  played[key] = { ...(played[key] ?? {}), [gameId]: { status, finishedAt: result.finishedAt } };
+  storage.set(PLAYED_KEY, played);
+
+  return result;
+}
+
+/**
  * Estado de juego de un reto HOY segun el lock durable (sobrevive al reinicio).
  * Se usa para bloquear el reto hasta el día siguiente.
  */
@@ -200,7 +231,10 @@ export function resetForAccountSwitch(): void {
  * Comportamiento:
  *  - Escribe TANTO en `results` (para stats/puntos) como en `played` (lock durable)
  *  - Cada attempt se agrupa bajo SU PROPIO `dateKey` (pueden venir de varios días)
- *  - Si un attempt del server ya existe localmente, no lo pisa (idempotente)
+ *  - Si un attempt del server ya existe localmente, no lo pisa (idempotente),
+ *    salvo que local diga PERDIDO y el server GANADO: la única forma de que
+ *    eso pase es una segunda oportunidad ganada en otro dispositivo, y el
+ *    server es la fuente de verdad.
  *  - Si un attempt del server NO existe localmente, lo agrega y bloquea el juego
  *
  * @param serverAttempts Attempts recibidos del server, cada uno con su dateKey
@@ -229,13 +263,18 @@ export function syncFromServer(
     const status: "won" | "lost" = att.won ? "won" : "lost";
     const finishedAt = new Date(att.finishedAt).getTime();
 
+    // Segunda oportunidad ganada en otro lado: el local "perdido" queda viejo.
+    const upgraded =
+      status === "won" &&
+      (playedDay[att.gameId]?.status === "lost" || resultsDay[att.gameId]?.status === "lost");
+
     // Escribir en played (lock durable) si no existe
-    if (!playedDay[att.gameId]) {
+    if (!playedDay[att.gameId] || upgraded) {
       playedDay[att.gameId] = { status, finishedAt };
     }
 
     // Escribir en results (para stats) si no existe
-    if (!resultsDay[att.gameId]) {
+    if (!resultsDay[att.gameId] || upgraded) {
       resultsDay[att.gameId] = {
         status,
         date: day,

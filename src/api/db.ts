@@ -537,6 +537,57 @@ export async function initializeDatabase(): Promise<void> {
         PRIMARY KEY (challenge_id, user_id)
       );
     `);
+    // Foto del resultado del dueño al EMPEZAR la partida. El desafío puede
+    // cambiar después (si el dueño gana su segunda oportunidad, el link pasa a
+    // mostrar ese resultado), pero quien ya jugó tiene que conservar la
+    // comparación contra lo que vio. NULL = fila anterior a estas columnas: se
+    // compara contra el desafío.
+    for (const col of ["owner_won BOOLEAN", "owner_points INT", "owner_time_seconds INT"]) {
+      await client.query(`
+        DO $$ BEGIN
+          ALTER TABLE challenge_plays ADD COLUMN IF NOT EXISTS ${col};
+        EXCEPTION WHEN duplicate_column THEN NULL;
+        END $$;
+      `);
+    }
+
+    // ─── Segunda oportunidad (ver src/api/secondChance.ts) ─────────────
+    // El reto diario que se reemplazó gastando una vida. Informativo.
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE attempts ADD COLUMN IF NOT EXISTS life_used BOOLEAN NOT NULL DEFAULT false;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
+    `);
+    // Una fila por vida gastada. La PK (usuario, día) ES la regla "una vida por
+    // día, sumando todos los juegos": no hay forma de insertar una segunda. La
+    // fila nace al EMPEZAR (con la semilla, para retomar el mismo reto) y se
+    // completa al terminar. `ip_address` alimenta la regla de IP del ranking y
+    // se anula a los 12 meses como la de attempts.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS second_chances (
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        date_key DATE NOT NULL,
+        game_id TEXT NOT NULL,
+        seed TEXT NOT NULL,
+        difficulty TEXT NOT NULL,
+        time_limit INT,
+        untimed BOOLEAN,
+        ranked BOOLEAN NOT NULL,
+        ip_address TEXT,
+        won BOOLEAN,
+        points INT,
+        time_seconds INT,
+        started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        finished_at TIMESTAMPTZ,
+        PRIMARY KEY (user_id, date_key)
+      );
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_second_chances_ip
+      ON second_chances (ip_address, game_id, date_key)
+      WHERE ip_address IS NOT NULL;
+    `);
 
     // Referidos acreditados. Una fila = "esta conexión le dio una vida a este
     // usuario este día". La IP va HASHEADA (ver hashIp en lives.ts): alcanza
@@ -698,7 +749,15 @@ export async function purgeOldIpAddresses(): Promise<number> {
        AND created_at < now() - INTERVAL '12 months'`,
   );
 
-  return (res.rowCount ?? 0) + (refs.rowCount ?? 0);
+  // Y para la IP de las segundas oportunidades (misma función que la de
+  // attempts: la regla de IP del ranking, que solo mira el día en curso).
+  const chances = await pool.query(
+    `UPDATE second_chances SET ip_address = NULL
+     WHERE ip_address IS NOT NULL
+       AND started_at < now() - INTERVAL '12 months'`,
+  );
+
+  return (res.rowCount ?? 0) + (refs.rowCount ?? 0) + (chances.rowCount ?? 0);
 }
 
 export async function transaction<T>(

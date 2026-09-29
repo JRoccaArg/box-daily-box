@@ -57,6 +57,7 @@ import {
   getFriendRequests,
   getOutgoingFriendRequests,
   getMyLives,
+  startSecondChanceRoute,
   createSharedChallenge,
   getSharedChallenge,
   removeFriend,
@@ -177,6 +178,17 @@ async function start(): Promise<void> {
       config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
     },
     finishChallenge as any,
+  );
+
+  // Segunda oportunidad: gasta una vida. El límite real es 1 por día (en la
+  // base); este solo frena el martilleo.
+  app.post(
+    "/challenges/:gameId/second-chance",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
+    },
+    startSecondChanceRoute as any,
   );
 
   app.get(

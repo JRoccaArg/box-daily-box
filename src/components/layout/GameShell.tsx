@@ -4,7 +4,14 @@ import type { Difficulty, GameDefinition, GameStatus, ShareGrid } from "@/types"
 import { useStats } from "@/context/StatsContext";
 import { useI18n } from "@/context";
 import { computeScore } from "@/lib/scoring";
-import { apiStartChallenge, apiFinishChallenge, apiCreateSharedChallenge } from "@/lib/api";
+import {
+  apiStartChallenge,
+  apiFinishChallenge,
+  apiCreateSharedChallenge,
+  apiStartSecondChance,
+  type LivesInfo,
+  type SecondChanceStart,
+} from "@/lib/api";
 import { isIdentityComplete } from "@/lib/identity";
 import { updateServerPoints, saveSolution } from "@/lib/stats";
 import { buildShareText, shareResult } from "@/lib/share";
@@ -18,6 +25,7 @@ import { DuelChallengeModal } from "@/components/layout/DuelChallengeModal";
 import { IdentityModal } from "@/components/layout/IdentityModal";
 import { challengeSharePath, homePath } from "@/lib/routes";
 import { useTimer } from "@/hooks/useTimer";
+import { useLives } from "@/hooks/useLives";
 import { Panel } from "@/components/ui/Panel";
 import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -31,6 +39,7 @@ import {
   Timer as TimerIcon,
   Swords,
   Share2,
+  Heart,
 } from "@/components/ui/Icon";
 
 type Phase = "config" | "playing" | "finished";
@@ -55,7 +64,7 @@ type GameShellProps = {
  * duplicar el andamiaje y se mantiene un contrato unico y estable.
  */
 export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
-  const { record, playedStatus, refreshStats } = useStats();
+  const { record, replace, playedStatus, refreshStats } = useStats();
   const { t, locale } = useI18n();
   const lockedStatus = playedStatus(game.id, date);
 
@@ -102,6 +111,21 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
   // true si el resultado NO entró al ranking (otra cuenta de la IP ya jugó).
   const [notRanked, setNotRanked] = useState(false);
   const navigate = useNavigate();
+
+  // ─── Segunda oportunidad (vida extra, src/api/secondChance.ts) ───
+  // Vidas del jugador (del server). null = no se sabe: no se ofrece nada.
+  const { lives } = useLives();
+  // Semilla del reto nuevo mientras se juega la segunda oportunidad; null en
+  // el reto del día. Cambia el reto que dibuja el juego (prop `seed`).
+  const [secondChance, setSecondChance] = useState<{ seed: string } | null>(null);
+  const secondChanceRef = useRef(false);
+  // Arranque ya confirmado por el server, a aplicar cuando dificultad y tiempo
+  // (fijados por el server) ya estén en el estado. Ver el efecto de más abajo.
+  const [pendingSecondChance, setPendingSecondChance] = useState<
+    (Extract<SecondChanceStart, { ok: true }> & { localStart: number; remaining: number | null }) | null
+  >(null);
+  const [lifeStarting, setLifeStarting] = useState(false);
+  const [lifeError, setLifeError] = useState<string | null>(null);
 
   // Evita doble registro (rendirse + expiracion simultaneos, p.ej.).
   const finishedRef = useRef(false);
@@ -151,10 +175,17 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
       setPhase("finished");
       playGameResultFeedback(outcome === "won");
       const meta = buildMeta();
-      record(game.id, outcome, meta, date);
-      // Guardar la solution para poder re-verificarla en el server si el
-      // usuario se loguea más tarde (importación de intentos locales).
-      saveSolution(game.id, solution ?? null, date);
+      if (secondChanceRef.current) {
+        // La segunda oportunidad REEMPLAZA al resultado perdido (igual que en
+        // el server). Su solution no se guarda: es de un reto generado con
+        // semilla, y la importación al loguearse verifica contra el del día.
+        replace(game.id, outcome, meta, date);
+      } else {
+        record(game.id, outcome, meta, date);
+        // Guardar la solution para poder re-verificarla en el server si el
+        // usuario se loguea más tarde (importación de intentos locales).
+        saveSolution(game.id, solution ?? null, date);
+      }
       const points = computeScore({
         won: outcome === "won",
         difficulty: scoreRef.current.difficulty,
@@ -175,6 +206,7 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
         gameId: game.id,
         outcome,
         difficulty: scoreRef.current.difficulty,
+        secondChance: secondChanceRef.current,
         points,
         ...(typeof meta.timeSeconds === "number" ? { timeSeconds: meta.timeSeconds } : {}),
       });
@@ -194,6 +226,9 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
             // Logros desbloqueados por esta partida. El server ya los otorgó;
             // sin esto el jugador nunca se enteraba (ver src/lib/achievements.ts).
             announceAchievements(res?.newAchievements, t);
+            // Un jugador nuevo recién ahora tiene identidad para consultar sus
+            // vidas, y tras una segunda oportunidad cambió "usada hoy".
+            emit(Events.LIVES_CHANGED);
             // Con el resultado ya guardado en el server, se puede crear el
             // desafío (el server copia el resultado real, no el de acá).
             if (res) {
@@ -209,7 +244,7 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
 
       window.setTimeout(() => setResultOpen(true), 650);
     },
-    [game.id, record, date, buildMeta, refreshStats, maxTimeOption, t],
+    [game.id, record, replace, date, buildMeta, refreshStats, maxTimeOption, t],
   );
 
   // -----------------------------------------------------------------
@@ -274,6 +309,62 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
 
   const timer = useTimer({ seconds: timeLimit, onExpire: handleExpire });
   const { start: startTimer, pause: pauseTimer, reset: resetTimer } = timer;
+
+  // Segunda oportunidad, paso 2: con la dificultad y el tiempo del server ya
+  // aplicados al estado (y el cronómetro ya reconfigurado con ese total), se
+  // arranca. Va en un efecto, y DESPUÉS de useTimer, porque el cronómetro se
+  // reinicia solo cuando cambia su total: si arrancara en el mismo click, ese
+  // reinicio pisaría el tiempo restante de una partida retomada.
+  useEffect(() => {
+    const sc = pendingSecondChance;
+    if (!sc) return;
+    setPendingSecondChance(null);
+    finishedRef.current = false;
+    secondChanceRef.current = true;
+    sessionTokenRef.current = sc.sessionToken;
+    scoreRef.current.startedAt = sc.localStart;
+    resetTimer(sc.remaining);
+    setResultOpen(false);
+    setShareGrid(null);
+    setChallengeLink(null);
+    setNotRanked(false);
+    setPointsEarned(0);
+    setFinishSeconds(null);
+    setSecondChance({ seed: sc.seed });
+    setStatus("playing");
+    setPhase("playing");
+    trackEvent("second_chance_started", { gameId: game.id, resumed: sc.resumed });
+  }, [pendingSecondChance, resetTimer, game.id]);
+
+  // Segunda oportunidad, paso 1: gastar la vida en el server (que devuelve el
+  // reto nuevo y FIJA dificultad y tiempo: los de la partida perdida).
+  const spendLife = async () => {
+    if (lifeStarting) return;
+    setLifeStarting(true);
+    setLifeError(null);
+    const res = await apiStartSecondChance(game.id);
+    setLifeStarting(false);
+    emit(Events.LIVES_CHANGED);
+    if (!res.ok) {
+      setLifeError(
+        res.code === "LIFE_USED_TODAY"
+          ? t("lives.used_today")
+          : res.code === "NO_LIVES"
+            ? t("lives.none_hint")
+            : t("lives.error"),
+      );
+      return;
+    }
+    // Reloj: si se retomó, sigue desde el arranque original (medido con el
+    // reloj del server para no depender de la hora del dispositivo).
+    const elapsedMs = Math.max(0, res.serverNow - res.startedAt);
+    const remaining =
+      res.timeLimit === null ? null : Math.max(0, res.timeLimit - Math.floor(elapsedMs / 1000));
+    setDifficulty(res.difficulty as Difficulty);
+    setUntimed(res.timeLimit === null && game.timer.kind !== "none");
+    if (res.timeLimit !== null) setChosenTime(res.timeLimit);
+    setPendingSecondChance({ ...res, localStart: Date.now() - elapsedMs, remaining });
+  };
 
   useEffect(() => {
     if (phase === "playing") startTimer();
@@ -411,6 +502,15 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
             <Lock size={15} />
             {t("locked.wait")}
           </div>
+          {!won && (
+            <LifeOffer
+              lives={lives}
+              gameId={game.id}
+              starting={lifeStarting}
+              error={lifeError}
+              onUse={() => void spendLife()}
+            />
+          )}
           <div className="mt-6">
             <Link to={homePath(locale)}>
               <Button variant="outline">{t("result.go_home")}</Button>
@@ -532,6 +632,7 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
   return (
     <div className="space-y-4">
       <ControlBar
+        secondChance={secondChance !== null}
         difficulty={difficulty}
         secondsLeft={timer.secondsLeft}
         totalSeconds={timeLimit}
@@ -545,6 +646,8 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
 
       <div ref={boardRef}>
         <GameComponent
+          key={secondChance?.seed ?? "daily"}
+          seed={secondChance?.seed}
           difficulty={difficulty}
           date={date}
           timeLimit={timeLimit}
@@ -623,6 +726,16 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
             </p>
           )}
 
+          {!won && (
+            <LifeOffer
+              lives={lives}
+              gameId={game.id}
+              starting={lifeStarting}
+              error={lifeError}
+              onUse={() => void spendLife()}
+            />
+          )}
+
           <div className="mt-5 flex flex-col gap-2">
             <Button block onClick={onShare}>
               <span className="inline-flex items-center justify-center gap-2">
@@ -693,6 +806,7 @@ function BackLink() {
 }
 
 function ControlBar({
+  secondChance,
   difficulty,
   secondsLeft,
   totalSeconds,
@@ -700,6 +814,7 @@ function ControlBar({
   onSurrender,
   onBackRequest,
 }: {
+  secondChance: boolean;
   difficulty: Difficulty;
   secondsLeft: number | null;
   totalSeconds: number | null;
@@ -725,6 +840,15 @@ function ControlBar({
         <span className="truncate rounded-md border border-white/10 bg-asphalt-700 px-2 py-0.5 font-mono text-xs uppercase tracking-wider text-ink-muted">
           {t(`diff.${difficulty}`)}
         </span>
+        {secondChance && (
+          <span
+            className="inline-flex shrink-0 items-center gap-1 rounded-md border border-sector-purple/40 bg-sector-purple/10 px-2 py-0.5 text-xs font-medium text-sector-purple"
+            title={t("lives.second_chance")}
+          >
+            <Heart size={12} />
+            <span className="hidden sm:inline">{t("lives.second_chance")}</span>
+          </span>
+        )}
       </div>
 
       <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
@@ -776,5 +900,54 @@ function ResultBanner({ won, onOpen }: { won: boolean; onOpen: () => void }) {
         <span className="text-xs text-ink-muted">{t("banner.summary")}</span>
       </div>
     </button>
+  );
+}
+
+/**
+ * Oferta de vida extra tras perder (en el cartel de resultado y en la vista
+ * de "ya jugaste hoy"). Tres casos: se puede usar (botón), ya se usó la del
+ * día, o no hay vidas (se explica cómo conseguirlas).
+ */
+function LifeOffer({
+  lives,
+  gameId,
+  starting,
+  error,
+  onUse,
+}: {
+  lives: LivesInfo | null;
+  gameId: string;
+  starting: boolean;
+  error: string | null;
+  onUse: () => void;
+}) {
+  const { t } = useI18n();
+  if (!lives) return null;
+
+  const resumable = lives.pendingGameId === gameId;
+  if (lives.usableToday || resumable) {
+    return (
+      <div className="mx-auto mt-4 max-w-sm rounded-xl border border-sector-purple/30 bg-sector-purple/10 p-3">
+        <Button block onClick={onUse} disabled={starting}>
+          <span className="inline-flex items-center justify-center gap-2">
+            <Heart size={17} />
+            {starting ? t("lives.starting") : resumable ? t("lives.resume") : t("lives.use")}
+          </span>
+        </Button>
+        {!resumable && (
+          <p className="mt-2 text-xs text-ink-muted">
+            {t("lives.use_hint", { count: lives.balance })}
+          </p>
+        )}
+        {error && <p className="mt-2 text-xs text-racing-400">{error}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <p className="mx-auto mt-4 inline-flex max-w-sm items-start gap-2 text-left text-xs text-ink-muted">
+      <Heart size={14} className="mt-0.5 shrink-0 text-sector-purple" />
+      <span>{lives.usedToday ? t("lives.used_today") : t("lives.none_hint")}</span>
+    </p>
   );
 }
