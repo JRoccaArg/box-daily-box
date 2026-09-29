@@ -8,6 +8,7 @@ import { DuelBanner } from "./DuelBanner";
 import { ToastContainer } from "./ToastContainer";
 import { ConsentBanner } from "./ConsentBanner";
 import { GpEventBanner } from "./GpEventBanner";
+import { LivesToastWatcher } from "./LivesToastWatcher";
 
 /** Marco de pagina: header pegajoso + contenedor centrado + footer. */
 export function Layout({ children }: { children: ReactNode }) {
@@ -26,6 +27,9 @@ export function Layout({ children }: { children: ReactNode }) {
       <SpeedInsights />
       {/* Cartel de consentimiento RGPD (gatea Google Analytics, etapa 3). */}
       <ConsentBanner />
+      {/* Sin UI propia: solo dispara el toast "ganaste una vida" (etapa 5),
+          esperando a que termine una partida en curso si hacía falta. */}
+      <LivesToastWatcher />
       {/* Apila DuelBanner (persistente mientras haya invitacion) y los
           toasts (transitorios) sin que se tapen entre si: cada uno se
           dimensiona a si mismo, este contenedor solo fija la posicion. */}

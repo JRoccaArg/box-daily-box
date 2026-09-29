@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useStats } from "@/context/StatsContext";
 import { useI18n } from "@/context";
 import { StatsModal } from "./StatsModal";
 import { IdentityModal } from "./IdentityModal";
+import { LivesModal } from "./LivesModal";
 import { LanguageSelector } from "./LanguageSelector";
 import { SoundSettings } from "./SoundSettings";
-import { Stat as StatIcon, Flame } from "@/components/ui/Icon";
+import { Stat as StatIcon, Flame, Heart } from "@/components/ui/Icon";
 import { on, Events } from "@/lib/events";
 import { runNavGuard } from "@/lib/navGuard";
 import { homePath } from "@/lib/routes";
@@ -14,6 +15,7 @@ import { useMounted } from "@/lib/useMounted";
 import { getEffectiveNow } from "@/lib/debugDate";
 import { usePendingFriendRequestsCount } from "@/lib/friendsPolling";
 import { useUnseenAchievementsCount } from "@/lib/achievements";
+import { useLives } from "@/hooks/useLives";
 import { getStreakVisual } from "@/lib/streakVisual";
 import type { Locale } from "@/i18n";
 import type { StatsView } from "./StatsModal";
@@ -61,9 +63,11 @@ export function Header() {
   const [statsOpen, setStatsOpen] = useState(false);
   const [statsInitialView, setStatsInitialView] = useState<StatsView | undefined>(undefined);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [livesOpen, setLivesOpen] = useState(false);
   const { pathname } = useLocation();
   const pendingRequests = usePendingFriendRequestsCount();
   const unseenAchievements = useUnseenAchievementsCount();
+  const { lives } = useLives();
   // Un solo globito numérico en el botón de Stats, mismo patrón que ya
   // existía solo para amigos: suma las dos cosas que "necesitan mirada" (una
   // solicitud pendiente es accionable; un logro no visto es solo un aviso,
@@ -77,6 +81,21 @@ export function Header() {
   // hidratación (el HTML prerenderizado no incluye esta fecha).
   const mounted = useMounted();
   const streakVisual = getStreakVisual(summary.currentStreak);
+
+  // Pulso decorativo de "ganaste una vida" (LivesToastWatcher ya disparó el
+  // toast; esto solo anima el corazoncito un instante). `animate-pop` es la
+  // misma animación de 0.18s que ya usa el resto de la web, respeta
+  // prefers-reduced-motion vía la regla global de src/index.css.
+  const [celebrate, setCelebrate] = useState(false);
+  const celebrateTimeout = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    return on(Events.LIFE_GAINED, () => {
+      window.clearTimeout(celebrateTimeout.current);
+      setCelebrate(true);
+      celebrateTimeout.current = window.setTimeout(() => setCelebrate(false), 400);
+    });
+  }, []);
+  useEffect(() => () => window.clearTimeout(celebrateTimeout.current), []);
 
   // Escuchar el evento global para abrir el modal de stats desde cualquier
   // lugar de la app (ej: botón "Ver ranking del día" del modal de resultado).
@@ -98,6 +117,7 @@ export function Header() {
   useEffect(() => {
     setStatsOpen(false);
     setProfileOpen(false);
+    setLivesOpen(false);
   }, [pathname]);
 
   return (
@@ -121,6 +141,29 @@ export function Header() {
               <Flame size={13} className={streakVisual.flameClass} />
               {summary.currentStreak}
             </span>
+          )}
+
+          {/* Vidas extra (Etapa 5). `lives` es null hasta tener una
+              identidad real (nadie jugó todavía): recién ahí "0 vidas"
+              significa algo. Con saldo se ve en violeta; en 0, atenuado. */}
+          {mounted && lives && (
+            <button
+              onClick={() => setLivesOpen(true)}
+              aria-label={t("lives.header_label", { count: lives.balance })}
+              title={t("lives.header_label", { count: lives.balance })}
+              className={[
+                "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 font-mono text-xs font-semibold transition-[background-color,border-color,transform] duration-150 active:scale-95",
+                lives.balance > 0
+                  ? "border-sector-purple/40 bg-sector-purple/10 text-sector-purple hover:border-sector-purple/60 hover:bg-sector-purple/15"
+                  : "border-white/10 bg-asphalt-700 text-ink-faint hover:border-white/25",
+                celebrate && "animate-pop",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              <Heart size={13} />
+              {lives.balance}
+            </button>
           )}
 
           <SoundSettings />
@@ -174,6 +217,7 @@ export function Header() {
 
       <StatsModal open={statsOpen} onClose={() => setStatsOpen(false)} initialView={statsInitialView} />
       <IdentityModal open={profileOpen} onClose={() => setProfileOpen(false)} />
+      <LivesModal open={livesOpen} onClose={() => setLivesOpen(false)} lives={lives} />
     </header>
   );
 }

@@ -12,6 +12,7 @@
  */
 
 import { storage } from "./storage";
+import { emit, Events } from "./events";
 
 export type UserIdentity = {
   userId: string;
@@ -247,14 +248,30 @@ export function isIdentityComplete(): boolean {
 const IDENTITY_TOKEN_KEY = "identity_token";
 const TOKEN_COOKIE_NAME = "bdb_tok";
 
+// Recuerda si YA vimos un identityToken en esta carga de página, para que
+// IDENTITY_ESTABLISHED se emita una sola vez por transición real de "sin
+// token" a "con token" (ver el evento en events.ts). Sin este flag, cada
+// llamada a getIdentityToken() re-sincronizando capas (algo que pasa en casi
+// todos los requests, ver abajo) volvería a emitir el evento y los hooks que
+// lo escuchan (useLives.ts, friendsPolling.ts) rearmarían su poll sin
+// necesidad todo el tiempo.
+let hasKnownToken = false;
+
 /** Guarda el identityToken emitido por el server, en las tres capas. */
 export function setIdentityToken(token: string): void {
+  const isFirstTokenThisSession = !hasKnownToken;
+  hasKnownToken = true;
+
   storage.set(IDENTITY_TOKEN_KEY, token);
   writeCookie(TOKEN_COOKIE_NAME, token);
   try {
     sessionStorage.setItem(TOKEN_COOKIE_NAME, token);
   } catch {
     // Entorno sin sessionStorage — ignorar.
+  }
+
+  if (isFirstTokenThisSession) {
+    emit(Events.IDENTITY_ESTABLISHED);
   }
 }
 
@@ -301,4 +318,8 @@ export function clearIdentityToken(): void {
   } catch {
     // Entorno sin sessionStorage — ignorar.
   }
+  // Rearma el flag de setIdentityToken(): si después de esto se establece un
+  // token nuevo (login con otra cuenta, sin recargar la página), tiene que
+  // volver a contar como "primera vez" y emitir IDENTITY_ESTABLISHED.
+  hasKnownToken = false;
 }
