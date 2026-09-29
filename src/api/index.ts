@@ -57,7 +57,8 @@ import {
   getFriendRequests,
   getOutgoingFriendRequests,
   getMyLives,
-  getMyReferralCode,
+  createSharedChallenge,
+  getSharedChallenge,
   removeFriend,
   sweepExpiredDuels,
 } from "./routes";
@@ -384,11 +385,14 @@ async function start(): Promise<void> {
   app.get("/friends/requests", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getFriendRequests as any);
   app.get("/friends/requests/outgoing", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getOutgoingFriendRequests as any);
 
-  // Vidas extra: saldo propio y código del link de desafío. Ambas son lecturas
-  // del propio usuario (identityToken obligatorio), mismo límite que el resto
-  // de las lecturas de cuenta.
+  // Vidas extra: saldo propio (identityToken obligatorio), mismo límite que el
+  // resto de las lecturas de cuenta.
   app.get("/me/lives", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getMyLives as any);
-  app.get("/me/referral-code", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getMyReferralCode as any);
+
+  // Desafíos por link: crear el propio (20/min, como el resto de escrituras) y
+  // leer una invitación (60/min: es pública y la abre gente desde redes).
+  app.post("/shared-challenges", { preHandler: requireDb, config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, createSharedChallenge as any);
+  app.get("/shared-challenges/:id", { preHandler: requireDb, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, getSharedChallenge as any);
 
   // ─── Inicializar BD en background ─────────────────────────────────
   initializeDatabase()

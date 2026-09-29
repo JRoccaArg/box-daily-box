@@ -473,22 +473,69 @@ export async function initializeDatabase(): Promise<void> {
       END $$;
     `);
 
-    // Código público del link de desafío. Es SEPARADO de `friend_code` a
-    // propósito: el de referido va escrito en cada resultado que el usuario
-    // comparte (potencialmente en redes públicas), mientras que el de amigo
-    // sirve para que alguien te mande una solicitud. Reusar uno solo
-    // convertiría cada resultado compartido en una invitación abierta a que
-    // cualquier desconocido te agregue.
+    // ─── Desafíos por link (ver src/api/challenges.ts) ────────────────
+    // El tiempo elegido en cada intento. Hace falta para que un desafío le fije
+    // a quien lo acepta EL MISMO tiempo que usó quien lo compartió. `untimed`
+    // NULL = intento anterior a esta columna (no se sabe qué eligió): esos
+    // intentos no pueden convertirse en desafío.
     await client.query(`
       DO $$ BEGIN
-        ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_code TEXT;
+        ALTER TABLE attempts ADD COLUMN IF NOT EXISTS time_limit INT;
       EXCEPTION WHEN duplicate_column THEN NULL;
       END $$;
     `);
     await client.query(`
-      CREATE UNIQUE INDEX IF NOT EXISTS idx_users_referral_code
-      ON users (referral_code)
-      WHERE referral_code IS NOT NULL;
+      DO $$ BEGIN
+        ALTER TABLE attempts ADD COLUMN IF NOT EXISTS untimed BOOLEAN;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
+    `);
+    // Trazabilidad: el reto oficial de este intento se jugó desde un desafío
+    // (con un reto generado, no el del día). Solo informativo.
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE attempts ADD COLUMN IF NOT EXISTS challenge_id TEXT;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
+    `);
+
+    // Un desafío = una COPIA del intento de quien comparte. Copia y no
+    // referencia porque el link no vence: si algún día se borra o anonimiza el
+    // intento, la invitación tiene que seguir mostrando lo mismo.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS challenges (
+        id TEXT PRIMARY KEY,
+        owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        game_id TEXT NOT NULL,
+        date_key DATE NOT NULL,
+        difficulty TEXT NOT NULL,
+        time_limit INT,
+        untimed BOOLEAN NOT NULL,
+        won BOOLEAN NOT NULL,
+        points INT NOT NULL,
+        time_seconds INT,
+        grid JSONB,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        UNIQUE (owner_id, game_id, date_key)
+      );
+    `);
+
+    // Partidas de quienes aceptan un desafío. La PK (desafío, usuario) ES la
+    // regla "una sola partida por link": no hay forma de insertar una segunda.
+    // La fila nace al EMPEZAR (con la semilla) y se completa al terminar.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS challenge_plays (
+        challenge_id TEXT NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        seed TEXT NOT NULL,
+        counts_as_daily BOOLEAN NOT NULL,
+        won BOOLEAN,
+        points INT,
+        time_seconds INT,
+        started_at TIMESTAMPTZ DEFAULT now(),
+        finished_at TIMESTAMPTZ,
+        PRIMARY KEY (challenge_id, user_id)
+      );
     `);
 
     // Referidos acreditados. Una fila = "esta conexión le dio una vida a este

@@ -19,7 +19,10 @@ import type { ShareGrid } from "@/types";
 
 type Translate = (key: string, vars?: Record<string, string | number>) => string;
 
-/** Firma de marca al pie del mensaje (placeholder, no es el link de referido). */
+/**
+ * Firma de marca al pie del mensaje, cuando todavía no hay link de desafío
+ * (sin conexión con el backend, o un resultado que no se puede desafiar).
+ */
 const SITE_SIGNATURE = "boxdailybox.com";
 
 export type ShareInput = {
@@ -34,10 +37,14 @@ export type ShareInput = {
   points: number;
   /** Grilla del juego, o null → formato uniforme sin grilla. */
   grid: ShareGrid | null;
+  /** Línea de nombres de columnas ya traducida (ver `ShareGrid.legendKey`). */
+  legend?: string | null;
+  /** Link del desafío. Si falta, el mensaje cierra con la firma de la web. */
+  link?: string | null;
 };
 
 /** "m:ss" a partir de segundos. */
-function formatClock(totalSeconds: number): string {
+export function formatClock(totalSeconds: number): string {
   const s = Math.max(0, Math.round(totalSeconds));
   const m = Math.floor(s / 60);
   const ss = String(s % 60).padStart(2, "0");
@@ -47,15 +54,17 @@ function formatClock(totalSeconds: number): string {
 /**
  * Arma el texto a compartir. Estructura:
  *   🏁 <juego> · <fecha>
+ *   <nombres de columnas, si hay>
  *   <filas de la grilla, si hay>
  *   <✅|❌> · ⏱ <m:ss> · 🏆 <pts>
- *   <firma>
+ *   <link del desafío, o la firma>
  */
 export function buildShareText(input: ShareInput): string {
   const lines: string[] = [];
   lines.push(`🏁 ${input.gameName} · ${input.dateLabel}`);
 
   if (input.grid && input.grid.rows.length > 0) {
+    if (input.legend) lines.push(input.legend);
     for (const row of input.grid.rows) lines.push(row);
   }
 
@@ -66,7 +75,7 @@ export function buildShareText(input: ShareInput): string {
   lines.push(stats.join(" · "));
 
   lines.push("");
-  lines.push(SITE_SIGNATURE);
+  lines.push(input.link || SITE_SIGNATURE);
   return lines.join("\n");
 }
 

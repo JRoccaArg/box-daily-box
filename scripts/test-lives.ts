@@ -53,7 +53,6 @@ const BOB = "anon-bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";   // amigo 1
 const CARA = "anon-cccccccc-cccc-4ccc-8ccc-cccccccccccc";  // amiga 2
 const DAVE = "anon-dddddddd-dddd-4ddd-8ddd-dddddddddddd";  // Bob tras borrar el navegador
 
-const ALICE_CODE = "AL1CE2";
 const HOY = "2026-09-24";
 const MANANA = "2026-09-25";
 
@@ -72,12 +71,10 @@ async function schema() {
       best_streak INT NOT NULL DEFAULT 0,
       last_win_date DATE,
       friend_code TEXT,
-      referral_code TEXT,
       extra_lives_balance INT NOT NULL DEFAULT 0,
       last_life_used_date DATE,
       CONSTRAINT users_lives_non_negative CHECK (extra_lives_balance >= 0)
     );
-    CREATE UNIQUE INDEX idx_users_referral_code ON users (referral_code) WHERE referral_code IS NOT NULL;
 
     CREATE TABLE attempts (
       id BIGSERIAL PRIMARY KEY,
@@ -134,7 +131,6 @@ async function reset() {
   for (const id of [ALICE, BOB, CARA, DAVE]) {
     await db.query("INSERT INTO users (id) VALUES ($1)", [id]);
   }
-  await db.query("UPDATE users SET referral_code = $1 WHERE id = $2", [ALICE_CODE, ALICE]);
   // Alice jugó hoy desde SU conexión: es lo que define "la IP del referidor".
   await db.query(
     `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, time_seconds, points, ip_address)
@@ -151,7 +147,7 @@ async function balance(userId: string): Promise<number> {
 /** Atajo: un referido normal (Bob juega con el link de Alice, desde su IP). */
 function credit(overrides: Partial<Parameters<typeof creditReferralLives>[1]> = {}) {
   return creditReferralLives(q, {
-    referralCode: ALICE_CODE,
+    referrerId: ALICE,
     referredUserId: BOB,
     referredIp: IP_BOB,
     gameId: "pittexto",
@@ -277,16 +273,23 @@ async function testMismaIpAunqueElReferidorNoJugoHoy() {
   );
 }
 
-async function testCodigoInvalido() {
-  console.log("\n▶ Código ausente o inexistente");
+async function testSinReferidor() {
+  console.log("\n▶ Partida que no viene de un desafío, o referidor inexistente");
   await reset();
 
-  assert(rejectedFor(await credit({ referralCode: null })) === "no_code", "sin código no acredita");
-  assert(rejectedFor(await credit({ referralCode: "" })) === "no_code", "código vacío no acredita");
-  assert(
-    rejectedFor(await credit({ referralCode: "ZZZZZZ" })) === "unknown_code",
-    "un código que no existe no acredita",
-  );
+  assert(rejectedFor(await credit({ referrerId: null })) === "no_referrer", "sin referidor no acredita");
+  assert(rejectedFor(await credit({ referrerId: "" })) === "no_referrer", "referidor vacío no acredita");
+
+  // En producción el referidor sale de la fila del desafío (FK a users), así
+  // que no puede ser inexistente; si lo fuera, la base rechaza el registro y
+  // el finish lo atrapa sin tocar la partida.
+  let rechazado = false;
+  try {
+    await credit({ referrerId: "anon-99999999-9999-4999-8999-999999999999" });
+  } catch {
+    rechazado = true;
+  }
+  assert(rechazado, "un referidor que no existe es rechazado por la base");
   assert((await balance(BOB)) === 0, "ninguno de esos casos toca el saldo");
 }
 
@@ -565,7 +568,7 @@ async function main() {
   await testMismaIp();
   await testMismaIpPorSesionAbierta();
   await testMismaIpAunqueElReferidorNoJugoHoy();
-  await testCodigoInvalido();
+  await testSinReferidor();
   await testSinIp();
   await testCooldownMismoDia();
   await testCooldownVenceAlDiaSiguiente();

@@ -20,6 +20,20 @@ export function duelPath(locale: Locale, duelId: string): string {
   return `/${locale}/duelo/${duelId}`;
 }
 
+/**
+ * Link PÚBLICO de un desafío, SIN idioma: es lo que se comparte. Al abrirlo,
+ * la raíz redirige al idioma de quien lo abre (ver RootRedirect), no al de
+ * quien lo compartió. Ej: challengeSharePath("ABCDEFGHJK") -> "/reto/ABCDEFGHJK"
+ */
+export function challengeSharePath(challengeId: string): string {
+  return `/reto/${challengeId}`;
+}
+
+/** Página de un desafío ya con idioma, ej: challengePath("en", "ABCDEFGHJK") -> "/en/reto/ABCDEFGHJK" */
+export function challengePath(locale: Locale, challengeId: string): string {
+  return `/${locale}/reto/${challengeId}`;
+}
+
 /** Términos y Condiciones, ej: termsPath("en") -> "/en/terms" */
 export function termsPath(locale: Locale): string {
   return `/${locale}/terms`;

@@ -203,8 +203,7 @@ export async function consumeLife(
 
 /** Motivo por el que NO se acreditó. Sirve para diagnóstico y tests. */
 export type CreditRejection =
-  | "no_code"           // la partida no venía de un link de desafío
-  | "unknown_code"      // el código no corresponde a ningún usuario
+  | "no_referrer"       // la partida no venía de un link de desafío
   | "self_referral"     // el referido y el referidor son la misma cuenta
   | "no_ip"             // no pudimos determinar la IP del referido
   | "same_ip"           // el referido juega desde una conexión del referidor
@@ -218,8 +217,11 @@ export type CreditResult =
   | { credited: false; reason: CreditRejection };
 
 export type CreditInput = {
-  /** Código del referidor, leído del sessionToken FIRMADO (nunca del body). */
-  referralCode: string | null | undefined;
+  /**
+   * Dueño del desafío por el que llegó el referido. Lo resuelve el server a
+   * partir del id de desafío FIRMADO en el sessionToken, nunca del body.
+   */
+  referrerId: string | null | undefined;
   referredUserId: string;
   /** IP del referido en ESTE momento (`req.ip` del finish). */
   referredIp: string | null | undefined;
@@ -246,9 +248,9 @@ export async function creditReferralLives(
   q: QueryFn,
   input: CreditInput,
 ): Promise<CreditResult> {
-  const { referralCode, referredUserId, referredIp, gameId, dateKey, playedSeconds } = input;
+  const { referrerId, referredUserId, referredIp, gameId, dateKey, playedSeconds } = input;
 
-  if (!referralCode) return { credited: false, reason: "no_code" };
+  if (!referrerId) return { credited: false, reason: "no_referrer" };
 
   if (LIFE_RULES.REQUIRE_REAL_PLAY && playedSeconds < LIFE_RULES.MIN_PLAY_SECONDS) {
     return { credited: false, reason: "not_played_enough" };
@@ -259,10 +261,6 @@ export async function creditReferralLives(
   // muy raro (proxy que borra la IP de origen) y preferimos perder una vida
   // legítima antes que regalar la validación entera.
   if (!isUsableIp(referredIp)) return { credited: false, reason: "no_ip" };
-
-  const referrerRes = await q("SELECT id FROM users WHERE referral_code = $1", [referralCode]);
-  const referrerId = (referrerRes.rows[0] as { id?: string } | undefined)?.id;
-  if (!referrerId) return { credited: false, reason: "unknown_code" };
 
   if (referrerId === referredUserId) return { credited: false, reason: "self_referral" };
 

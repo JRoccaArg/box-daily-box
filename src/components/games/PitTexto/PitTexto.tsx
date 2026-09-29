@@ -4,12 +4,17 @@ import type { Driver } from "@/types";
 import { findDriversByText, fullName, nationality, countryName } from "@/data";
 import { getDriverPoolAtLeast } from "@/lib/filters";
 import { buildTarget, scoreGuess, heatColor } from "./pittexto.logic";
-import type { Factor } from "./pittexto.logic";
+import type { Factor, FactorState } from "./pittexto.logic";
 import { useI18n } from "@/context";
 import { Panel } from "@/components/ui/Panel";
 import { Check, Close } from "@/components/ui/Icon";
 
 const MAX_GUESSES = 8;
+
+/** Orden de las columnas en la grilla de compartir; coincide con la leyenda
+ *  `share.pittexto_legend` (Nac Esc Deb Tít Comp). */
+const SHARE_FACTOR_ORDER = ["nat", "team", "debut", "titles", "mates"] as const;
+const FACTOR_EMOJI: Record<FactorState, string> = { match: "🟩", partial: "🟨", none: "⬛" };
 
 export function PitTexto({ difficulty, date, seed, status, onWin, onLose, onShareReady }: GameProps) {
   const { t } = useI18n();
@@ -23,12 +28,20 @@ export function PitTexto({ difficulty, date, seed, status, onWin, onLose, onShar
   const solved = guesses.some((g) => g.id === target.id);
   const finished = status !== "playing" || solved || guesses.length >= MAX_GUESSES;
 
-  // Grilla de compartir: un emoji por intento (🟥 fallo, 🟩 acierto). Refleja
-  // en cuántos intentos lo sacaste sin revelar quién era el piloto.
+  // Grilla de compartir: una fila por intento con los 5 datos que devuelve
+  // cada intento (🟩 acertado, 🟨 cerca, ⬛ no), en orden fijo y con una línea
+  // de nombres arriba. Dice QUÉ dato acertaste, nunca cuál era el valor ni
+  // quién era el piloto.
   useEffect(() => {
     if (!onShareReady || status === "playing") return;
-    onShareReady({ rows: guesses.map((g) => (g.id === target.id ? "🟩" : "🟥")) });
-  }, [status, guesses, target.id, onShareReady]);
+    onShareReady({
+      rows: guesses.map((g) => {
+        const byKey = new Map(scoreGuess(g, target).factors.map((f) => [f.key, f.state]));
+        return SHARE_FACTOR_ORDER.map((k) => FACTOR_EMOJI[byKey.get(k) ?? "none"]).join(" ");
+      }),
+      legendKey: "share.pittexto_legend",
+    });
+  }, [status, guesses, target, onShareReady]);
 
   const guessedIds = new Set(guesses.map((g) => g.id));
   const suggestions = useMemo(() => {

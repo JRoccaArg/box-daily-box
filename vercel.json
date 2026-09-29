@@ -82,6 +82,14 @@
     {
       "source": "/:lang/duelo/:duelId",
       "destination": "/:lang"
+    },
+    {
+      "source": "/:lang/reto/:challengeId",
+      "destination": "/:lang"
+    },
+    {
+      "source": "/reto/:challengeId",
+      "destination": "/"
     }
   ]
 }

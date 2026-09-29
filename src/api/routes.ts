@@ -39,7 +39,19 @@ import {
   parseDebugAchievementAction,
   runDebugAchievementAction,
 } from "./debugAchievements";
-import { creditReferralLives, getLivesState, LIVES_USABLE_PER_DAY } from "./lives";
+import { creditReferralLives, getLivesState, LIVES_USABLE_PER_DAY, type QueryFn } from "./lives";
+import {
+  compareOutcome,
+  createOrGetChallenge,
+  getChallenge,
+  getPlay,
+  hasDailyAttempt,
+  isChallengeId,
+  recordChallengePlay,
+  sanitizeGrid,
+  startChallengePlay,
+  type ChallengeRow,
+} from "./challenges";
 
 const SESSION_TTL = 15 * 60 * 1000; // 15 minutos
 
@@ -136,13 +148,16 @@ type SessionPayload = {
   duelId?: string;
   duelSeed?: string;
   /**
-   * Código del referidor, si la partida arrancó desde un link de desafío.
-   * Firmado por la misma razón que `duelId`: se fija al EMPEZAR y no se puede
-   * cambiar al terminar. Sin esto, un cliente podría jugar normalmente y recién
-   * al enviar el resultado declarar "me refirió X", eligiendo a quién regalarle
-   * una vida sin haber abierto ningún link.
+   * Si la sesión es de un DESAFÍO por link (src/api/challenges.ts). Todo
+   * firmado por la misma razón que `duelId`/`duelSeed`: se fija al EMPEZAR y el
+   * cliente no puede cambiarlo al terminar. `challengeSeed` es la semilla del
+   * reto generado; si viniera del body, alguien podría terminar con la
+   * solución de otro reto más fácil. `countsAsDaily` decide si el resultado
+   * pasa a ser el reto oficial del día de ese juego.
    */
-  refCode?: string;
+  challengeId?: string;
+  challengeSeed?: string;
+  countsAsDaily?: boolean;
 };
 
 function signToken(payload: SessionPayload): string {
@@ -170,6 +185,149 @@ function verifyToken(token: string): SessionPayload | null {
   }
 }
 
+// ─── Piezas comunes del arranque (reto diario y desafío por link) ───
+// Extraídas de startChallenge SIN cambiar su lógica, para que el desafío por
+// link aplique exactamente las mismas reglas (identidad, ranking por IP, alta
+// del jugador) en vez de una copia que con el tiempo se desincronice.
+
+/** Ejecutor de queries para los módulos inyectables (lives.ts, challenges.ts). */
+const dbq: QueryFn = (sql, params) => query(sql, params as any[]);
+
+/**
+ * Día del reto: la fecha LOCAL del cliente si es válida y cae a ±1 día del UTC
+ * del server; si no, la del server.
+ */
+function resolveChallengeDay(req: FastifyRequest, clientDateKey: unknown): string {
+  const utcToday = resolveNow(req).toISOString().substring(0, 10);
+  if (isValidDateKey(clientDateKey)) {
+    const clientMs = new Date(clientDateKey + "T12:00:00Z").getTime();
+    const utcMs = new Date(utcToday + "T12:00:00Z").getTime();
+    if (Math.abs(clientMs - utcMs) / 86_400_000 <= 1) return clientDateKey;
+  }
+  return utcToday;
+}
+
+/**
+ * PRUEBA DE PROPIEDAD (anti robo de cuenta). Responde 403 y devuelve false si
+ * el userId pertenece a una cuenta existente y el cliente no probó que es suya.
+ *
+ * El userId es PÚBLICO: `/ranking/monthly` y `/ranking/daily` lo devuelven
+ * para cada jugador. Antes, el arranque emitía un identityToken para
+ * CUALQUIER userId recibido, sin verificar nada. Eso permitía dos ataques
+ * encadenados a partir del ranking:
+ *   1. Pedir el identityToken de otro jugador y tomar control de su cuenta
+ *      (leer su historial, cambiarle el nombre, sus badges, sus amigos).
+ *   2. Arrancar y terminar retos en su nombre con `solution: null`,
+ *      registrándole derrotas en los 8 juegos del día, rompiéndole la racha
+ *      y congelándole el progreso de logros.
+ * Una cuenta que todavía no existe no tiene nada que proteger — se crea y se le
+ * emite su primer token.
+ */
+async function requirePlayerIdentity(
+  reply: FastifyReply,
+  safeUserId: string | null,
+  identityToken: string | undefined,
+): Promise<boolean> {
+  if (!safeUserId) return true;
+  const known = await query("SELECT 1 FROM users WHERE id = $1", [safeUserId]);
+  if (known.rows.length > 0 && !ownsIdentity(identityToken, safeUserId)) {
+    reply.code(403).send({
+      error: "No autorizado para jugar como este usuario",
+      code: "IDENTITY_REQUIRED",
+    });
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Regla de ranking por IP: se permite JUGAR siempre (para jugar con amigos
+ * desde la misma red), pero en el ranking global solo cuenta la PRIMERA cuenta
+ * que jugó CADA juego ese día desde esa IP.
+ *
+ * Devuelve si este intento será rankeable: lo es si NINGUNA otra cuenta jugó
+ * (o está jugando) ESTE juego ese día desde esta IP. El resultado se guarda
+ * igual; solo cambia si entra al ranking.
+ *
+ * Sin IP real ("unknown", proxy raro) no se bloquea: es preferible permitir a
+ * bloquear falsamente a muchos usuarios legítimos que caerían todos ahí.
+ */
+async function computeRankedByIp(
+  clientIp: string,
+  gameId: string,
+  today: string,
+  uid: string,
+): Promise<boolean> {
+  if (clientIp === "unknown" || clientIp.length === 0) return true;
+  // ¿Otra cuenta ya tiene un attempt de ESTE juego hoy desde esta IP?
+  const ipAttempt = await query(
+    `SELECT 1 FROM attempts
+     WHERE ip_address = $1 AND game_id = $2 AND date_key = $3::date
+     AND user_id != $4 AND ranked
+     LIMIT 1`,
+    [clientIp, gameId, today, uid],
+  );
+  // ¿Otra cuenta tiene una sesión activa (empezó pero no terminó) de ESTE
+  // juego hoy desde esta IP? (para evitar que dos empiecen a la vez y ambos
+  // crean que rankean).
+  const ipSession = await query(
+    `SELECT 1 FROM sessions
+     WHERE ip_address = $1 AND game_id = $2 AND date_key = $3::date
+     AND user_id != $4 AND NOT consumed AND expires_at > $5
+     LIMIT 1`,
+    [clientIp, gameId, today, uid, Date.now()],
+  );
+  return ipAttempt.rows.length === 0 && ipSession.rows.length === 0;
+}
+
+/**
+ * Upsert del jugador (nombre sanitizado, país validado). Si el display_name
+ * colisiona con el índice único (otro usuario ya lo tiene), reintenta sin
+ * tocarlo para no bloquear el juego: el usuario conserva su nombre local y
+ * puede elegir uno único después desde el modal de perfil.
+ */
+async function upsertPlayer(
+  uid: string,
+  displayName: string | undefined,
+  country: string | null,
+): Promise<void> {
+  const name = sanitizeDisplayName(displayName);
+  try {
+    await query(
+      `INSERT INTO users (id, display_name, country_code)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (id) DO UPDATE SET
+         display_name = COALESCE(NULLIF($2, ''), users.display_name),
+         country_code = COALESCE($3, users.country_code)`,
+      [uid, name, country],
+    );
+  } catch (err: any) {
+    if (err.code === "23505" && String(err.constraint || "").includes("display_name")) {
+      await query(
+        `INSERT INTO users (id, country_code)
+         VALUES ($1, $2)
+         ON CONFLICT (id) DO UPDATE SET
+           country_code = COALESCE($2, users.country_code)`,
+        [uid, country],
+      );
+    } else {
+      throw err;
+    }
+  }
+}
+
+/**
+ * Tiempo de la partida: una opción reconocida para el juego, o `null`
+ * explícito (modo "Sin Tiempo", válido para cualquier juego). Cualquier otro
+ * valor cae al máximo del juego.
+ */
+function resolveTimeLimit(gameId: string, raw: number | null | undefined): number | null {
+  if (raw === null) return null;
+  const validOptions = GAME_TIME_OPTIONS[gameId] ?? [];
+  if (validOptions.includes(raw as number)) return raw as number;
+  return validOptions.length > 0 ? Math.max(...validOptions) : TIME_LIMITS[gameId] ?? 180;
+}
+
 // ─── POST /challenges/:gameId/start ─────────────────────────────────
 
 export async function startChallenge(
@@ -178,7 +336,7 @@ export async function startChallenge(
 ): Promise<void> {
   try {
     const { gameId } = req.params as { gameId: string };
-    const { difficulty, userId, displayName, countryCode, clientDateKey, timeLimit: rawTimeLimit, duelId, identityToken, refCode } = req.body as {
+    const { difficulty, userId, displayName, countryCode, clientDateKey, timeLimit: rawTimeLimit, duelId, identityToken, challengeId } = req.body as {
       difficulty: Difficulty;
       userId?: string;
       displayName?: string;
@@ -188,8 +346,8 @@ export async function startChallenge(
       timeLimit?: number | null;
       duelId?: string;
       identityToken?: string;
-      /** Código del link de desafío por el que llegó, si llegó por uno. */
-      refCode?: string;
+      /** Id del desafío por link, si la partida es la de quien lo aceptó. */
+      challengeId?: string;
     };
 
     // ─── Rama DUELO (Roadmap §4) ───────────────────────────────────────
@@ -198,6 +356,16 @@ export async function startChallenge(
     // cuenta al ranking, no bloquea ni es bloqueada por el reto diario.
     if (duelId !== undefined) {
       await startDuelChallenge(req, reply, { gameId, duelId, userId, identityToken });
+      return;
+    }
+
+    // ─── Rama DESAFÍO POR LINK (src/api/challenges.ts) ─────────────────
+    // Igual que el duelo: dificultad, tiempo y semilla salen del server (las
+    // filas `challenges` y `challenge_plays`), nunca del body.
+    if (challengeId !== undefined) {
+      await startSharedChallenge(req, reply, {
+        gameId, challengeId, userId, displayName, countryCode, clientDateKey, identityToken,
+      });
       return;
     }
 
@@ -213,52 +381,13 @@ export async function startChallenge(
     // Validar userId: si viene, debe ser UUID o anon-id válido. Si es basura,
     // lo tratamos como ausente (generamos uno nuevo) en vez de confiar en él.
     const safeUserId = isValidUserId(userId) ? userId : null;
-
-    // Validar país (opcional).
     const country = isValidCountry(countryCode) ? countryCode : null;
-
-    // Usar la fecha LOCAL del cliente si es valida (±1 dia de UTC).
-    const utcToday = resolveNow(req).toISOString().substring(0, 10);
-    let today = utcToday;
-    if (isValidDateKey(clientDateKey)) {
-      const clientMs = new Date(clientDateKey + "T12:00:00Z").getTime();
-      const utcMs = new Date(utcToday + "T12:00:00Z").getTime();
-      const diffDays = Math.abs(clientMs - utcMs) / 86_400_000;
-      if (diffDays <= 1) {
-        today = clientDateKey;
-      }
-    }
+    const today = resolveChallengeDay(req, clientDateKey);
     const uid = safeUserId || `anon-${randomUUID()}`;
 
-    // ─── PRUEBA DE PROPIEDAD (anti robo de cuenta) ────────────────────
-    // El userId es PÚBLICO: `/ranking/monthly` y `/ranking/daily` lo devuelven
-    // para cada jugador. Antes, este endpoint emitía un identityToken para
-    // CUALQUIER userId recibido, sin verificar nada. Eso permitía dos ataques
-    // encadenados a partir del ranking:
-    //   1. Pedir el identityToken de otro jugador y tomar control de su cuenta
-    //      (leer su historial, cambiarle el nombre, sus badges, sus amigos).
-    //   2. Arrancar y terminar retos en su nombre con `solution: null`,
-    //      registrándole derrotas en los 8 juegos del día, rompiéndole la racha
-    //      y congelándole el progreso de logros.
-    // Ahora: si la cuenta YA existe, el cliente debe probar que es suya. Una
-    // cuenta que todavía no existe no tiene nada que proteger — se crea y se le
-    // emite su primer token.
-    if (safeUserId) {
-      const known = await query("SELECT 1 FROM users WHERE id = $1", [uid]);
-      if (known.rows.length > 0 && !ownsIdentity(identityToken, uid)) {
-        reply.code(403).send({
-          error: "No autorizado para jugar como este usuario",
-          code: "IDENTITY_REQUIRED",
-        });
-        return;
-      }
-    }
+    if (!(await requirePlayerIdentity(reply, safeUserId, identityToken))) return;
 
     const clientIp = req.ip || "unknown";
-    // Solo aplicamos el bloqueo por IP si tenemos una IP real. Si es "unknown"
-    // (proxy raro, etc.), no bloqueamos: es preferible permitir a bloquear
-    // falsamente a muchos usuarios legítimos que caerían todos en "unknown".
-    const ipUsable = clientIp !== "unknown" && clientIp.length > 0;
 
     // ─── ANTI MULTI-DISPOSITIVO ───
     // 1. Verificar que ESTE usuario no jugó ya hoy el RETO DIARIO.
@@ -273,91 +402,20 @@ export async function startChallenge(
       return;
     }
 
-    // Regla de ranking por IP: se permite JUGAR siempre (para jugar con
-    // amigos desde la misma red), pero en el ranking global solo cuenta la
-    // PRIMERA cuenta que jugó CADA juego ese día desde esa IP.
-    //
-    // Calculamos si este attempt será rankeable: lo es si NINGUNA otra cuenta
-    // jugó (o está jugando) ESTE juego hoy desde esta IP. El resultado se
-    // guarda igual; solo cambia si entra al ranking.
-    let ranked = true;
-    if (ipUsable) {
-      // ¿Otra cuenta ya tiene un attempt de ESTE juego hoy desde esta IP?
-      const ipAttempt = await query(
-        `SELECT 1 FROM attempts
-         WHERE ip_address = $1 AND game_id = $2 AND date_key = $3::date
-         AND user_id != $4 AND ranked
-         LIMIT 1`,
-        [clientIp, gameId, today, uid],
-      );
-      // ¿Otra cuenta tiene una sesión activa (empezó pero no terminó) de ESTE
-      // juego hoy desde esta IP? (para evitar que dos empiecen a la vez y
-      // ambos crean que rankean).
-      const ipSession = await query(
-        `SELECT 1 FROM sessions
-         WHERE ip_address = $1 AND game_id = $2 AND date_key = $3::date
-         AND user_id != $4 AND NOT consumed AND expires_at > $5
-         LIMIT 1`,
-        [clientIp, gameId, today, uid, Date.now()],
-      );
-      if (ipAttempt.rows.length > 0 || ipSession.rows.length > 0) {
-        ranked = false;
-      }
-    }
+    // 2. Ranking por IP (ver computeRankedByIp).
+    const ranked = await computeRankedByIp(clientIp, gameId, today, uid);
 
-    // Upsert usuario (nombre sanitizado, país ya validado arriba).
-    // Si el display_name colisiona con el índice único (otro usuario ya lo
-    // tiene), reintentamos sin tocarlo para no bloquear el juego. El usuario
-    // conservará su nombre local anterior y podrá elegir uno único después
-    // desde el modal de perfil.
-    const name = sanitizeDisplayName(displayName);
-    try {
-      await query(
-        `INSERT INTO users (id, display_name, country_code)
-         VALUES ($1, $2, $3)
-         ON CONFLICT (id) DO UPDATE SET
-           display_name = COALESCE(NULLIF($2, ''), users.display_name),
-           country_code = COALESCE($3, users.country_code)`,
-        [uid, name, country],
-      );
-    } catch (err: any) {
-      if (err.code === "23505" && String(err.constraint || "").includes("display_name")) {
-        await query(
-          `INSERT INTO users (id, country_code)
-           VALUES ($1, $2)
-           ON CONFLICT (id) DO UPDATE SET
-             country_code = COALESCE($2, users.country_code)`,
-          [uid, country],
-        );
-      } else {
-        throw err;
-      }
-    }
+    await upsertPlayer(uid, displayName, country);
 
-    // Validar timeLimit: debe ser una opción reconocida para el juego, o
-    // `null` explícito (modo "Sin Tiempo", válido para cualquier juego).
-    const validOptions = GAME_TIME_OPTIONS[gameId] ?? [];
-    const timeLimit: number | null =
-      rawTimeLimit === null
-        ? null
-        : validOptions.includes(rawTimeLimit as number)
-          ? (rawTimeLimit as number)
-          : (validOptions.length > 0 ? Math.max(...validOptions) : TIME_LIMITS[gameId] ?? 180);
+    const timeLimit = resolveTimeLimit(gameId, rawTimeLimit);
 
     // Crear sesión firmada (con IP)
     const startedAt = Date.now();
     const expiresAt = startedAt + SESSION_TTL;
     const sessionId = randomUUID();
 
-    // Código del link de desafío. Solo se valida el FORMATO acá y se firma; a
-    // quién corresponde se resuelve recién al acreditar (ver lives.ts). Un
-    // código inexistente no es un error para el jugador: la partida es válida
-    // igual, simplemente después no acredita ninguna vida.
-    const safeRefCode = isCodeFormat(refCode, REFERRAL_CODE_LEN) ? (refCode as string) : undefined;
-
     const payload: SessionPayload = {
       sessionId, uid, gameId, difficulty, today, startedAt, timeLimit, ranked,
-      ...(safeRefCode ? { refCode: safeRefCode } : {}),
     };
     const sessionToken = signToken(payload);
 
@@ -379,6 +437,81 @@ export async function startChallenge(
     console.error("startChallenge error:", err);
     reply.code(500).send({ error: "Error interno" });
   }
+}
+
+// ─── Puntaje de una sesión (reto diario y desafío por link) ─────────
+
+/**
+ * Tiempo, verificación y puntaje de una sesión terminada. Compartido por el
+ * reto diario y el desafío por link para que ambos puntúen EXACTAMENTE igual —
+ * la comparación del desafío depende de eso.
+ *
+ * Con `session.challengeSeed`, el reto se verifica contra el reto GENERADO con
+ * esa semilla (la firmada en el token), no contra el del día.
+ */
+function scoreSession(
+  req: FastifyRequest,
+  session: SessionPayload,
+  solution: Record<string, unknown> | null | undefined,
+  isAbandon: boolean,
+  now: number,
+): { timeSeconds: number; untimed: boolean; sessionTimeLimit: number; won: boolean; points: number } {
+  const gameId = session.gameId;
+  const timeSeconds = Math.round((now - session.startedAt) / 1000);
+
+  // `null` explícito = modo "Sin Tiempo" (puntaje fijo). `undefined` solo
+  // puede darse en tokens viejos (pre-deploy) sin este campo: se trata como
+  // "con tiempo", con fallback al máximo del juego.
+  const untimed = session.timeLimit === null;
+  const sessionTimeLimit =
+    session.timeLimit === undefined || session.timeLimit === null
+      ? TIME_LIMITS[gameId] ?? 180
+      : session.timeLimit;
+  const gameOptions = GAME_TIME_OPTIONS[gameId] ?? [];
+  const maxTimeOption = gameOptions.length > 0 ? Math.max(...gameOptions) : sessionTimeLimit;
+
+  // ─── LÍMITE DE TIEMPO SERVER-SIDE ───
+  // El `timeLimit` está FIRMADO en el sessionToken, así que el cliente no lo
+  // puede inflar. Si el envío llegó pasado ese límite (más la tolerancia por
+  // latencia), es derrota: no alcanza con perder el bonus de velocidad,
+  // porque una victoria fuera de tiempo igual sumaría para racha y logros.
+  // El modo "Sin Tiempo" está exento por definición.
+  const overtime =
+    !untimed && timeSeconds > sessionTimeLimit + TIME_LIMIT_TOLERANCE_SECONDS;
+
+  // ─── VERIFICACIÓN REAL ───
+  // Si es abandono/timeout (sin solution), el resultado es perdido sin verificar.
+  // Si hay solution, se verifica normalmente server-side.
+  const won = overtime || isAbandon
+    ? false
+    : verifyChallenge(
+        gameId,
+        session.difficulty,
+        session.today,
+        solution as any,
+        session.challengeSeed,
+      ).won;
+
+  const basePoints = computeScore({
+    won,
+    difficulty: session.difficulty,
+    timeSeconds,
+    timeLimit: sessionTimeLimit,
+    maxTimeOption,
+    untimed,
+  });
+
+  // ─── EVENTO PUNTUAL: PUNTOS DOBLES DE GP (src/lib/gpEvent.ts) ───────
+  // La ventana se evalúa contra `resolveNow(req)` — el reloj del SERVIDOR en
+  // el instante en que se acreditan los puntos — y NO contra `session.today`.
+  // Es deliberado: `session.today` acepta el `clientDateKey` del navegador si
+  // cae a ±1 día del UTC del server (ver startChallenge), así que un cliente
+  // modificado podría declararse en sábado un viernes y cobrar el x2 fuera de
+  // la ventana. El reloj del server no es negociable, y además hace que el
+  // evento empiece en el mismo instante para todos los husos horarios.
+  const points = basePoints * gpEventMultiplier(resolveNow(req));
+
+  return { timeSeconds, untimed, sessionTimeLimit, won, points };
 }
 
 // ─── POST /challenges/:gameId/finish ────────────────────────────────
@@ -447,62 +580,18 @@ export async function finishChallenge(
       return;
     }
 
-    const timeSeconds = Math.round((now - session.startedAt) / 1000);
+    // ─── Rama DESAFÍO POR LINK (src/api/challenges.ts) ─────────────────
+    if (session.challengeId) {
+      await finishSharedChallenge(req, reply, { session, solution, isAbandon, now });
+      return;
+    }
 
-    // `null` explícito = modo "Sin Tiempo" (puntaje fijo). `undefined` solo
-    // puede darse en tokens viejos (pre-deploy) sin este campo: se trata como
-    // "con tiempo", con fallback al máximo del juego.
-    const untimed = session.timeLimit === null;
-    const sessionTimeLimit =
-      session.timeLimit === undefined || session.timeLimit === null
-        ? TIME_LIMITS[gameId] ?? 180
-        : session.timeLimit;
-    const gameOptions = GAME_TIME_OPTIONS[gameId] ?? [];
-    const maxTimeOption = gameOptions.length > 0 ? Math.max(...gameOptions) : sessionTimeLimit;
-
-    // ─── LÍMITE DE TIEMPO SERVER-SIDE ───
-    // El `timeLimit` está FIRMADO en el sessionToken, así que el cliente no lo
-    // puede inflar. Si el envío llegó pasado ese límite (más la tolerancia por
-    // latencia), es derrota: no alcanza con perder el bonus de velocidad,
-    // porque una victoria fuera de tiempo igual sumaría para racha y logros.
-    // El modo "Sin Tiempo" está exento por definición.
-    const overtime =
-      !untimed && timeSeconds > sessionTimeLimit + TIME_LIMIT_TOLERANCE_SECONDS;
-
-    // ─── VERIFICACIÓN REAL ───
-    // Si es abandono/timeout (sin solution), el resultado es perdido sin verificar.
-    // Si hay solution, se verifica normalmente server-side.
-    const verifyResult = overtime
-      ? { won: false, detail: `Fuera de tiempo (${timeSeconds}s > ${sessionTimeLimit}s)` }
-      : isAbandon
-        ? { won: false, detail: "Abandono o tiempo agotado" }
-        : verifyChallenge(
-            gameId,
-            session.difficulty,
-            session.today,
-            solution as any,
-          );
-
+    const { timeSeconds, untimed, sessionTimeLimit, won: verifiedWon, points } = scoreSession(
+      req, session, solution, isAbandon, now,
+    );
+    const verifyResult = { won: verifiedWon };
     // Sin tiempo mínimo a propósito: responder rápido se premia, no se castiga.
     const flagged = false;
-    const basePoints = computeScore({
-      won: verifyResult.won,
-      difficulty: session.difficulty,
-      timeSeconds,
-      timeLimit: sessionTimeLimit,
-      maxTimeOption,
-      untimed,
-    });
-
-    // ─── EVENTO PUNTUAL: PUNTOS DOBLES DE GP (src/lib/gpEvent.ts) ───────
-    // La ventana se evalúa contra `resolveNow(req)` — el reloj del SERVIDOR en
-    // el instante en que se acreditan los puntos — y NO contra `session.today`.
-    // Es deliberado: `session.today` acepta el `clientDateKey` del navegador si
-    // cae a ±1 día del UTC del server (ver startChallenge), así que un cliente
-    // modificado podría declararse en sábado un viernes y cobrar el x2 fuera de
-    // la ventana. El reloj del server no es negociable, y además hace que el
-    // evento empiece en el mismo instante para todos los husos horarios.
-    const points = basePoints * gpEventMultiplier(resolveNow(req));
 
     const uid = session.uid;
     const clientIp = req.ip || "unknown";
@@ -516,9 +605,11 @@ export async function finishChallenge(
           [session.sessionId],
         );
         await client.query(
-          `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, time_seconds, points, flagged, ranked, ip_address)
-           VALUES ($1, $2, $3::date, $4, $5, $6, $7, $8, $9, $10)`,
-          [uid, gameId, session.today, session.difficulty, verifyResult.won, timeSeconds, points, flagged, session.ranked, clientIp],
+          `INSERT INTO attempts (user_id, game_id, date_key, difficulty, won, time_seconds, points, flagged, ranked, ip_address, time_limit, untimed)
+           VALUES ($1, $2, $3::date, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+          // `time_limit`/`untimed`: el tiempo que eligió. Lo necesita un desafío
+          // por link para fijarle a quien lo acepta EL MISMO tiempo.
+          [uid, gameId, session.today, session.difficulty, verifyResult.won, timeSeconds, points, flagged, session.ranked, clientIp, untimed ? null : sessionTimeLimit, untimed],
         );
         // Racha diaria (Roadmap #3): solo al GANAR un reto diario y no-flaggeado.
         // Dentro de la MISMA transacción: si el INSERT choca por duplicado y hace
@@ -606,43 +697,6 @@ export async function finishChallenge(
       }
     }
 
-    // ─── VIDAS EXTRA POR REFERIDO (src/api/lives.ts) ───────────────────
-    // Se evalúa DESPUÉS del commit del attempt y en su propia transacción, por
-    // la misma razón que los logros: acreditar una vida nunca puede hacer
-    // rollback de una partida ya jugada ni devolver un 500 por algo accesorio.
-    //
-    // Corre también cuando el jugador PERDIÓ o abandonó: la regla vigente es
-    // que alcanza con que el reto quede cerrado (decisión explícita del dueño
-    // del producto; ver la nota de seguridad en lives.ts). Lo que sí se excluye
-    // es `duplicated`, porque ahí no hubo partida nueva: el intento ya existía
-    // y su referido ya se evaluó en el primer finish.
-    let lifeEarned = false;
-    if (!duplicated) {
-      try {
-        // `dateKey` sale del reloj del SERVIDOR y NO de `session.today`, por la
-        // misma razón que el multiplicador del evento de GP (ver más arriba):
-        // `session.today` acepta la fecha del navegador si cae a ±1 día del UTC
-        // del server. Como el límite "una vida por persona por día" se apoya en
-        // esa fecha, un cliente modificado podría declararse en tres días
-        // distintos y cobrar tres veces la misma vida del mismo amigo. El reloj
-        // del server no es negociable.
-        const creditDateKey = resolveNow(req).toISOString().substring(0, 10);
-        const credit = await transaction((client) =>
-          creditReferralLives((sql, params) => client.query(sql, params), {
-            referralCode: session.refCode ?? null,
-            referredUserId: uid,
-            referredIp: clientIp,
-            gameId,
-            dateKey: creditDateKey,
-            playedSeconds: timeSeconds,
-          }),
-        );
-        lifeEarned = credit.credited;
-      } catch (err) {
-        console.error("creditReferralLives error (no bloquea el finish):", err);
-      }
-    }
-
     reply.code(200).send({
       won: finalWon,
       points: finalPoints,
@@ -651,9 +705,6 @@ export async function finishChallenge(
       rank,
       flagged,
       duplicated,
-      // Si esta partida acreditó una vida extra a ambos lados del link de
-      // desafío. El saldo completo se consulta en GET /me/lives.
-      lifeEarned,
       // Si el attempt entró al ranking. false cuando otra cuenta de la misma
       // IP ya jugó este juego hoy: el usuario jugó y ve su resultado, pero no
       // cuenta para el ranking global.
@@ -1879,9 +1930,6 @@ export async function getUserRank(
 /** Alfabeto sin ambigüedad (sin I, L, O, 0, 1) para códigos legibles/dictables. */
 const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const FRIEND_CODE_LEN = 6;
-/** Largo del código del link de desafío. Mismo alfabeto/largo que el de amigo,
- *  pero es un código distinto y con otro propósito (ver la migración en db.ts). */
-const REFERRAL_CODE_LEN = 6;
 const DUEL_ID_LEN = 8;
 /** TTL de un duelo pendiente (esperando aceptación): 60s, "en vivo". */
 const DUEL_PENDING_TTL_MS = 60 * 1000;
@@ -3247,53 +3295,6 @@ export async function removeFriend(req: FastifyRequest, reply: FastifyReply): Pr
 // Acá quedan solo los handlers HTTP: autorización y forma de la respuesta.
 
 /**
- * Devuelve el referral_code del usuario, generándolo (único) la primera vez.
- *
- * Es casi igual a `ensureFriendCode`, y está duplicado a propósito: unificarlos
- * exigiría un helper que reciba el nombre de la columna e interpole SQL, que es
- * justo lo que no queremos en un archivo donde todo lo demás usa parámetros.
- * Dieciocho líneas repetidas cuestan menos que abrir esa puerta.
- */
-async function ensureReferralCode(userId: string): Promise<string> {
-  await query("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING", [userId]);
-  const cur = await query("SELECT referral_code FROM users WHERE id = $1", [userId]);
-  const existing = cur.rows[0]?.referral_code as string | null | undefined;
-  if (existing) return existing;
-
-  for (let attempt = 0; attempt < 12; attempt++) {
-    const code = randomCode(REFERRAL_CODE_LEN);
-    try {
-      const res = await query(
-        "UPDATE users SET referral_code = $1 WHERE id = $2 AND referral_code IS NULL RETURNING referral_code",
-        [code, userId],
-      );
-      if (res.rows.length > 0) return res.rows[0].referral_code as string;
-      // Otro request lo seteó concurrentemente: re-leer y usar ese.
-      const reread = await query("SELECT referral_code FROM users WHERE id = $1", [userId]);
-      if (reread.rows[0]?.referral_code) return reread.rows[0].referral_code as string;
-    } catch (err: any) {
-      if (err.code === "23505") continue; // código ya usado por otro: reintentar
-      throw err;
-    }
-  }
-  throw new Error("No se pudo generar referral_code único");
-}
-
-/** GET /me/referral-code — código propio para armar el link de desafío. */
-export async function getMyReferralCode(req: FastifyRequest, reply: FastifyReply): Promise<void> {
-  try {
-    const { userId } = (req.query ?? {}) as { userId?: string };
-    const identityToken = readIdentityToken(req);
-    if (!requireOwnership(reply, identityToken, userId)) return;
-    const code = await ensureReferralCode(userId);
-    reply.code(200).send({ code });
-  } catch (err) {
-    console.error("getMyReferralCode error:", err);
-    reply.code(500).send({ error: "Error interno" });
-  }
-}
-
-/**
  * GET /me/lives — saldo de vidas extra y si hoy queda una para gastar.
  *
  * Exige prueba de propiedad aunque solo lea: el saldo es parte del estado
@@ -3319,4 +3320,333 @@ export async function getMyLives(req: FastifyRequest, reply: FastifyReply): Prom
     console.error("getMyLives error:", err);
     reply.code(500).send({ error: "Error interno" });
   }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// ─── Desafíos por link (Etapa 3) ────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════
+// La lógica de base vive en src/api/challenges.ts (inyectable, testeada contra
+// PGlite). Acá quedan la firma de tokens, la prueba de identidad y la forma de
+// las respuestas.
+
+/** Lo que cualquiera puede ver de un desafío (sin ids internos ni la semilla). */
+async function publicChallengeView(challenge: ChallengeRow) {
+  const owner = await query("SELECT display_name, country_code FROM users WHERE id = $1", [
+    challenge.ownerId,
+  ]);
+  return {
+    id: challenge.id,
+    gameId: challenge.gameId,
+    dateKey: challenge.dateKey,
+    difficulty: challenge.difficulty,
+    timeLimit: challenge.timeLimit,
+    untimed: challenge.untimed,
+    won: challenge.won,
+    points: challenge.points,
+    timeSeconds: challenge.timeSeconds,
+    grid: challenge.grid,
+    owner: {
+      displayName: (owner.rows[0]?.display_name as string | null | undefined) ?? null,
+      countryCode: (owner.rows[0]?.country_code as string | null | undefined) ?? null,
+    },
+  };
+}
+
+/**
+ * POST /shared-challenges — crea (o devuelve) el desafío del intento de hoy
+ * del usuario en un juego. El frontend lo pide apenas termina la partida, para
+ * que el link ya exista cuando se toca "Compartir": Safari descarta
+ * `navigator.share` si entre el toque y la llamada hubo una espera de red.
+ */
+export async function createSharedChallenge(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { userId, identityToken, gameId, grid } = (req.body ?? {}) as {
+      userId?: string; identityToken?: string; gameId?: string; grid?: unknown;
+    };
+    if (!requireOwnership(reply, identityToken, userId)) return;
+    if (typeof gameId !== "string" || !VALID_GAMES.includes(gameId)) {
+      reply.code(422).send({ error: "Juego inválido" });
+      return;
+    }
+    const today = resolveNow(req).toISOString().substring(0, 10);
+    // Una grilla inválida no es motivo para negar el link: se guarda sin ella.
+    const res = await createOrGetChallenge(dbq, {
+      ownerId: userId, gameId, todayKey: today, grid: sanitizeGrid(grid),
+    });
+    if (!res.ok) {
+      reply.code(409).send({
+        error: "No hay un resultado de hoy para desafiar",
+        code: res.reason === "no_attempt" ? "NO_ATTEMPT" : "LEGACY_ATTEMPT",
+      });
+      return;
+    }
+    reply.code(200).send({ id: res.challenge.id });
+  } catch (err) {
+    console.error("createSharedChallenge error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/**
+ * GET /shared-challenges/:id — la invitación. Público: el link se comparte en
+ * redes y lo abre gente que nunca entró a la web.
+ *
+ * Si además viene la identidad probada del que mira, agrega su situación
+ * (¿es su propio desafío?, ¿ya lo jugó?, ¿contará como su reto del día?). Sin
+ * prueba de identidad no se revela nada de un usuario concreto: pasar el
+ * userId de otro no dice si esa persona jugó el desafío ni cómo le fue.
+ */
+export async function getSharedChallenge(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  try {
+    const { id } = req.params as { id: string };
+    if (!isChallengeId(id)) {
+      reply.code(422).send({ error: "Desafío inválido" });
+      return;
+    }
+    const challenge = await getChallenge(dbq, id);
+    if (!challenge) {
+      reply.code(404).send({ error: "Desafío no encontrado" });
+      return;
+    }
+
+    const body: Record<string, unknown> = { challenge: await publicChallengeView(challenge) };
+
+    const { userId, dateKey } = (req.query ?? {}) as { userId?: string; dateKey?: string };
+    if (isValidUserId(userId) && ownsIdentity(readIdentityToken(req), userId)) {
+      const play = await getPlay(dbq, id, userId);
+      const today = resolveChallengeDay(req, dateKey);
+      body.viewer = {
+        isOwner: userId === challenge.ownerId,
+        inProgress: play !== null && !play.finished,
+        play:
+          play && play.finished
+            ? {
+                won: Boolean(play.won),
+                points: play.points ?? 0,
+                timeSeconds: play.timeSeconds,
+                outcome: compareOutcome(
+                  { won: Boolean(play.won), points: play.points ?? 0 },
+                  challenge,
+                ),
+              }
+            : null,
+        // Si ya la empezó, lo que se decidió al empezar; si no, lo que pasaría hoy.
+        willCountAsDaily: play
+          ? play.countsAsDaily
+          : !(await hasDailyAttempt(dbq, userId, challenge.gameId, today)),
+      };
+    }
+
+    reply.code(200).send(body);
+  } catch (err) {
+    console.error("getSharedChallenge error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/**
+ * Arranque de la partida de quien acepta un desafío (rama de startChallenge).
+ *
+ * Mismas reglas que el reto diario para identidad, alta del jugador y ranking
+ * por IP (usa los mismos helpers). Lo distinto: juego, dificultad y tiempo
+ * salen del desafío, y el reto se genera con una semilla que decide el server
+ * (y reutiliza si la partida ya había empezado).
+ */
+async function startSharedChallenge(
+  req: FastifyRequest,
+  reply: FastifyReply,
+  args: {
+    gameId: string;
+    challengeId: string;
+    userId?: string;
+    displayName?: string;
+    countryCode?: string;
+    clientDateKey?: string;
+    identityToken?: string;
+  },
+): Promise<void> {
+  const { gameId, challengeId, userId, displayName, countryCode, clientDateKey, identityToken } = args;
+  if (!isChallengeId(challengeId)) {
+    reply.code(422).send({ error: "Desafío inválido" });
+    return;
+  }
+  const challenge = await getChallenge(dbq, challengeId);
+  if (!challenge) {
+    reply.code(404).send({ error: "Desafío no encontrado" });
+    return;
+  }
+  if (challenge.gameId !== gameId) {
+    reply.code(422).send({ error: "Juego inválido" });
+    return;
+  }
+
+  const safeUserId = isValidUserId(userId) ? userId : null;
+  const uid = safeUserId || `anon-${randomUUID()}`;
+  if (!(await requirePlayerIdentity(reply, safeUserId, identityToken))) return;
+
+  const country = isValidCountry(countryCode) ? countryCode : null;
+  const today = resolveChallengeDay(req, clientDateKey);
+  // Antes de reservar la partida: `challenge_plays.user_id` referencia a users.
+  await upsertPlayer(uid, displayName, country);
+
+  const started = await startChallengePlay(dbq, { challenge, userId: uid, todayKey: today });
+  if (started.kind === "own") {
+    reply.code(409).send({ error: "Es tu propio desafío", code: "OWN_CHALLENGE" });
+    return;
+  }
+  if (started.kind === "finished") {
+    reply.code(409).send({ error: "Ya jugaste este desafío", code: "ALREADY_PLAYED" });
+    return;
+  }
+
+  const clientIp = req.ip || "unknown";
+  // Solo una partida que va a ser su reto oficial puede rankear, y con la
+  // regla de IP de siempre. Una partida "extra" nunca toca el ranking.
+  const ranked = started.countsAsDaily
+    ? await computeRankedByIp(clientIp, gameId, today, uid)
+    : false;
+  const timeLimit = challenge.untimed ? null : resolveTimeLimit(gameId, challenge.timeLimit);
+  const difficulty = challenge.difficulty as Difficulty;
+
+  const startedAt = Date.now();
+  const expiresAt = startedAt + SESSION_TTL;
+  const sessionId = randomUUID();
+  const payload: SessionPayload = {
+    sessionId, uid, gameId, difficulty, today, startedAt, timeLimit, ranked,
+    challengeId, challengeSeed: started.seed, countsAsDaily: started.countsAsDaily,
+  };
+  const sessionToken = signToken(payload);
+
+  await query(
+    `INSERT INTO sessions (id, user_id, game_id, difficulty, date_key, started_at, expires_at, ip_address)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+    [sessionId, uid, gameId, difficulty, today, startedAt, expiresAt, clientIp],
+  );
+
+  reply.code(200).send({
+    // El cliente necesita la semilla para DIBUJAR el reto; la que vale para
+    // verificar es la firmada en el token, así que mandar otra no sirve de nada.
+    puzzle: { gameId, difficulty, dateKey: today, seed: started.seed },
+    sessionToken,
+    serverNow: startedAt,
+    identityToken: signIdentityToken(uid),
+    countsAsDaily: started.countsAsDaily,
+    ranked,
+    timeLimit,
+  });
+}
+
+/**
+ * Cierre de la partida de un desafío (rama de finishChallenge). La sesión ya
+ * viene verificada (firma, expiración, no consumida).
+ */
+async function finishSharedChallenge(
+  req: FastifyRequest,
+  reply: FastifyReply,
+  args: {
+    session: SessionPayload;
+    solution: Record<string, unknown> | null | undefined;
+    isAbandon: boolean;
+    now: number;
+  },
+): Promise<void> {
+  const { session, solution, isAbandon, now } = args;
+  const uid = session.uid;
+  const gameId = session.gameId;
+  const clientIp = req.ip || "unknown";
+
+  const challenge = await getChallenge(dbq, session.challengeId!);
+  if (!challenge) {
+    // El dueño borró su cuenta (ON DELETE CASCADE) mientras se jugaba.
+    reply.code(404).send({ error: "Desafío no encontrado" });
+    return;
+  }
+
+  const scored = scoreSession(req, session, solution, isAbandon, now);
+
+  const rec = await transaction(async (client) => {
+    await client.query("UPDATE sessions SET consumed = true WHERE id = $1", [session.sessionId]);
+    return recordChallengePlay((sql, params) => client.query(sql, params), {
+      challengeId: challenge.id,
+      userId: uid,
+      gameId,
+      difficulty: session.difficulty,
+      dateKey: session.today,
+      won: scored.won,
+      points: scored.points,
+      timeSeconds: scored.timeSeconds,
+      timeLimit: scored.sessionTimeLimit,
+      untimed: scored.untimed,
+      ranked: session.ranked,
+      ip: clientIp,
+    });
+  });
+
+  // Otra sesión de la misma partida ya había cerrado el resultado (se retomó
+  // tras cerrar la pestaña): vale el primero, que es el que se devuelve.
+  let mine = { won: scored.won, points: scored.points, timeSeconds: scored.timeSeconds };
+  if (!rec.recorded) {
+    const play = await getPlay(dbq, challenge.id, uid);
+    mine = {
+      won: Boolean(play?.won),
+      points: play?.points ?? 0,
+      timeSeconds: play?.timeSeconds ?? scored.timeSeconds,
+    };
+  }
+  const countedAsDaily = rec.recorded && rec.countedAsDaily;
+  const ranked = countedAsDaily && session.ranked;
+
+  // Logros: mismas condiciones que el reto diario (victoria nueva, rankeada).
+  let newAchievements: string[] = [];
+  if (countedAsDaily && mine.won && ranked) {
+    try {
+      const awarded = await awardAchievements(
+        (sql, params) => query(sql, params as any[]),
+        uid,
+      );
+      newAchievements = awarded.map((a) => a.type);
+    } catch (err) {
+      console.error("awardAchievements error (no bloquea el finish):", err);
+    }
+  }
+
+  // ─── VIDAS EXTRA (src/api/lives.ts) ───
+  // Después del commit y en su propia transacción: acreditar una vida nunca
+  // puede hacer rollback de una partida ya jugada. Corre aunque haya perdido o
+  // abandonado (regla elegida por el dueño del producto; ver lives.ts).
+  // `dateKey` sale del reloj del SERVIDOR y no de `session.today`: esa fecha
+  // admite la del navegador a ±1 día, y como el límite "una vida por persona
+  // por día" se apoya en la fecha, un cliente modificado podría declararse en
+  // tres días distintos y cobrar tres veces la misma vida.
+  let lifeEarned = false;
+  if (rec.recorded) {
+    try {
+      const credit = await transaction((client) =>
+        creditReferralLives((sql, params) => client.query(sql, params), {
+          referrerId: challenge.ownerId,
+          referredUserId: uid,
+          referredIp: clientIp,
+          gameId,
+          dateKey: resolveNow(req).toISOString().substring(0, 10),
+          playedSeconds: scored.timeSeconds,
+        }),
+      );
+      lifeEarned = credit.credited;
+    } catch (err) {
+      console.error("creditReferralLives error (no bloquea el finish):", err);
+    }
+  }
+
+  reply.code(200).send({
+    won: mine.won,
+    points: mine.points,
+    timeSeconds: mine.timeSeconds,
+    duplicated: !rec.recorded,
+    // Si quedó como su reto oficial del día de ese juego.
+    countedAsDaily,
+    ranked,
+    lifeEarned,
+    newAchievements,
+    outcome: compareOutcome(mine, challenge),
+  });
 }

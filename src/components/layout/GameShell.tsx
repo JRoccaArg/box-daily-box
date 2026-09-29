@@ -4,7 +4,7 @@ import type { Difficulty, GameDefinition, GameStatus, ShareGrid } from "@/types"
 import { useStats } from "@/context/StatsContext";
 import { useI18n } from "@/context";
 import { computeScore } from "@/lib/scoring";
-import { apiStartChallenge, apiFinishChallenge } from "@/lib/api";
+import { apiStartChallenge, apiFinishChallenge, apiCreateSharedChallenge } from "@/lib/api";
 import { isIdentityComplete } from "@/lib/identity";
 import { updateServerPoints, saveSolution } from "@/lib/stats";
 import { buildShareText, shareResult } from "@/lib/share";
@@ -16,7 +16,7 @@ import { announceAchievements } from "@/lib/achievements";
 import { playGameResultFeedback, playTickFeedback } from "@/lib/audio";
 import { DuelChallengeModal } from "@/components/layout/DuelChallengeModal";
 import { IdentityModal } from "@/components/layout/IdentityModal";
-import { homePath } from "@/lib/routes";
+import { challengeSharePath, homePath } from "@/lib/routes";
 import { useTimer } from "@/hooks/useTimer";
 import { Panel } from "@/components/ui/Panel";
 import { Button } from "@/components/ui/Button";
@@ -83,6 +83,16 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
   // `onShareReady`; null = formato uniforme sin grilla.
   const [finishSeconds, setFinishSeconds] = useState<number | null>(null);
   const [shareGrid, setShareGrid] = useState<ShareGrid | null>(null);
+  // Link del desafío por link (Etapa 3). Se pide al server apenas se guarda el
+  // resultado, NO al tocar Compartir: Safari descarta `navigator.share` si
+  // entre el toque y la llamada hubo una espera de red. Si todavía no llegó (o
+  // no hay backend), el mensaje sale con la firma de la web en vez del link.
+  const [challengeLink, setChallengeLink] = useState<string | null>(null);
+  // Espejo en ref de la grilla, para leerla desde el callback del finish.
+  const shareGridRef = useRef<ShareGrid | null>(null);
+  useEffect(() => {
+    shareGridRef.current = shareGrid;
+  }, [shareGrid]);
   // Modal de confirmacion para abandonar (al tocar "Volver" mientras juega).
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   // Modal de identidad (si el usuario no configuró nombre/pais).
@@ -184,6 +194,15 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
             // Logros desbloqueados por esta partida. El server ya los otorgó;
             // sin esto el jugador nunca se enteraba (ver src/lib/achievements.ts).
             announceAchievements(res?.newAchievements, t);
+            // Con el resultado ya guardado en el server, se puede crear el
+            // desafío (el server copia el resultado real, no el de acá).
+            if (res) {
+              apiCreateSharedChallenge(game.id, shareGridRef.current?.rows ?? null)
+                .then((c) => {
+                  if (c) setChallengeLink(`${window.location.origin}${challengeSharePath(c.id)}`);
+                })
+                .catch(() => {});
+            }
           })
           .catch(() => {});
       }
@@ -358,10 +377,12 @@ export function GameShell({ game, date = getEffectiveNow() }: GameShellProps) {
       timeSeconds: finishSeconds,
       points: pointsEarned,
       grid: shareGrid,
+      legend: shareGrid?.legendKey ? t(shareGrid.legendKey) : null,
+      link: challengeLink,
     });
     void shareResult(text, t);
-    trackEvent("result_shared", { gameId: game.id, outcome: status });
-  }, [locale, date, t, game.id, status, finishSeconds, pointsEarned, shareGrid]);
+    trackEvent("result_shared", { gameId: game.id, outcome: status, withLink: challengeLink !== null });
+  }, [locale, date, t, game.id, status, finishSeconds, pointsEarned, shareGrid, challengeLink]);
 
   // -----------------------------------------------------------------
   // Vista: reto ya jugado hoy (bloqueado hasta manana).

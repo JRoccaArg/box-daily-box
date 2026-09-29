@@ -902,3 +902,164 @@ export async function apiResetFeaturedBadges(
     true,
   );
 }
+
+// ─── Desafíos por link (Etapa 3; backend en src/api/challenges.ts) ──
+
+/** Lo que muestra la invitación. El resultado sale del server, no del link. */
+export type SharedChallenge = {
+  id: string;
+  gameId: string;
+  dateKey: string;
+  difficulty: string;
+  /** Segundos que eligió quien compartió; null si jugó en "Sin Tiempo". */
+  timeLimit: number | null;
+  untimed: boolean;
+  won: boolean;
+  points: number;
+  timeSeconds: number | null;
+  grid: string[] | null;
+  owner: { displayName: string | null; countryCode: string | null };
+};
+
+export type ChallengeOutcome = "won" | "lost" | "tied";
+
+/** Situación de quien mira (solo si el server pudo verificar su identidad). */
+export type SharedChallengeViewer = {
+  isOwner: boolean;
+  inProgress: boolean;
+  play: { won: boolean; points: number; timeSeconds: number | null; outcome: ChallengeOutcome } | null;
+  /** Si al jugarlo pasaría (o pasó) a ser su reto oficial del día de ese juego. */
+  willCountAsDaily: boolean;
+};
+
+/**
+ * Crea (o recupera) el desafío del resultado de hoy en un juego. La grilla es
+ * solo decorativa: el server la valida y la guarda para la invitación.
+ */
+export async function apiCreateSharedChallenge(
+  gameId: string,
+  grid: string[] | null,
+): Promise<{ id: string } | null> {
+  const { userId } = getIdentity();
+  const token = getIdentityToken();
+  if (!token) return null;
+  const res = await apiFetch<{ id: string }>("/shared-challenges", {
+    method: "POST",
+    body: JSON.stringify({ userId, identityToken: token, gameId, grid }),
+  });
+  return res && typeof res.id === "string" ? res : null;
+}
+
+/**
+ * Lee una invitación. `undefined` = el backend no respondió (mostrar error de
+ * red); `null` = el desafío no existe.
+ */
+export async function apiGetSharedChallenge(
+  id: string,
+): Promise<{ challenge: SharedChallenge; viewer?: SharedChallengeViewer } | null | undefined> {
+  if (!API_URL) return undefined;
+  const { userId } = getIdentity();
+  const params = new URLSearchParams({ userId, dateKey: dateKey() });
+  const res = await apiFetch<{ challenge?: SharedChallenge; viewer?: SharedChallengeViewer; error?: string }>(
+    `/shared-challenges/${encodeURIComponent(id)}?${params.toString()}`,
+    { headers: identityHeaders() },
+    8000,
+    true,
+  );
+  if (!res) return undefined;
+  if (!res.challenge) return null;
+  return { challenge: res.challenge, viewer: res.viewer };
+}
+
+export type SharedStartResult =
+  | {
+      ok: true;
+      sessionToken: string;
+      serverNow: number;
+      /** Semilla del reto generado: con ella se DIBUJA el reto en el cliente. */
+      seed: string;
+      countsAsDaily: boolean;
+      ranked: boolean;
+    }
+  | { ok: false; code?: "OWN_CHALLENGE" | "ALREADY_PLAYED" };
+
+/** Arranca la partida del desafío. Dificultad, tiempo y semilla los pone el server. */
+export async function apiStartSharedChallenge(
+  gameId: string,
+  challengeId: string,
+): Promise<SharedStartResult> {
+  if (!API_URL) return { ok: false };
+  const { userId, displayName, countryCode } = getIdentity();
+
+  type Resp = StartResponse & {
+    puzzle: { seed?: string };
+    countsAsDaily?: boolean;
+    ranked?: boolean;
+    code?: string;
+  };
+  const send = (uid: string, token: string | null) =>
+    apiFetch<Resp>(
+      `/challenges/${gameId}/start`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          challengeId,
+          userId: uid,
+          displayName,
+          countryCode,
+          clientDateKey: dateKey(),
+          ...(token ? { identityToken: token } : {}),
+        }),
+      },
+      8000,
+      true,
+    );
+
+  let data = await send(userId, getIdentityToken());
+  // Mismo rescate que apiStartChallenge: token perdido de las tres capas.
+  if (data?.code === "IDENTITY_REQUIRED") {
+    const fresh = resetIdentity();
+    data = await send(fresh.userId, null);
+  }
+  if (data?.code === "OWN_CHALLENGE" || data?.code === "ALREADY_PLAYED") {
+    return { ok: false, code: data.code };
+  }
+  if (!data || typeof data.sessionToken !== "string" || typeof data.puzzle?.seed !== "string") {
+    return { ok: false };
+  }
+  if (data.identityToken) setIdentityToken(data.identityToken);
+  return {
+    ok: true,
+    sessionToken: data.sessionToken,
+    serverNow: data.serverNow,
+    seed: data.puzzle.seed,
+    countsAsDaily: Boolean(data.countsAsDaily),
+    ranked: Boolean(data.ranked),
+  };
+}
+
+export type SharedFinishResponse = {
+  won: boolean;
+  points: number;
+  timeSeconds: number;
+  duplicated: boolean;
+  countedAsDaily: boolean;
+  ranked: boolean;
+  lifeEarned: boolean;
+  newAchievements?: string[];
+  outcome: ChallengeOutcome;
+};
+
+/** Cierra la partida del desafío (mismo endpoint que el reto diario). */
+export async function apiFinishSharedChallenge(
+  gameId: string,
+  sessionToken: string,
+  solution: Record<string, unknown> | null,
+): Promise<SharedFinishResponse | null> {
+  const { userId } = getIdentity();
+  return apiFetch<SharedFinishResponse>(`/challenges/${gameId}/finish`, {
+    method: "POST",
+    body: JSON.stringify({ sessionToken, solution, userId }),
+    keepalive: true,
+  });
+}

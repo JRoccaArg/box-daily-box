@@ -101,6 +101,13 @@ export type GameStatus = "idle" | "playing" | "won" | "lost";
  */
 export type ShareGrid = {
   rows: string[];
+  /**
+   * Key i18n de una línea opcional ARRIBA de la grilla que nombra cada columna
+   * (PitTexto: "Nac Esc Deb Tít Comp"). Sin ella, quien lee un mensaje con 5
+   * casillas por fila no sabe qué dato es cada una. Solo nombra el dato, nunca
+   * su valor.
+   */
+  legendKey?: string;
 };
 
 /** Props que recibe TODO juego desde el GameShell. Contrato estable. */

@@ -7,6 +7,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Home } from "@/pages/Home";
 import { GamePage } from "@/pages/GamePage";
 import { DuelPage } from "@/pages/DuelPage";
+import { ChallengePage } from "@/pages/ChallengePage";
 import { TermsPage, PrivacyPage } from "@/pages/LegalPage";
 import { InfoPage } from "@/pages/InfoPage";
 import { ContactPage } from "@/pages/ContactPage";
@@ -87,6 +88,9 @@ export const routes: RouteRecord[] = [
       // que el link de invitación no dé 404 al abrirse en frío; el router
       // client-side monta DuelPage normalmente después de hidratar.
       { path: "duelo/:duelId", Component: DuelPage },
+      // Desafío por link: mismo tratamiento que el duelo (id dinámico, sin
+      // prerender, reescrito por vercel.json al HTML de "/:lang").
+      { path: "reto/:challengeId", Component: ChallengePage },
       // Páginas legales (Roadmap #6). Rutas estáticas: se prerenderizan una vez
       // por idioma (la matriz de locales viene del getStaticPaths del padre).
       // Van con noindex (ver buildSeo), no entran al sitemap.
@@ -102,5 +106,8 @@ export const routes: RouteRecord[] = [
   // "/" (x-default): redirige al idioma preferido. Se prerenderiza con
   // contenido real (enlaces a todos los idiomas) para crawlers/no-JS.
   { path: "/", Component: RootRedirect },
+  // Link PÚBLICO de un desafío, sin idioma (es lo que se comparte): RootRedirect
+  // lo manda a "/<idioma de quien lo abre>/reto/<id>".
+  { path: "/reto/:challengeId", Component: RootRedirect },
   { path: "*", Component: RootRedirect },
 ];
