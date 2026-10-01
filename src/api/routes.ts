@@ -1183,7 +1183,8 @@ export async function adminGrantBadges(
       const res = await query(
         `INSERT INTO badges (user_id, badge_type, reference_month)
          VALUES ($1, $2, $3::date)
-         ON CONFLICT (user_id, badge_type, reference_month) DO NOTHING
+         ON CONFLICT (user_id, badge_type, reference_month)
+           WHERE reference_month IS NOT NULL DO NOTHING
          RETURNING id`,
         [userId, g.type, monthStart],
       );

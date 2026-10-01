@@ -142,10 +142,15 @@ export async function awardMonthlyPodium(
   for (const { userId, rank } of podium) {
     const badgeType = RANK_TO_BADGE[rank];
     if (!badgeType) continue; // fuera de 1..3 (no debería ocurrir por el WHERE)
+    // El WHERE es obligatorio: desde la migración de logros la unicidad del
+    // podio es un índice PARCIAL (idx_badges_monthly_unique), y Postgres solo
+    // lo infiere como árbitro del ON CONFLICT si se repite su predicado. Sin
+    // él, el INSERT falla ("no unique or exclusion constraint matching").
     const ins = await q(
       `INSERT INTO badges (user_id, badge_type, reference_month)
        VALUES ($1, $2, $3::date)
-       ON CONFLICT (user_id, badge_type, reference_month) DO NOTHING
+       ON CONFLICT (user_id, badge_type, reference_month)
+         WHERE reference_month IS NOT NULL DO NOTHING
        RETURNING id`,
       [userId, badgeType, monthStart],
     );

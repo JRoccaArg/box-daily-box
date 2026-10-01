@@ -56,14 +56,27 @@ async function setupSchema() {
     time_seconds INTEGER, points INTEGER NOT NULL, flagged BOOLEAN DEFAULT false,
     ranked BOOLEAN DEFAULT true, ip_address TEXT, created_at TIMESTAMPTZ DEFAULT now(),
     UNIQUE(user_id, game_id, date_key));`);
+  // Esquema FINAL de producción (db.ts, después de la migración de logros):
+  // reference_month nullable, CHECK con ach_* y SIN la UNIQUE de tabla — solo
+  // los dos índices únicos PARCIALES. Antes este test usaba el esquema viejo
+  // (UNIQUE de tabla) y por eso no detectó que el ON CONFLICT del podio dejó
+  // de matchear: en producción el cierre mensual fallaba cada hora.
   await db.query(`CREATE TABLE badges (
     id BIGSERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     badge_type TEXT NOT NULL
-      CHECK (badge_type IN ('monthly_gold', 'monthly_silver', 'monthly_bronze')),
-    reference_month DATE NOT NULL,
-    awarded_at TIMESTAMPTZ DEFAULT now(),
-    UNIQUE(user_id, badge_type, reference_month));`);
+      CHECK (
+        badge_type IN ('monthly_gold', 'monthly_silver', 'monthly_bronze')
+        OR badge_type LIKE 'ach\\_%'
+      ),
+    reference_month DATE,
+    awarded_at TIMESTAMPTZ DEFAULT now());`);
+  await db.query(`CREATE UNIQUE INDEX idx_badges_monthly_unique
+    ON badges (user_id, badge_type, reference_month)
+    WHERE reference_month IS NOT NULL;`);
+  await db.query(`CREATE UNIQUE INDEX idx_badges_achievement_unique
+    ON badges (user_id, badge_type)
+    WHERE reference_month IS NULL;`);
   await db.query(
     "INSERT INTO users (id, display_name) VALUES ($1,'U1'),($2,'U2'),($3,'U3'),($4,'U4')",
     [U1, U2, U3, U4],
