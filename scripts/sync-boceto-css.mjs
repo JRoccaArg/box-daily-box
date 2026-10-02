@@ -49,6 +49,11 @@ const parsed = postcss.parse(css);
 const keyframeNames = new Set();
 
 parsed.walkAtRules("font-face", (at) => at.remove());
+// La Saira del wordmark tiene otro archivo que la fuente del sitio original.
+// Un nombre propio evita cambiar medidas y saltos de línea fuera del rediseño.
+parsed.walkDecls(/^(font|font-family)$/, (decl) => {
+  decl.value = decl.value.replace(/(['"])Saira\1/g, "$1BDB V2 Saira$1");
+});
 parsed.walkAtRules(/keyframes$/, (at) => {
   keyframeNames.add(at.params.trim());
   at.params = KEYFRAME_PREFIX + at.params.trim();
