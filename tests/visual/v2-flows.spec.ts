@@ -1,6 +1,17 @@
 import {test,expect} from './fixtures';
 import {mockV2Api} from './v2-api';
 
+test('an unconfirmed visitor does not poll private duel invitations',async({page})=>{
+ await mockV2Api(page,{authenticated:false});
+ const privateRequests:string[]=[];
+ page.on('request',request=>{if(new URL(request.url()).pathname.endsWith('/duels/pending')) privateRequests.push(request.url());});
+ await page.goto('/es/');
+ await expect(page.locator('.home-rank')).toContainText('Sin puesto');
+ await expect(page.locator('.hero-copy p')).toContainText('F1. Una oportunidad');
+ await page.waitForTimeout(3500);
+ expect(privateRequests).toEqual([]);
+});
+
 test('profile loads authenticated stats and fetches detailed charts only when opened',async({page})=>{
  const requests=await mockV2Api(page);
  await page.goto('/es/perfil');
