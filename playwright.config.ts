@@ -6,6 +6,8 @@ import { defineConfig, devices } from "@playwright/test";
  * (ver GameShell.startGameSession), asi que no hace falta levantar dev:api
  * ni una base de datos para estas capturas.
  */
+const visualPort = process.env.BDB_VISUAL_PORT ?? "5173";
+const visualURL = `http://localhost:${visualPort}`;
 export default defineConfig({
   testDir: "./tests/visual",
   snapshotPathTemplate: "{testDir}/__screenshots__/{testFilePath}/{arg}-{projectName}{ext}",
@@ -20,18 +22,18 @@ export default defineConfig({
   retries: 1,
   reporter: "list",
   use: {
-    baseURL: "http://localhost:5173",
+    baseURL: visualURL,
     navigationTimeout: 45_000,
   },
   expect: {
     toHaveScreenshot: { maxDiffPixelRatio: 0.01 },
   },
   webServer: {
-    command: "npm run dev",
-    url: "http://localhost:5173",
+    command: `npm run dev -- --port ${visualPort} --strictPort`,
+    url: visualURL,
     // Las pantallas que consultan la API se prueban con rutas interceptadas.
     // Esta URL habilita el cliente HTTP sin requerir levantar una API real.
-    env: { ...process.env, VITE_API_URL: "http://localhost:5173/api" },
+    env: { ...process.env, VITE_API_URL: `${visualURL}/api` },
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,
   },

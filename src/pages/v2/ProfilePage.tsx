@@ -13,19 +13,20 @@ import { Modal } from "@/components/ui/Modal";
 import { useLocalIdentity } from "@/hooks/useLocalIdentity";
 import { useIdentityEditor } from "@/hooks/useIdentityEditor";
 import { useV2I18n } from "@/hooks/useV2I18n";
-import { apiGetUserSummary, apiGetUserBadges, apiGetRankingPage, apiSetFeaturedBadges, apiDeleteAccount, type UserSummary, type UserBadges, type RankingEntry, type FeaturedSlot } from "@/lib/api";
+import { apiGetUserSummaryResult, apiGetUserBadges, apiGetRankingPage, apiSetFeaturedBadges, apiDeleteAccount, type UserSummary, type UserBadges, type RankingEntry, type FeaturedSlot } from "@/lib/api";
 import { logout } from "@/lib/auth";
 import { resetForAccountSwitch } from "@/lib/stats";
 import { getIdentityToken } from "@/lib/identity";
 import { on, emit, Events } from "@/lib/events";
-import { accessPath, homePath, rankingPath } from "@/lib/routes";
+import { accessPath, homePath, rankingPath, accountPath } from "@/lib/routes";
 import { initialsOf } from "@/lib/v2/initials";
 import { badgeErrorKey } from "@/lib/v2/apiErrors";
 import { automaticSelection, selectableBadges, sanitizeSelection, toggleBadge, toggleGrouping, isSelected, isGrouped, sameSelection } from "@/lib/v2/badgeSelection";
 import { ProfileDetails } from "@/components/v2/ProfileDetails";
+import {ErrorState} from '@/components/v2/ErrorState';
 import { GoogleAccountStatus } from "@/components/v2/GoogleAccountStatus";
 
-type Data = { userId: string; summary: UserSummary | null; badges: UserBadges | null; monthly: RankingEntry | null; rankingLoaded: boolean };
+type Data = { userId: string; summary: UserSummary | null; badges: UserBadges | null; monthly: RankingEntry | null; rankingLoaded: boolean; status: number };
 
 export function ProfilePage() {
  const { t, locale } = useV2I18n();
@@ -40,9 +41,9 @@ export function ProfilePage() {
   if (!userId) { setData(null); setLoading(false); return; }
   let cancelled = false;
   setLoading(true);
-  void Promise.all([apiGetUserSummary(userId), apiGetUserBadges(userId), apiGetRankingPage("monthly", {limit: 1, offset: 0, userId})])
+  void Promise.all([apiGetUserSummaryResult(userId), apiGetUserBadges(userId), apiGetRankingPage("monthly", {limit: 1, offset: 0, userId})])
    .then(([summary, badges, ranking]) => {
-    if (!cancelled) { setData({userId, summary, badges, monthly: ranking?.me ?? null, rankingLoaded: ranking !== null}); setLoading(false); }
+    if (!cancelled) { setData({userId, summary: summary.ok ? summary.data : null, status: summary.ok ? 0 : summary.status, badges, monthly: ranking?.me ?? null, rankingLoaded: ranking !== null}); setLoading(false); }
    });
   return () => { cancelled = true; };
  }, [userId, version]);
@@ -64,7 +65,7 @@ export function ProfilePage() {
   <ProfileTabs active="profile"/>
   {!identity || loading ? <div className="v2-skeleton" style={{height: 180}} aria-busy="true" aria-label="Cargando estadísticas"/> :
    !userId ? <section className="panel v2-empty"><h2>Tu recorrido empieza aquí</h2><Link to={accessPath(locale)} className="primary">Confirma tu piloto</Link></section> :
-   !summary ? <section className="panel v2-empty" role="alert"><p>No pudimos cargar tus estadísticas.</p><button className="secondary" onClick={() => setVersion(n => n + 1)}>Reintentar</button></section> : <>
+   !summary ? <ErrorState status={current?.status} onRetry={() => setVersion(n => n + 1)}/> : <>
     <section className="month-score panel"><div><span>Tu mes en puntos</span><strong>{current?.rankingLoaded ? number(current.monthly?.points ?? 0) : "—"}</strong><p>En el ranking solo aparecen los puntos que cumplen la política de IP.</p></div><Link to={rankingPath(locale)} className="secondary">{current?.monthly ? "#" + number(current.monthly.rank) : "Ver clasificación"}</Link></section>
     <section className="stats-ribbon">{cards.map(card => <div key={card.label}><strong>{card.value}</strong><span>{card.label}</span></div>)}</section>
     <section className="streak-panel panel"><div className="section-label"><h2>Vuelta a vuelta</h2><span>{summary.todayWon} retos ganados hoy</span></div><div className="v2-week">{summary.lastDays.map(day => <div key={day.dateKey} className={day.won > 0 ? "is-won" : ""} title={day.dateKey + ": " + day.won + " ganados"}><span>{new Intl.DateTimeFormat(locale, {weekday: "short", timeZone: "UTC"}).format(new Date(day.dateKey + "T12:00:00Z"))}</span><b>{day.won > 0 ? "✓" : "·"}</b></div>)}</div></section>
@@ -74,7 +75,7 @@ export function ProfilePage() {
  </V2Page>;
 }
 
-function IdentitySection({ badges, badgesLoading, onRefresh }: { badges: UserBadges | null; badgesLoading: boolean; onRefresh: () => void }) {
+export function IdentitySection({ badges, badgesLoading, onRefresh }: { badges: UserBadges | null; badgesLoading: boolean; onRefresh: () => void }) {
  const { t, locale } = useV2I18n();
  const identity = useLocalIdentity();
  const editor = useIdentityEditor();
@@ -104,6 +105,7 @@ function IdentitySection({ badges, badgesLoading, onRefresh }: { badges: UserBad
   </form>
   {identity?.hasToken && (badges ? <BadgeEditor data={badges} userId={identity.userId}/> : badgesLoading ? <div id="insignias" className="v2-skeleton" style={{height: 180}} aria-busy="true" aria-label="Cargando insignias"/> : <div id="insignias" className="badge-setting"><p>No pudimos cargar tus insignias.</p><button className="secondary" onClick={onRefresh}>Reintentar</button></div>)}
   <div className={"connected-account" + (identity?.loggedIn ? " is-google" : "")}>{identity?.loggedIn ? <GoogleAccountStatus email={identity.email}/> : <span>Modo visitante</span>}{identity?.loggedIn ? <button onClick={leaveAccount}>Cerrar sesión</button> : <Link to={accessPath(locale)}>Conectar con Google</Link>}</div>
+  <Link className="v2-account-access" to={accountPath(locale)}>Perfil y cuenta</Link>
   {identity?.hasToken && <button className="delete-account" onClick={() => {setDeleteOpen(true); setDeleteWord(""); setDeleteError(false);}}>Eliminar cuenta</button>}
   <Modal open={deleteOpen} onClose={() => {if (!deleting) setDeleteOpen(false);}} title="Eliminar cuenta">
    <div className="bdb-v2 v2-account-modal"><p>Se borrarán tu progreso, insignias y amigos. Esta acción no se puede deshacer.</p><label className="v2-delete-label">Escribe ELIMINAR<input value={deleteWord} onChange={e => setDeleteWord(e.target.value)} autoComplete="off" disabled={deleting}/></label>

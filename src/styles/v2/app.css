@@ -122,3 +122,50 @@
 .bdb-v2 .connected-account.is-google>button{flex:none;color:#d6bac7;font:600 11px var(--soft);padding:9px 11px;border:1px solid #684553;border-radius:9px;background:#ffffff03}
 .bdb-v2 .connected-account.is-google>button:hover{border-color:#aa7885;background:#ffffff07}
 .bdb-v2 .access-card .v2-google-done{display:flex;justify-content:center;align-items:center;margin:20px 0;min-height:43px}
+
+/* Application integration of the approved home; stable hit targets. */
+.bdb-home{min-height:0}
+.bdb-home .home-artwork{display:contents}
+.bdb-home .progress-pips i.is-complete{background:#74ba96;box-shadow:0 0 8px #74ba9630}
+.bdb-home .game-action.is-won{color:#90caa3}
+.bdb-home .home-rank{transform:none!important}
+.bdb-home .home-rank-slot{position:relative;display:block;min-width:0;flex:1}
+.bdb-home .home-rank-measure{position:absolute;inset:0;visibility:hidden;overflow:hidden;white-space:nowrap;font:600 14px Manrope}
+.bdb-home .home-rank-value{width:100%;font-size:12px}
+.bdb-home.v2-site-header,.bdb-home.v2-site-footer{background:#0b0b0b;padding:0;min-height:0}
+.bdb-home.v2-site-header{position:relative;z-index:35}
+.bdb-home.v2-site-header .wrap,.bdb-home.v2-site-footer .wrap{margin:auto}
+.bdb-home.v2-site-header .nav{position:relative;overflow:visible;min-height:80px;gap:12px;grid-template-columns:auto minmax(0,1fr) auto auto auto auto}
+.bdb-home.v2-site-header .brand{white-space:nowrap}
+.bdb-home.v2-site-header .language-menu{max-height:360px;overflow:auto}
+.bdb-home.v2-site-header .language-option .flag{flex:none;width:24px;height:16px}
+.bdb-home.v2-site-header .language-flag .flag{width:24px;height:17px}
+.bdb-home.v2-site-header .v2-header-life{align-self:center}
+.bdb-home .motion-control{z-index:20}
+.bdb-v2 .reading-section{scroll-margin-top:24px}
+@media(min-width:641px){.bdb-home.v2-site-header .mobile-menu-toggle{display:none}}
+@media(max-width:900px){.bdb-home.v2-site-header .navlinks{gap:12px;font-size:10px}.bdb-home.v2-site-header .language-wrap{width:105px}.bdb-home.v2-site-header .nav{column-gap:10px}}
+@media(max-width:640px){.bdb-home.v2-site-header .nav{display:flex;min-height:72px}.bdb-home.v2-site-header .brand{margin-right:auto}.bdb-home.v2-site-header .header-support{display:none}.bdb-home.v2-site-header .account .outline{display:none}.bdb-home.v2-site-header .language-wrap{width:96px}.bdb-home.v2-site-header .mobile-menu-toggle{display:flex;flex:none}.bdb-home .edition{gap:14px;flex-wrap:wrap}.bdb-home .date{max-width:160px;text-align:right;line-height:1.5}.bdb-home .streak-timeline{margin-left:auto}.bdb-home.v2-site-footer .footer-bottom{flex-wrap:wrap}}
+
+
+/* Real account and callback states use the approved account palette. */
+.bdb-v2 .v2-account-page .identity-title,.bdb-v2 .v2-account-page .v2-account-access{display:none}
+.bdb-v2 .v2-account-access{display:inline-block;font:600 13px var(--small-font);color:#c5bcc0;margin-top:14px}
+.bdb-v2 .v2-auth-state{min-height:65vh;display:flex;flex-direction:column;justify-content:center}
+.bdb-v2 .v2-auth-google{width:68px;height:68px;border:1px solid #343036;border-radius:22px;display:grid;place-items:center;margin:0 auto 24px;background:#19171a}
+.bdb-v2 .v2-auth-google svg{width:30px;height:30px}
+.bdb-v2 .v2-lives-content{padding:10px 4px;text-align:center;font-family:Manrope,sans-serif}
+.bdb-v2 .v2-lives-content>div{background:#d6617920;color:#ef8da1;border:1px solid #d6617930;border-radius:20px}
+.bdb-v2 .v2-lives-content>p:first-of-type{font-family:Outfit,sans-serif;font-size:22px}
+.bdb-v2 .v2-lives-content>p{line-height:1.7}
+
+.bdb-home .v2-mobile-language>summary{display:flex;align-items:center;gap:10px;padding:14px 7px;font:600 13px Manrope,sans-serif;cursor:pointer}
+.bdb-home .v2-mobile-language>summary .flag{width:22px;height:15px}
+.bdb-home .v2-mobile-language .mobile-language-options{max-height:210px;overflow:auto}
+.bdb-home .v2-mobile-language .mobile-language-options button{display:flex;align-items:center;gap:7px;min-height:36px}
+.bdb-home .v2-mobile-language .mobile-language-options .flag{width:18px;height:12px}
+
+.bdb-home.v2-site-header .navlinks a:first-child{border-bottom-color:transparent}
+.bdb-home.v2-site-header .navlinks a[aria-current=page]{border-bottom-color:var(--orange)}
+
+.bdb-home .home-rank-measure{font-size:12px}

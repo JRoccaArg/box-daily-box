@@ -98,8 +98,9 @@ async function apiFetch<T>(
   options: RequestInit = {},
   timeoutMs = 8000,
   preserveClientErrors = false,
+  onFailure?: (status: number) => void,
 ): Promise<T | null> {
-  if (!API_URL) return null;
+  if (!API_URL) { onFailure?.(0); return null; }
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -123,8 +124,9 @@ async function apiFetch<T>(
     });
 
     if (!res.ok) {
+      onFailure?.(res.status);
       const body = await res.json().catch(() => ({}));
-      console.warn(`[API] ${path} → ${res.status}:`, body);
+      console.warn(`[API] ${path} → ${res.status}`);
       if (preserveClientErrors && res.status >= 400 && res.status < 500) {
         return body as T;
       }
@@ -133,6 +135,7 @@ async function apiFetch<T>(
 
     return (await res.json()) as T;
   } catch (err) {
+    onFailure?.((err as Error).name === 'AbortError' ? 408 : 0);
     // No romper la app si el backend esta caido.
     if ((err as Error).name !== "AbortError") {
       console.warn(`[API] ${path} error:`, err);
@@ -157,6 +160,11 @@ function identityHeaders(): Record<string, string> {
 }
 
 // ─── Endpoints ──────────────────────────────────────────────────────
+
+/** Server clock; daily challenges retain their existing local-midnight boundary. */
+export function apiGetClock(): Promise<{timestamp: string} | null> {
+  return apiFetch('/health');
+}
 
 /** Resultado del intento de iniciar un reto. */
 export type StartResult =
@@ -360,6 +368,16 @@ export async function apiGetUserSummary(userId: string): Promise<UserSummary | n
     `/user/${encodeURIComponent(userId)}/summary?${params.toString()}`,
     { headers: identityHeaders() },
   );
+}
+
+/** Status only: no server messages, stack traces or account details reach error UI. */
+export async function apiGetUserSummaryResult(userId: string): Promise<
+  {ok: true; data: UserSummary} | {ok: false; status: number}
+> {
+  let status = 0;
+  const params = new URLSearchParams({today: dateKey()});
+  const data = await apiFetch<UserSummary>(`/user/${encodeURIComponent(userId)}/summary?${params}`, {headers: identityHeaders()}, 8000, false, code => {status=code;});
+  return data ? {ok:true,data} : {ok:false,status};
 }
 
 /**

@@ -12,11 +12,16 @@ import { consumeOAuthState, consumePostLoginPath, handleGoogleCallback } from "@
 import { announceAchievements } from "@/lib/achievements";
 import { safeReturnPath } from "@/lib/routes";
 import { useI18n } from "@/context";
+import { Head } from 'vite-react-ssg';
+import { Link } from 'react-router-dom';
+import { V2Page } from '@/components/v2/V2Page';
+import { GoogleMark } from '@/components/v2/GoogleMark';
+import { accessPath } from '@/lib/routes';
 
 export function AuthCallback(): JSX.Element {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [status, setStatus] = useState<"loading" | "error">("loading");
   const [errorKey, setErrorKey] = useState("");
   // El efecto depende de `t`, que cambia cuando AuthCallbackRoot pasa del
@@ -38,14 +43,12 @@ export function AuthCallback(): JSX.Element {
     if (error) {
       setStatus("error");
       setErrorKey("auth.cancelled");
-      window.setTimeout(() => navigate("/"), 2000);
       return;
     }
 
     if (!code) {
       setStatus("error");
       setErrorKey("auth.no_code");
-      window.setTimeout(() => navigate("/"), 2000);
       return;
     }
 
@@ -54,7 +57,6 @@ export function AuthCallback(): JSX.Element {
     if (!stateOk) {
       setStatus("error");
       setErrorKey("auth.failed");
-      window.setTimeout(() => navigate("/"), 2500);
       return;
     }
 
@@ -63,7 +65,6 @@ export function AuthCallback(): JSX.Element {
       if (!result) {
         setStatus("error");
         setErrorKey("auth.failed");
-        window.setTimeout(() => navigate("/"), 2500);
         return;
       }
       // Logros que se desbloquearon al fusionar/importar el historial en esta
@@ -77,24 +78,26 @@ export function AuthCallback(): JSX.Element {
   }, [searchParams, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-950 text-neutral-100 p-8">
-      <div className="max-w-md w-full text-center">
+    <V2Page>
+      <Head><title>{t(status==='error'?'auth.error':'auth.loading')} · Box Daily Box</title><meta name="robots" content="noindex, nofollow"/></Head>
+      <section className="error-scene v2-auth-state" aria-live="polite">
         {status === "loading" && (
           <>
-            <div className="animate-spin h-12 w-12 border-4 border-neutral-700 border-t-red-500 rounded-full mx-auto mb-4" />
-            <h1 className="text-2xl font-semibold mb-2">{t("auth.loading")}</h1>
-            <p className="text-neutral-400">{t("auth.linking")}</p>
+            <div className="v2-auth-google"><GoogleMark/></div>
+            <h1>{t("auth.loading")}</h1>
+            <p>{t("auth.linking")}</p>
+            <div className="v2-skeleton" style={{height: 5, maxWidth: 180, margin: '24px auto'}}/>
           </>
         )}
         {status === "error" && (
           <>
-            <div className="text-5xl mb-4">⚠️</div>
-            <h1 className="text-2xl font-semibold mb-2">{t("auth.error")}</h1>
-            <p className="text-neutral-400 mb-4">{t(errorKey)}</p>
-            <p className="text-sm text-neutral-500">{t("auth.redirecting")}</p>
+            <div className="error-symbol" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M32 8 57 52H7Z"/><path d="M32 24v12m0 8v1"/></svg></div>
+            <h1>{t("auth.error")}<span>.</span></h1>
+            <p>{t(errorKey)}</p>
+            <Link className="primary" to={accessPath(locale)}>Volver al acceso</Link>
           </>
         )}
-      </div>
-    </div>
+      </section>
+    </V2Page>
   );
 }

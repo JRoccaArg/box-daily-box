@@ -18,17 +18,19 @@ export function LivesModal({
   open,
   onClose,
   lives,
+  redesigned = false,
 }: {
   open: boolean;
   onClose: () => void;
   lives: LivesInfo | null;
+  redesigned?: boolean;
 }) {
   const { t } = useI18n();
   const balance = lives?.balance ?? 0;
 
   return (
     <Modal open={open} onClose={onClose} title={t("lives.header_title")}>
-      <div className="text-center">
+      <div className={redesigned ? 'bdb-v2 v2-lives-content' : 'text-center'}>
         <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-sector-purple/15 text-sector-purple">
           <Heart size={26} />
         </div>
