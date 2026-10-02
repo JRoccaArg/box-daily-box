@@ -16,7 +16,7 @@ const content: InfoContent = {
     polewordle:
       "Es la versión Fórmula 1 del clásico juego de adivinar palabras. Tenés que descubrir el apellido de un piloto en 6 intentos. Cada letra se marca en verde, amarillo o gris según esté en la posición correcta, en otra posición, o no esté en el apellido.",
     "el-intruso":
-      "Se muestran diez pilotos de Fórmula 1. Nueve de ellos comparten algo en común (una regla oculta: puede ser la escudería, la nacionalidad, una década, etc.) y uno no encaja. Tu trabajo es encontrar al intruso.",
+      "Se muestran diez pilotos de Fórmula 1. Nueve comparten una característica oculta relacionada con una escudería, campeonatos, victorias, poles o podios. Encuentra al piloto que no cumple esa regla.",
     "parrilla-bingo":
       "Una grilla de 3x3 donde cada celda cruza una escudería con una condición (por ejemplo, \"campeón del mundo\" o \"corrió en los años 90\"). Tenés que completar cada celda con un piloto real que cumpla ambas condiciones a la vez, sin repetir pilotos.",
     "gp-resultado":
@@ -31,7 +31,7 @@ const content: InfoContent = {
 
   difficultyHeading: "Dificultades",
   difficultyIntro:
-    "Cada juego se puede jugar en 4 niveles de dificultad. La dificultad define de qué época salen los pilotos: cuanto más difícil, más atrás en la historia de la Fórmula 1 hay que conocer.",
+    "Los niveles disponibles dependen del juego. Career Path y Team Radio ofrecen Fácil, Medio y Difícil; los demás también incluyen Leyenda. La dificultad cambia los datos y el desafío. En Team Radio, cada nivel utiliza un período distinto y cambia lo parecidas que son las opciones.",
 
   scoringHeading: "Cómo se calcula el puntaje",
   scoringIntro:

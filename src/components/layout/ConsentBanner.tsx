@@ -14,7 +14,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/context";
 import { privacyPath } from "@/lib/routes";
-import { Button } from "@/components/ui/Button";
 import { setConsent, shouldShowBanner, onConsentChanged } from "@/lib/consent";
 
 export function ConsentBanner() {
@@ -32,14 +31,14 @@ export function ConsentBanner() {
   if (!visible) return null;
 
   return (
-    <div
+    <div className="bdb-v2"><div
       role="dialog"
       aria-live="polite"
       aria-label={t("consent.title")}
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-asphalt-800/95 backdrop-blur-sm animate-rise"
+      className="cookie-preview"
     >
-      <div className="mx-auto flex max-w-4xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:gap-5 sm:py-3.5">
-        <p className="flex-1 text-xs leading-relaxed text-ink sm:text-[13px]">
+      <div className="cookie-preview-copy"><h2>{t('consent.title')}</h2>
+        <p>
           {t("consent.message")}{" "}
           <Link
             to={privacyPath(locale)}
@@ -48,15 +47,14 @@ export function ConsentBanner() {
             {t("footer.privacy")}
           </Link>
         </p>
-        <div className="flex shrink-0 gap-2.5">
-          <Button variant="outline" size="sm" onClick={() => setConsent("denied")}>
+      </div><div className="cookie-preview-actions">
+          <button type="button" onClick={() => setConsent("denied")}>
             {t("consent.reject")}
-          </Button>
-          <Button variant="primary" size="sm" onClick={() => setConsent("granted")}>
+          </button>
+          <button type="button" onClick={() => setConsent("granted")}>
             {t("consent.accept")}
-          </Button>
+          </button>
         </div>
-      </div>
-    </div>
+    </div></div>
   );
 }

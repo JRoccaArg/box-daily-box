@@ -6,7 +6,7 @@
   "description": "Daily F1 minigames. One puzzle per day. No signup.",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && npm run gen:sitemap && vite-react-ssg build",
+    "build": "tsc -b && npm run gen:sitemap && vite-react-ssg build && node scripts/create-404.mjs",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc -b --noEmit",
@@ -19,7 +19,7 @@
     "dev:api": "tsx watch --tsconfig tsconfig.app.json src/api/index.ts",
     "seed:badges": "tsx --tsconfig tsconfig.app.json scripts/seed-badges.ts",
     "seed:duels": "tsx --tsconfig tsconfig.app.json scripts/seed-duels.ts",
-    "test:v2": "tsx --tsconfig tsconfig.app.json scripts/test-ranking-paginated.ts && tsx --tsconfig tsconfig.app.json scripts/test-v2-domain.ts"
+    "test:v2": "tsx --tsconfig tsconfig.app.json scripts/test-ranking-paginated.ts && tsx --tsconfig tsconfig.app.json scripts/test-v2-domain.ts && tsx --tsconfig tsconfig.app.json scripts/test-api-cors.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.2.0",

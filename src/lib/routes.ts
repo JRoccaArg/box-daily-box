@@ -77,6 +77,10 @@ export function profilePath(locale: Locale): string {
   return `/${locale}/perfil`;
 }
 
+export function accountPath(locale: Locale): string {
+  return `/${locale}/perfil/cuenta`;
+}
+
 /** Logros, ej: achievementsPath("es") -> "/es/perfil/logros" */
 export function achievementsPath(locale: Locale): string {
   return `/${locale}/perfil/logros`;

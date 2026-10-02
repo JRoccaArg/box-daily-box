@@ -68,7 +68,9 @@ test.describe("achievements", () => {
 
     await page.goto("/es/");
     await expect(page.getByRole("button", { name: /Debug/ })).toHaveCount(0);
-    await page.getByRole("button", { name: "Ver estadisticas" }).click();
+    const menu = page.getByRole("button", {name: "Abrir menú"});
+    if ((page.viewportSize()?.width ?? 1280) <= 640) await menu.click();
+    await page.getByRole("link", { name: "Mi piloto", exact: true }).click();
     await page.getByRole("link", { name: "Logros", exact: true }).click();
 
     await expect(page.getByRole("heading", { name: "Logros." })).toBeVisible();

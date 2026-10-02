@@ -4,7 +4,7 @@ import type { RouteRecord } from "vite-react-ssg";
 import { I18nProvider } from "@/context";
 import { StatsProvider } from "@/context";
 import { Layout } from "@/components/layout/Layout";
-import { Home } from "@/pages/Home";
+import { HomePage } from "@/pages/v2/HomePage";
 import { GamePage } from "@/pages/GamePage";
 import { DuelPage } from "@/pages/DuelPage";
 import { ChallengePage } from "@/pages/ChallengePage";
@@ -18,6 +18,9 @@ import { AccessPage } from "@/pages/v2/AccessPage";
 import { ProfilePage } from "@/pages/v2/ProfilePage";
 import { AchievementsPage } from "@/pages/v2/AchievementsPage";
 import { FriendsPage } from "@/pages/v2/FriendsPage";
+import { NotFoundPage } from "@/pages/v2/NotFoundPage";
+import { AccountPage } from "@/pages/v2/AccountPage";
+import { RouteErrorPage } from "@/pages/v2/RouteErrorPage";
 import { GAMES } from "@/components/games/registry";
 import { SUPPORTED_LOCALES, type Locale } from "@/i18n/types";
 import { getStoredLocale } from "@/i18n";
@@ -76,13 +79,14 @@ function AuthCallbackRoot() {
  * no cambian: solo cambia de dónde sale el prefijo de idioma en la URL.
  */
 export const routes: RouteRecord[] = [
-  { path: "/auth/callback", Component: AuthCallbackRoot },
+  { path: "/auth/callback", Component: AuthCallbackRoot, ErrorBoundary: RouteErrorPage },
   {
     path: "/:lang",
     Component: LangRoot,
+    ErrorBoundary: RouteErrorPage,
     getStaticPaths: () => [...SUPPORTED_LOCALES],
     children: [
-      { index: true, Component: Home },
+      { index: true, Component: HomePage },
       {
         path: "juego/:gameId",
         Component: GamePage,
@@ -114,11 +118,14 @@ export const routes: RouteRecord[] = [
       { path: "perfil", Component: ProfilePage },
       { path: "perfil/logros", Component: AchievementsPage },
       { path: "perfil/amigos", Component: FriendsPage },
+      { path: "perfil/cuenta", Component: AccountPage },
+      { path: "no-encontrado", Component: NotFoundPage },
+      { path: "*", Component: NotFoundPage },
     ],
   },
   // "/" (x-default): redirige al idioma preferido. Se prerenderiza con
   // contenido real (enlaces a todos los idiomas) para crawlers/no-JS.
-  { path: "/", Component: RootRedirect },
+  { path: "/", Component: RootRedirect, ErrorBoundary: RouteErrorPage },
   // Link PÚBLICO de un desafío, sin idioma (es lo que se comparte): RootRedirect
   // lo manda a "/<idioma de quien lo abre>/reto/<id>".
   { path: "/reto/:challengeId", Component: RootRedirect },

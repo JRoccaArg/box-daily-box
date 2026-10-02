@@ -13,6 +13,7 @@
 import "dotenv/config";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import { apiCorsOptions } from './cors';
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import {
@@ -153,18 +154,7 @@ async function start(): Promise<void> {
   });
 
   // ─── CORS estricto ────────────────────────────────────────────────
-  await app.register(cors, {
-    origin: ALLOWED_ORIGINS,
-    methods: ["GET", "POST"],
-    // `X-Identity-Token`: los GET autenticados (historial, ranking propio,
-    // amigos) mandan el token de identidad por header y ya no por query string,
-    // para que no quede escrito en los logs de acceso ni en el historial del
-    // navegador. Al declarar `allowedHeaders` explícitamente hay que listarlo,
-    // o el navegador bloquea el preflight.
-    allowedHeaders: ["Content-Type", "X-Identity-Token"],
-    credentials: false, // no usamos cookies
-    maxAge: 86400,
-  });
+  await app.register(cors, apiCorsOptions(ALLOWED_ORIGINS));
 
   // ─── Rate limiting global ─────────────────────────────────────────
   // 100 req/min por IP: suficiente para uso normal, frena floods.

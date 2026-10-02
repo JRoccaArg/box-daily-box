@@ -1,9 +1,18 @@
 import { test, expect } from "./fixtures";
+import {mockV2Api} from './v2-api';
 
 test.describe("home", () => {
   test("renders the daily challenges list", async ({ page }) => {
-    await page.goto("/es/");
-    await expect(page.getByRole("heading", { name: "Ocho desafios. Un dia." })).toBeVisible();
+    await mockV2Api(page);
+    await page.emulateMedia({reducedMotion:'reduce'});
+    await page.goto("/es/?circuit=monaco&safety=0");
+    await expect(page.getByRole("heading", { name: "LA F1 SE SABE DEMÚESTRALO." })).toBeVisible();
+    await expect(page.locator('.home-rank')).toContainText('#1020');
+    await expect(page.locator('.streak-count')).toHaveText('7');
+    await expect(page.locator('.progress-games strong')).toContainText('3');
+    await expect(page.locator('#circuit-stage svg')).toBeVisible();
+    await expect(page.locator('.bdb-home .game')).toHaveCount(8);
+    await page.evaluate(()=>document.fonts.ready);
     await expect(page).toHaveScreenshot("home.png", { fullPage: true });
   });
 
