@@ -124,7 +124,7 @@ export function BadgeGallery({ userId }: BadgeGalleryProps) {
       return;
     }
     setData((d) => (d ? { ...d, featured: result.featured } : d));
-    setFeatured(result.featured);
+    setFeatured(result.featured ?? []);
     setSavedFlash(true);
   }
 

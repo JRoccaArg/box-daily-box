@@ -5,9 +5,22 @@
 // nunca pueden divergir entre lo que indexa Google y lo que ve el usuario.
 
 import { translate } from "@/i18n";
+import { v2Copy } from "@/lib/v2/copy";
 import type { Locale } from "@/i18n";
 import { SUPPORTED_LOCALES } from "@/i18n/types";
-import { homePath, gamePath, termsPath, privacyPath, infoPath, contactPath } from "@/lib/routes";
+import {
+  homePath,
+  gamePath,
+  termsPath,
+  privacyPath,
+  infoPath,
+  contactPath,
+  rankingPath,
+  accessPath,
+  profilePath,
+  achievementsPath,
+  friendsPath,
+} from "@/lib/routes";
 import { getInfoContent } from "@/content/info";
 
 export const SITE_URL = "https://www.boxdailybox.com";
@@ -53,7 +66,19 @@ export type SeoRoute =
   | { kind: "game"; gameId: string }
   | { kind: "legal"; page: "terms" | "privacy" }
   | { kind: "info" }
-  | { kind: "contact" };
+  | { kind: "contact" }
+  | { kind: "account"; page: AccountPage };
+
+/** Páginas de cuenta del rediseño v2: personales, siempre noindex. */
+export type AccountPage = "ranking" | "access" | "profile" | "achievements" | "friends";
+
+const ACCOUNT_PATH: Record<AccountPage, (l: Locale) => string> = {
+  ranking: rankingPath,
+  access: (l) => accessPath(l),
+  profile: profilePath,
+  achievements: achievementsPath,
+  friends: friendsPath,
+};
 
 export type SeoAlternate = { locale: Locale; href: string };
 
@@ -81,6 +106,8 @@ function pathFor(locale: Locale, route: SeoRoute): string {
       return infoPath(locale);
     case "contact":
       return contactPath(locale);
+    case "account":
+      return ACCOUNT_PATH[route.page](locale);
   }
 }
 
@@ -114,6 +141,10 @@ export function buildSeo(locale: Locale, route: SeoRoute): SeoData {
       title = translate(locale, "seo.contact.title");
       description = translate(locale, "seo.contact.description");
       break;
+    case "account":
+      title = v2Copy(`seo.account.${route.page}.title`) ?? "Box Daily Box";
+      description = v2Copy("seo.account.description") ?? "";
+      break;
   }
 
   const path = pathFor(locale, route);
@@ -123,7 +154,10 @@ export function buildSeo(locale: Locale, route: SeoRoute): SeoData {
   // Al ir con noindex, no emitimos hreflang (Google los ignora para noindex) y
   // el canonical apunta a sí misma. Siguen siendo 100% públicas y válidas para
   // Google OAuth.
-  const isLegal = route.kind === "legal";
+  // Mismo trato para las páginas de cuenta del rediseño (ranking, acceso,
+  // perfil, logros, amigos): su contenido depende de quién las mira y no
+  // aporta a búsquedas.
+  const isLegal = route.kind === "legal" || route.kind === "account";
 
   return {
     title,

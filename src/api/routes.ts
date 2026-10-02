@@ -14,6 +14,7 @@ import {
   isValidUserId,
   isValidDateKey,
   isValidMonth,
+  isValidYear,
   isValidCountry,
   sanitizeDisplayName,
   isPlausibleToken,
@@ -23,7 +24,9 @@ import { signIdentityToken, ownsIdentity } from "./identity-token";
 import { TOKEN_SECRET, ADMIN_SECRET } from "./secrets";
 import {
   awardMonthlyPodium,
+  awardAnnualPodium,
   MonthNotClosedError,
+  YearNotClosedError,
   deriveDisplayBadges,
   normalizeReferenceMonths,
   validateFeaturedSelection,
@@ -32,7 +35,17 @@ import {
   type FeaturedSlot,
 } from "./badges";
 import { resolveNow, isStagingDebugEnabled } from "./debugDate";
-import { bumpStreakOnWin, displayStreak, toDateKey } from "./streak";
+import { bumpStreakOnWin } from "./streak";
+import {
+  loadRankingRows,
+  paginateRanking,
+  parseRankingQuery,
+  RankingSnapshotCache,
+  toRankingEntry,
+  type RankedRow,
+  type RankingKind,
+} from "./ranking";
+import { buildUserSummary, loadDayCounts } from "./summary";
 import { awardAchievements, getAchievementProgress } from "./achievements";
 import {
   DebugAchievementInputError,
@@ -207,6 +220,26 @@ function verifyToken(token: string): SessionPayload | null {
 const dbq: QueryFn = (sql, params) => query(sql, params as any[]);
 
 /**
+ * Snapshots en memoria del ranking público (src/api/ranking.ts), con TTL por
+ * tipo. Mensual y anual viven solo con su TTL; el diario además se invalida al
+ * escribirse un intento que lo cambia (ver `invalidateDailyRanking`).
+ */
+const rankingCache = new RankingSnapshotCache((kind, periodStart) =>
+  loadRankingRows(dbq, kind, periodStart),
+);
+
+/**
+ * Descarta el snapshot del ranking DIARIO de esa fecha, para que quien termina
+ * una partida se vea enseguida. Se llama DESPUÉS del commit, desde los cierres
+ * que escriben un intento del reto diario: reto diario, segunda oportunidad y
+ * desafío por link que cuenta como diario. (El login con import de intentos,
+ * en auth.ts, vive con el TTL.)
+ */
+function invalidateDailyRanking(dateKey: string): void {
+  rankingCache.invalidate("daily", dateKey);
+}
+
+/**
  * Día del reto: la fecha LOCAL del cliente si es válida y cae a ±1 día del UTC
  * del server; si no, la del server.
  */
@@ -224,8 +257,8 @@ function resolveChallengeDay(req: FastifyRequest, clientDateKey: unknown): strin
  * PRUEBA DE PROPIEDAD (anti robo de cuenta). Responde 403 y devuelve false si
  * el userId pertenece a una cuenta existente y el cliente no probó que es suya.
  *
- * El userId es PÚBLICO: `/ranking/monthly` y `/ranking/daily` lo devuelven
- * para cada jugador. Antes, el arranque emitía un identityToken para
+ * El userId es PÚBLICO: `/ranking/daily`, `/ranking/monthly` y
+ * `/ranking/annual` lo devuelven para cada jugador. Antes, el arranque emitía un identityToken para
  * CUALQUIER userId recibido, sin verificar nada. Eso permitía dos ataques
  * encadenados a partir del ranking:
  *   1. Pedir el identityToken de otro jugador y tomar control de su cuenta
@@ -655,6 +688,10 @@ export async function finishChallenge(
       }
     }
 
+    // Un intento rankeado nuevo cambia el ranking diario de ese día (también
+    // una derrota: el ranking incluye a quien jugó y perdió con 0 puntos).
+    if (!duplicated && session.ranked) invalidateDailyRanking(session.today);
+
     // Si fue duplicado, leer el attempt original para devolver datos coherentes.
     let finalWon = flagged ? false : verifyResult.won;
     let finalPoints = flagged ? 0 : points;
@@ -802,150 +839,95 @@ async function computeDisplayBadgesForRanking(
   return map;
 }
 
-// ─── GET /ranking/monthly ───────────────────────────────────────────
+// ─── GET /ranking/daily | /ranking/monthly | /ranking/annual ────────
+
+/** Nombre del campo del período en la respuesta, por tipo de ranking. */
+const RANKING_PERIOD_FIELD: Record<RankingKind, "date" | "month" | "year"> = {
+  daily: "date",
+  monthly: "month",
+  annual: "year",
+};
+
+/**
+ * Handler común de los tres rankings (lógica en src/api/ranking.ts).
+ *
+ *  - Sin `limit` → respuesta LEGACY, idéntica a la de antes de paginar:
+ *    `{ date|month|year, top }` con la lista completa.
+ *  - Con `limit` → `{ date|month|year, total, offset, limit, top, me }`. `me`
+ *    es la entrada de `userId` (dato público: no requiere token) o null.
+ *
+ * Los badges se calculan solo para las entradas devueltas (página + me).
+ */
+async function serveRanking(
+  req: FastifyRequest,
+  reply: FastifyReply,
+  kind: RankingKind,
+): Promise<void> {
+  const now = resolveNow(req);
+  const params = parseRankingQuery(kind, (req.query ?? {}) as Record<string, unknown>, now);
+  const rows = await rankingCache.get(kind, params.periodStart);
+  const page = paginateRanking(rows, {
+    country: params.country,
+    limit: params.limit,
+    offset: params.limit === null ? 0 : params.offset,
+    userId: params.limit === null ? null : params.userId,
+  });
+
+  const forBadges: RankedRow[] = [...page.top];
+  if (page.me && !page.top.some((r) => r.userId === page.me?.userId)) forBadges.push(page.me);
+  const badgeMap = await computeDisplayBadgesForRanking(forBadges);
+
+  const todayKey = now.toISOString().slice(0, 10);
+  const entry = (r: RankedRow) => toRankingEntry(r, todayKey, badgeMap.get(r.userId) ?? []);
+  const period = { [RANKING_PERIOD_FIELD[kind]]: params.periodKey };
+
+  if (params.limit === null) {
+    reply.code(200).send({ ...period, top: page.top.map(entry) });
+    return;
+  }
+  reply.code(200).send({
+    ...period,
+    total: page.total,
+    offset: params.offset,
+    limit: params.limit,
+    top: page.top.map(entry),
+    me: page.me ? entry(page.me) : null,
+  });
+}
 
 export async function getRankingMonthly(
   req: FastifyRequest,
   reply: FastifyReply,
 ): Promise<void> {
   try {
-    const { month, country } = req.query as { month?: string; country?: string };
-    // Validar month: si es basura, usar mes actual.
-    const target = isValidMonth(month)
-      ? `${month}-01`
-      : resolveNow(req).toISOString().substring(0, 7) + "-01";
-
-    const countryFilter = isValidCountry(country) ? country : null;
-
-    // Rango del mes [primer día, primer día del mes siguiente).
-    // Usar rango en vez de date_trunc(columna) permite aprovechar el índice.
-    const monthStart = target; // YYYY-MM-01
-    const params: (string | null)[] = [monthStart];
-    let countryClause = "";
-    if (countryFilter) {
-      params.push(countryFilter);
-      countryClause = `AND u.country_code = $${params.length}`;
-    }
-
-    const topResult = await query(
-      `SELECT u.id, u.display_name, u.country_code, u.role, u.featured_badges,
-              u.current_streak, u.last_win_date,
-              SUM(a.points) as points,
-              COUNT(*) FILTER (WHERE a.won) as games_won,
-              COUNT(DISTINCT a.date_key) as days_played
-       FROM attempts a
-       JOIN users u ON a.user_id = u.id
-       WHERE NOT a.flagged AND a.ranked
-       AND a.date_key >= $1::date
-       AND a.date_key < ($1::date + INTERVAL '1 month')
-       ${countryClause}
-       GROUP BY u.id, u.display_name, u.country_code, u.role, u.featured_badges,
-                u.current_streak, u.last_win_date
-       ORDER BY points DESC, u.id ASC`,
-      params,
-    );
-
-    const todayKey = resolveNow(req).toISOString().slice(0, 10);
-    const rawTop = topResult.rows.map((row: any, idx: number) => ({
-      rank: idx + 1,
-      userId: row.id as string,
-      displayName: row.display_name as string,
-      countryCode: (row.country_code as string) || null,
-      points: Number(row.points ?? 0),
-      gamesWon: Number(row.games_won ?? 0),
-      daysPlayed: Number(row.days_played ?? 0),
-      role: (row.role as string) || "user",
-      featured: (row.featured_badges as FeaturedSlot[] | null) ?? null,
-      currentStreak: displayStreak(
-        Number(row.current_streak ?? 0),
-        toDateKey(row.last_win_date),
-        todayKey,
-      ),
-    }));
-
-    const badgeMap = await computeDisplayBadgesForRanking(rawTop);
-    const top = rawTop.map((e) => ({
-      rank: e.rank,
-      userId: e.userId,
-      displayName: e.displayName,
-      countryCode: e.countryCode,
-      points: e.points,
-      gamesWon: e.gamesWon,
-      daysPlayed: e.daysPlayed,
-      currentStreak: e.currentStreak,
-      displayBadges: badgeMap.get(e.userId) ?? [],
-    }));
-
-    reply.code(200).send({ month: target.substring(0, 7), top });
+    await serveRanking(req, reply, "monthly");
   } catch (err) {
     console.error("getRankingMonthly error:", err);
     reply.code(500).send({ error: "Error interno" });
   }
 }
 
-// ─── GET /ranking/daily ─────────────────────────────────────────────
-
 export async function getRankingDaily(
   req: FastifyRequest,
   reply: FastifyReply,
 ): Promise<void> {
   try {
-    const { date, country } = req.query as { date?: string; country?: string };
-    const target = isValidDateKey(date)
-      ? date
-      : resolveNow(req).toISOString().substring(0, 10);
-    const countryFilter = isValidCountry(country) ? country : null;
-
-    const topResult = await query(
-      `SELECT u.id, u.display_name, u.country_code, u.role, u.featured_badges,
-              u.current_streak, u.last_win_date,
-              SUM(a.points) as points,
-              COUNT(*) FILTER (WHERE a.won) as games_won
-       FROM attempts a
-       JOIN users u ON a.user_id = u.id
-       WHERE NOT a.flagged AND a.ranked
-       AND a.date_key = $1::date
-       ${countryFilter ? "AND u.country_code = $2" : ""}
-       GROUP BY u.id, u.display_name, u.country_code, u.role, u.featured_badges,
-                u.current_streak, u.last_win_date
-       ORDER BY points DESC, u.id ASC`,
-      countryFilter ? [target, countryFilter] : [target],
-    );
-
-    const todayKey = resolveNow(req).toISOString().slice(0, 10);
-    const rawTop = topResult.rows.map((row: any, idx: number) => ({
-      rank: idx + 1,
-      userId: row.id as string,
-      displayName: row.display_name as string,
-      countryCode: (row.country_code as string) || null,
-      points: Number(row.points ?? 0),
-      gamesWon: Number(row.games_won ?? 0),
-      daysPlayed: 1,
-      role: (row.role as string) || "user",
-      featured: (row.featured_badges as FeaturedSlot[] | null) ?? null,
-      currentStreak: displayStreak(
-        Number(row.current_streak ?? 0),
-        toDateKey(row.last_win_date),
-        todayKey,
-      ),
-    }));
-
-    const badgeMap = await computeDisplayBadgesForRanking(rawTop);
-    const top = rawTop.map((e) => ({
-      rank: e.rank,
-      userId: e.userId,
-      displayName: e.displayName,
-      countryCode: e.countryCode,
-      points: e.points,
-      gamesWon: e.gamesWon,
-      daysPlayed: e.daysPlayed,
-      currentStreak: e.currentStreak,
-      displayBadges: badgeMap.get(e.userId) ?? [],
-    }));
-
-    reply.code(200).send({ date: target, top });
+    await serveRanking(req, reply, "daily");
   } catch (err) {
     console.error("getRankingDaily error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/** Ranking del año calendario: mismas reglas que el mensual sobre [YYYY-01-01, +1 año). */
+export async function getRankingAnnual(
+  req: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  try {
+    await serveRanking(req, reply, "annual");
+  } catch (err) {
+    console.error("getRankingAnnual error:", err);
     reply.code(500).send({ error: "Error interno" });
   }
 }
@@ -1089,6 +1071,58 @@ export async function adminCloseMonth(
       return;
     }
     console.error("adminCloseMonth error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+// ─── POST /admin/badges/close-year ──────────────────────────────────
+
+/**
+ * Cierra un año y entrega el podio ANUAL (oro/plata/bronce). Espejo exacto de
+ * `adminCloseMonth`: mismo secreto admin en header, idempotente y solo-agrega.
+ * Normalmente no hace falta: el cron horario cierra solo el año anterior.
+ * Body: { year: 'YYYY' } (también se acepta el número).
+ */
+export async function adminCloseYear(
+  req: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  try {
+    const headerSecret = req.headers["x-admin-secret"];
+    const provided = typeof headerSecret === "string" ? headerSecret : "";
+    // Comparación timing-safe (igual que adminDebug).
+    const a = Buffer.from(String(provided));
+    const b = Buffer.from(ADMIN_SECRET);
+    const ok = a.length === b.length && timingSafeEqual(a, b);
+    if (!ok) {
+      reply.code(403).send({ error: "Acceso denegado" });
+      return;
+    }
+
+    const { year: rawYear } = (req.body ?? {}) as { year?: unknown };
+    const year = typeof rawYear === "number" ? String(rawYear) : rawYear;
+    if (!isValidYear(year)) {
+      reply.code(422).send({ error: "year inválido (formato YYYY)" });
+      return;
+    }
+
+    // Transacción: el cálculo del podio + los inserts idempotentes van atómicos.
+    const result = await transaction(async (client) =>
+      awardAnnualPodium((sql, params) => client.query(sql, params), year, resolveNow(req)),
+    );
+
+    reply.code(200).send({
+      year: result.year,
+      yearStart: result.yearStart,
+      awardedCount: result.awarded.length,
+      awarded: result.awarded,
+    });
+  } catch (err) {
+    if (err instanceof YearNotClosedError) {
+      reply.code(422).send({ error: "El año no está cerrado todavía" });
+      return;
+    }
+    console.error("adminCloseYear error:", err);
     reply.code(500).send({ error: "Error interno" });
   }
 }
@@ -1441,6 +1475,7 @@ export async function setFeaturedBadges(
         "UPDATE users SET featured_badges = NULL WHERE id = $1",
         [userId],
       );
+      rankingCache.clear();
       reply.code(200).send({ userId, featured: null });
       return;
     }
@@ -1465,6 +1500,7 @@ export async function setFeaturedBadges(
       "UPDATE users SET featured_badges = $1::jsonb WHERE id = $2",
       [JSON.stringify(validated.value), userId],
     );
+    rankingCache.clear();
 
     reply.code(200).send({ userId, featured: validated.value });
   } catch (err) {
@@ -1511,6 +1547,7 @@ export async function deleteAccount(
       reply.code(404).send({ error: "Usuario no encontrado" });
       return;
     }
+    rankingCache.clear();
     reply.code(200).send({ ok: true, userId });
   } catch (err) {
     console.error("deleteAccount error:", err);
@@ -1714,6 +1751,7 @@ export async function updateUserProfile(
     );
     const user = finalRow.rows[0];
 
+    rankingCache.clear();
     reply.code(200).send({
       userId: user.id,
       displayName: user.display_name,
@@ -1943,6 +1981,33 @@ export async function getUserRank(
     });
   } catch (err) {
     console.error("getUserRank error:", err);
+    reply.code(500).send({ error: "Error interno" });
+  }
+}
+
+/**
+ * GET /user/:userId/summary?today=YYYY-MM-DD
+ *
+ * Resumen personal del perfil (victorias, derrotas, hoy, rachas y últimos 7
+ * días) desde el historial completo del server; lógica en src/api/summary.ts.
+ * Solo el dueño (identityToken por header `X-Identity-Token`, igual que el
+ * resto de los GET de cuenta). `today` = el día local del cliente si es válido
+ * y cae a ±1 día del UTC del server; si no, el UTC.
+ */
+export async function getUserSummary(
+  req: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  try {
+    const { userId } = (req.params ?? {}) as { userId?: string };
+    if (!requireOwnership(reply, readIdentityToken(req), userId)) return;
+
+    const { today } = (req.query ?? {}) as { today?: unknown };
+    const todayKey = resolveChallengeDay(req, today);
+    const days = await loadDayCounts(dbq, userId);
+    reply.code(200).send(buildUserSummary(days, todayKey));
+  } catch (err) {
+    console.error("getUserSummary error:", err);
     reply.code(500).send({ error: "Error interno" });
   }
 }
@@ -3627,6 +3692,8 @@ async function finishSharedChallenge(
   }
   const countedAsDaily = rec.recorded && rec.countedAsDaily;
   const ranked = countedAsDaily && session.ranked;
+  // Pasó a ser su intento oficial del día y rankea: cambia el ranking diario.
+  if (ranked) invalidateDailyRanking(session.today);
 
   // Logros: mismas condiciones que el reto diario (victoria nueva, rankeada).
   let newAchievements: string[] = [];
@@ -3809,6 +3876,11 @@ async function finishSecondChanceSession(
       timeSeconds: scored.timeSeconds,
     });
   });
+
+  // La segunda oportunidad REEMPLAZA el intento perdido (puntos y también
+  // `ranked`, que puede pasar a false por la regla de IP), así que el ranking
+  // diario de ese día cambia aunque esta partida no rankee.
+  if (rec.recorded) invalidateDailyRanking(session.today);
 
   // Otra sesión de la misma segunda oportunidad ya la había cerrado (se retomó
   // tras un corte): vale el primer resultado, que es el que se devuelve.

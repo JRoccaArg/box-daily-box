@@ -30,6 +30,7 @@ import {
 import { dateKey } from "./seed";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+export const googleLoginAvailable = !!GOOGLE_CLIENT_ID;
 
 export type AuthResult = {
   userId: string;
@@ -97,11 +98,27 @@ export function consumeOAuthState(received: string | null): boolean {
   return !!received && !!saved && received === saved;
 }
 
+// A dónde volver después del login (la página desde la que se lo inició).
+// sessionStorage: sobrevive al ida y vuelta a Google en la misma pestaña.
+const POST_LOGIN_KEY = "bdb_post_login";
+
+/** Ruta interna a la que volver tras el login (y la borra). null si no hay. */
+export function consumePostLoginPath(): string | null {
+  try {
+    const path = sessionStorage.getItem(POST_LOGIN_KEY);
+    sessionStorage.removeItem(POST_LOGIN_KEY);
+    return path;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Inicia el flujo de OAuth con Google.
  * Redirige a la pantalla de consentimiento de Google.
+ * @param returnTo ruta interna a la que volver al terminar (ej. "/es/perfil").
  */
-export function loginWithGoogle(): void {
+export function loginWithGoogle(returnTo?: string): void {
   if (!GOOGLE_CLIENT_ID) {
     console.error("VITE_GOOGLE_CLIENT_ID no configurado");
     return;
@@ -109,6 +126,12 @@ export function loginWithGoogle(): void {
   const redirectUri = `${window.location.origin}/auth/callback`;
   const state = newOAuthState();
   saveOAuthState(state);
+  try {
+    if (returnTo) sessionStorage.setItem(POST_LOGIN_KEY, returnTo);
+    else sessionStorage.removeItem(POST_LOGIN_KEY);
+  } catch {
+    // Sin sessionStorage: se vuelve a la home, como antes.
+  }
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
     redirect_uri: redirectUri,

@@ -4,12 +4,13 @@
 // URL: /auth/callback?code=xxx&state=yyy
 //
 // Verifica el ?state= (anti-CSRF), envía el ?code= al backend y luego
-// redirige a home.
+// vuelve a la página desde la que se inició el login (o a la home).
 
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { consumeOAuthState, handleGoogleCallback } from "@/lib/auth";
+import { consumeOAuthState, consumePostLoginPath, handleGoogleCallback } from "@/lib/auth";
 import { announceAchievements } from "@/lib/achievements";
+import { safeReturnPath } from "@/lib/routes";
 import { useI18n } from "@/context";
 
 export function AuthCallback(): JSX.Element {
@@ -69,8 +70,9 @@ export function AuthCallback(): JSX.Element {
       // cuenta. El toast vive en un store global, así que sobrevive al
       // navigate de abajo (Layout no se desmonta en navegación client-side).
       announceAchievements(result.newAchievements, tRef.current);
-      // Éxito: redirigir a home.
-      navigate("/", { replace: true });
+      // Éxito: volver a donde se inició el login (validado: solo rutas
+      // internas), o a la home si no hay.
+      navigate(safeReturnPath(consumePostLoginPath()) ?? "/", { replace: true });
     })();
   }, [searchParams, navigate]);
 

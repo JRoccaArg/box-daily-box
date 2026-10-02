@@ -13,6 +13,11 @@ import { InfoPage } from "@/pages/InfoPage";
 import { ContactPage } from "@/pages/ContactPage";
 import { AuthCallback } from "@/pages/AuthCallback";
 import { RootRedirect } from "@/pages/RootRedirect";
+import { RankingPage } from "@/pages/v2/RankingPage";
+import { AccessPage } from "@/pages/v2/AccessPage";
+import { ProfilePage } from "@/pages/v2/ProfilePage";
+import { AchievementsPage } from "@/pages/v2/AchievementsPage";
+import { FriendsPage } from "@/pages/v2/FriendsPage";
 import { GAMES } from "@/components/games/registry";
 import { SUPPORTED_LOCALES, type Locale } from "@/i18n/types";
 import { getStoredLocale } from "@/i18n";
@@ -101,6 +106,14 @@ export const routes: RouteRecord[] = [
       { path: "info", Component: InfoPage },
       // Página de contacto (mail para reportes/ideas). Se indexa igual que info.
       { path: "contact", Component: ContactPage },
+      // Páginas de cuenta del rediseño v2 (antes eran modales). Se prerenderiza
+      // solo el "cascarón" por idioma: los datos son de quien mira y se cargan
+      // en el cliente. noindex y fuera del sitemap (ver buildSeo).
+      { path: "ranking", Component: RankingPage },
+      { path: "acceso", Component: AccessPage },
+      { path: "perfil", Component: ProfilePage },
+      { path: "perfil/logros", Component: AchievementsPage },
+      { path: "perfil/amigos", Component: FriendsPage },
     ],
   },
   // "/" (x-default): redirige al idioma preferido. Se prerenderiza con

@@ -196,6 +196,12 @@ export type AchievementProgress = {
   /** Porcentaje 0..100 (topeado). */
   percent: number;
   unlocked: boolean;
+  /**
+   * SOLO en `ach_specialist_50`: el juego con más victorias válidas (el que
+   * define `maxSingleGame`), para que la galería diga "en qué juego vas mejor".
+   * Empate → el game_id alfabéticamente menor; sin victorias → null.
+   */
+  gameId?: string | null;
 };
 
 /**
@@ -222,15 +228,23 @@ export async function getAchievementProgress(
        (SELECT COALESCE(MAX(c), 0) FROM (
           SELECT COUNT(DISTINCT game_id) AS c FROM w
           WHERE game_id = ANY(${DAILY_SQL}) GROUP BY date_key
-        ) y)::int AS "bestDayDistinct"`,
+        ) y)::int AS "bestDayDistinct",
+       -- Juego del Especialista: mismo conteo que "maxSingleGame". COLLATE "C"
+       -- para que el desempate alfabético no dependa del locale de la base.
+       (SELECT game_id FROM w GROUP BY game_id
+         ORDER BY COUNT(*) DESC, game_id COLLATE "C" ASC
+         LIMIT 1) AS "specialistGameId"`,
     [userId],
   );
 
-  const m = (res.rows[0] ?? {}) as Record<AchievementMetric, number>;
+  const row = (res.rows[0] ?? {}) as Partial<Record<AchievementMetric, number>> & {
+    specialistGameId?: string | null;
+  };
+  const specialistGameId = row.specialistGameId ?? null;
   return ACHIEVEMENTS.map((a) => {
-    const raw = Number(m[a.metric] ?? 0);
+    const raw = Number(row[a.metric] ?? 0);
     const current = Math.min(raw, a.target);
-    return {
+    const item: AchievementProgress = {
       type: a.type,
       current,
       rawCurrent: raw,
@@ -238,5 +252,7 @@ export async function getAchievementProgress(
       percent: Math.min(100, Math.round((raw / a.target) * 100)),
       unlocked: raw >= a.target,
     };
+    if (a.type === "ach_specialist_50") item.gameId = specialistGameId;
+    return item;
   });
 }

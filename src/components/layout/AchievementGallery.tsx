@@ -155,7 +155,7 @@ export function AchievementGallery({ userId }: AchievementGalleryProps) {
       return;
     }
     setData((current) => (current ? { ...current, featured: result.featured } : current));
-    setFeatured(result.featured);
+    setFeatured(result.featured ?? []);
     setAutomatic(false);
     setSavedFlash(true);
   }

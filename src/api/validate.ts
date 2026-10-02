@@ -10,8 +10,9 @@
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ANON_RE = /^anon-[0-9a-f-]{36}$/i;
-const DATEKEY_RE = /^\d{4}-\d{2}-\d{2}$/;
-const MONTH_RE = /^\d{4}-\d{2}$/;
+const DATEKEY_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
+const MONTH_RE = /^(\d{4})-(\d{2})$/;
+const YEAR_RE = /^\d{4}$/;
 const COUNTRY_RE = /^[A-Z]{3}$/;
 
 /** Valida que un userId sea un UUID o un id anónimo generado por nosotros. */
@@ -19,16 +20,46 @@ export function isValidUserId(v: unknown): v is string {
   return typeof v === "string" && (UUID_RE.test(v) || ANON_RE.test(v));
 }
 
-/** Valida formato YYYY-MM-DD. */
-export function isValidDateKey(v: unknown): v is string {
-  if (typeof v !== "string" || !DATEKEY_RE.test(v)) return false;
-  const d = new Date(v + "T12:00:00Z");
-  return !Number.isNaN(d.getTime());
+function isLeapYear(y: number): boolean {
+  return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
 }
 
-/** Valida formato YYYY-MM. */
+function daysInMonth(y: number, m: number): number {
+  if (m === 2) return isLeapYear(y) ? 29 : 28;
+  return [4, 6, 9, 11].includes(m) ? 30 : 31;
+}
+
+/**
+ * Valida una fecha 'YYYY-MM-DD' que EXISTA en el calendario.
+ *
+ * El formato solo no alcanza: `new Date("2026-02-30")` en V8 no es inválida,
+ * "rueda" al 2 de marzo, así que antes una fecha imposible pasaba esta
+ * validación y reventaba recién en Postgres (`::date`) como un 500. El año 0
+ * tampoco existe para Postgres.
+ */
+export function isValidDateKey(v: unknown): v is string {
+  if (typeof v !== "string") return false;
+  const m = DATEKEY_RE.exec(v);
+  if (!m) return false;
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  if (year < 1 || month < 1 || month > 12) return false;
+  return day >= 1 && day <= daysInMonth(year, month);
+}
+
+/** Valida un mes 'YYYY-MM' que exista (mes 01..12, año >= 1). */
 export function isValidMonth(v: unknown): v is string {
-  return typeof v === "string" && MONTH_RE.test(v);
+  if (typeof v !== "string") return false;
+  const m = MONTH_RE.exec(v);
+  if (!m) return false;
+  const month = Number(m[2]);
+  return Number(m[1]) >= 1 && month >= 1 && month <= 12;
+}
+
+/** Valida un año 'YYYY' (>= 0001; Postgres no tiene año 0). */
+export function isValidYear(v: unknown): v is string {
+  return typeof v === "string" && YEAR_RE.test(v) && Number(v) >= 1;
 }
 
 /** Valida un código de país ISO alpha-3 (3 letras mayúsculas, ej: "ARG"). */

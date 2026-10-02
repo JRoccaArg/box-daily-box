@@ -347,7 +347,7 @@ export function IdentityModal({ open, onClose }: IdentityModalProps) {
       ) : (
         <button
           type="button"
-          onClick={loginWithGoogle}
+          onClick={() => loginWithGoogle()}
           className="w-full flex items-center justify-center gap-3 rounded-lg border border-white/15 bg-white px-4 py-3 text-sm font-medium text-neutral-900 hover:bg-neutral-100 transition"
         >
           <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
