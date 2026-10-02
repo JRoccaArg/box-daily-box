@@ -1,14 +1,15 @@
 import type {Page} from '@playwright/test';
 
-export async function mockV2Api(page:Page, options:{status?:number;rank?:number;balance?:number}={}) {
+export async function mockV2Api(page:Page, options:{status?:number;rank?:number;balance?:number;authenticated?:boolean}={}) {
  const summaryRequests:Array<{token:string|undefined;url:string}>=[];
  const id='00000000-0000-4000-8000-000000000000';
- await page.addInitScript(()=>{
-  localStorage.setItem('boxbox:v1:identity_token',JSON.stringify('visual-test-token'));
+ await page.addInitScript(({authenticated})=>{
+  if(authenticated) localStorage.setItem('boxbox:v1:identity_token',JSON.stringify('visual-test-token'));
+  else localStorage.removeItem('boxbox:v1:identity_token');
   sessionStorage.clear();
   let seed=42;
   Math.random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
- });
+ },{authenticated:options.authenticated!==false});
  await page.route('**/api/**',async route=>{
   const path=new URL(route.request().url()).pathname.replace(/^\/api/,'');
   let status=200;

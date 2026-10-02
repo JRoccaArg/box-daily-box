@@ -867,6 +867,7 @@ export async function apiGetDuel(duelId: string): Promise<DuelState | null> {
 }
 
 export async function apiGetPendingDuels(): Promise<PendingDuel[]> {
+  if (!getIdentityToken()) return [];
   const { userId } = getIdentity();
   if (!userId) return [];
   const params = new URLSearchParams({ userId });
