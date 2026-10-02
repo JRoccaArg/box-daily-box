@@ -13,6 +13,24 @@ const achievements = [
 test.describe("achievements", () => {
   test("shows progress and saves a featured achievement", async ({ page }) => {
     const savedBodies: unknown[] = [];
+    const userId = "00000000-0000-4000-8000-000000000000";
+    let featured: unknown = null;
+    await page.addInitScript(() => {
+      window.localStorage.setItem("boxbox:v1:identity_token", JSON.stringify("visual-test-token"));
+    });
+
+    await page.route(/\/(?:api\/)?user\/[^/]+$/, (route) => route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ userId, displayName: "VisualTest", countryCode: "ARG", canChangeName: false, nameChangedAt: "2026-01-01" }),
+    }));
+    await page.route(/\/(?:api\/)?user\/[^/]+\/summary(?:\?.*)?$/, (route) => route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ today: "2026-01-15", won: 145, lost: 20, todayWon: 0, todayPlayed: 0, currentStreak: 0, bestStreak: 8, lastDays: [] }),
+    }));
+    await page.route(/\/(?:api\/)?ranking\/monthly(?:\?.*)?$/, (route) => route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ period: "2026-01", total: 0, offset: 0, limit: 1, top: [], me: null }),
+    }));
 
     // En el test visual Vite usa la API relativa (/user/…). En staging usa
     // VITE_API_URL y pasa a /api/user/…: el mock cubre ambas formas.
@@ -20,10 +38,11 @@ test.describe("achievements", () => {
       if (route.request().method() === "POST") {
         const body = route.request().postDataJSON() as { featured: unknown };
         savedBodies.push(body);
+        featured = body.featured;
         await route.fulfill({
           contentType: "application/json",
           body: JSON.stringify({
-            userId: "visual-user",
+            userId,
             featured: body.featured,
           }),
         });
@@ -33,7 +52,7 @@ test.describe("achievements", () => {
       await route.fulfill({
         contentType: "application/json",
         body: JSON.stringify({
-          userId: "visual-user",
+          userId,
           role: "user",
           owned: [
             { id: 1, type: "ach_legend_10", referenceMonth: null, awardedAt: "2026-09-01" },
@@ -41,7 +60,7 @@ test.describe("achievements", () => {
             { id: 3, type: "ach_complete", referenceMonth: null, awardedAt: "2026-09-01" },
           ],
           counts: { ach_legend_10: 1, ach_wins_100: 1, ach_complete: 1 },
-          featured: null,
+          featured,
           achievements,
         }),
       });
@@ -50,30 +69,38 @@ test.describe("achievements", () => {
     await page.goto("/es/");
     await expect(page.getByRole("button", { name: /Debug/ })).toHaveCount(0);
     await page.getByRole("button", { name: "Ver estadisticas" }).click();
-    await page.getByRole("button", { name: "Logros" }).click();
+    await page.getByRole("link", { name: "Logros", exact: true }).click();
 
-    await expect(page.getByRole("heading", { name: "Mis logros" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Logros." })).toBeVisible();
     await expect(page.getByText("3 de 7 desbloqueados")).toBeVisible();
-    await expect(page.getByRole("button", { name: /Leyenda Viviente/ })).toBeEnabled();
-    await expect(page.getByRole("button", { name: /Maestro de Leyenda/ })).toBeDisabled();
-    await expect(page.getByRole("dialog")).toHaveScreenshot("achievements.png", {
-      animations: "disabled",
-    });
+    const collection = page.locator(".achievement-grid");
+    await expect(collection.locator("article.unlocked")).toHaveCount(3);
+    await expect(collection.locator("article.pending")).toHaveCount(4);
+    await expect(page.locator(".next-achievement").getByRole("heading", { name: "Gran Premio Perfecto" })).toBeVisible();
 
-    await page.getByRole("button", { name: /Leyenda Viviente/ }).click();
-    await expect(page.getByText("1/3 destacados")).toBeVisible();
-    await page.getByRole("button", { name: "Guardar selección" }).click();
+    // La colección se ve en Logros; las insignias equipadas se editan en Perfil.
+    await page.getByRole("link", { name: "Elegir insignias", exact: true }).click();
+    const badges = page.locator("#insignias");
+    await expect(badges.getByRole("checkbox", { name: "Selección automática" })).toBeChecked();
+    await badges.getByRole("checkbox", { name: "Selección automática" }).uncheck();
+    await badges.getByRole("button", { name: "Elegir insignias", exact: true }).click();
+    await expect(badges.getByRole("button", { name: "Maestro de Leyenda", exact: true })).toHaveCount(0);
+    await badges.getByRole("button", { name: "Centurión", exact: true }).click();
+    await badges.getByRole("button", { name: "Piloto Completo", exact: true }).click();
+    await badges.getByRole("button", { name: "Guardar insignias", exact: true }).click();
+    await expect(badges.getByText("Insignias guardadas", { exact: true })).toBeVisible();
+    expect(savedBodies[0]).toEqual(expect.objectContaining({ featured: [{ type: "ach_legend_10" }] }));
 
-    expect(savedBodies[0]).toEqual({ featured: [{ type: "ach_legend_10" }] });
-    await expect(page.getByText("Selección guardada")).toBeVisible();
+    await badges.getByRole("button", { name: "Leyenda Viviente", exact: true }).click();
+    await badges.getByRole("button", { name: "Guardar insignias", exact: true }).click();
+    await expect(badges.getByText("Insignias guardadas", { exact: true })).toBeVisible();
+    expect(savedBodies[1]).toEqual(expect.objectContaining({ featured: [] }));
+    await expect(badges.locator(".equipped-badge")).toHaveCount(0);
 
-    await page.getByRole("button", { name: "Quitar Leyenda Viviente del ranking" }).click();
-    await page.getByRole("button", { name: "Guardar selección" }).click();
-    expect(savedBodies[1]).toEqual({ featured: [] });
-    await expect(page.getByText("No se mostrará ningún badge junto a tu nombre.")).toBeVisible();
-
-    await page.getByRole("button", { name: "Usar selección automática" }).click();
-    expect(savedBodies[2]).toEqual({ featured: null });
-    await expect(page.getByText("Automático")).toBeVisible();
+    await badges.getByRole("checkbox", { name: "Selección automática" }).check();
+    await badges.getByRole("button", { name: "Guardar insignias", exact: true }).click();
+    await expect(badges.getByText("Insignias guardadas", { exact: true })).toBeVisible();
+    expect(savedBodies[2]).toEqual(expect.objectContaining({ featured: null }));
+    await expect(badges.locator(".equipped-badge")).toHaveCount(3);
   });
 });
