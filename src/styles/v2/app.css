@@ -167,3 +167,5 @@
 
 .bdb-home.v2-site-header .navlinks a:first-child{border-bottom-color:transparent}
 .bdb-home.v2-site-header .navlinks a[aria-current=page]{border-bottom-color:var(--orange)}
+
+.bdb-home .home-rank-measure{font-size:12px}

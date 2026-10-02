@@ -55,3 +55,17 @@ test('home navigation, legal pages and cookie choices work at every viewport',as
  await expect(page.locator('.cookie-preview')).toHaveCount(0);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
+
+test('the circuit accent follows the selected driver and stays yellow with safety car',async({page})=>{
+ await mockV2Api(page);
+ await page.emulateMedia({reducedMotion:'reduce'});
+ await page.goto('/es/?circuit=monaco&safety=0');
+ const driver=page.locator('.track-driver').first();
+ await driver.click();
+ const color=await driver.locator('circle').evaluate(e=>getComputedStyle(e).fill);
+ await expect(page.locator('.hero-period')).toHaveCSS('color',color);
+ await page.goto('/es/?circuit=monaco&safety=1');
+ await expect(page.locator('.safety-status')).toBeVisible();
+ const safetyColor=await page.locator('.safety-car circle').evaluate(e=>getComputedStyle(e).fill);
+ await expect(page.locator('.hero-period')).toHaveCSS('color',safetyColor);
+});

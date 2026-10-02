@@ -67,7 +67,6 @@ telemetry = telemetry.replaceAll('requestAnimationFrame(frame)', 'raf = requestA
 telemetry = telemetry.replace(/document.addEventListener\('click',([\s\S]*?)\n  \}\);/, "document.addEventListener('click',$1\n  }, {signal});");
 telemetry = telemetry.replace(/document.addEventListener\('keydown',([\s\S]*?)\n  \}\);/, "document.addEventListener('keydown',$1\n  }, {signal});");
 telemetry = telemetry.replace("  return { start: () => raf = requestAnimationFrame(frame) };", "  return {start: () => {raf = requestAnimationFrame(frame);}, stop: () => {cancelAnimationFrame(raf); panel.remove(); safetyStatus.remove();}};");
-telemetry = telemetry.replace("hero.style.setProperty('--hero-line-color',", "root.style.setProperty('--hero-line-color',");
 write('src/lib/v2/telemetry.js', telemetry);
 cpSync(resolve(source,'circuits.js'),'src/lib/v2/circuits.js');
 console.log('Imported approved artwork, scoped styles, tracks and animation lifecycle.');

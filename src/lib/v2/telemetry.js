@@ -99,7 +99,7 @@ export function createPeloton({ hero, root, signal, circuit, pilots, layer, path
   let hovered = null;
   let pinned = null;
   let lineColor = pilots[Math.floor(Math.random() * pilots.length)].color;
-  root.style.setProperty('--hero-line-color', lineColor);
+  hero.style.setProperty('--hero-line-color', lineColor);
   const safetyParam = new URLSearchParams(location.search).get('safety');
   const safety = {
     active: safetyParam === '1' || (safetyParam !== '0' && Math.random() < .15),

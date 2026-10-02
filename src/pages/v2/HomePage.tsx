@@ -120,7 +120,7 @@ function HomeRank({value,locale}: {value:string;locale:Parameters<typeof homePat
   void document.fonts.ready.then(measure);
   return ()=>observer.disconnect();
  },[value]);
- return <Link className="home-rank" to={rankingPath(locale)} aria-label={`Tu puesto de hoy: ${value}. Ver clasificación`} title={value}><span className="home-rank-label">Tu puesto</span><span className="home-rank-slot"><span ref={ref} className="home-rank-measure">{value}</span><span className={'home-rank-value'+(overflow?' is-label':'')}>{overflow ? 'Ver puesto' : value}</span></span></Link>;
+ return <Link className="home-rank" to={rankingPath(locale)} aria-label={`Tu puesto de hoy: ${value}. Ver clasificación`} title={value}><span className="home-rank-label">Tu puesto</span><span className="home-rank-slot"><span ref={ref} className="home-rank-measure">{value}</span><span className={'home-rank-value'+(overflow?' is-label':'')}>{overflow ? (value.startsWith('#') ? 'Ver puesto' : 'Ver ranking') : value}</span></span></Link>;
 }
 
 
