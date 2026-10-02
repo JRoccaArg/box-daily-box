@@ -1,0 +1,80 @@
+/* Fuentes del rediseño v2 (las mismas del boceto visual). Licencia OFL:
+ * ver Bricolage-Grotesque-OFL.txt (Saira, Outfit y Manrope también son OFL).
+ * Solo se descargan cuando una página v2 las usa. */
+@font-face {
+  font-family: "BDB V2 Saira";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("./fonts/saira-brand.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Outfit";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("./fonts/outfit-0.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Outfit";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./fonts/outfit-1.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Outfit";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("./fonts/outfit-2.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/manrope-0.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./fonts/manrope-1.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("./fonts/manrope-2.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./fonts/manrope-3.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("./fonts/manrope-4.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./fonts/bricolage-500.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./fonts/bricolage-700.ttf") format("truetype");
+}

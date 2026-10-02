@@ -21,20 +21,28 @@ import {
   purgeOldIpAddresses,
   transaction,
 } from "./db";
-import { awardMonthlyPodium, previousMonthKey } from "./badges";
+import {
+  awardAnnualPodium,
+  awardMonthlyPodium,
+  previousMonthKey,
+  previousYearKey,
+} from "./badges";
 import {
   startChallenge,
   finishChallenge,
   getRankingMonthly,
   getRankingDaily,
+  getRankingAnnual,
   adminDebug,
   getUserProfile,
   updateUserProfile,
   getUserAttempts,
   getUserRank,
+  getUserSummary,
   deleteAccount,
   checkUsernameAvailable,
   adminCloseMonth,
+  adminCloseYear,
   getUserBadges,
   setFeaturedBadges,
   adminSeedBadges,
@@ -114,6 +122,26 @@ async function closePreviousMonthBadges(): Promise<void> {
     }
   } catch (err) {
     console.error(`⚠️  Error cerrando badges de ${month}:`, err);
+  }
+}
+
+/**
+ * Igual que `closePreviousMonthBadges`, para el podio ANUAL: pide siempre el
+ * año anterior al actual (cerrado por definición), así el primer tick después
+ * del 1 de enero lo entrega solo. Idempotente y con su propio try/catch: un
+ * fallo acá no frena el cierre mensual ni tumba el proceso.
+ */
+async function closePreviousYearBadges(): Promise<void> {
+  const year = previousYearKey(new Date());
+  try {
+    const result = await transaction((client) =>
+      awardAnnualPodium((sql, params) => client.query(sql, params), year),
+    );
+    if (result.awarded.length > 0) {
+      console.log(`Badges anuales de ${result.year} otorgados: ${result.awarded.length}`);
+    }
+  } catch (err) {
+    console.error(`Error cerrando badges anuales de ${year}:`, err);
   }
 }
 
@@ -209,6 +237,16 @@ async function start(): Promise<void> {
     getRankingDaily as any,
   );
 
+  // Ranking del año calendario (mismas reglas y límite que el mensual).
+  app.get(
+    "/ranking/annual",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 60, timeWindow: "1 minute" } },
+    },
+    getRankingAnnual as any,
+  );
+
   app.get(
     "/admin/debug",
     {
@@ -274,6 +312,16 @@ async function start(): Promise<void> {
     getUserRank as any,
   );
 
+  // Resumen personal del perfil (solo el dueño, token por header).
+  app.get(
+    "/user/:userId/summary",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 60, timeWindow: "1 minute" } },
+    },
+    getUserSummary as any,
+  );
+
   // Borrado de cuenta (derecho de supresión). Rate limit bajo: es una acción
   // rara y destructiva, no hay motivo legítimo para repetirla muchas veces.
   app.post(
@@ -303,6 +351,16 @@ async function start(): Promise<void> {
       config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
     },
     adminCloseMonth as any,
+  );
+
+  // Cierre anual del podio (admin, secreto en header). Mismo límite.
+  app.post(
+    "/admin/badges/close-year",
+    {
+      preHandler: requireDb,
+      config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
+    },
+    adminCloseYear as any,
   );
 
   // Colección de badges de un usuario (público, para la galería).
@@ -444,6 +502,9 @@ async function start(): Promise<void> {
       // solo.
       closePreviousMonthBadges();
       setInterval(closePreviousMonthBadges, 60 * 60 * 1000); // cada hora
+      // Mismo esquema para el podio anual (el año anterior al actual).
+      closePreviousYearBadges();
+      setInterval(closePreviousYearBadges, 60 * 60 * 1000); // cada hora
 
       // Barrido de duelos vencidos (Roadmap §4). La corrección real la dan los
       // barridos "lazy" en los handlers (TTL de 60s), pero este cron periódico
@@ -463,7 +524,7 @@ async function start(): Promise<void> {
     });
 
   const PORT = parseInt(process.env.PORT ?? "3000", 10);
-  const HOST = "0.0.0.0";
+  const HOST = process.env.HOST ?? "0.0.0.0";
 
   await app.listen({ port: PORT, host: HOST });
   console.log(`✅ Server running on port ${PORT}`);

@@ -6,18 +6,21 @@
 // sin duplicar SQL ni divergir del ranking oficial.
 //
 // Decisiones de diseño (ver plan / roadmap):
-//  - Solo se GUARDAN badges de podio mensual. admin/superadmin se DERIVAN de
-//    users.role en tiempo de lectura (revocar el rol quita el badge, sin filas huérfanas).
+//  - Se GUARDAN los badges de podio (mensual y anual). admin/superadmin se
+//    DERIVAN de users.role en tiempo de lectura (revocar el rol quita el badge,
+//    sin filas huérfanas).
 //  - El award es idempotente y SOLO-AGREGA: nunca revoca. Las correcciones (raras y
 //    siempre deliberadas) se hacen a mano en la DB.
-//  - Un mes solo se premia si está CERRADO (anterior al mes actual del server).
+//  - Un período solo se premia si está CERRADO (anterior al mes/año actual del server).
+//  - El podio ANUAL usa exactamente las mismas reglas que el mensual, sobre el
+//    año calendario, y se guarda con `reference_month = 'YYYY-01-01'`.
 
 import { ACHIEVEMENTS, isAchievementType } from "./achievements";
 
 /** Ejecutor de queries mínimo, compatible con `pg` (Pool/Client) y con PGlite. */
 export type QueryFn = (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
 
-/** Tipos de badge que se persisten en la tabla `badges` (podio mensual). */
+/** Tipos de badge del podio mensual (tabla `badges`, con reference_month). */
 export const MONTHLY_BADGE_TYPES = [
   "monthly_gold",
   "monthly_silver",
@@ -25,15 +28,44 @@ export const MONTHLY_BADGE_TYPES = [
 ] as const;
 export type MonthlyBadgeType = (typeof MONTHLY_BADGE_TYPES)[number];
 
+/** Tipos de badge del podio anual (reference_month = primer día del año). */
+export const ANNUAL_BADGE_TYPES = [
+  "annual_gold",
+  "annual_silver",
+  "annual_bronze",
+] as const;
+export type AnnualBadgeType = (typeof ANNUAL_BADGE_TYPES)[number];
+
+/**
+ * CHECK de `badges.badge_type` (db.ts lo re-crea en cada arranque y los tests
+ * arman el esquema con esta MISMA expresión): los 6 tipos de podio o cualquier
+ * logro con prefijo 'ach_' (así el catálogo de logros crece sin migrar).
+ * Los tipos son constantes nuestras (no entrada de usuario): interpolar es seguro.
+ */
+export const BADGE_TYPE_CHECK_SQL = `badge_type IN (${[
+  ...MONTHLY_BADGE_TYPES,
+  ...ANNUAL_BADGE_TYPES,
+]
+  .map((t) => `'${t}'`)
+  .join(", ")}) OR badge_type LIKE 'ach\\_%'`;
+
 /** Mapea la posición del podio (1..3) al tipo de badge correspondiente. */
 const RANK_TO_BADGE: Record<number, MonthlyBadgeType> = {
   1: "monthly_gold",
   2: "monthly_silver",
   3: "monthly_bronze",
 };
+const RANK_TO_ANNUAL_BADGE: Record<number, AnnualBadgeType> = {
+  1: "annual_gold",
+  2: "annual_silver",
+  3: "annual_bronze",
+};
 
-/** Orden de jerarquía para el default de destacados (oro > plata > bronce). */
-const BADGE_HIERARCHY: readonly string[] = MONTHLY_BADGE_TYPES;
+/**
+ * Orden de jerarquía para el modo automático de destacados: el podio anual
+ * (oro > plata > bronce) antes que el mensual, y recién después los logros.
+ */
+const BADGE_HIERARCHY: readonly string[] = [...ANNUAL_BADGE_TYPES, ...MONTHLY_BADGE_TYPES];
 
 /** Máximo de badges destacados elegibles inline (admin/superadmin va aparte). */
 export const MAX_FEATURED = 3;
@@ -43,6 +75,18 @@ export function isMonthlyBadgeType(v: unknown): v is MonthlyBadgeType {
     typeof v === "string" &&
     (MONTHLY_BADGE_TYPES as readonly string[]).includes(v)
   );
+}
+
+export function isAnnualBadgeType(v: unknown): v is AnnualBadgeType {
+  return (
+    typeof v === "string" &&
+    (ANNUAL_BADGE_TYPES as readonly string[]).includes(v)
+  );
+}
+
+/** Badge de podio (mensual o anual): agrupable con contador y con fechas. */
+function isPodiumBadgeType(v: unknown): v is MonthlyBadgeType | AnnualBadgeType {
+  return isMonthlyBadgeType(v) || isAnnualBadgeType(v);
 }
 
 /** Primer día del mes (UTC) al que pertenece `d`, como 'YYYY-MM-01'. */
@@ -60,21 +104,25 @@ export function previousMonthKey(now: Date): string {
   return `${y}-${m}`;
 }
 
+/** Primer día del año (UTC) al que pertenece `d`, como 'YYYY-01-01'. */
+export function yearStartOf(d: Date): string {
+  return `${String(d.getUTCFullYear()).padStart(4, "0")}-01-01`;
+}
+
+/** Año anterior (UTC) al de `now`, como 'YYYY'. Usado por el cron de cierre automático. */
+export function previousYearKey(now: Date): string {
+  return String(now.getUTCFullYear() - 1).padStart(4, "0");
+}
+
 /**
- * Calcula el podio (posiciones 1..3, incluyendo empates) de un mes.
- *
- * Reutiliza EXACTAMENTE los filtros del ranking oficial
- * (`won AND NOT flagged AND ranked`) y el mismo rango mensual
- * `[YYYY-MM-01, +1 month)` que `getRankingMonthly`, para no divergir.
- *
- * Desempate determinista: points > games_won > days_played. Los empatados en un
- * mismo puesto comparten el badge de ese puesto (semántica de `RANK()`).
- *
- * @param monthStart primer día del mes objetivo, 'YYYY-MM-01'.
+ * Podio (posiciones 1..3, incluyendo empates) de un período `[start, start + span)`.
+ * Único SQL del podio, compartido por el mensual y el anual para que no diverjan.
+ * `span` es una constante nuestra ('1 month' | '1 year'), nunca entrada de usuario.
  */
-export async function computeMonthlyPodium(
+async function computePodium(
   q: QueryFn,
-  monthStart: string,
+  periodStart: string,
+  span: "1 month" | "1 year",
 ): Promise<Array<{ userId: string; rank: number }>> {
   const res = await q(
     `WITH ranked AS (
@@ -88,16 +136,73 @@ export async function computeMonthlyPodium(
        JOIN users u ON a.user_id = u.id
        WHERE a.won AND NOT a.flagged AND a.ranked
          AND a.date_key >= $1::date
-         AND a.date_key < ($1::date + INTERVAL '1 month')
+         AND a.date_key < ($1::date + INTERVAL '${span}')
        GROUP BY u.id
      )
      SELECT user_id, rnk FROM ranked WHERE rnk <= 3 ORDER BY rnk`,
-    [monthStart],
+    [periodStart],
   );
   return res.rows.map((r) => {
     const row = r as { user_id: string; rnk: number | string };
     return { userId: row.user_id, rank: Number(row.rnk) };
   });
+}
+
+/**
+ * Calcula el podio (posiciones 1..3, incluyendo empates) de un mes.
+ *
+ * Reutiliza EXACTAMENTE los filtros del ranking oficial
+ * (`won AND NOT flagged AND ranked`) y el mismo rango mensual
+ * `[YYYY-MM-01, +1 month)` que el ranking mensual, para no divergir.
+ *
+ * Desempate determinista: points > games_won > days_played. Los empatados en un
+ * mismo puesto comparten el badge de ese puesto (semántica de `RANK()`).
+ *
+ * @param monthStart primer día del mes objetivo, 'YYYY-MM-01'.
+ */
+export async function computeMonthlyPodium(
+  q: QueryFn,
+  monthStart: string,
+): Promise<Array<{ userId: string; rank: number }>> {
+  return computePodium(q, monthStart, "1 month");
+}
+
+/**
+ * Podio de un año calendario `[YYYY-01-01, +1 year)`: mismas reglas, filtros y
+ * desempate que `computeMonthlyPodium`.
+ *
+ * @param yearStart primer día del año objetivo, 'YYYY-01-01'.
+ */
+export async function computeAnnualPodium(
+  q: QueryFn,
+  yearStart: string,
+): Promise<Array<{ userId: string; rank: number }>> {
+  return computePodium(q, yearStart, "1 year");
+}
+
+/**
+ * Inserta un badge de podio sin duplicar. El WHERE es obligatorio: desde la
+ * migración de logros la unicidad del podio es un índice PARCIAL
+ * (idx_badges_monthly_unique), y Postgres solo lo infiere como árbitro del
+ * ON CONFLICT si se repite su predicado. Sin él, el INSERT falla ("no unique
+ * or exclusion constraint matching") — así estuvo roto el cierre mensual.
+ * Devuelve true si la fila es nueva.
+ */
+async function insertPodiumBadge(
+  q: QueryFn,
+  userId: string,
+  badgeType: MonthlyBadgeType | AnnualBadgeType,
+  referenceMonth: string,
+): Promise<boolean> {
+  const ins = await q(
+    `INSERT INTO badges (user_id, badge_type, reference_month)
+     VALUES ($1, $2, $3::date)
+     ON CONFLICT (user_id, badge_type, reference_month)
+       WHERE reference_month IS NOT NULL DO NOTHING
+     RETURNING id`,
+    [userId, badgeType, referenceMonth],
+  );
+  return ins.rows.length > 0;
 }
 
 /** Error tipado que indica que el mes solicitado todavía no cerró. */
@@ -142,31 +247,72 @@ export async function awardMonthlyPodium(
   for (const { userId, rank } of podium) {
     const badgeType = RANK_TO_BADGE[rank];
     if (!badgeType) continue; // fuera de 1..3 (no debería ocurrir por el WHERE)
-    const ins = await q(
-      `INSERT INTO badges (user_id, badge_type, reference_month)
-       VALUES ($1, $2, $3::date)
-       ON CONFLICT (user_id, badge_type, reference_month) DO NOTHING
-       RETURNING id`,
-      [userId, badgeType, monthStart],
-    );
-    if (ins.rows.length > 0) awarded.push({ userId, badgeType });
+    if (await insertPodiumBadge(q, userId, badgeType, monthStart)) {
+      awarded.push({ userId, badgeType });
+    }
   }
   return { month, monthStart, awarded };
+}
+
+/** Error tipado que indica que el año solicitado todavía no cerró. */
+export class YearNotClosedError extends Error {
+  code = "YEAR_NOT_CLOSED" as const;
+  constructor(message = "El año no está cerrado todavía") {
+    super(message);
+    this.name = "YearNotClosedError";
+  }
+}
+
+/**
+ * Entrega (idempotente, solo-agrega) los badges del podio de un año CERRADO.
+ * Espejo de `awardMonthlyPodium`: rechaza el año en curso y los futuros con
+ * `YearNotClosedError`, nunca revoca, y para atomicidad en producción se le
+ * pasa el `client.query` de una transacción.
+ *
+ * @param year 'YYYY'
+ * @param now  inyectable para tests; por defecto el ahora del server.
+ */
+export async function awardAnnualPodium(
+  q: QueryFn,
+  year: string,
+  now: Date = new Date(),
+): Promise<{
+  year: string;
+  yearStart: string;
+  awarded: Array<{ userId: string; badgeType: AnnualBadgeType }>;
+}> {
+  const yearStart = `${year}-01-01`;
+  // Comparación lexicográfica válida porque ambas son 'YYYY-01-01'.
+  if (yearStart >= yearStartOf(now)) {
+    throw new YearNotClosedError();
+  }
+
+  const podium = await computeAnnualPodium(q, yearStart);
+  const awarded: Array<{ userId: string; badgeType: AnnualBadgeType }> = [];
+  for (const { userId, rank } of podium) {
+    const badgeType = RANK_TO_ANNUAL_BADGE[rank];
+    if (!badgeType) continue;
+    if (await insertPodiumBadge(q, userId, badgeType, yearStart)) {
+      awarded.push({ userId, badgeType });
+    }
+  }
+  return { year, yearStart, awarded };
 }
 
 // ─── Visualización de badges (inline en el ranking) ──────────────────
 
 /**
  * Un badge listo para renderizar inline junto al nombre. `count > 1` => contador.
- * `months` ('YYYY-MM'[], orden descendente) solo aplica a tipos mensuales
- * (oro/plata/bronce) — alimenta el tooltip ("Ganador de Junio 2026", etc.).
+ * `months` ('YYYY-MM'[], orden descendente) solo aplica a tipos de podio
+ * (oro/plata/bronce) — alimenta el tooltip ("Ganador de Junio 2026", etc.). En
+ * el podio ANUAL cada elemento es 'YYYY-01' (el frontend muestra solo el año).
  * admin/superadmin no tienen meses (se derivan del rol, no de un evento puntual).
  */
 export type DisplayBadge = { type: string; count: number; months?: string[] };
 
 /** Un slot de la selección de destacados del usuario. `type` puede ser un badge
- *  de podio (monthly_*) o un logro (ach_*). `grouped` (contador ×N) solo aplica a
- *  podio; los logros son únicos (siempre individuales). */
+ *  de podio (monthly_* / annual_*) o un logro (ach_*). `grouped` (contador ×N)
+ *  solo aplica a podio; los logros son únicos (siempre individuales). */
 export type FeaturedSlot = { type: string; grouped?: boolean };
 
 /**
@@ -214,7 +360,8 @@ export function deriveDisplayBadges(
   // el usuario decidió no mostrar ningún badge (admin/superadmin sigue aparte).
   if (featured === null || !Array.isArray(featured)) {
     // Default por PRIORIDAD:
-    //  1) Podio por jerarquía (oro → plata → bronce), agrupado con su contador.
+    //  1) Podio por jerarquía, agrupado con su contador: anual (oro → plata →
+    //     bronce) y después mensual (oro → plata → bronce).
     for (const type of BADGE_HIERARCHY) {
       if (!roomLeft()) return out;
       const c = ownedCounts[type] ?? 0;
@@ -243,7 +390,8 @@ export function deriveDisplayBadges(
       out.push({ type: slot.type, count: 1 });
       continue;
     }
-    if (!isMonthlyBadgeType(slot.type)) continue;
+    // Podio (mensual o anual): agrupable, sin superar la cantidad poseída.
+    if (!isPodiumBadgeType(slot.type)) continue;
     const owned = ownedCounts[slot.type] ?? 0;
     if (owned <= 0) continue;
     const months = monthsByType[slot.type] ?? [];
@@ -268,9 +416,10 @@ function baseAdminCount(role: string): number {
  * A diferencia de `deriveDisplayBadges` (lectura, defensiva), acá rechazamos con
  * error claro cualquier cosa inválida, para responder 422.
  *
- * Reglas: array de <= MAX_FEATURED slots; cada slot con `type` de badge mensual
- * que el usuario POSEE; sin exceder la cantidad poseída (anti-inflado); admin/
- * superadmin NO son elegibles (se muestran siempre, aparte).
+ * Reglas: array de <= MAX_FEATURED slots; cada slot con `type` de badge de podio
+ * (mensual o anual) o de logro que el usuario POSEE; sin exceder la cantidad
+ * poseída (anti-inflado); admin/superadmin NO son elegibles (se muestran
+ * siempre, aparte).
  */
 export function validateFeaturedSelection(
   input: unknown,
@@ -307,7 +456,7 @@ export function validateFeaturedSelection(
       continue;
     }
 
-    if (!isMonthlyBadgeType(type)) {
+    if (!isPodiumBadgeType(type)) {
       return { ok: false, error: "Tipo de badge inválido o no elegible" };
     }
     const owned = ownedCounts[type] ?? 0;

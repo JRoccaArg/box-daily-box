@@ -2,6 +2,7 @@
 import { Pool, QueryResult } from "pg";
 import { backfillStreaks } from "./streak";
 import { awardAchievements } from "./achievements";
+import { BADGE_TYPE_CHECK_SQL } from "./badges";
 import { requireEnv } from "./secrets";
 
 const pool = new Pool({
@@ -256,68 +257,8 @@ export async function initializeDatabase(): Promise<void> {
       END $$;
     `);
 
-    // Tabla badges: guarda badges GANADOS. Dos familias conviven acá:
-    //  - PODIO mensual: badge_type monthly_* con reference_month (el mes premiado).
-    //  - LOGROS: badge_type con prefijo ach_ y reference_month NULL (no son de un
-    //    mes, se ganan una vez). Ver src/api/achievements.ts.
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS badges (
-        id BIGSERIAL PRIMARY KEY,
-        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        badge_type TEXT NOT NULL
-          CHECK (badge_type IN ('monthly_gold', 'monthly_silver', 'monthly_bronze')),
-        reference_month DATE NOT NULL,
-        awarded_at TIMESTAMPTZ DEFAULT now(),
-        UNIQUE(user_id, badge_type, reference_month)
-      );
-    `);
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS idx_badges_user ON badges(user_id);
-    `);
-
-    // ─── Migración: soporte de badges de LOGROS en la tabla badges ─────
-    // 1. reference_month pasa a ser NULLABLE (los logros no tienen mes).
-    await client.query(`
-      DO $$ BEGIN
-        ALTER TABLE badges ALTER COLUMN reference_month DROP NOT NULL;
-      EXCEPTION WHEN others THEN NULL;
-      END $$;
-    `);
-    // 2. CHECK relajado: acepta los 3 tipos de podio O cualquier badge_type con
-    //    prefijo 'ach_'. Así el catálogo de logros crece sin migrar la DB cada vez.
-    await client.query(`
-      DO $$ BEGIN
-        ALTER TABLE badges DROP CONSTRAINT IF EXISTS badges_badge_type_check;
-      END $$;
-    `);
-    await client.query(`
-      DO $$ BEGIN
-        ALTER TABLE badges ADD CONSTRAINT badges_badge_type_check
-          CHECK (
-            badge_type IN ('monthly_gold', 'monthly_silver', 'monthly_bronze')
-            OR badge_type LIKE 'ach\\_%'
-          );
-      EXCEPTION WHEN duplicate_object THEN NULL;
-      END $$;
-    `);
-    // 3. La UNIQUE de tabla (user_id, badge_type, reference_month) trata NULLs como
-    //    distintos → NO garantizaría "un logro por usuario". Se reemplaza por DOS
-    //    índices únicos PARCIALES: uno para podio (con mes) y otro para logros (sin mes).
-    await client.query(`
-      DO $$ BEGIN
-        ALTER TABLE badges DROP CONSTRAINT IF EXISTS badges_user_id_badge_type_reference_month_key;
-      END $$;
-    `);
-    await client.query(`
-      CREATE UNIQUE INDEX IF NOT EXISTS idx_badges_monthly_unique
-      ON badges (user_id, badge_type, reference_month)
-      WHERE reference_month IS NOT NULL;
-    `);
-    await client.query(`
-      CREATE UNIQUE INDEX IF NOT EXISTS idx_badges_achievement_unique
-      ON badges (user_id, badge_type)
-      WHERE reference_month IS NULL;
-    `);
+    // Tabla badges + sus migraciones (podio mensual/anual y logros).
+    await migrateBadgesTable((sql) => client.query(sql));
 
     // ─── Sistema de amigos y duelos (Roadmap §4) ─────────────────────
     // Código de amigo: string corto, único, compartible (tipo "friend code"
@@ -692,6 +633,82 @@ export async function initializeDatabase(): Promise<void> {
   } finally {
     client.release();
   }
+}
+
+/**
+ * Crea y migra la tabla `badges` (idempotente; corre en cada arranque). Está
+ * separada de `initializeDatabase` para que los tests la corran TAL CUAL contra
+ * PGlite y validen el esquema real, no una réplica a mano.
+ *
+ * Tres familias conviven en la tabla:
+ *  - PODIO mensual: badge_type monthly_* con reference_month (el mes premiado).
+ *  - PODIO anual: badge_type annual_* con reference_month = 'YYYY-01-01'.
+ *  - LOGROS: badge_type con prefijo ach_ y reference_month NULL (no son de un
+ *    mes, se ganan una vez). Ver src/api/achievements.ts.
+ * Requiere que exista `users` (FK).
+ */
+export async function migrateBadgesTable(
+  run: (sql: string) => Promise<unknown>,
+): Promise<void> {
+  await run(`
+    CREATE TABLE IF NOT EXISTS badges (
+      id BIGSERIAL PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      badge_type TEXT NOT NULL
+        CHECK (badge_type IN ('monthly_gold', 'monthly_silver', 'monthly_bronze')),
+      reference_month DATE NOT NULL,
+      awarded_at TIMESTAMPTZ DEFAULT now(),
+      UNIQUE(user_id, badge_type, reference_month)
+    );
+  `);
+  await run(`
+    CREATE INDEX IF NOT EXISTS idx_badges_user ON badges(user_id);
+  `);
+
+  // ─── Migración: soporte de badges de LOGROS en la tabla badges ─────
+  // 1. reference_month pasa a ser NULLABLE (los logros no tienen mes).
+  await run(`
+    DO $$ BEGIN
+      ALTER TABLE badges ALTER COLUMN reference_month DROP NOT NULL;
+    EXCEPTION WHEN others THEN NULL;
+    END $$;
+  `);
+  // 2. CHECK relajado: acepta los tipos de podio (mensual y anual) O cualquier
+  //    badge_type con prefijo 'ach_'. Así el catálogo de logros crece sin migrar
+  //    la DB cada vez. Se dropea y re-crea en cada arranque, así que cambiar
+  //    BADGE_TYPE_CHECK_SQL (badges.ts) alcanza para migrar.
+  await run(`
+    DO $$ BEGIN
+      ALTER TABLE badges DROP CONSTRAINT IF EXISTS badges_badge_type_check;
+    END $$;
+  `);
+  await run(`
+    DO $$ BEGIN
+      ALTER TABLE badges ADD CONSTRAINT badges_badge_type_check
+        CHECK (${BADGE_TYPE_CHECK_SQL});
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END $$;
+  `);
+  // 3. La UNIQUE de tabla (user_id, badge_type, reference_month) trata NULLs como
+  //    distintos → NO garantizaría "un logro por usuario". Se reemplaza por DOS
+  //    índices únicos PARCIALES: uno para podio (con mes) y otro para logros (sin mes).
+  //    Todo INSERT de podio con ON CONFLICT debe repetir `WHERE reference_month
+  //    IS NOT NULL` para que Postgres infiera el índice parcial como árbitro.
+  await run(`
+    DO $$ BEGIN
+      ALTER TABLE badges DROP CONSTRAINT IF EXISTS badges_user_id_badge_type_reference_month_key;
+    END $$;
+  `);
+  await run(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_badges_monthly_unique
+    ON badges (user_id, badge_type, reference_month)
+    WHERE reference_month IS NOT NULL;
+  `);
+  await run(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_badges_achievement_unique
+    ON badges (user_id, badge_type)
+    WHERE reference_month IS NULL;
+  `);
 }
 
 export async function query(

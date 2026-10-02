@@ -62,4 +62,7 @@ export const Events = {
    *  termina su primer reto sin recargar la página). Sin este evento se
    *  quedarían escuchando en el vacío el resto de la sesión. */
   IDENTITY_ESTABLISHED: "identity:established",
+  /** Se guardó nombre/país del perfil (rediseño v2): las vistas que muestran
+   *  la identidad (tarjeta de piloto, perfil, cabeceras) la releen. */
+  PROFILE_CHANGED: "profile:changed",
 } as const;

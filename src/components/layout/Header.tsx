@@ -1,16 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useStats } from "@/context/StatsContext";
 import { useI18n } from "@/context";
-import { StatsModal } from "./StatsModal";
-import { IdentityModal } from "./IdentityModal";
 import { LivesModal } from "./LivesModal";
 import { LanguageSelector } from "./LanguageSelector";
 import { SoundSettings } from "./SoundSettings";
 import { Stat as StatIcon, Flame, Heart } from "@/components/ui/Icon";
 import { on, Events } from "@/lib/events";
 import { runNavGuard } from "@/lib/navGuard";
-import { homePath } from "@/lib/routes";
+import { homePath, rankingPath, profilePath, accessPath, friendsPath, achievementsPath } from "@/lib/routes";
+import { useLocalIdentity } from "@/hooks/useLocalIdentity";
 import { useMounted } from "@/lib/useMounted";
 import { getEffectiveNow } from "@/lib/debugDate";
 import { usePendingFriendRequestsCount } from "@/lib/friendsPolling";
@@ -18,7 +17,6 @@ import { useUnseenAchievementsCount } from "@/lib/achievements";
 import { useLives } from "@/hooks/useLives";
 import { getStreakVisual } from "@/lib/streakVisual";
 import type { Locale } from "@/i18n";
-import type { StatsView } from "./StatsModal";
 
 /** Fecha legible en el idioma actual. */
 function readableDate(d: Date, locale: string): string {
@@ -58,22 +56,16 @@ function Wordmark({ label, locale }: { label: string; locale: Locale }) {
 }
 
 export function Header() {
+  const navigate = useNavigate();
+  const identity = useLocalIdentity();
   const { summary } = useStats();
   const { t, locale } = useI18n();
-  const [statsOpen, setStatsOpen] = useState(false);
-  const [statsInitialView, setStatsInitialView] = useState<StatsView | undefined>(undefined);
-  const [profileOpen, setProfileOpen] = useState(false);
   const [livesOpen, setLivesOpen] = useState(false);
   const { pathname } = useLocation();
   const pendingRequests = usePendingFriendRequestsCount();
   const unseenAchievements = useUnseenAchievementsCount();
   const { lives } = useLives();
-  // Un solo globito numérico en el botón de Stats, mismo patrón que ya
-  // existía solo para amigos: suma las dos cosas que "necesitan mirada" (una
-  // solicitud pendiente es accionable; un logro no visto es solo un aviso,
-  // pero ambos se resuelven abriendo el mismo panel). El detalle de CUÁL de
-  // las dos pestañas tiene contenido nuevo se ve al abrir el modal (punto en
-  // la pestaña "Logros", ver StatsModal.tsx).
+  // El acceso a estadísticas prioriza solicitudes de amigos y logros nuevos.
   const statsBadgeCount = pendingRequests + unseenAchievements;
 
   // La fecha de "hoy" difiere entre el momento del prerender (build) y la
@@ -97,17 +89,12 @@ export function Header() {
   }, []);
   useEffect(() => () => window.clearTimeout(celebrateTimeout.current), []);
 
-  // Escuchar el evento global para abrir el modal de stats desde cualquier
-  // lugar de la app (ej: botón "Ver ranking del día" del modal de resultado).
-  // Este camino siempre abre en la pestaña por defecto (Ranking Global): el
-  // salto directo a "Amigos" es solo para cuando se toca el botón CON el
-  // globito de notificaciones visible (ver el botón mas abajo).
+  // Los resultados de juegos conservan su evento y abren el nuevo ranking.
   useEffect(() => {
     return on(Events.OPEN_STATS, () => {
-      setStatsInitialView(undefined);
-      setStatsOpen(true);
+      if (!runNavGuard()) navigate(rankingPath(locale));
     });
-  }, []);
+  }, [locale, navigate]);
 
   // Cerrar los modales al navegar. Header vive dentro de Layout, que NO se
   // desmonta al cambiar de ruta hija (home ↔ juego ↔ duelo) — sin esto, un
@@ -115,8 +102,6 @@ export function Header() {
   // pantalla nueva tras aceptar un duelo desde el banner, tapándola. Cubre
   // cualquier navegación futura, no solo la de duelos.
   useEffect(() => {
-    setStatsOpen(false);
-    setProfileOpen(false);
     setLivesOpen(false);
   }, [pathname]);
 
@@ -146,7 +131,7 @@ export function Header() {
           {/* Vidas extra (Etapa 5). `lives` es null hasta tener una
               identidad real (nadie jugó todavía): recién ahí "0 vidas"
               significa algo. Con saldo se ve en violeta; en 0, atenuado. */}
-          {mounted && lives && (
+          {mounted && lives && lives.balance > 0 && (
             <button
               onClick={() => setLivesOpen(true)}
               aria-label={t("lives.header_label", { count: lives.balance })}
@@ -170,7 +155,7 @@ export function Header() {
           <LanguageSelector />
 
           <button
-            onClick={() => setProfileOpen(true)}
+            onClick={() => { if (!runNavGuard()) navigate(identity?.hasToken ? profilePath(locale) : accessPath(locale)); }}
             aria-label={t("header.profile_label")}
             className="inline-flex h-9 items-center justify-center rounded-lg border border-white/10 px-3 text-ink transition-[background-color,border-color,transform] duration-150 active:scale-95 hover:border-white/25 hover:bg-white/5"
           >
@@ -183,14 +168,7 @@ export function Header() {
               // ACCIONABLE (alguien espera una respuesta); un logro no visto
               // es solo un aviso. Si hay de las dos, gana amigos — el logro
               // sigue con su punto en la pestaña hasta que se lo mire.
-              setStatsInitialView(
-                pendingRequests > 0
-                  ? "friends"
-                  : unseenAchievements > 0
-                    ? "achievements"
-                    : undefined,
-              );
-              setStatsOpen(true);
+              if (!runNavGuard()) navigate(pendingRequests > 0 ? friendsPath(locale) : unseenAchievements > 0 ? achievementsPath(locale) : profilePath(locale));
             }}
             aria-label={t("header.stats_label")}
             className="relative inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/10 px-3 text-sm text-ink transition-[background-color,border-color,transform] duration-150 active:scale-95 hover:border-white/25 hover:bg-white/5"
@@ -215,8 +193,6 @@ export function Header() {
         </div>
       </div>
 
-      <StatsModal open={statsOpen} onClose={() => setStatsOpen(false)} initialView={statsInitialView} />
-      <IdentityModal open={profileOpen} onClose={() => setProfileOpen(false)} />
       <LivesModal open={livesOpen} onClose={() => setLivesOpen(false)} lives={lives} />
     </header>
   );

@@ -18,13 +18,15 @@
 //      se descartan silenciosamente al sincronizar)
 //  - Si hay conflicto (misma cuenta, misma fecha, mismo juego):
 //    → gana el intento del server (regla de negocio)
+//  - El userId del dispositivo solo se vincula/fusiona si el cliente prueba
+//    que es suyo con su identityToken (ver resolveClaimableUserId).
 
 import { FastifyRequest, FastifyReply } from "fastify";
 import { query, transaction } from "./db";
 import { sanitizeDisplayName, isValidDateKey } from "./validate";
-import { signIdentityToken } from "./identity-token";
+import { signIdentityToken, ownsIdentity } from "./identity-token";
 import { requireEnv } from "./secrets";
-import { awardAchievements } from "./achievements";
+import { awardAchievements, type QueryFn } from "./achievements";
 import { mergeAnonymousExtras } from "./accountMerge";
 import { verifyChallenge } from "./verify";
 import { computeScore } from "../lib/scoring";
@@ -115,6 +117,36 @@ async function getGoogleUserInfo(
   }
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Decide si el `currentUserId` que manda el cliente al loguearse puede
+ * vincularse (Google nuevo) o fusionarse (Google existente) con la cuenta.
+ *
+ * El userId es PÚBLICO (lo devuelven `/ranking/daily` y `/ranking/monthly`),
+ * así que no prueba nada por sí solo. Antes este endpoint lo aceptaba tal
+ * cual: con el userId de otro jugador sacado del ranking, un Google NUEVO
+ * quedaba vinculado a esa cuenta (y recibía su identityToken: toma de cuenta),
+ * y un Google EXISTENTE le absorbía historial, amigos y vidas y la BORRABA.
+ *
+ * Mismo criterio que `requirePlayerIdentity` en routes.ts:
+ *  - userId con formato inválido → null (se ignora).
+ *  - userId que NO existe en `users` → se acepta: no hay nada que proteger
+ *    (jugador que todavía no jugó ningún reto).
+ *  - userId que SÍ existe → solo con un identityToken propio. Sin prueba, se
+ *    ignora (null): el login sigue, pero sin vincular ni fusionar esa cuenta.
+ */
+export async function resolveClaimableUserId(
+  q: QueryFn,
+  currentUserId: unknown,
+  currentIdentityToken: unknown,
+): Promise<string | null> {
+  if (typeof currentUserId !== "string" || !UUID_RE.test(currentUserId)) return null;
+  const known = await q("SELECT 1 FROM users WHERE id = $1", [currentUserId]);
+  if (known.rows.length === 0) return currentUserId;
+  return ownsIdentity(currentIdentityToken, currentUserId) ? currentUserId : null;
+}
+
 // ─── Endpoints ─────────────────────────────────────────────────────
 
 /**
@@ -128,6 +160,7 @@ async function getGoogleUserInfo(
  *   code: string,
  *   redirectUri: string,
  *   currentUserId?: string  // userId actual del frontend (anónimo)
+ *   currentIdentityToken?: string  // prueba de que currentUserId es del cliente
  * }
  */
 export async function googleAuthCallback(
@@ -135,10 +168,11 @@ export async function googleAuthCallback(
   reply: FastifyReply,
 ): Promise<void> {
   try {
-    const { code, redirectUri, currentUserId, localAttempts, clientDateKey } = req.body as {
+    const { code, redirectUri, currentUserId, currentIdentityToken, localAttempts, clientDateKey } = req.body as {
       code?: string;
       redirectUri?: string;
       currentUserId?: string;
+      currentIdentityToken?: string;
       localAttempts?: Array<{
         gameId?: string;
         difficulty?: string;
@@ -182,6 +216,18 @@ export async function googleAuthCallback(
       [googleId],
     );
 
+    // userId del dispositivo que se puede vincular/fusionar: solo si el
+    // cliente probó que es suyo (ver resolveClaimableUserId). Si no, el login
+    // sigue como si no hubiera mandado ninguno.
+    const claimedUserId = await resolveClaimableUserId(
+      (sql, params) => query(sql, params as any[]),
+      currentUserId,
+      currentIdentityToken,
+    );
+    if (currentUserId && !claimedUserId) {
+      console.warn("auth/google: currentUserId sin prueba de identidad, se ignora");
+    }
+
     let userId: string;
     let isNewLink = false;
     let migratedCount = 0;
@@ -200,36 +246,27 @@ export async function googleAuthCallback(
       // Regla:
       //  - Si server ya tiene attempt para (game, date) → descartar el local (borrarlo)
       //  - Si server NO tiene → migrar (cambiar user_id del attempt anónimo)
-      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (
-        typeof currentUserId === "string" &&
-        UUID_RE.test(currentUserId) &&
-        currentUserId !== userId
-      ) {
+      if (claimedUserId && claimedUserId !== userId) {
         const anonHasGoogle = await query(
           "SELECT google_id FROM google_accounts WHERE user_id = $1",
-          [currentUserId],
+          [claimedUserId],
         );
         // Solo migrar si el userId anónimo NO está vinculado a ninguna cuenta
         if (anonHasGoogle.rows.length === 0) {
           // migrateAnonymousAttempts hace TODO atómicamente:
           // migra attempts + borra sesiones + borra el usuario anónimo.
-          migratedCount = await migrateAnonymousAttempts(currentUserId, userId);
+          migratedCount = await migrateAnonymousAttempts(claimedUserId, userId);
         }
       }
     } else {
       // Cuenta Google nueva: vincular con el userId actual o crear uno
       isNewLink = true;
 
-      // Validar currentUserId (si viene, debe ser UUID válido)
-      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const validCurrentUser = typeof currentUserId === "string" && UUID_RE.test(currentUserId);
-
-      if (validCurrentUser) {
+      if (claimedUserId) {
         // Verificar que ese userId no tenga ya otra cuenta Google vinculada
         const alreadyLinked = await query(
           "SELECT google_id FROM google_accounts WHERE user_id = $1",
-          [currentUserId],
+          [claimedUserId],
         );
         if (alreadyLinked.rows.length > 0) {
           // Este userId ya está vinculado a OTRA cuenta Google → error
@@ -243,9 +280,9 @@ export async function googleAuthCallback(
           `INSERT INTO users (id, display_name)
            VALUES ($1, $2)
            ON CONFLICT (id) DO NOTHING`,
-          [currentUserId, googleName],
+          [claimedUserId, googleName],
         );
-        userId = currentUserId;
+        userId = claimedUserId;
       } else {
         // Sin userId válido: generar uno nuevo
         const { randomUUID } = await import("crypto");

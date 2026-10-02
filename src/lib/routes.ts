@@ -53,3 +53,49 @@ export function infoPath(locale: Locale): string {
 export function contactPath(locale: Locale): string {
   return `/${locale}/contact`;
 }
+
+// ─── Páginas de cuenta (rediseño v2) ────────────────────────────────
+// Personales: noindex y fuera del sitemap (ver buildSeo / gen-sitemap).
+
+/** Clasificación global, ej: rankingPath("es") -> "/es/ranking" */
+export function rankingPath(locale: Locale): string {
+  return `/${locale}/ranking`;
+}
+
+/**
+ * Acceso (Google o visitante), ej: accessPath("es") -> "/es/acceso".
+ * `returnTo` es la ruta interna a la que volver al confirmar la identidad
+ * (ej. el juego que se quiso abrir sin nombre/país).
+ */
+export function accessPath(locale: Locale, returnTo?: string): string {
+  const base = `/${locale}/acceso`;
+  return returnTo ? `${base}?volver=${encodeURIComponent(returnTo)}` : base;
+}
+
+/** Perfil ("Mi recorrido"), ej: profilePath("es") -> "/es/perfil" */
+export function profilePath(locale: Locale): string {
+  return `/${locale}/perfil`;
+}
+
+/** Logros, ej: achievementsPath("es") -> "/es/perfil/logros" */
+export function achievementsPath(locale: Locale): string {
+  return `/${locale}/perfil/logros`;
+}
+
+/** Amigos, ej: friendsPath("es") -> "/es/perfil/amigos" */
+export function friendsPath(locale: Locale): string {
+  return `/${locale}/perfil/amigos`;
+}
+
+/**
+ * Valida una ruta de retorno recibida por query string o guardada antes de ir
+ * a Google: solo rutas internas del sitio (empiezan con "/", sin "//", sin
+ * barra invertida ni esquema), para que no sirva de redirección abierta.
+ */
+export function safeReturnPath(raw: string | null | undefined): string | null {
+  if (!raw || typeof raw !== "string" || raw.length > 300) return null;
+  if (Array.from(raw).some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) return null;
+  if (!raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) return null;
+  if (/^\/[^/?#]*:/.test(raw)) return null;
+  return raw;
+}

@@ -38,6 +38,17 @@ function CircleMedal(p: ShapeProps) {
   );
 }
 
+/** Copa con laureles — podio ANUAL (oro/plata/bronce del año). */
+function LaurelCup(p: ShapeProps) {
+  return (
+    <svg {...shapeBase(p)}>
+      <path d="M8 4h8v5a4 4 0 0 1-8 0V4ZM12 13v4M9 20h6" />
+      <path d="M5.5 6c-1.8 2.6-1.4 6 .9 8M18.5 6c1.8 2.6 1.4 6-.9 8" />
+      <path d="M4.6 9.2 3 8.6M5.2 12.4l-1.6.4M19.4 9.2l1.6-.6M18.8 12.4l1.6.4" />
+    </svg>
+  );
+}
+
 /** Hexágono con estrella — badge de rol (admin/superadmin). */
 function HexagonStar(p: ShapeProps) {
   return (
@@ -143,6 +154,9 @@ const SHAPE: Record<BadgeType, (p: ShapeProps) => React.JSX.Element> = {
   monthly_gold: ShieldCrown,
   monthly_silver: CircleMedal,
   monthly_bronze: CircleMedal,
+  annual_gold: LaurelCup,
+  annual_silver: LaurelCup,
+  annual_bronze: LaurelCup,
   ach_legend_10: LegendStar,
   ach_legend_50: MasterLegend,
   ach_wins_100: SteeringWheel,
@@ -163,6 +177,9 @@ const COLOR: Record<BadgeType, string> = {
   monthly_gold: "text-sector-yellow",
   monthly_silver: "text-[#C0C0C0]",
   monthly_bronze: "text-[#CD7F32]",
+  annual_gold: "text-[#FFE076]",
+  annual_silver: "text-[#D9DCE3]",
+  annual_bronze: "text-[#E09A5B]",
   ach_legend_10: "text-[#D7A51D]",
   ach_legend_50: "text-[#B88912]",
   ach_wins_100: "text-[#7C818C]",
@@ -173,6 +190,15 @@ const COLOR: Record<BadgeType, string> = {
   admin: "text-sector-green",
   superadmin: "text-racing-400",
 };
+
+/**
+ * Solo la forma del badge, sin color propio (hereda `currentColor`): para
+ * contenedores que ya definen su tono, como los medallones del rediseño v2.
+ */
+export function BadgeShape({ type, size = 18 }: { type: BadgeType; size?: number }) {
+  const Shape = SHAPE[type] ?? UnknownBadge;
+  return <Shape size={size} aria-hidden="true" />;
+}
 
 type BadgeIconProps = {
   type: BadgeType;

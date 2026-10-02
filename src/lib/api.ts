@@ -46,11 +46,15 @@ export type AchievementBadgeType =
   | "ach_perfect_day"
   | "ach_complete";
 
-/** Tipos de badge. Los monthly_* y ach_* se ganan; admin/superadmin derivan del rol. */
+/** Podio anual (rediseño v2): se guarda con reference_month = 'YYYY-01-01'. */
+export type AnnualBadgeType = "annual_gold" | "annual_silver" | "annual_bronze";
+
+/** Tipos de badge. Los monthly_*, annual_* y ach_* se ganan; admin/superadmin derivan del rol. */
 export type BadgeType =
   | "monthly_gold"
   | "monthly_silver"
   | "monthly_bronze"
+  | AnnualBadgeType
   | AchievementBadgeType
   | "admin"
   | "superadmin";
@@ -272,6 +276,92 @@ export async function apiGetDailyRanking(
   return apiFetch<DailyRankingResponse>(`/ranking/daily?${params.toString()}`);
 }
 
+/** Período de la clasificación (el anual es nuevo del rediseño v2). */
+export type RankingPeriod = "daily" | "monthly" | "annual";
+
+/** Página de la clasificación + la fila propia, aparte de la página. */
+export type RankingPage = {
+  /** 'YYYY-MM-DD' (daily), 'YYYY-MM' (monthly) o 'YYYY' (annual). */
+  period: string;
+  /** Cantidad de pilotos (ya filtrados por país, si hubo filtro). */
+  total: number;
+  offset: number;
+  limit: number;
+  top: RankingEntry[];
+  /** Tu fila dentro de la clasificación (null si no figurás). */
+  me: RankingEntry | null;
+};
+
+type RawRankingPage = {
+  date?: string;
+  month?: string;
+  year?: string;
+  total: number;
+  offset: number;
+  limit: number;
+  top: RankingEntry[];
+  me: RankingEntry | null;
+};
+
+/** Clave del período actual en hora LOCAL (igual criterio que date_key). */
+export function currentPeriodKey(period: RankingPeriod): string {
+  const today = dateKey();
+  if (period === "monthly") return today.substring(0, 7);
+  if (period === "annual") return today.substring(0, 4);
+  return today;
+}
+
+/**
+ * GET /ranking/{daily|monthly|annual} paginado (con `limit`). Pide además la
+ * fila de `userId`, que el server devuelve aparte de la página (`me`) para
+ * que tu puesto esté siempre visible aunque no hayas llegado a esa página.
+ */
+export async function apiGetRankingPage(
+  period: RankingPeriod,
+  opts: { key?: string; country?: string; limit: number; offset: number; userId?: string },
+): Promise<RankingPage | null> {
+  const params = new URLSearchParams();
+  const key = opts.key ?? currentPeriodKey(period);
+  params.set(period === "daily" ? "date" : period === "monthly" ? "month" : "year", key);
+  if (opts.country) params.set("country", opts.country);
+  params.set("limit", String(opts.limit));
+  params.set("offset", String(opts.offset));
+  if (opts.userId) params.set("userId", opts.userId);
+  const raw = await apiFetch<RawRankingPage>(`/ranking/${period}?${params.toString()}`);
+  if (!raw || !Array.isArray(raw.top)) return null;
+  return {
+    period: raw.date ?? raw.month ?? raw.year ?? key,
+    total: Number(raw.total ?? raw.top.length),
+    offset: Number(raw.offset ?? opts.offset),
+    limit: Number(raw.limit ?? opts.limit),
+    top: raw.top,
+    me: raw.me ?? null,
+  };
+}
+
+/** Resumen personal calculado en el server (todo el historial, sin duelos). */
+export type UserSummary = {
+  /** Día que el server usó como "hoy" (el local del cliente si es válido). */
+  today: string;
+  won: number;
+  lost: number;
+  todayWon: number;
+  todayPlayed: number;
+  currentStreak: number;
+  bestStreak: number;
+  /** Últimos 7 días, del más viejo a hoy. */
+  lastDays: Array<{ dateKey: string; played: number; won: number }>;
+};
+
+/** GET /user/:userId/summary — solo el dueño (identityToken por header). */
+export async function apiGetUserSummary(userId: string): Promise<UserSummary | null> {
+  const params = new URLSearchParams({ today: dateKey() });
+  return apiFetch<UserSummary>(
+    `/user/${encodeURIComponent(userId)}/summary?${params.toString()}`,
+    { headers: identityHeaders() },
+  );
+}
+
 /**
  * Endpoint genérico para POST autenticado. Usado por el módulo de auth
  * (que no puede importar apiFetch porque es privado).
@@ -449,6 +539,8 @@ export type AchievementProgress = {
   target: number;
   percent: number;
   unlocked: boolean;
+  /** Solo en `ach_specialist_50`: el juego con más victorias (null sin victorias). */
+  gameId?: string | null;
 };
 
 /** GET /user/:userId/badges — colección pública de badges de un usuario. */
@@ -488,11 +580,11 @@ export async function apiDeleteAccount(
 
 export async function apiSetFeaturedBadges(
   userId: string,
-  featured: FeaturedSlot[],
+  featured: FeaturedSlot[] | null,
   identityToken?: string | null,
-): Promise<{ userId: string; featured: FeaturedSlot[] } | { error: string } | null> {
+): Promise<{ userId: string; featured: FeaturedSlot[] | null } | { error: string } | null> {
   const token = identityToken ?? getIdentityToken();
-  return apiFetch<{ userId: string; featured: FeaturedSlot[] } | { error: string }>(
+  return apiFetch<{ userId: string; featured: FeaturedSlot[] | null } | { error: string }>(
     `/user/${encodeURIComponent(userId)}/badges/featured`,
     {
       method: "POST",
@@ -814,6 +906,19 @@ export async function apiListFriends(): Promise<Friend[]> {
   const params = new URLSearchParams({ userId });
   const res = await apiFetch<{ friends: Friend[] }>(`/friends?${params.toString()}`, { headers: identityHeaders() });
   return res?.friends ?? [];
+}
+
+/** A failed request remains distinguishable from a genuinely empty list. */
+export async function apiGetFriendsSnapshot(): Promise<{ friends: Friend[]; requests: FriendRequest[] } | null> {
+  const { userId } = getIdentity();
+  if (!getIdentityToken()) return null;
+  const params = new URLSearchParams({ userId });
+  const [friends, requests] = await Promise.all([
+    apiFetch<{ friends: Friend[] }>(`/friends?${params}`, { headers: identityHeaders() }),
+    apiFetch<{ requests: FriendRequest[] }>(`/friends/requests?${params}`, { headers: identityHeaders() }),
+  ]);
+  if (!friends || !requests) return null;
+  return { friends: friends.friends, requests: requests.requests };
 }
 
 export async function apiListFriendRequests(): Promise<FriendRequest[]> {

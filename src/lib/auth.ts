@@ -14,6 +14,7 @@ import { apiPost, apiGetUserAttempts } from "./api";
 import {
   getIdentity,
   updateIdentity,
+  getIdentityToken,
   setIdentityToken,
   clearIdentityToken,
 } from "./identity";
@@ -29,6 +30,7 @@ import {
 import { dateKey } from "./seed";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+export const googleLoginAvailable = !!GOOGLE_CLIENT_ID;
 
 export type AuthResult = {
   userId: string;
@@ -51,16 +53,85 @@ const AUTH_STATUS_KEY = "auth:status";
 const AUTH_EMAIL_KEY = "auth:email";
 const AUTH_PICTURE_KEY = "auth:picture";
 
+// `state` del OAuth (anti-CSRF de login): sin él, un tercero podía hacer que
+// el navegador de la víctima completara el callback con el `code` de la
+// cuenta Google del atacante, dejándola jugando (y sumando) en esa cuenta.
+// Vive en sessionStorage (sobrevive al ida y vuelta a Google en la misma
+// pestaña) con una cookie de 10 min como respaldo si sessionStorage falla.
+const OAUTH_STATE_KEY = "bdb_oauth_state";
+const OAUTH_STATE_MAX_AGE_S = 600;
+
+function newOAuthState(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function saveOAuthState(state: string): void {
+  try {
+    sessionStorage.setItem(OAUTH_STATE_KEY, state);
+  } catch {
+    // Sin sessionStorage: queda la cookie.
+  }
+  const secure = window.location.protocol === "https:" ? ";Secure" : "";
+  document.cookie = `${OAUTH_STATE_KEY}=${state};path=/;max-age=${OAUTH_STATE_MAX_AGE_S};SameSite=Lax${secure}`;
+}
+
+/**
+ * Verifica el `state` que volvió de Google contra el guardado al iniciar el
+ * login, y lo borra (uso único). false si falta o no coincide.
+ */
+export function consumeOAuthState(received: string | null): boolean {
+  let saved: string | null = null;
+  try {
+    saved = sessionStorage.getItem(OAUTH_STATE_KEY);
+    sessionStorage.removeItem(OAUTH_STATE_KEY);
+  } catch {
+    // Ignorar: se prueba con la cookie.
+  }
+  const fromCookie = document.cookie
+    .split("; ")
+    .find((c) => c.startsWith(`${OAUTH_STATE_KEY}=`))
+    ?.slice(OAUTH_STATE_KEY.length + 1);
+  document.cookie = `${OAUTH_STATE_KEY}=;path=/;max-age=0;SameSite=Lax`;
+  saved = saved ?? fromCookie ?? null;
+  return !!received && !!saved && received === saved;
+}
+
+// A dónde volver después del login (la página desde la que se lo inició).
+// sessionStorage: sobrevive al ida y vuelta a Google en la misma pestaña.
+const POST_LOGIN_KEY = "bdb_post_login";
+
+/** Ruta interna a la que volver tras el login (y la borra). null si no hay. */
+export function consumePostLoginPath(): string | null {
+  try {
+    const path = sessionStorage.getItem(POST_LOGIN_KEY);
+    sessionStorage.removeItem(POST_LOGIN_KEY);
+    return path;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Inicia el flujo de OAuth con Google.
  * Redirige a la pantalla de consentimiento de Google.
+ * @param returnTo ruta interna a la que volver al terminar (ej. "/es/perfil").
  */
-export function loginWithGoogle(): void {
+export function loginWithGoogle(returnTo?: string): void {
   if (!GOOGLE_CLIENT_ID) {
     console.error("VITE_GOOGLE_CLIENT_ID no configurado");
     return;
   }
   const redirectUri = `${window.location.origin}/auth/callback`;
+  const state = newOAuthState();
+  saveOAuthState(state);
+  try {
+    if (returnTo) sessionStorage.setItem(POST_LOGIN_KEY, returnTo);
+    else sessionStorage.removeItem(POST_LOGIN_KEY);
+  } catch {
+    // Sin sessionStorage: se vuelve a la home, como antes.
+  }
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
     redirect_uri: redirectUri,
@@ -68,6 +139,7 @@ export function loginWithGoogle(): void {
     scope: "openid email profile",
     access_type: "online",
     prompt: "select_account",
+    state,
   });
   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 }
@@ -105,6 +177,9 @@ export async function handleGoogleCallback(code: string): Promise<AuthResult | n
     code,
     redirectUri,
     currentUserId,
+    // Prueba de que currentUserId es de este dispositivo: sin ella el server
+    // no vincula ni fusiona esa cuenta (el userId es público en el ranking).
+    currentIdentityToken: getIdentityToken(),
     localAttempts,
     clientDateKey: today,
   });
