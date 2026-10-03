@@ -67,15 +67,16 @@ export function CountryPicker({
 
   useEffect(() => {
     if (!open) return;
-    searchRef.current?.focus();
-    const onDown = (e: MouseEvent) => {
+    // En pantallas táctiles no se enfoca el buscador: abriría el teclado y taparía la lista.
+    if (!window.matchMedia?.("(pointer: coarse)").matches) searchRef.current?.focus();
+    const onDown = (e: PointerEvent) => {
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
         setOpen(false);
         setQuery("");
       }
     };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
   }, [open]);
 
   function close() {
@@ -96,7 +97,9 @@ export function CountryPicker({
     <div
       className="v2-picker"
       ref={rootRef}
-      onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) close(); }}
+      // Solo se cierra al pasar el foco a OTRO elemento (Tab). Un toque sobre la barra de la lista o un
+      // botón en Safari no devuelve relatedTarget y cerraba la lista a mitad de la selección.
+      onBlur={(e) => { const next = e.relatedTarget as Node | null; if (next && !e.currentTarget.contains(next)) close(); }}
       onKeyDown={(e) => {
         if (e.key === "Escape" && open) {
           e.stopPropagation();

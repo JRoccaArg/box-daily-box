@@ -73,7 +73,7 @@ export function RankingPage() {
  </tr>;
 
  return <V2Page page="ranking">
-  <section className="page-intro"><div><p className="eyebrow">La grilla fuera de la pista</p><h1>Clasificación<span>.</span></h1><p>Un reto a la vez. Cada punto cuenta.</p></div><span className="live"><i/>Ranking en vivo</span></section>
+  <section className="page-intro"><div><p className="eyebrow">La grilla fuera de la pista</p><h1>Ranking<span>.</span></h1><p>Un reto a la vez. Cada punto cuenta.</p></div><span className="live"><i/>Ranking en vivo</span></section>
   {status === "ready" && leader && <section className="rank-lead" aria-label="Primera posición">
    <div className="leader-rank">01<span>Líder {period === "daily" ? "del día" : period === "monthly" ? "del mes" : "del año"}</span></div>
    <div className="leader-person"><V2Flag code={leader.countryCode}/><div><h2>{leader.displayName || t("stats.no_name")}</h2><p>{number(leader.gamesWon)} retos ganados</p></div></div>
@@ -81,21 +81,21 @@ export function RankingPage() {
    {leader.currentStreak > 0 && <div className="leader-streak"><V2Streak days={leader.currentStreak}/><small>días seguidos</small></div>}
    <div className="laurel" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4h10v6a5 5 0 0 1-10 0V4ZM7 6H3v3c0 3 2 4 5 4M17 6h4v3c0 3-2 4-5 4M12 15v5M8 21h8"/></svg></div>
   </section>}
-  <section className="rank-board" aria-label="Clasificación">
+  <section className="rank-board" aria-label="Ranking">
    <div className="board-tools">
     <div className="segments" role="group" aria-label="Período">{PERIODS.map(p => <button key={p.value} type="button" className={period === p.value ? "selected" : ""} aria-pressed={period === p.value} onClick={() => { setPeriod(p.value); setKey(""); setOffset(0); }}>{p.label}</button>)}</div>
-    <label className="v2-period-input"><span>Período</span><input aria-label="Período de la clasificación" type={period === "daily" ? "date" : period === "monthly" ? "month" : "number"} min={period === "annual" ? "1" : undefined} max={period === "annual" ? "9999" : undefined} value={activeKey} onChange={e => { setKey(e.target.value); setOffset(0); }}/></label>
+    {period !== "monthly" && <label className="v2-period-input"><span>Período</span><input aria-label="Período del ranking" type={period === "daily" ? "date" : "number"} min={period === "annual" ? "1" : undefined} max={period === "annual" ? "9999" : undefined} value={activeKey} onChange={e => { setKey(e.target.value); setOffset(0); }}/></label>}
     <CountryPicker value={country} onChange={value => { setCountry(value); setOffset(0); }} variant="filter" label="Filtrar por país" placeholder="Todos los países"/>
    </div>
-   {status === "loading" && <div className="v2-skeleton" style={{height: 300}} aria-label="Cargando clasificación" aria-busy="true"/>}
+   {status === "loading" && <div className="v2-skeleton" style={{height: 300}} aria-label="Cargando ranking" aria-busy="true"/>}
    {status === "invalid" && <p className="v2-empty" role="alert">Introduce un año de cuatro cifras.</p>}
-   {status === "error" && <div className="v2-empty" role="alert"><p>No pudimos actualizar la clasificación.</p><button className="secondary" onClick={() => setRetry(n => n + 1)}>Reintentar</button></div>}
-   {data && status === "ready" && <><div className="table-wrap"><table><caption className="sr-only">Clasificación {data.period}{country ? " por país" : " global"}</caption><thead><tr><th scope="col">Puesto</th><th scope="col">Piloto</th><th scope="col">Racha</th><th scope="col" className="retos">Ganados</th><th scope="col">Puntos</th></tr></thead><tbody>{data.top.map(row)}</tbody></table></div>
+   {status === "error" && <div className="v2-empty" role="alert"><p>No pudimos actualizar el ranking.</p><button className="secondary" onClick={() => setRetry(n => n + 1)}>Reintentar</button></div>}
+   {data && status === "ready" && <><div className="table-wrap"><table><caption className="sr-only">Ranking {data.period}{country ? " por país" : " global"}</caption><thead><tr><th scope="col">Puesto</th><th scope="col">Piloto</th><th scope="col">Racha</th><th scope="col" className="retos">Ganados</th><th scope="col">Puntos</th></tr></thead><tbody>{data.top.map(row)}</tbody></table></div>
     {data.total === 0 && <p className="v2-empty">Todavía no hay pilotos en este período{country ? " y país" : ""}.</p>}
     <div className="board-bottom"><span>{data.period} · {number(data.total)} pilotos</span><div className="v2-pagination"><button className="secondary" disabled={offset === 0} onClick={() => setOffset(n => Math.max(0, n - LIMIT))}>Anterior</button><span aria-live="polite">{data.total ? offset + 1 : 0}–{Math.min(offset + data.top.length, data.total)} / {number(data.total)}</span><button className="secondary" disabled={offset + LIMIT >= data.total} onClick={() => setOffset(n => n + LIMIT)}>Siguiente</button></div></div>
    </>}
   </section>
-  {data && status === "ready" && <section className="your-position"><div className="position-number">{me ? "#" + number(me.rank) : "—"}</div><div><p>Tu puesto{country ? " en este país" : ""}</p><strong>{identity?.displayName || t("stats.no_name")} <V2Flag code={identity?.countryCode}/></strong></div><div className="position-score"><strong>{me ? number(me.points) : "—"} <small>pts</small></strong><span>{me ? number(me.gamesWon) + " retos ganados" : "Sin puesto en esta clasificación"}</span></div><Link to={homePath(locale)} className="primary compact">Volver a jugar</Link></section>}
+  {data && status === "ready" && <section className="your-position"><div className="position-number">{me ? "#" + number(me.rank) : "—"}</div><div><p>Tu puesto{country ? " en este país" : ""}</p><strong>{identity?.displayName || t("stats.no_name")} <V2Flag code={identity?.countryCode}/></strong></div><div className="position-score"><strong>{me ? number(me.points) : "—"} <small>pts</small></strong><span>{me ? number(me.gamesWon) + " retos ganados" : "Sin puesto en este ranking"}</span></div><Link to={homePath(locale)} className="primary compact">Volver a jugar</Link></section>}
   <p className="footnote">En el ranking solo aparecen los puntos que cumplen la política de IP.</p>
  </V2Page>;
 }

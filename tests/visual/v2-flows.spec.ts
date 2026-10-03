@@ -54,8 +54,8 @@ test('home navigation, legal pages and cookie choices work at every viewport',as
  if((page.viewportSize()?.width??1280)<=640) {
   await menu.click();
   await expect(page.locator('#v2-mobile-menu')).toBeVisible();
-  await page.locator('#v2-mobile-menu').getByRole('link',{name:'Clasificación',exact:true}).click();
- }else await page.locator('.navlinks').getByRole('link',{name:'Clasificación'}).click();
+  await page.locator('#v2-mobile-menu').getByRole('link',{name:'Ranking',exact:true}).click();
+ }else await page.locator('.navlinks').getByRole('link',{name:'Ranking',exact:true}).click();
  await expect(page).toHaveURL(/\/es\/ranking$/);
  await page.getByRole('link',{name:'Términos y Condiciones',exact:true}).click();
  await expect(page.locator('.document-body')).toBeVisible();
