@@ -20,6 +20,10 @@
 //    entrada sigue viva en caché.
 //  - Dos requests simultáneos con la caché vencida comparten la MISMA promesa
 //    (una sola query a la base).
+//  - El ANUAL no escanea el año entero: se arma sumando los snapshots de cada
+//    mes. Ninguna query toca más de un mes; el mes en curso reutiliza el
+//    snapshot del ranking mensual y los meses ya asentados se cargan una vez y
+//    viven `SETTLED_MONTH_TTL_MS`.
 
 import type { DisplayBadge, FeaturedSlot } from "./badges";
 import { displayStreak, toDateKey } from "./streak";
@@ -75,8 +79,22 @@ export const MAX_PAGE_SIZE = 100;
 export const RANKING_TTL_MS: Record<RankingKind, number> = {
   daily: 10_000,
   monthly: 30_000,
-  annual: 120_000,
+  annual: 30_000,
 };
+
+/**
+ * TTL de un mes ya asentado dentro del ranking anual. Un mes cerrado casi no
+ * cambia: solo por un import de intentos viejos al iniciar sesión (que vive con
+ * el TTL) o por un reproceso.
+ */
+export const SETTLED_MONTH_TTL_MS = 10 * 60_000;
+
+/**
+ * Días que un mes cerrado todavía puede recibir intentos: el día del reto lo
+ * fija el cliente con tolerancia de ±1 día respecto del UTC del server, así que
+ * el 1 del mes siguiente aún se escriben partidas con fecha del último día.
+ */
+const MONTH_SETTLE_DAYS = 2;
 
 /** Máximo de snapshots en memoria (se expulsa el más viejo). */
 export const RANKING_CACHE_MAX_KEYS = 64;
@@ -157,6 +175,56 @@ export function paginateRanking(
     if (row) me = { ...row, rank: idx + 1 };
   }
   return { total: filtered.length, top, me };
+}
+
+/** Primer día de cada mes del año de `yearStart` ('YYYY-01-01') hasta `untilMs` inclusive. */
+export function monthsOfYear(yearStart: string, untilMs: number): string[] {
+  const year = Number(yearStart.slice(0, 4));
+  const months: string[] = [];
+  for (let m = 0; m < 12; m++) {
+    const start = Date.UTC(year, m, 1);
+    if (start > untilMs) break;
+    months.push(new Date(start).toISOString().slice(0, 10));
+  }
+  return months;
+}
+
+/** ¿El mes ('YYYY-MM-01') cerró hace más de MONTH_SETTLE_DAYS y ya no recibe intentos? */
+export function isSettledMonth(monthStart: string, nowMs: number): boolean {
+  const y = Number(monthStart.slice(0, 4));
+  const m = Number(monthStart.slice(5, 7));
+  const settledAt = Date.UTC(y, m, 1) + MONTH_SETTLE_DAYS * 86_400_000;
+  return settledAt <= nowMs;
+}
+
+/**
+ * Suma los snapshots mensuales (en orden cronológico) en el del año, con el
+ * mismo criterio que la query anual: puntos y victorias suman, los días
+ * jugados también (los meses no comparten fechas) y el orden es
+ * `points DESC, id ASC`. Los datos del jugador (nombre, país, racha...) se
+ * toman del mes más reciente en que aparece.
+ */
+export function mergeMonthlyRows(months: readonly (readonly RankingRow[])[]): RankingRow[] {
+  const byUser = new Map<string, RankingRow>();
+  for (const rows of months) {
+    for (const r of rows) {
+      const acc = byUser.get(r.userId);
+      byUser.set(
+        r.userId,
+        acc
+          ? {
+              ...r,
+              points: acc.points + r.points,
+              gamesWon: acc.gamesWon + r.gamesWon,
+              daysPlayed: acc.daysPlayed + r.daysPlayed,
+            }
+          : r,
+      );
+    }
+  }
+  return [...byUser.values()].sort(
+    (a, b) => b.points - a.points || (a.userId < b.userId ? -1 : a.userId > b.userId ? 1 : 0),
+  );
 }
 
 /** Arma la entrada pública aplicando el death-check de la racha con el "hoy" actual. */
@@ -265,6 +333,8 @@ type CacheEntry = {
  *    (posiblemente anterior a la escritura) ya no se guarda.
  *  - Como mucho `maxKeys` entradas: al pasarse se expulsa la cargada hace más
  *    tiempo (orden de inserción del Map).
+ *  - `clear` borra también los meses asentados del anual; `invalidate` solo la
+ *    entrada pedida (`invalidate("annual", …)` no toca los meses).
  *
  * Es por proceso: con varias instancias del server, cada una tiene la suya y
  * la invalidación solo alcanza a la propia (el resto vive con el TTL).
@@ -285,19 +355,44 @@ export class RankingSnapshotCache {
   }
 
   get(kind: RankingKind, periodStart: string): Promise<RankingRow[]> {
-    const key = `${kind}:${periodStart}`;
+    return this.fetch(
+      `${kind}:${periodStart}`,
+      this.ttlMs[kind],
+      kind === "annual" ? () => this.composeAnnual(periodStart) : () => this.load(kind, periodStart),
+    );
+  }
+
+  /**
+   * El anual suma los snapshots de cada mes (ver cabecera del módulo): el mes
+   * en curso (o recién cerrado) sale del snapshot MENSUAL, compartido con ese
+   * ranking, y los meses asentados de una entrada propia de larga vida.
+   */
+  private async composeAnnual(yearStart: string): Promise<RankingRow[]> {
+    const nowMs = this.now();
+    const parts: RankingRow[][] = [];
+    for (const month of monthsOfYear(yearStart, nowMs)) {
+      parts.push(
+        isSettledMonth(month, nowMs)
+          ? await this.fetch(`settled:${month}`, SETTLED_MONTH_TTL_MS, () => this.load("monthly", month))
+          : await this.get("monthly", month),
+      );
+    }
+    return mergeMonthlyRows(parts);
+  }
+
+  private fetch(key: string, ttlMs: number, loader: () => Promise<RankingRow[]>): Promise<RankingRow[]> {
     const current = this.entries.get(key);
     if (current?.rows && current.expiresAt > this.now()) return Promise.resolve(current.rows);
     if (current?.inflight) return current.inflight;
 
     const startedAt = this.now();
     const entry: CacheEntry = { rows: null, expiresAt: 0, inflight: null };
-    entry.inflight = this.load(kind, periodStart).then(
+    entry.inflight = loader().then(
       (rows) => {
         // Solo se guarda si nadie invalidó/expulsó la entrada mientras tanto.
         if (this.entries.get(key) === entry) {
           entry.rows = rows;
-          entry.expiresAt = startedAt + this.ttlMs[kind];
+          entry.expiresAt = startedAt + ttlMs;
           entry.inflight = null;
         }
         return rows;

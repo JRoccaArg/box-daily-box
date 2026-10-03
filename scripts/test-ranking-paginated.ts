@@ -15,12 +15,19 @@
  */
 import { PGlite } from "@electric-sql/pglite";
 import {
+  RankingSnapshotCache,
+  isSettledMonth,
   loadRankingRows,
+  mergeMonthlyRows,
+  monthsOfYear,
   paginateRanking,
   parseRankingQuery,
   toRankingEntry,
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
+  RANKING_TTL_MS,
+  SETTLED_MONTH_TTL_MS,
+  type RankingKind,
   type RankingRow,
 } from "../src/api/ranking";
 import { isValidDateKey, isValidMonth, isValidYear } from "../src/api/validate";
@@ -147,6 +154,65 @@ const ids = (rows: Array<{ userId: string }>) => rows.map((r) => r.userId).join(
   assert(annual[0]?.userId === U5, "anual ordenado por puntos del año");
   const prevYear = await loadRankingRows(q, "annual", "2025-01-01");
   assert(prevYear.length === 1 && prevYear[0]?.userId === U3 && prevYear[0]?.points === 700, "anual 2025 solo trae el 31/12/2025");
+
+  // ─── Anual compuesto con los meses (lo que usa el server) ──────────
+  console.log("\n[Anual = suma de snapshots mensuales]");
+  const T0 = Date.parse("2026-12-31T12:00:00Z");
+  let nowMs = T0;
+  const calls: string[] = [];
+  const cache = new RankingSnapshotCache(
+    (kind: RankingKind, start: string) => {
+      calls.push(`${kind}:${start}`);
+      return loadRankingRows(q, kind, start);
+    },
+    { now: () => nowMs },
+  );
+  const summary = (rows: readonly RankingRow[]) =>
+    rows.map((r) => [r.userId, r.displayName, r.countryCode, r.points, r.gamesWon, r.daysPlayed, r.rawStreak].join("|")).join(";");
+  const composed = await cache.get("annual", "2026-01-01");
+  assert(summary(composed) === summary(annual), "el anual compuesto es idéntico al de la query anual (orden, puntos, victorias, días)");
+  assert(calls.length === 12 && calls.every((c) => c.startsWith("monthly:2026-")), "ninguna carga toca más de un mes: 12 queries mensuales y ninguna anual");
+
+  calls.length = 0;
+  await cache.get("annual", "2026-01-01");
+  assert(calls.length === 0, "segunda lectura dentro del TTL: sin queries");
+  nowMs = T0 + RANKING_TTL_MS.annual + 1;
+  const refreshed = await cache.get("annual", "2026-01-01");
+  assert(calls.join(",") === "monthly:2026-12-01", "vencido el TTL del anual solo se recarga el mes en curso");
+  assert(summary(refreshed) === summary(annual), "el anual refrescado sigue siendo idéntico");
+  const monthlyShared = calls.length;
+  await cache.get("monthly", "2026-12-01");
+  assert(calls.length === monthlyShared, "el mes en curso del anual es el MISMO snapshot que el ranking mensual");
+  nowMs = T0 + SETTLED_MONTH_TTL_MS + 1;
+  calls.length = 0;
+  await cache.get("annual", "2026-01-01");
+  assert(calls.length === 12, "pasado el TTL de los meses asentados se recargan (11 asentados + el mes en curso)");
+
+  cache.clear();
+  assert(cache.size() === 0, "clear() borra también los meses asentados");
+  calls.length = 0;
+  nowMs = Date.parse("2026-03-15T09:00:00Z");
+  const partial = await cache.get("annual", "2026-01-01");
+  assert(calls.join(",") === "monthly:2026-01-01,monthly:2026-02-01,monthly:2026-03-01", "año en curso: solo los meses hasta hoy");
+  assert(partial.find((r) => r.userId === U6)?.points === 10, "a mitad de año suma solo lo ya jugado (U6: 10 del 1/1)");
+  calls.length = 0;
+  assert((await cache.get("annual", "2027-01-01")).length === 0 && calls.length === 0, "año futuro: vacío y sin queries");
+
+  assert(monthsOfYear("2026-01-01", Date.parse("2026-12-31T00:00:00Z")).length === 12, "monthsOfYear: año completo");
+  assert(monthsOfYear("2025-01-01", Date.parse("2026-02-01T00:00:00Z")).length === 12, "monthsOfYear: año pasado completo");
+  assert(!isSettledMonth("2026-11-01", Date.parse("2026-12-02T12:00:00Z")), "un mes cerrado hace menos de 2 días aún NO está asentado (fecha de cliente ±1 día)");
+  assert(isSettledMonth("2026-11-01", Date.parse("2026-12-03T00:00:00Z")), "a los 2 días de cerrar queda asentado");
+  assert(!isSettledMonth("2026-12-01", Date.parse("2026-12-31T00:00:00Z")), "el mes en curso nunca está asentado");
+
+  const mk = (id: string, name: string, points: number, won: number, days: number): RankingRow => ({
+    userId: id, displayName: name, countryCode: null, role: "user", featured: null,
+    points, gamesWon: won, daysPlayed: days, rawStreak: 0, lastWinDate: null,
+  });
+  const merged = mergeMonthlyRows([[mk(U2, "Viejo", 100, 1, 1), mk(U1, "Uno", 100, 2, 2)], [mk(U2, "Nuevo", 50, 1, 3)]]);
+  assert(merged[0]?.userId === U2 && merged[0].points === 150 && merged[0].gamesWon === 2 && merged[0].daysPlayed === 4, "suma puntos, victorias y días entre meses");
+  assert(merged[0]?.displayName === "Nuevo", "los datos del jugador salen del mes más reciente");
+  const tie = mergeMonthlyRows([[mk(U2, "Dos", 70, 1, 1), mk(U1, "Uno", 70, 1, 1)]]);
+  assert(ids(tie) === [U1, U2].join(","), "empate de puntos: id ASC, igual que la query");
 
   // ─── Paginado ──────────────────────────────────────────────────────
   console.log("\n[paginateRanking]");

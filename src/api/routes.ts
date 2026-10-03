@@ -221,8 +221,9 @@ const dbq: QueryFn = (sql, params) => query(sql, params as any[]);
 
 /**
  * Snapshots en memoria del ranking público (src/api/ranking.ts), con TTL por
- * tipo. Mensual y anual viven solo con su TTL; el diario además se invalida al
- * escribirse un intento que lo cambia (ver `invalidateDailyRanking`).
+ * tipo. Mensual y anual viven solo con su TTL (el anual se arma sumando los
+ * meses, sin escanear el año); el diario además se invalida al escribirse un
+ * intento que lo cambia (ver `invalidateDailyRanking`).
  */
 const rankingCache = new RankingSnapshotCache((kind, periodStart) =>
   loadRankingRows(dbq, kind, periodStart),

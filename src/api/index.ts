@@ -514,7 +514,10 @@ async function start(): Promise<void> {
     });
 
   const PORT = parseInt(process.env.PORT ?? "3000", 10);
-  const HOST = process.env.HOST ?? "0.0.0.0";
+  // Variable propia (API_HOST) y no la genérica HOST: es un nombre que algunos
+  // entornos definen con el nombre de la máquina, y el server no levantaría en la
+  // interfaz correcta. Por defecto escucha en todas (lo que Railway necesita).
+  const HOST = process.env.API_HOST ?? "0.0.0.0";
 
   await app.listen({ port: PORT, host: HOST });
   console.log(`✅ Server running on port ${PORT}`);
