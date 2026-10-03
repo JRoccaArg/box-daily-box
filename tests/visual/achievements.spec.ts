@@ -84,16 +84,22 @@ test.describe("achievements", () => {
     await page.getByRole("link", { name: "Elegir insignias", exact: true }).click();
     const badges = page.locator("#insignias");
     await expect(badges.getByRole("checkbox", { name: "Selección automática" })).toBeChecked();
+    const slots = badges.locator(".badge-motion-stage");
     await badges.getByRole("checkbox", { name: "Selección automática" }).uncheck();
-    await badges.getByRole("button", { name: "Elegir insignias", exact: true }).click();
-    await expect(badges.getByRole("button", { name: "Maestro de Leyenda", exact: true })).toHaveCount(0);
-    await badges.getByRole("button", { name: "Centurión", exact: true }).click();
-    await badges.getByRole("button", { name: "Piloto Completo", exact: true }).click();
+    // Cada casilla abre un desplegable: los 7 logros siempre (los bloqueados se ven pero no se eligen).
+    await slots.nth(1).click();
+    await expect(badges.getByRole("option")).toHaveCount(7);
+    await expect(badges.getByRole("option", { name: /Maestro de Leyenda/ })).toHaveAttribute("aria-disabled", "true");
+    await expect(badges.getByRole("option", { name: /Centurión/ })).toHaveAttribute("aria-selected", "true");
+    await badges.getByRole("button", { name: "Dejar esta casilla vacía" }).click();
+    await slots.nth(1).click();
+    await badges.getByRole("button", { name: "Dejar esta casilla vacía" }).click();
     await badges.getByRole("button", { name: "Guardar insignias", exact: true }).click();
     await expect(badges.getByText("Insignias guardadas", { exact: true })).toBeVisible();
     expect(savedBodies[0]).toEqual(expect.objectContaining({ featured: [{ type: "ach_legend_10" }] }));
 
-    await badges.getByRole("button", { name: "Leyenda Viviente", exact: true }).click();
+    await slots.first().click();
+    await badges.getByRole("button", { name: "Dejar esta casilla vacía" }).click();
     await badges.getByRole("button", { name: "Guardar insignias", exact: true }).click();
     await expect(badges.getByText("Insignias guardadas", { exact: true })).toBeVisible();
     expect(savedBodies[1]).toEqual(expect.objectContaining({ featured: [] }));
@@ -104,5 +110,12 @@ test.describe("achievements", () => {
     await expect(badges.getByText("Insignias guardadas", { exact: true })).toBeVisible();
     expect(savedBodies[2]).toEqual(expect.objectContaining({ featured: null }));
     await expect(badges.locator(".equipped-badge")).toHaveCount(3);
+
+    // Con el automático activo, tocar una casilla lo desactiva y abre su desplegable.
+    await slots.nth(2).click();
+    await expect(badges.getByRole("checkbox", { name: "Selección automática" })).not.toBeChecked();
+    await expect(badges.getByRole("listbox")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(badges.getByRole("listbox")).toHaveCount(0);
   });
 });

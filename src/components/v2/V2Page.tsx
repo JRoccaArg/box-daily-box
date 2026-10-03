@@ -13,6 +13,7 @@ import "@/styles/v2/fonts.css";
 import "@/styles/v2/boceto.css";
 import "@/styles/v2/app.css";
 import "@/styles/v2/extras.css";
+import "@/styles/v2/fidelity.css";
 
 type V2PageProps = {
   page?: AccountPage;

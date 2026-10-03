@@ -1,6 +1,8 @@
 /* Integration states. The source design remains in boceto.css. */
-.bdb-v2.v2-page{position:relative;min-height:calc(100vh - 130px);width:100%;padding:34px 20px 48px;background:#0e0b0e;color:#f4e5ed;font-family:'Manrope',sans-serif}
-.bdb-v2 .shell{width:100%;max-width:800px;margin:auto}
+/* El gutter horizontal lo da SOLO .shell (24px, 18px en móvil), como en el boceto: así el contenido
+   queda alineado con el header y el pie (ancho útil 800px) y no 48px más angosto. */
+.bdb-v2.v2-page{position:relative;min-height:calc(100vh - 130px);width:100%;padding:34px 0 48px;background:#0e0b0e;color:var(--ink);font-family:'Manrope',sans-serif}
+.bdb-v2 .shell{width:100%;max-width:848px;margin:auto}
 .bdb-v2 button,.bdb-v2 a{touch-action:manipulation}
 .bdb-v2 button{cursor:pointer}
 .bdb-v2 button:disabled{opacity:.5;cursor:default}
@@ -45,32 +47,12 @@
 .bdb-v2 .v2-picker-empty{font-size:12px;padding:10px;color:#b291a3}
 .bdb-v2 .passport:has(.v2-picker-popover){overflow:visible;z-index:9}
 .bdb-v2 .identity-panel{overflow:visible}
-.bdb-v2 .profile-hero{display:flex;align-items:center;justify-content:space-between;gap:25px;margin-bottom:28px}
-.bdb-v2 .profile-person{display:flex;align-items:center;gap:20px;min-width:0}
-.bdb-v2 .profile-person>div:last-child{min-width:0}
-.bdb-v2 .profile-person h1{font-size:36px;line-height:1.2;overflow-wrap:anywhere;margin:5px 0}
-.bdb-v2 .profile-person p:last-child{display:flex;gap:9px;align-items:center;font-size:12px;color:#baa2b0}
-.bdb-v2 .month-score{display:flex;justify-content:space-between;align-items:center;gap:20px}
-.bdb-v2 .month-score>div>strong{display:block;font:600 48px 'Outfit',sans-serif;margin-top:7px}
-.bdb-v2 .month-score p{font-size:11px;line-height:1.8;color:#b49aa7;margin-top:6px;max-width:380px}
-.bdb-v2 .stats-ribbon{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:22px 0}
-.bdb-v2 .stats-ribbon strong{display:block;font:600 31px 'Outfit'}
-.bdb-v2 .v2-week{display:flex;gap:10px;justify-content:space-between;margin-top:18px}
-.bdb-v2 .v2-week>div{display:grid;gap:9px;text-align:center;flex:1;font-size:11px;color:#947989;text-transform:capitalize}
-.bdb-v2 .v2-week b{display:grid;place-items:center;min-height:38px;border:1px solid #503040;border-radius:11px;color:#9a7f8f}
-.bdb-v2 .v2-week .is-won b{color:#f0c18c;border-color:#ad7447;background:#402b22}
+/* (Perfil) Las reglas propias de la versión anterior de la cabecera, el panel del mes, la cinta de
+   estadísticas y la semana se retiraron: esas piezas ahora usan directamente el CSS del boceto. */
 .bdb-v2 .identity-fields{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .bdb-v2 .identity-fields label{display:grid;gap:6px;font-size:12px}
 .bdb-v2 .identity-fields input{width:100%;font:500 13px 'Manrope';color:#f4e3ea;padding:12px;border-radius:10px}
-.bdb-v2 .v2-switch{display:inline-flex;align-items:center;gap:9px;font-size:12px;cursor:pointer}
-.bdb-v2 .v2-switch input{width:18px;height:18px;accent-color:#d68c6c}
-.bdb-v2 .v2-badge-options{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;margin:20px 0}
-.bdb-v2 .v2-badge-option{display:grid;gap:6px}
-.bdb-v2 .v2-badge-option .secondary{display:flex;align-items:center;gap:10px;text-align:left}
-.bdb-v2 .v2-badge-option [aria-pressed=true]{border-color:#d0a16a;background:#3c2b20;color:#f6dba9}
-.bdb-v2 .v2-group-toggle{font-size:11px;color:#caad9f;background:none;border:0;text-align:left;padding:6px}
-.bdb-v2 .v2-badge-save{display:flex;gap:20px;align-items:center;justify-content:space-between}
-.bdb-v2 .v2-badge-save p{font-size:12px;color:#dac399}
+/* (Insignias) El selector con desplegable vive en fidelity.css (.v2-switch, .v2-badge-menu, .v2-badge-save). */
 .bdb-v2 .v2-confirm{display:flex;align-items:center;gap:9px;font-size:11px;flex-wrap:wrap}
 .bdb-v2 .v2-confirm .is-danger{color:#f3a09b}
 .v2-account-modal input{display:block;margin-top:8px;width:100%;padding:12px;border:1px solid #674052;border-radius:8px;background:#171015;color:#f1dfe9}
@@ -86,14 +68,8 @@
 .bdb-v2 .v2-menu-button svg{width:18px;height:18px;stroke:currentColor;fill:none}
 .bdb-v2 .v2-header-current{color:#f0ada7}
 @media(max-width:640px){
- .bdb-v2.v2-page{padding:26px 16px 38px}
- .bdb-v2 .profile-hero{align-items:flex-start;flex-wrap:wrap}
- .bdb-v2 .profile-person{gap:12px;width:100%}
- .bdb-v2 .profile-person h1{font-size:30px}
- .bdb-v2 .profile-tools{width:100%;flex-direction:row;justify-content:space-between;align-items:center}
- .bdb-v2 .stats-ribbon strong{font-size:27px}
- .bdb-v2 .stats-ribbon span{font-size:10px}
- .bdb-v2 .identity-fields,.bdb-v2 .v2-badge-options{grid-template-columns:1fr}
+ .bdb-v2.v2-page{padding:26px 0 38px}
+ .bdb-v2 .identity-fields{grid-template-columns:1fr}
  .bdb-v2 .board-tools>.v2-picker{width:100%}
  .bdb-v2 .board-tools .segments{flex:1}
  .bdb-v2 .v2-period-input{margin-left:0}

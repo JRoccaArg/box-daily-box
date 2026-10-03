@@ -206,7 +206,8 @@ export function AchievementsPage() {
             <span>{t("achievement.unlocked_count", { count: owned.length, total: items.length })}</span>
           </div>
           <section className="achievement-grid" aria-label={t("v2.ach.collection")}>
-            {items.map((item) => (
+            {/* Como en el boceto: primero los desbloqueados y después los pendientes (cada grupo, en el orden del catálogo). */}
+            {[...owned, ...items.filter((item) => !isAchievementOwned(item, counts))].map((item) => (
               <AchievementCard
                 key={item.type}
                 item={item}

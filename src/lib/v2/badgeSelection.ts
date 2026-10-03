@@ -147,3 +147,120 @@ export function sameSelection(a: FeaturedSlot[] | null, b: FeaturedSlot[] | null
   if (a.length !== b.length) return false;
   return a.every((s, i) => s.type === b[i]?.type && !!s.grouped === !!b[i]?.grouped);
 }
+
+// ─── Selector por casillas (desplegable del perfil) ──────────────────
+
+/** Tono del medallón: la plata usa la variante gris del boceto; el resto, la dorada. */
+export function badgeTone(type: string): "gold" | "silver" {
+  return type === "monthly_silver" || type === "annual_silver" || type === "ach_wins_100" || type === "ach_wins_500"
+    ? "silver"
+    : "gold";
+}
+
+/** Estado de una opción del desplegable respecto de la casilla que se está editando. */
+export type PickerState = "current" | "available" | "in-use" | "locked";
+
+export type PickerOption = {
+  /** Identificador estable para React (un podio con varios ejemplares tiene dos filas). */
+  key: string;
+  type: SlotType;
+  podium: boolean;
+  /** Para podios con varios ejemplares: ocupa un solo lugar con contador (×N). */
+  grouped: boolean;
+  /** Ejemplares que posee (logros: 0 o 1). */
+  count: number;
+  state: PickerState;
+  /** Solo logros bloqueados: avance real hacia el objetivo. */
+  progress?: { current: number; target: number };
+  /** Podio: períodos ganados ('YYYY-MM'; anual = 'YYYY-01'), del más reciente al más viejo. */
+  periods: string[];
+};
+
+/** ¿La opción se puede elegir ahora mismo para esa casilla? */
+export function isPickable(option: PickerOption): boolean {
+  return option.state === "available" || option.state === "current";
+}
+
+/**
+ * Opciones del desplegable de la casilla `slot`: primero los 7 logros (todos,
+ * con su estado: obtenido o bloqueado) y después los podios que ya ganó.
+ *
+ * Solo se puede elegir lo que se POSEE (el server valida contra las filas de
+ * `badges`, no contra el progreso): un logro con progreso completo pero sin
+ * fila todavía figura como bloqueado hasta que el server lo otorgue.
+ */
+export function pickerOptions(
+  data: UserBadges,
+  selection: FeaturedSlot[],
+  slot: number,
+): { achievements: PickerOption[]; podiums: PickerOption[] } {
+  const here = selection[slot];
+  const elsewhere = selection.filter((_, i) => i !== slot);
+  const periodsOf = (type: string) =>
+    data.owned
+      .filter((b) => b.type === type && b.referenceMonth)
+      .map((b) => b.referenceMonth as string)
+      .sort()
+      .reverse();
+
+  const achievements: PickerOption[] = data.achievements.map((a) => {
+    const owned = (data.counts[a.type] ?? 0) > 0;
+    const state: PickerState = !owned
+      ? "locked"
+      : here?.type === a.type
+        ? "current"
+        : elsewhere.some((s) => s.type === a.type)
+          ? "in-use"
+          : "available";
+    return {
+      key: a.type,
+      type: a.type,
+      podium: false,
+      grouped: false,
+      count: owned ? 1 : 0,
+      state,
+      progress: owned ? undefined : { current: Math.min(a.rawCurrent, a.target), target: a.target },
+      periods: [],
+    };
+  });
+
+  const podiums: PickerOption[] = [];
+  for (const type of PODIUM_ORDER) {
+    const count = data.counts[type] ?? 0;
+    if (count <= 0) continue;
+    const periods = periodsOf(type);
+    const sameType = elsewhere.filter((s) => s.type === type);
+    const groupedElsewhere = sameType.some((s) => s.grouped);
+    const individualsElsewhere = sameType.filter((s) => !s.grouped).length;
+    if (count > 1) {
+      const groupedState: PickerState =
+        here?.type === type && here.grouped ? "current" : sameType.length > 0 ? "in-use" : "available";
+      podiums.push({ key: `${type}:group`, type, podium: true, grouped: true, count, state: groupedState, periods });
+    }
+    const singleState: PickerState =
+      here?.type === type && !here.grouped
+        ? "current"
+        : groupedElsewhere || individualsElsewhere >= count
+          ? "in-use"
+          : "available";
+    podiums.push({ key: `${type}:one`, type, podium: true, grouped: false, count, state: singleState, periods });
+  }
+  return { achievements, podiums };
+}
+
+/** Pone (o saca, con `null`) una insignia en la casilla `slot`. Mantiene la lista compacta y con tope de 3. */
+export function setSlot(selection: FeaturedSlot[], slot: number, value: FeaturedSlot | null): FeaturedSlot[] {
+  const next = selection.slice(0, MAX_FEATURED);
+  if (value === null) {
+    if (slot < next.length) next.splice(slot, 1);
+    return next;
+  }
+  if (slot >= next.length) next.push(value);
+  else next[slot] = value;
+  return next.slice(0, MAX_FEATURED);
+}
+
+/** Casilla de la lista a la que corresponde clickear la casilla visual `slot` (las vacías se llenan en orden). */
+export function slotTarget(selection: FeaturedSlot[], slot: number): number {
+  return Math.min(slot, selection.length, MAX_FEATURED - 1);
+}

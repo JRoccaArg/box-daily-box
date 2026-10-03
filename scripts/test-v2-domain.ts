@@ -5,7 +5,7 @@ import { RankingSnapshotCache } from "../src/api/ranking";
 import { awardAnnualPodium, YearNotClosedError, deriveDisplayBadges, validateFeaturedSelection } from "../src/api/badges";
 import { getAchievementProgress } from "../src/api/achievements";
 import { pickNextGoal, displayPercent } from "../src/lib/v2/nextGoal";
-import { automaticSelection, toggleGrouping } from "../src/lib/v2/badgeSelection";
+import { automaticSelection, toggleGrouping, pickerOptions, setSlot, slotTarget, badgeTone, isPickable } from "../src/lib/v2/badgeSelection";
 import { safeReturnPath } from "../src/lib/routes";
 import type { AchievementProgress, UserBadges } from "../src/lib/api";
 
@@ -56,6 +56,40 @@ try {
  const owned = {counts, owned:[], achievements:[progress("ach_wins_100",100,100)]} as unknown as UserBadges;
  assert.deepEqual(automaticSelection(owned).map(a=>a.type),["annual_gold","monthly_gold","ach_wins_100"]);
  assert.equal(toggleGrouping([{type:"annual_gold",grouped:true},{type:"ach_wins_100"}], {type:"annual_gold",count:9,periods:[],podium:true}).length,3);
+ // Selector por casillas: logros (todos, con estado) primero y después los podios ganados.
+ const pickData = {
+  counts: {ach_wins_100: 1, ach_complete: 1, monthly_silver: 2, monthly_gold: 1},
+  owned: [
+   {id: 1, type: "monthly_silver", referenceMonth: "2026-07", awardedAt: ""},
+   {id: 2, type: "monthly_silver", referenceMonth: "2026-08", awardedAt: ""},
+   {id: 3, type: "monthly_gold", referenceMonth: "2026-08", awardedAt: ""},
+  ],
+  achievements: [progress("ach_legend_50",29,50), progress("ach_wins_100",100,100), progress("ach_perfect_day",8,8), progress("ach_complete",8,8)],
+ } as unknown as UserBadges;
+ const freshPick = pickerOptions(pickData, [], 0);
+ // Un logro con progreso completo pero SIN fila en `badges` (el server todavía no lo otorgó) no es elegible: el server valida posesión.
+ assert.deepEqual(freshPick.achievements.map(o => [o.type, o.state]), [["ach_legend_50","locked"],["ach_wins_100","available"],["ach_perfect_day","locked"],["ach_complete","available"]]);
+ assert.deepEqual(freshPick.achievements[0]?.progress, {current: 29, target: 50});
+ assert.deepEqual(freshPick.podiums.map(o => [o.key, o.state]), [["monthly_gold:one","available"],["monthly_silver:group","available"],["monthly_silver:one","available"]]);
+ assert.deepEqual(freshPick.podiums[2]?.periods, ["2026-08", "2026-07"]);
+ assert.equal(freshPick.achievements.filter(isPickable).length, 2);
+ const withGrouped = pickerOptions(pickData, [{type: "ach_wins_100"}, {type: "monthly_silver", grouped: true}], 0);
+ assert.equal(withGrouped.achievements[1]?.state, "current");
+ assert.deepEqual(withGrouped.podiums.map(o => o.state), ["available","in-use","in-use"]);
+ const forEmptySlot = pickerOptions(pickData, [{type: "ach_wins_100"}, {type: "monthly_silver", grouped: true}], 2);
+ assert.equal(forEmptySlot.achievements[1]?.state, "in-use");
+ const withSingle = pickerOptions(pickData, [{type: "monthly_silver"}], 1);
+ assert.deepEqual(withSingle.podiums.filter(o => o.type === "monthly_silver").map(o => o.state), ["in-use","available"]);
+ const twoSingles = pickerOptions(pickData, [{type: "monthly_silver"}, {type: "monthly_silver"}], 2);
+ assert.equal(twoSingles.podiums.find(o => o.key === "monthly_silver:one")?.state, "in-use");
+ const s1 = {type: "ach_wins_100"}, s2 = {type: "ach_complete"}, s3 = {type: "monthly_gold"}, s4 = {type: "monthly_bronze"};
+ assert.deepEqual(setSlot([s1, s2], 0, null), [s2]);
+ assert.deepEqual(setSlot([s1], 1, s4), [s1, s4]);
+ assert.deepEqual(setSlot([s1, s2, s3], 1, s4), [s1, s4, s3]);
+ assert.deepEqual(setSlot([s1, s2, s3], 3, s4), [s1, s2, s3]);
+ assert.deepEqual(setSlot([s1], 5, null), [s1]);
+ assert.deepEqual([slotTarget([], 0), slotTarget([s1], 2), slotTarget([s1, s2, s3], 2), slotTarget([s1, s2], 0)], [0, 1, 2, 0]);
+ assert.deepEqual(["monthly_silver","annual_silver","ach_wins_500","monthly_gold","ach_complete"].map(badgeTone), ["silver","silver","silver","gold","gold"]);
  assert.equal(safeReturnPath("//example.org"),null);
  assert.equal(safeReturnPath("/\n/example.org"),null);
  assert.equal(safeReturnPath("/\\example.org"),null);

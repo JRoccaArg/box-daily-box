@@ -19,7 +19,7 @@ test('profile loads authenticated stats and fetches detailed charts only when op
  await expect(page.locator('.stats-ribbon')).toContainText('80%');
  expect(requests.some(r=>r.token==='visual-test-token')).toBe(true);
  await expect(page.locator('.points-chart')).toHaveCount(0);
- await page.getByText('Ver estadísticas en detalle',{exact:true}).click();
+ await page.getByText('Ver estadísticas en detalle').click();
  await expect(page.getByRole('img',{name:'Puntos personales por día del mes'})).toBeVisible();
  await page.getByRole('link',{name:'Perfil y cuenta',exact:true}).click();
  await expect(page.getByRole('heading',{name:'Tu identidad.'})).toBeVisible();

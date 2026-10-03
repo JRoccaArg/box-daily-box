@@ -1,0 +1,110 @@
+/* Fidelidad al boceto.
+ *
+ * No cambia la estética: restituye lo que el boceto define y que en la app se
+ * veía distinto por tres tipos de causa.
+ *  (1) Clases del boceto con el MISMO nombre que una clase global del sitio
+ *      actual (Tailwind / src/index.css) y que se colaban sobre ellas:
+ *      .eyebrow (mayúsculas + monoespaciada), .outline (aro permanente, el
+ *      botón "Mi piloto" parecía seleccionado), .panel (sombra), y las reglas
+ *      base de Tailwind sobre <sup>.
+ *  (2) Reglas de la integración que anulaban los cortes responsive del boceto.
+ *  (3) Piezas del perfil que el boceto dibuja y la app aún no tenía.
+ * Se importa al final, después de boceto.css / app.css / extras.css. */
+
+/* ─── (1) Choques con el CSS global ──────────────────────────────── */
+.bdb-v2 .eyebrow{letter-spacing:normal;text-transform:none}
+/* Tailwind trae la utilidad `.outline{outline-style:solid}`; el boceto usa .outline como botón de contorno. */
+.bdb-v2 .outline:not(:focus-visible){outline-style:none}
+/* Legacy `.panel` agrega sombra; en el boceto solo el panel de identidad la tiene. */
+.bdb-v2 .panel{box-shadow:none}
+.bdb-v2 .identity-panel{box-shadow:0 18px 45px #00000023}
+/* Preflight de Tailwind deja <sup> con line-height:0 y position:relative: el "BOX" del logo subía 7px. */
+.bdb-v2 sup{position:static;line-height:inherit}
+
+/* El foco por teclado del sitio actual suma un aro de Tailwind al aro del boceto: se ve doble.
+   Se anula solo el aro de Tailwind (no los box-shadow propios de cada componente). */
+.bdb-v2 :focus-visible{--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000}
+
+/* ─── (2) Responsive del boceto que la integración anulaba ──────── */
+@media(max-width:640px){
+ /* El boceto oculta las insignias de la tabla en móvil; mostradas rompían la fila "Tú" letra por letra. */
+ .bdb-v2 .rank-board .driver>.v2-inline-badges{display:none}
+ .bdb-v2 .your-position{gap:12px}
+ .bdb-v2 .position-number{font-size:28px!important}
+ .bdb-v2 .board-tools{gap:8px}
+}
+@media(min-width:641px){.bdb-v2 .board-tools{gap:14px}}
+
+/* ─── (3) Perfil ──────────────────────────────────────────────────── */
+.bdb-v2 .account-status.is-guest{color:#b8a7b1}
+.bdb-v2 .account-status.is-guest i{background:#8d7c88}
+/* Día sin victoria en la semana (el boceto solo dibuja los ganados). */
+.bdb-v2 .streak-days .is-miss i{background:#241b20;border-color:#3a2a31;color:#6f5a65}
+.bdb-v2 .streak-days .is-miss.today i{border-color:#5a4350;box-shadow:none}
+/* Enlaces del final del panel de identidad: separados, ya no pegados en una misma línea. */
+.bdb-v2 .v2-account-access{margin-right:22px;vertical-align:baseline}
+.bdb-v2 .extended-detail summary small{margin-top:3px}
+
+/* ─── Insignias del ranking: casillas, interruptor y desplegable ── */
+/* La casilla es un botón (el boceto usa un div): se resetea sin tocar su aspecto. */
+.bdb-v2 button.badge-motion-stage{padding:0;border:0;background:none;color:inherit;font:inherit;text-align:center;cursor:pointer;width:100%}
+.bdb-v2 button.badge-motion-stage:disabled{opacity:1;cursor:default}
+.bdb-v2 button.badge-motion-stage>.equipped-badge,.bdb-v2 button.badge-motion-stage>.empty-badge{width:100%}
+.bdb-v2 .badge-motion-stage.is-open>.equipped-badge,.bdb-v2 .badge-motion-stage.is-open>.empty-badge{border-color:#d0a16a;box-shadow:0 0 0 1px #d0a16a55,0 8px 24px #a57a2226}
+.bdb-v2 .badge-motion-stage.is-open>.empty-badge{border-style:solid}
+
+/* Interruptor "Selección automática": mismo lenguaje que el resto (rojo/dorado sobre fondo oscuro). */
+.bdb-v2 .badge-setting-bottom .v2-switch{position:relative;display:inline-flex;align-items:center;gap:10px;font:500 11px 'Manrope',sans-serif;color:#d9c3b3;cursor:pointer;user-select:none;min-width:0}
+/* El input real va transparente ENCIMA de la pista (recibe el click y el foco); la pista es solo dibujo. */
+.bdb-v2 .v2-switch input{position:absolute;left:0;top:50%;transform:translateY(-50%);width:38px;height:22px;margin:0;padding:0;border:0;opacity:0;cursor:pointer;z-index:1}
+.bdb-v2 .v2-switch-track{position:relative;flex:none;width:38px;height:22px;border-radius:12px;background:#30232c;border:1px solid #51434c;transition:background .22s,border-color .22s}
+.bdb-v2 .v2-switch-track::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#b9a7b2;transition:transform .22s,background .22s}
+.bdb-v2 .v2-switch input:checked+.v2-switch-track{background:#6e3328;border-color:#c88b61}
+.bdb-v2 .v2-switch input:checked+.v2-switch-track::after{transform:translateX(16px);background:#f6dba9}
+.bdb-v2 .v2-switch input:focus-visible+.v2-switch-track{outline:2px solid #ed4e46;outline-offset:3px}
+.bdb-v2 .v2-switch input:disabled+.v2-switch-track{opacity:.5}
+
+/* Desplegable: panel con la paleta dorada de las casillas, abierto justo debajo de ellas. */
+.bdb-v2 .badge-setting .v2-badge-menu{position:relative;margin:2px 0 18px;padding:18px 16px 16px;border:1px solid #745b39;border-radius:15px;background:radial-gradient(ellipse at 50% 0,#967a392c,transparent 75%),#241d19;box-shadow:0 14px 34px #0008}
+/* Pico que apunta a la casilla abierta: centro de la casilla i = ancho/3·(i+½) + 4px·i − 4px (gap de 12px). */
+.bdb-v2 .badge-setting .v2-badge-menu::before{content:'';position:absolute;top:-7px;left:calc(100% / 3 * (var(--slot,0) + .5) + 4px * var(--slot,0) - 10px);width:12px;height:12px;background:#241d19;border:solid #745b39;border-width:1px 0 0 1px;transform:rotate(45deg)}
+.bdb-v2 .v2-badge-menu-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.bdb-v2 .badge-setting .v2-badge-menu-head strong{font:700 13px var(--display);color:#f3dfbb;letter-spacing:-.1px}
+.bdb-v2 .badge-setting .v2-badge-close{width:28px;height:28px;display:grid;place-items:center;padding:0;border:1px solid #6b553a;border-radius:9px;background:#2c241d;color:#e9c484;font-size:18px;line-height:1;white-space:normal}
+.bdb-v2 .badge-setting .v2-badge-close:hover{border-color:#a98456;background:#3b2f23}
+.bdb-v2 .v2-badge-menu [role=group]+[role=group]{margin-top:16px}
+.bdb-v2 .v2-badge-menu-label{display:block;font:700 10px 'Manrope',sans-serif;color:#b8a28d;margin:0 0 9px;letter-spacing:.02em}
+.bdb-v2 .v2-badge-menu-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.bdb-v2 .v2-badge-menu-empty{display:block;font:500 11px/1.7 'Manrope',sans-serif;color:#a98c73}
+.bdb-v2 .badge-setting .v2-badge-opt{display:flex;align-items:center;gap:11px;width:100%;min-width:0;text-align:left;padding:10px 12px;border:1px solid #5a4630;border-radius:12px;background:#2c241d;color:#f3dfbb;font:500 11px 'Manrope',sans-serif;white-space:normal;cursor:pointer;transition:background .2s,border-color .2s}
+.bdb-v2 .badge-setting .v2-badge-opt:hover:not([aria-disabled=true]){background:#3b2f23;border-color:#a98456}
+.bdb-v2 .badge-setting .v2-badge-opt.is-current{border-color:#d0a16a;background:#3c2b20;color:#f6dba9}
+.bdb-v2 .badge-setting .v2-badge-opt[aria-disabled=true]{cursor:default}
+.bdb-v2 .badge-setting .v2-badge-opt.is-locked{background:#1d1917;border-style:dashed;border-color:#4a3d33;color:#a2948a}
+.bdb-v2 .badge-setting .v2-badge-opt.is-use{border-style:dashed;color:#bfae9a}
+.bdb-v2 .v2-badge-opt.is-locked .v2-opt-medal,.bdb-v2 .v2-badge-opt.is-use .v2-opt-medal{opacity:.5;filter:grayscale(.85)}
+.bdb-v2 .v2-opt-medal{flex:none;width:36px;height:40px;display:grid;place-items:center;border-radius:12px;border:1px solid #aa8758;background:linear-gradient(150deg,#5b442b,#2c231c);color:#e9c484;box-shadow:inset 0 1px #f8d99d33}
+.bdb-v2 .v2-opt-medal.silver{border-color:#948898;background:linear-gradient(150deg,#49404d,#28212c);color:#d8cce0;box-shadow:inset 0 1px #ede2ff33}
+.bdb-v2 .v2-opt-text{display:grid;gap:3px;min-width:0;flex:1}
+.bdb-v2 .badge-setting .v2-opt-text strong{font:700 12px var(--soft);color:inherit;overflow-wrap:anywhere}
+.bdb-v2 .v2-opt-state{font:500 10px/1.45 'Manrope',sans-serif;color:#a8c2ae}
+.bdb-v2 .v2-badge-opt.is-locked .v2-opt-state,.bdb-v2 .v2-badge-opt.is-use .v2-opt-state{color:#a98c73}
+.bdb-v2 .v2-badge-opt.is-current .v2-opt-state{color:#d8bf8d}
+.bdb-v2 .v2-opt-tick{flex:none;width:16px;height:16px;border-radius:50%;background:#b6975f;color:#251b15;display:grid;place-items:center;font:700 9px var(--soft);font-style:normal}
+.bdb-v2 .badge-setting .v2-badge-clear{display:block;width:100%;margin-top:16px;padding:10px 12px;border:1px solid #5a4630;border-radius:10px;background:transparent;color:#d0b48e;font:600 11px 'Manrope',sans-serif;white-space:normal}
+.bdb-v2 .badge-setting .v2-badge-clear:hover{border-color:#a98456;background:#2c241d}
+
+/* Guardar insignias: fila propia, separada de "Elegir insignias". */
+.bdb-v2 .v2-badge-save{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:16px;min-height:38px}
+.bdb-v2 .badge-setting .v2-badge-save p{font:500 11px/1.6 'Manrope',sans-serif;color:#dac399;margin:0}
+
+@media(max-width:640px){
+ .bdb-v2 .badge-setting .v2-badge-menu{padding:16px 12px 14px}
+ .bdb-v2 .badge-setting .v2-badge-menu::before{left:calc(100% / 3 * (var(--slot,0) + .5) + 2.3px * var(--slot,0) - 8px)}
+ .bdb-v2 .v2-badge-menu-grid{grid-template-columns:1fr}
+ .bdb-v2 .badge-setting-bottom .v2-switch{flex:1 1 100%}
+ .bdb-v2 .v2-badge-save{flex-direction:column-reverse;align-items:stretch;gap:10px}
+ .bdb-v2 .v2-badge-save .primary{width:100%}
+ .bdb-v2 .v2-badge-save p{text-align:center}
+}
+@media(prefers-reduced-motion:reduce){.bdb-v2 .v2-switch-track,.bdb-v2 .v2-switch-track::after,.bdb-v2 .v2-badge-opt{transition:none}}
