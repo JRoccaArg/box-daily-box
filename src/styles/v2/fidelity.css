@@ -154,3 +154,10 @@
    (el primero ya no es rojo y parpadeante de por sí). */
 .bdb-home .progress-pips i:first-child{background:#333239;animation:none}
 .bdb-home .progress-pips i.is-complete{background:#e10600;box-shadow:0 0 8px #e1060040}
+
+/* Home · panel del circuito: la barra de color (::before, 3px recta) quedaba recortada por las esquinas
+   redondeadas y no llegaba a los bordes laterales. Ahora es el borde superior curvo del área interior del
+   panel: sigue la esquina y se une con los laterales; el borde de 2px rojo del panel pasa a neutro (1px)
+   para que no asome bajo el color del circuito. */
+.bdb-home .hero{border-top:1px solid #333237}
+.bdb-home .hero::before{inset:0;height:auto;border-radius:inherit;border-top:3px solid var(--hero-line-color);background:none;box-shadow:none;transition:border-color .45s ease}
